@@ -1,0 +1,54 @@
+/**
+ * React Query hooks for dashboard data
+ */
+
+import { useQuery } from '@tanstack/react-query'
+import { getTokenBalance, getUpcomingBookings, getUserStats, type TokenBalance, type UpcomingBooking, type UserStats } from '@/lib/dashboard-queries'
+
+// Query keys
+export const dashboardKeys = {
+  all: ['dashboard'] as const,
+  tokenBalance: (userId: string) => [...dashboardKeys.all, 'tokenBalance', userId] as const,
+  upcomingBookings: (userId: string) => [...dashboardKeys.all, 'upcomingBookings', userId] as const,
+  userStats: (userId: string) => [...dashboardKeys.all, 'userStats', userId] as const,
+}
+
+/**
+ * Hook to fetch user's token balance
+ */
+export function useDashboardTokenBalance(userId: string | undefined) {
+  return useQuery<TokenBalance, Error>({
+    queryKey: dashboardKeys.tokenBalance(userId || ''),
+    queryFn: () => getTokenBalance(userId!),
+    enabled: !!userId,
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes
+  })
+}
+
+/**
+ * Hook to fetch user's upcoming bookings
+ */
+export function useDashboardUpcomingBookings(userId: string | undefined) {
+  return useQuery<UpcomingBooking[], Error>({
+    queryKey: dashboardKeys.upcomingBookings(userId || ''),
+    queryFn: () => getUpcomingBookings(userId!),
+    enabled: !!userId,
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes
+  })
+}
+
+/**
+ * Hook to fetch user's stats
+ */
+export function useDashboardUserStats(userId: string | undefined) {
+  return useQuery<UserStats, Error>({
+    queryKey: dashboardKeys.userStats(userId || ''),
+    queryFn: () => getUserStats(userId!),
+    enabled: !!userId,
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes
+  })
+}
+

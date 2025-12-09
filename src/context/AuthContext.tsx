@@ -1,0 +1,390 @@
+'use client'
+
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { supabase, getSupabaseClient } from '@/lib/supabase'
+import type { UserResponse, SignInResponse, SignUpResponse, SignInRequest, SignUpRequest } from '@/api/schemas'
+import { ApiResponse } from '@/lib/api-error'
+import type { User } from '@supabase/supabase-js'
+
+interface AuthContextType {
+  user: UserResponse | null
+  isLoading: boolean
+  isAuthenticated: boolean
+  signIn: (credentials: SignInRequest) => Promise<ApiResponse<SignInResponse>>
+  signUp: (data: SignUpRequest) => Promise<ApiResponse<SignUpResponse>>
+  signInWithGoogle: () => Promise<void>
+  signOut: () => Promise<void>
+  setUser: (user: UserResponse | null) => void
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+// Map Supabase user to UserResponse
+async function mapSupabaseUserToUserResponse(supabaseUser: User | null): Promise<UserResponse | null> {
+  if (!supabaseUser) return null
+
+  try {
+    // Fetch user profile from database
+    const { data: profile, error } = await getSupabaseClient()
+      .from('user_profiles')
+      .select('id, email, name, role, created_at, updated_at')
+      .eq('id', supabaseUser.id)
+      .single()
+
+    if (error || !profile) {
+      // If profile doesn't exist, return basic user info from auth
+      return {
+        id: supabaseUser.id,
+        name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'User',
+        email: supabaseUser.email || '',
+        role: (supabaseUser.user_metadata?.role as 'user' | 'admin' | 'instructor' | 'super_admin') || 'user',
+        createdAt: supabaseUser.created_at,
+        updatedAt: supabaseUser.updated_at || supabaseUser.created_at,
+      }
+    }
+
+    return {
+      id: profile.id,
+      name: profile.name,
+      email: profile.email,
+      role: profile.role as 'user' | 'admin' | 'instructor' | 'super_admin',
+      createdAt: profile.created_at,
+      updatedAt: profile.updated_at || profile.created_at,
+    }
+  } catch (error) {
+    console.error('[Auth] Error mapping user:', error)
+    // Fallback to basic user info
+    return {
+      id: supabaseUser.id,
+      name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'User',
+      email: supabaseUser.email || '',
+      role: 'user',
+      createdAt: supabaseUser.created_at,
+      updatedAt: supabaseUser.updated_at || supabaseUser.created_at,
+    }
+  }
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<UserResponse | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  useEffect(() => {
+    initializeAuth()
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          const userResponse = await mapSupabaseUserToUserResponse(session.user)
+          setUser(userResponse)
+          setIsAuthenticated(true)
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null)
+          setIsAuthenticated(false)
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          const userResponse = await mapSupabaseUserToUserResponse(session.user)
+          setUser(userResponse)
+        }
+      }
+    )
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  const initializeAuth = async () => {
+    try {
+      // Get current session
+      const { data: { session }, error } = await supabase.auth.getSession()
+
+      if (error) {
+        console.error('[Auth] Session error:', error)
+        setIsLoading(false)
+        return
+      }
+
+      if (session?.user) {
+        // Create user response immediately from auth data (don't wait for profile)
+        const userResponse: UserResponse = {
+          id: session.user.id,
+          name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+          email: session.user.email || '',
+          role: (session.user.user_metadata?.role as 'user' | 'admin' | 'instructor' | 'super_admin') || 'user',
+          createdAt: session.user.created_at,
+          updatedAt: session.user.updated_at || session.user.created_at,
+        }
+        
+        // Set user immediately
+        setUser(userResponse)
+        setIsAuthenticated(true)
+        
+        // Fetch profile in background and update if it exists (non-blocking)
+        mapSupabaseUserToUserResponse(session.user).then((profileUser) => {
+          if (profileUser) {
+            setUser(profileUser)
+          }
+        }).catch((err) => {
+          console.warn('[Auth] Background profile fetch failed:', err)
+          // Ignore - we already have user from metadata
+        })
+      } else {
+        setUser(null)
+        setIsAuthenticated(false)
+      }
+    } catch (error) {
+      console.error('[Auth] Initialization failed:', error)
+      setUser(null)
+      setIsAuthenticated(false)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const signIn = async (credentials: SignInRequest): Promise<ApiResponse<SignInResponse>> => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password,
+      })
+
+      if (error) {
+        return {
+          success: false,
+          error: {
+            code: 'AUTHENTICATION_ERROR',
+            message: error.message || 'Invalid email or password',
+            details: error,
+          },
+          timestamp: new Date().toISOString(),
+        }
+      }
+
+      if (!data.user || !data.session) {
+        return {
+          success: false,
+          error: {
+            code: 'AUTHENTICATION_ERROR',
+            message: 'Failed to create session',
+          },
+          timestamp: new Date().toISOString(),
+        }
+      }
+
+      // Map Supabase user to UserResponse
+      const userResponse = await mapSupabaseUserToUserResponse(data.user)
+
+      if (!userResponse) {
+        return {
+          success: false,
+          error: {
+            code: 'AUTHENTICATION_ERROR',
+            message: 'Failed to load user profile',
+          },
+          timestamp: new Date().toISOString(),
+        }
+      }
+
+      setUser(userResponse)
+      setIsAuthenticated(true)
+
+      return {
+        success: true,
+        data: {
+          user: userResponse,
+          tokens: {
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+            token_type: 'Bearer' as const,
+            expires_in: data.session.expires_in || 3600,
+          },
+        },
+        timestamp: new Date().toISOString(),
+      }
+    } catch (error) {
+      console.error('[Auth] Sign in failed:', error)
+      return {
+        success: false,
+        error: {
+          code: 'UNKNOWN_ERROR',
+          message: error instanceof Error ? error.message : 'An unexpected error occurred',
+          details: error,
+        },
+        timestamp: new Date().toISOString(),
+      }
+    }
+  }
+
+  const signUp = async (data: SignUpRequest): Promise<ApiResponse<SignUpResponse>> => {
+    try {
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            name: data.name,
+            role: 'user', // Default role for new users
+          },
+          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : undefined,
+        },
+      })
+
+      if (error) {
+        return {
+          success: false,
+          error: {
+            code: 'AUTHENTICATION_ERROR',
+            message: error.message || 'Failed to create account',
+            details: error,
+          },
+          timestamp: new Date().toISOString(),
+        }
+      }
+
+      if (!authData.user) {
+        return {
+          success: false,
+          error: {
+            code: 'AUTHENTICATION_ERROR',
+            message: 'Failed to create user',
+          },
+          timestamp: new Date().toISOString(),
+        }
+      }
+
+      // Note: Supabase may require email confirmation before creating a session
+      // If email confirmation is required, session will be null
+      if (authData.session) {
+        // User is immediately signed in (no email confirmation required)
+        const userResponse = await mapSupabaseUserToUserResponse(authData.user)
+        
+        if (!userResponse) {
+          return {
+            success: false,
+            error: {
+              code: 'AUTHENTICATION_ERROR',
+              message: 'Failed to load user profile',
+            },
+            timestamp: new Date().toISOString(),
+          }
+        }
+
+        setUser(userResponse)
+        setIsAuthenticated(true)
+
+        return {
+          success: true,
+          data: {
+            user: userResponse,
+            tokens: {
+              access_token: authData.session.access_token,
+              refresh_token: authData.session.refresh_token,
+              token_type: 'Bearer' as const,
+              expires_in: authData.session.expires_in || 3600,
+            },
+          },
+          timestamp: new Date().toISOString(),
+        }
+      } else {
+        // Email confirmation required
+        // Return success but user is not authenticated yet
+        const userResponse = await mapSupabaseUserToUserResponse(authData.user)
+        
+        return {
+          success: true,
+          data: {
+            user: userResponse || {
+              id: authData.user.id,
+              name: data.name,
+              email: data.email,
+              role: 'user',
+              createdAt: authData.user.created_at,
+              updatedAt: authData.user.updated_at || authData.user.created_at,
+            },
+            tokens: {
+              access_token: '',
+              token_type: 'Bearer' as const,
+              expires_in: 0,
+            },
+          },
+          timestamp: new Date().toISOString(),
+        }
+      }
+    } catch (error) {
+      console.error('[Auth] Sign up failed:', error)
+      return {
+        success: false,
+        error: {
+          code: 'UNKNOWN_ERROR',
+          message: error instanceof Error ? error.message : 'An unexpected error occurred',
+          details: error,
+        },
+        timestamp: new Date().toISOString(),
+      }
+    }
+  }
+
+  const signInWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : undefined,
+        },
+      })
+      if (error) {
+        console.error('[Auth] Google sign in error:', error)
+        throw error
+      }
+      // Note: User will be redirected to Google, then back to the app
+      // The auth state change listener will handle setting the user
+    } catch (error) {
+      console.error('[Auth] Google sign in failed:', error)
+      throw error
+    }
+  }
+
+  const signOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        console.error('[Auth] Sign out error:', error)
+      }
+    } catch (error) {
+      console.error('[Auth] Sign out failed:', error)
+    } finally {
+      clearAuth()
+    }
+  }
+
+  const clearAuth = () => {
+    setUser(null)
+    setIsAuthenticated(false)
+  }
+
+  return (
+    <AuthContext.Provider value={{
+      user,
+      isLoading,
+      isAuthenticated,
+      signIn,
+      signUp,
+      signInWithGoogle,
+      signOut,
+      setUser,
+    }}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider')
+  }
+  return context
+}
+
