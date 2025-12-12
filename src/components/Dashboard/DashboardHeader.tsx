@@ -7,9 +7,10 @@ import { useAuth } from "@/context/AuthContext";
 
 interface DashboardHeaderProps {
   sidebarCollapsed?: boolean;
+  onMobileMenuClick?: () => void;
 }
 
-const DashboardHeader = ({ sidebarCollapsed = false }: DashboardHeaderProps) => {
+const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: DashboardHeaderProps) => {
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -34,14 +35,25 @@ const DashboardHeader = ({ sidebarCollapsed = false }: DashboardHeaderProps) => 
 
   return (
     <header
-      className={`fixed top-0 right-0 z-30 h-16 bg-white dark:bg-dark border-b border-gray-200 dark:border-gray-700 transition-all duration-300 ${
-        sidebarCollapsed ? "left-20" : "left-64"
-      }`}
+      className={`fixed top-0 right-0 z-[40] h-16 bg-white dark:bg-dark border-b border-gray-200 dark:border-gray-700 transition-all duration-300 ${
+        sidebarCollapsed ? "lg:left-20" : "lg:left-64"
+      } left-0`}
     >
-      <div className="flex items-center justify-between h-full px-6">
+      <div className="flex items-center justify-between h-full px-4 sm:px-6">
+        {/* Mobile Menu Button */}
+        <button
+          onClick={onMobileMenuClick}
+          className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mr-2"
+          aria-label="Open menu"
+        >
+          <svg className="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
         {/* Search Bar */}
-        <div className="flex-1 max-w-xl">
-          <div className="relative">
+        <div className="hidden md:flex flex-1 max-w-xl">
+          <div className="relative w-full">
             <input
               type="text"
               placeholder="Search classes, instructors..."
@@ -58,8 +70,18 @@ const DashboardHeader = ({ sidebarCollapsed = false }: DashboardHeaderProps) => 
           </div>
         </div>
 
+        {/* Mobile Search Button */}
+        <button
+          className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          aria-label="Search"
+        >
+          <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
+
         {/* Right Side Actions */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           {/* Theme Toggle */}
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -92,7 +114,7 @@ const DashboardHeader = ({ sidebarCollapsed = false }: DashboardHeaderProps) => 
 
             {/* Notifications Dropdown */}
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-dark rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2">
+              <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-dark rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2">
                 <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="font-semibold text-dark dark:text-white">Notifications</h3>
                 </div>
@@ -135,7 +157,7 @@ const DashboardHeader = ({ sidebarCollapsed = false }: DashboardHeaderProps) => 
 
             {/* User Dropdown */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-dark rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2">
+              <div className="absolute right-0 mt-2 w-48 sm:w-56 bg-white dark:bg-dark rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2">
                 <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                   <p className="font-medium text-dark dark:text-white">{user?.name}</p>
                   <p className="text-sm text-body-color dark:text-gray-400">{user?.email}</p>

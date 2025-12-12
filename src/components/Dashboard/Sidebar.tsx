@@ -2,13 +2,21 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import Modal from "@/components/Modal/Modal";
 
-const Sidebar = () => {
+interface SidebarProps {
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, signOut } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Sync with localStorage
   useEffect(() => {
@@ -24,6 +32,16 @@ const Sidebar = () => {
     localStorage.setItem("sidebarCollapsed", String(newState));
     // Dispatch storage event for other components to listen
     window.dispatchEvent(new Event("storage"));
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      // Redirect to signin page after logout
+      router.push("/signin");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   const menuItems = [
@@ -105,38 +123,71 @@ const Sidebar = () => {
     },
   ];
 
+  // Close sidebar on mobile when route changes
+  useEffect(() => {
+    if (isMobileOpen && onMobileClose) {
+      onMobileClose();
+    }
+  }, [pathname]); // Only depend on pathname, not onMobileClose
+
   return (
-    <aside
-      className={`fixed left-0 top-0 z-40 h-screen transition-all duration-300 ${
-        isCollapsed ? "w-20" : "w-64"
-      } bg-white dark:bg-dark border-r border-gray-200 dark:border-gray-700`}
-    >
+    <>
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[45] lg:hidden"
+          onClick={onMobileClose}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        className={`fixed left-0 top-0 z-[50] h-screen flex flex-col transition-all duration-300 ease-in-out ${
+          isCollapsed ? "w-20" : "w-64"
+        } bg-white dark:bg-dark border-r border-gray-200 dark:border-gray-700 shadow-lg lg:shadow-none ${
+          isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
       {/* Logo & Toggle */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
         {!isCollapsed && (
           <Link href="/dashboard" className="flex items-center">
             <span className="text-xl font-bold text-primary">Zumbaton</span>
           </Link>
         )}
-        <button
-          onClick={toggleCollapse}
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
-          <svg
-            className={`w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform ${
-              isCollapsed ? "rotate-180" : ""
-            }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <div className="flex items-center gap-2">
+          {/* Mobile Close Button */}
+          <button
+            onClick={onMobileClose}
+            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Close menu"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-          </svg>
-        </button>
+            <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          {/* Desktop Collapse Toggle */}
+          <button
+            onClick={toggleCollapse}
+            className="hidden lg:block p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Toggle sidebar"
+          >
+            <svg
+              className={`w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform ${
+                isCollapsed ? "rotate-180" : ""
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* User Info */}
-      <div className={`p-4 border-b border-gray-200 dark:border-gray-700 ${isCollapsed ? "text-center" : ""}`}>
+      <div className={`p-4 border-b border-gray-200 dark:border-gray-700 shrink-0 ${isCollapsed ? "text-center" : ""}`}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
             <span className="text-primary font-semibold">
@@ -179,7 +230,7 @@ const Sidebar = () => {
       </nav>
 
       {/* Bottom Navigation */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2 shrink-0">
         {bottomMenuItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -198,22 +249,56 @@ const Sidebar = () => {
             </Link>
           );
         })}
+      </div>
 
-        {/* Sign Out Button */}
+      {/* Logout Button - Absolute Bottom */}
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700 shrink-0">
         <button
-          onClick={signOut}
+          onClick={() => setShowLogoutModal(true)}
           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ${
             isCollapsed ? "justify-center" : ""
           }`}
-          title={isCollapsed ? "Sign Out" : undefined}
+          title={isCollapsed ? "Logout" : undefined}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
-          {!isCollapsed && <span className="font-medium">Sign Out</span>}
+          {!isCollapsed && <span className="font-medium">Logout</span>}
         </button>
       </div>
-    </aside>
+
+      {/* Logout Confirmation Modal */}
+      <Modal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        title="Confirm Logout"
+        description="Are you sure you want to logout? You'll need to sign in again to access your account."
+        size="sm"
+        footer={
+          <div className="flex items-center justify-end gap-3 w-full">
+            <button
+              onClick={() => setShowLogoutModal(false)}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-body-color dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-6 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-2">
+          <p className="text-body-color dark:text-gray-400">
+            You will be signed out of your account and redirected to the sign in page.
+          </p>
+        </div>
+      </Modal>
+      </aside>
+    </>
   );
 };
 

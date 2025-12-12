@@ -2,6 +2,16 @@
  * Utility functions
  */
 
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+/**
+ * Utility function to merge Tailwind CSS classes
+ */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
   return date.toLocaleDateString("en-US", {

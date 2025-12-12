@@ -66,7 +66,7 @@ export const SoftDeleteSchema = BaseTimestampsSchema.extend({
   deletedAt: DateTimeSchema.nullable(),
 })
 
-export const RoleSchema = z.enum(['user', 'admin', 'instructor'])
+export const RoleSchema = z.enum(['user', 'admin', 'instructor', 'super_admin'])
 
 export const ClassLevelSchema = z.enum(['beginner', 'intermediate', 'advanced', 'all_levels'])
 

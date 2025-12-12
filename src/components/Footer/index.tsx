@@ -18,8 +18,6 @@ const Footer = () => {
       { name: "About Us", href: "/about" },
       { name: "Our Instructors", href: "/about#team" },
       { name: "Locations", href: "/contact" },
-      { name: "Careers", href: "/careers" },
-      { name: "Blog", href: "/blog" },
     ],
     support: [
       { name: "FAQ", href: "/faq" },
@@ -93,14 +91,8 @@ const Footer = () => {
             </div>
             <div className="flex gap-4">
               <Link
-                href="/signup"
-                className="px-6 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/25"
-              >
-                Start Free Trial
-              </Link>
-              <Link
                 href="/schedule"
-                className="px-6 py-3 border border-gray-700 hover:border-green-500 text-white font-semibold rounded-lg transition-all duration-300 hover:bg-green-500/10"
+                className="px-6 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/25"
               >
                 View Schedule
               </Link>
@@ -232,18 +224,18 @@ const Footer = () => {
                 </svg>
                 +1 (800) 555-ZUMBA
               </a>
-              <a href="mailto:hello@zumbaton.com" className="flex items-center gap-2 text-gray-400 hover:text-green-500 transition-colors">
+              <a href="mailto:info@zumbathon.com" className="flex items-center gap-2 text-gray-400 hover:text-green-500 transition-colors">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                hello@zumbaton.com
+                info@zumbathon.com
               </a>
               <span className="flex items-center gap-2 text-gray-400">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                New York • LA • Miami
+                Singapore
               </span>
             </div>
             <div className="flex items-center gap-2 text-gray-500 text-sm">

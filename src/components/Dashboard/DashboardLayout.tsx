@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Sidebar from "@/components/Dashboard/Sidebar";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
+import CheckInButton from "@/components/CheckInButton";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -15,6 +16,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const pathname = usePathname();
   const { isAuthenticated, isLoading } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Check if sidebar is collapsed from Sidebar component (via localStorage or state)
   useEffect(() => {
@@ -49,21 +51,30 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a2e]">
       {/* Sidebar */}
-      <Sidebar />
+      <Sidebar 
+        isMobileOpen={isMobileSidebarOpen}
+        onMobileClose={() => setIsMobileSidebarOpen(false)}
+      />
 
       {/* Header */}
-      <DashboardHeader sidebarCollapsed={sidebarCollapsed} />
+      <DashboardHeader 
+        sidebarCollapsed={sidebarCollapsed}
+        onMobileMenuClick={() => setIsMobileSidebarOpen(true)}
+      />
 
       {/* Main Content */}
       <main
         className={`pt-16 min-h-screen transition-all duration-300 ${
-          sidebarCollapsed ? "ml-20" : "ml-64"
+          sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"
         }`}
       >
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {children}
         </div>
       </main>
+      
+      {/* Check-In Button - Only on authenticated pages */}
+      <CheckInButton />
     </div>
   );
 };

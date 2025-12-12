@@ -157,6 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             code: 'AUTHENTICATION_ERROR',
             message: error.message || 'Invalid email or password',
             details: error,
+            timestamp: new Date().toISOString(),
           },
           timestamp: new Date().toISOString(),
         }
@@ -168,6 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           error: {
             code: 'AUTHENTICATION_ERROR',
             message: 'Failed to create session',
+            timestamp: new Date().toISOString(),
           },
           timestamp: new Date().toISOString(),
         }
@@ -182,6 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           error: {
             code: 'AUTHENTICATION_ERROR',
             message: 'Failed to load user profile',
+            timestamp: new Date().toISOString(),
           },
           timestamp: new Date().toISOString(),
         }
@@ -211,6 +214,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           code: 'UNKNOWN_ERROR',
           message: error instanceof Error ? error.message : 'An unexpected error occurred',
           details: error,
+          timestamp: new Date().toISOString(),
         },
         timestamp: new Date().toISOString(),
       }
@@ -238,6 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             code: 'AUTHENTICATION_ERROR',
             message: error.message || 'Failed to create account',
             details: error,
+            timestamp: new Date().toISOString(),
           },
           timestamp: new Date().toISOString(),
         }
@@ -249,6 +254,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           error: {
             code: 'AUTHENTICATION_ERROR',
             message: 'Failed to create user',
+            timestamp: new Date().toISOString(),
           },
           timestamp: new Date().toISOString(),
         }
@@ -266,6 +272,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             error: {
               code: 'AUTHENTICATION_ERROR',
               message: 'Failed to load user profile',
+              timestamp: new Date().toISOString(),
             },
             timestamp: new Date().toISOString(),
           }
@@ -320,6 +327,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           code: 'UNKNOWN_ERROR',
           message: error instanceof Error ? error.message : 'An unexpected error occurred',
           details: error,
+          timestamp: new Date().toISOString(),
         },
         timestamp: new Date().toISOString(),
       }

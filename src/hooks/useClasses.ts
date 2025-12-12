@@ -7,6 +7,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getUpcomingClasses, bookClass, cancelBooking, leaveWaitlist, type ClassWithAvailability } from '@/lib/classes-queries'
 import { useToast } from '@/components/Toast'
 
+// Re-export type for convenience
+export type { ClassWithAvailability }
+
 // Query keys
 export const classKeys = {
   all: ['classes'] as const,
@@ -41,8 +44,13 @@ export function useBookClass() {
   const toast = useToast()
 
   return useMutation({
-    mutationFn: ({ userId, classId }: { userId: string; classId: string }) =>
-      bookClass(userId, classId),
+    mutationFn: async ({ userId, classId }: { userId: string; classId: string }) => {
+      const result = await bookClass(userId, classId)
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to book class')
+      }
+      return result
+    },
     onSuccess: (data, variables) => {
       // Invalidate classes list to refresh availability
       queryClient.invalidateQueries({ queryKey: classKeys.lists() })
@@ -56,11 +64,12 @@ export function useBookClass() {
           `You are now #${data.waitlistPosition} on the waitlist. You'll be notified if a spot opens up.`
         )
       } else {
-        toast.success('Class Booked!', data.message)
+        toast.success('Class Booked!', data.message || 'Your booking has been confirmed.')
       }
     },
     onError: (error: Error) => {
-      toast.error('Booking Failed', error.message || 'Failed to book class. Please try again.')
+      const errorMessage = error.message || 'Failed to book class. Please try again.'
+      toast.error('Booking Failed', errorMessage)
     },
   })
 }

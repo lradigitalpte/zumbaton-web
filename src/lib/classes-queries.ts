@@ -183,19 +183,42 @@ export async function bookClass(userId: string, classId: string): Promise<{
       }
     }
 
-    // 2. Check if user already has a booking or waitlist entry
+    // 2. Check if user already has a booking for this class
     const { data: userBooking } = await supabase
       .from(TABLES.BOOKINGS)
       .select('id, status')
       .eq('user_id', userId)
       .eq('class_id', classId)
-      .in('status', ['confirmed', 'waitlist'])
       .maybeSingle()
 
     if (userBooking) {
-      return {
-        success: false,
-        message: 'You already have a booking for this class',
+      // Active bookings - can't book again
+      if (userBooking.status === 'confirmed' || userBooking.status === 'waitlist') {
+        return {
+          success: false,
+          message: 'You already have a booking for this class',
+        }
+      }
+      
+      // Attended - can't book again
+      if (userBooking.status === 'attended') {
+        return {
+          success: false,
+          message: 'You have already attended this class',
+        }
+      }
+      
+      // Cancelled bookings - we'll update the existing record instead of creating new one
+      // This handles the unique constraint issue
+      if (userBooking.status === 'cancelled' || userBooking.status === 'cancelled-late') {
+        // Continue to booking logic - we'll update the existing booking
+        // This is handled below in the insert logic
+      } else {
+        // No-show or other status
+        return {
+          success: false,
+          message: 'You already have a booking record for this class',
+        }
       }
     }
 
@@ -307,40 +330,113 @@ export async function bookClass(userId: string, classId: string): Promise<{
       }
     }
 
-    // 9. Create booking
-    const { data: booking, error: bookingError } = await supabase
+    // 9. Check if there's a cancelled booking we can reuse
+    const { data: cancelledBooking } = await supabase
       .from(TABLES.BOOKINGS)
-      .insert({
-        user_id: userId,
-        class_id: classId,
-        user_package_id: selectedPackage.id,
-        tokens_used: classData.token_cost,
-        status: 'confirmed',
-        booked_at: new Date().toISOString(),
-      })
-      .select('id')
-      .single()
+      .select('id, status')
+      .eq('user_id', userId)
+      .eq('class_id', classId)
+      .in('status', ['cancelled', 'cancelled-late'])
+      .maybeSingle()
 
-    if (bookingError) {
-      // Rollback: release tokens
-      await supabase
-        .from(TABLES.USER_PACKAGES)
+    let bookingId: string
+
+    if (cancelledBooking) {
+      // Update existing cancelled booking to confirmed
+      const { data: updatedBooking, error: updateError } = await supabase
+        .from(TABLES.BOOKINGS)
         .update({
-          tokens_held: selectedPackage.tokens_held || 0,
+          user_package_id: selectedPackage.id,
+          tokens_used: classData.token_cost,
+          status: 'confirmed',
+          booked_at: new Date().toISOString(),
+          cancelled_at: null,
+          cancellation_reason: null,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', selectedPackage.id)
+        .eq('id', cancelledBooking.id)
+        .select('id')
+        .single()
 
-      return {
-        success: false,
-        message: 'Failed to create booking',
+      if (updateError) {
+        // Rollback: release tokens
+        await supabase
+          .from(TABLES.USER_PACKAGES)
+          .update({
+            tokens_held: selectedPackage.tokens_held || 0,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', selectedPackage.id)
+
+        return {
+          success: false,
+          message: 'Failed to update booking. Please try again.',
+        }
       }
+
+      bookingId = updatedBooking.id
+    } else {
+      // Create new booking
+      const { data: booking, error: bookingError } = await supabase
+        .from(TABLES.BOOKINGS)
+        .insert({
+          user_id: userId,
+          class_id: classId,
+          user_package_id: selectedPackage.id,
+          tokens_used: classData.token_cost,
+          status: 'confirmed',
+          booked_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single()
+
+      if (bookingError) {
+        // Rollback: release tokens
+        await supabase
+          .from(TABLES.USER_PACKAGES)
+          .update({
+            tokens_held: selectedPackage.tokens_held || 0,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', selectedPackage.id)
+
+        // Check for duplicate key error
+        if (bookingError.code === '23505') {
+          // Double-check for existing booking
+          const { data: existingBooking } = await supabase
+            .from(TABLES.BOOKINGS)
+            .select('id, status')
+            .eq('user_id', userId)
+            .eq('class_id', classId)
+            .maybeSingle()
+
+          if (existingBooking) {
+            if (existingBooking.status === 'confirmed' || existingBooking.status === 'waitlist') {
+              return {
+                success: false,
+                message: 'You already have a booking for this class',
+              }
+            }
+            return {
+              success: false,
+              message: 'Unable to create booking. Please try again or contact support.',
+            }
+          }
+        }
+
+        return {
+          success: false,
+          message: bookingError.message || 'Failed to create booking. Please try again.',
+        }
+      }
+
+      bookingId = booking.id
     }
 
     return {
       success: true,
       message: 'Class booked successfully!',
-      bookingId: booking.id,
+      bookingId: bookingId,
     }
   } catch (error) {
     console.error('Error booking class:', error)

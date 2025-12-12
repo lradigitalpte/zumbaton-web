@@ -67,26 +67,12 @@ export async function getClassDetail(classId: string): Promise<ClassDetail | nul
 
   const whatToBring = defaultWhatToBring[classData.class_type] || ['Water bottle', 'Towel', 'Athletic shoes']
 
-  // Get instructor bio from instructors table if instructor_id exists
+  // Generate instructor bio from class data
   let instructorBio: string | null = null
-  if (classData.instructor_id) {
-    const { data: instructorData } = await supabase
-      .from('instructors')
-      .select('bio, years_experience')
-      .eq('user_id', classData.instructor_id)
-      .maybeSingle()
-
-    if (instructorData?.bio) {
-      instructorBio = instructorData.bio
-    } else if (classData.instructor_name) {
-      const experience = instructorData?.years_experience 
-        ? `${instructorData.years_experience} years of experience`
-        : 'years of experience'
-      instructorBio = `Certified ${classData.class_type} instructor with ${experience}. Passionate about making fitness fun and accessible to everyone.`
-    }
-  } else if (classData.instructor_name) {
-    // Fallback to default bio if no instructor_id
-    instructorBio = `Certified ${classData.class_type} instructor with years of experience. Passionate about making fitness fun and accessible to everyone.`
+  if (classData.instructor_name) {
+    // Generate default bio based on class type
+    const classTypeName = classData.class_type.charAt(0).toUpperCase() + classData.class_type.slice(1)
+    instructorBio = `Certified ${classTypeName} instructor with years of experience. Passionate about making fitness fun and accessible to everyone.`
   }
 
   return {
