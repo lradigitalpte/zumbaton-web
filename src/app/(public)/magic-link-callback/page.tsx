@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getSupabaseClient } from "@/lib/supabase";
 import Image from "next/image";
 
-export default function MagicLinkCallbackPage() {
+function MagicLinkCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { checkSession } = useAuth();
@@ -200,6 +200,37 @@ export default function MagicLinkCallbackPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MagicLinkCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+          <div className="w-full max-w-md">
+            <div className="text-center mb-8">
+              <Image
+                src="/images/logo/zumbaton logo (transparent).png"
+                alt="Zumbaton Logo"
+                width={200}
+                height={67}
+                className="h-16 w-auto mx-auto dark:invert"
+                priority
+              />
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                Loading...
+              </h2>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <MagicLinkCallbackContent />
+    </Suspense>
   );
 }
 
