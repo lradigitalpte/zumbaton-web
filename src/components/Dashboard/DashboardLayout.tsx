@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
 import Sidebar from "@/components/Dashboard/Sidebar";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
 import CheckInButton from "@/components/CheckInButton";
@@ -17,6 +18,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { isAuthenticated, isLoading } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const hasRedirectedRef = useRef(false);
 
   // Check if sidebar is collapsed from Sidebar component (via localStorage or state)
   useEffect(() => {
@@ -32,15 +35,46 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  // Redirect to signin if not authenticated (skip in demo mode)
+  // Check session directly as a fallback to avoid race conditions
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      // Check if demo mode - handled by AuthContext
-      router.push(`/signin?redirect=${pathname}`);
-    }
+    const checkSession = async () => {
+      // If already authenticated via context, no need to check session
+      if (isAuthenticated) {
+        setSessionChecked(true);
+        return;
+      }
+
+      // If still loading, wait
+      if (isLoading) {
+        return;
+      }
+
+      // Context says not authenticated - double-check with Supabase directly
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          // Session exists but context hasn't updated yet - wait a bit
+          setSessionChecked(true);
+          return;
+        }
+      } catch (error) {
+        console.error('[Dashboard] Error checking session:', error);
+      }
+
+      // No session found - redirect to signin (but only once)
+      if (!hasRedirectedRef.current) {
+        hasRedirectedRef.current = true;
+        router.push(`/signin?redirect=${pathname}`);
+      }
+    };
+
+    // Add a small delay to allow auth state to propagate
+    const timeoutId = setTimeout(checkSession, 100);
+    return () => clearTimeout(timeoutId);
   }, [isLoading, isAuthenticated, router, pathname]);
 
-  if (isLoading) {
+  // Show loading while checking auth
+  if (isLoading || (!isAuthenticated && !sessionChecked)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-dark">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -56,22 +90,23 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         onMobileClose={() => setIsMobileSidebarOpen(false)}
       />
 
-      {/* Header */}
-      <DashboardHeader 
-        sidebarCollapsed={sidebarCollapsed}
-        onMobileMenuClick={() => setIsMobileSidebarOpen(true)}
-      />
-
-      {/* Main Content */}
-      <main
-        className={`pt-16 min-h-screen transition-all duration-300 ${
+      {/* Main Content Area */}
+      <div
+        className={`flex-1 transition-all duration-300 ease-in-out ${
           sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"
         }`}
       >
-        <div className="p-4 sm:p-6">
+        {/* Header */}
+        <DashboardHeader 
+          sidebarCollapsed={sidebarCollapsed}
+          onMobileMenuClick={() => setIsMobileSidebarOpen(true)}
+        />
+        
+        {/* Page Content */}
+        <div className="pt-28 sm:pt-32 p-4 sm:p-6">
           {children}
         </div>
-      </main>
+      </div>
       
       {/* Check-In Button - Only on authenticated pages */}
       <CheckInButton />

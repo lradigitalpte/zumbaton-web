@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/context/AuthContext";
+import SearchPanel from "./SearchPanel";
 
 interface DashboardHeaderProps {
   sidebarCollapsed?: boolean;
@@ -15,6 +16,39 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
   const { theme, setTheme } = useTheme();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showSearchPanel, setShowSearchPanel] = useState(false);
+
+  // Memoize the close handler to prevent dependency array issues
+  const handleCloseSearchPanel = useCallback(() => {
+    setShowSearchPanel(false);
+  }, []);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-user-menu]')) {
+        setShowUserMenu(false);
+      }
+      if (!target.closest('[data-notifications]')) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
+  // Keyboard shortcut for search (Cmd/Ctrl + K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setShowSearchPanel(true);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const notifications = [
     {
@@ -39,53 +73,56 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
         sidebarCollapsed ? "lg:left-20" : "lg:left-64"
       } left-0`}
     >
-      <div className="flex items-center justify-between h-full px-4 sm:px-6">
-        {/* Mobile Menu Button */}
-        <button
-          onClick={onMobileMenuClick}
-          className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mr-2"
-          aria-label="Open menu"
-        >
-          <svg className="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
+      <div className="flex items-center justify-between h-full px-3 sm:px-4 lg:px-6 gap-2">
+        {/* Left Side - Mobile Menu & Search */}
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          {/* Mobile Menu Button */}
+          <button
+            onClick={onMobileMenuClick}
+            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
+            aria-label="Open menu"
+          >
+            <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
 
-        {/* Search Bar */}
-        <div className="hidden md:flex flex-1 max-w-xl">
-          <div className="relative w-full">
-            <input
-              type="text"
-              placeholder="Search classes, instructors..."
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-dark dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-            />
+          {/* Search Button - Desktop & Mobile */}
+          <button
+            onClick={() => setShowSearchPanel(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-1 max-w-xl min-w-0"
+            aria-label="Search"
+          >
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+              className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
-          </div>
+            <span className="hidden sm:block text-sm text-gray-500 dark:text-gray-400 flex-1 text-left truncate">
+              Search classes, instructors...
+            </span>
+            <span className="hidden lg:inline-flex items-center gap-0.5 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-1.5 py-0.5 text-xs text-gray-500 dark:text-gray-400 shrink-0">
+              <span>⌘</span>
+              <span>K</span>
+            </span>
+          </button>
         </div>
 
-        {/* Mobile Search Button */}
-        <button
-          className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          aria-label="Search"
-        >
-          <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </button>
-
         {/* Right Side Actions */}
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           {/* Theme Toggle */}
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Toggle theme"
           >
             {theme === "dark" ? (
               <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
@@ -99,10 +136,14 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
           </button>
 
           {/* Notifications */}
-          <div className="relative">
+          <div className="relative" data-notifications>
             <button
-              onClick={() => setShowNotifications(!showNotifications)}
+              onClick={() => {
+                setShowNotifications(!showNotifications);
+                setShowUserMenu(false);
+              }}
               className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Notifications"
             >
               <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -140,10 +181,14 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
           </div>
 
           {/* User Menu */}
-          <div className="relative">
+          <div className="relative" data-user-menu>
             <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
+              onClick={() => {
+                setShowUserMenu(!showUserMenu);
+                setShowNotifications(false);
+              }}
               className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="User menu"
             >
               <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                 <span className="text-primary font-semibold text-sm">
@@ -197,6 +242,9 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
           </div>
         </div>
       </div>
+
+      {/* Search Panel */}
+      <SearchPanel isOpen={showSearchPanel} onClose={handleCloseSearchPanel} />
     </header>
   );
 };

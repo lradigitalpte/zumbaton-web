@@ -22,6 +22,7 @@ export interface UserBooking {
 
 /**
  * Get user's bookings with optional filter
+ * Includes timeout protection to prevent infinite loading
  */
 export async function getUserBookings(
   userId: string,
@@ -30,6 +31,9 @@ export async function getUserBookings(
   const supabase = getSupabaseClient()
   const now = new Date().toISOString()
 
+  // Add timeout protection (30 seconds)
+  const QUERY_TIMEOUT = 30000
+  
   let query = supabase
     .from(TABLES.BOOKINGS)
     .select(`
@@ -51,7 +55,27 @@ export async function getUserBookings(
     .eq('user_id', userId)
     .order('booked_at', { ascending: false })
 
-  const { data, error } = await query
+  // Race between query and timeout
+  let data: any, error: any
+  try {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('Query timeout after 30s'))
+      }, QUERY_TIMEOUT)
+    })
+
+    const result = await Promise.race([
+      query,
+      timeoutPromise,
+    ]) as { data: any; error: any }
+    
+    data = result.data
+    error = result.error
+  } catch (timeoutError: any) {
+    // If timeout occurs, return empty array instead of throwing
+    console.error('Bookings query timeout:', timeoutError)
+    return []
+  }
 
   if (error) {
     console.error('Error fetching user bookings:', error)

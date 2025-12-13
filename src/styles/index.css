@@ -18,7 +18,7 @@
   --color-white: #ffffff;
   --color-black: #121723;
   --color-dark: #1d2430;
-  --color-primary: #4a6cf7;
+  --color-primary: #65a30d;
   --color-yellow: #fbb040;
   --color-bg-color-dark: #171c28;
 
@@ -57,14 +57,14 @@
 
   --drop-shadow-three: 0px 5px 15px rgba(6, 8, 15, 0.05);
 
-  /* shadcn/ui colors */
+  /* shadcn/ui colors - Lime Green Theme */
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.3% 53.3%;
+  --ring: 85 86% 34%;
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.3% 53.3%;
-  --primary-foreground: 210 40% 98%;
+  --primary: 85 86% 34%;
+  --primary-foreground: 0 0% 100%;
   --secondary: 210 40% 96%;
   --secondary-foreground: 222.2 47.6% 11.2%;
   --destructive: 0 84.2% 60.2%;
@@ -84,11 +84,11 @@
   @theme {
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 85 86% 50%;
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-    --primary: 212.7 26.8% 83.9%;
-    --primary-foreground: 222.2 47.6% 11.2%;
+    --primary: 85 86% 50%;
+    --primary-foreground: 0 0% 0%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;

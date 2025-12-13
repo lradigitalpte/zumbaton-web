@@ -1,5 +1,6 @@
 /**
  * React Query hooks for user bookings
+ * Uses global defaults from providers.tsx for retry logic and caching
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -26,8 +27,9 @@ export function useUserBookings(
     queryKey: bookingKeys.list(userId || '', filter),
     queryFn: () => getUserBookings(userId!, filter),
     enabled: !!userId,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 60 * 1000, // 1 minute - bookings are important to keep fresh
     gcTime: 5 * 60 * 1000, // 5 minutes
+    // Uses global retry logic from providers.tsx (max 2 retries, circuit breaker)
   })
 }
 

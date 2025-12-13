@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Modal from "@/components/Modal/Modal";
@@ -112,15 +113,6 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
         </svg>
       ),
     },
-    {
-      name: "Help & Support",
-      href: "/support",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-    },
   ];
 
   // Close sidebar on mobile when route changes
@@ -144,62 +136,83 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
       <aside
         className={`fixed left-0 top-0 z-[50] h-screen flex flex-col transition-all duration-300 ease-in-out ${
           isCollapsed ? "w-20" : "w-64"
-        } bg-white dark:bg-dark border-r border-gray-200 dark:border-gray-700 shadow-lg lg:shadow-none ${
+        } bg-gray-900 border-r border-gray-800 shadow-lg lg:shadow-none ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
       {/* Logo & Toggle */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
-        {!isCollapsed && (
-          <Link href="/dashboard" className="flex items-center">
-            <span className="text-xl font-bold text-primary">Zumbaton</span>
-          </Link>
-        )}
-        <div className="flex items-center gap-2">
-          {/* Mobile Close Button */}
-          <button
-            onClick={onMobileClose}
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Close menu"
-          >
-            <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-          {/* Desktop Collapse Toggle */}
-          <button
-            onClick={toggleCollapse}
-            className="hidden lg:block p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Toggle sidebar"
-          >
-            <svg
-              className={`w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform ${
-                isCollapsed ? "rotate-180" : ""
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-            </svg>
-          </button>
+      <div className="relative flex items-center h-16 px-4 border-b border-gray-800 shrink-0">
+        {/* Logo - centered when collapsed, left-aligned when expanded */}
+        <div className={`flex-1 flex items-center ${isCollapsed ? "justify-center" : ""}`}>
+          {!isCollapsed ? (
+            <Link href="/dashboard" className="flex items-center">
+              <Image
+                src="/logo/zumbaton logo (solid bg).png"
+                alt="Zumbaton Logo"
+                width={200}
+                height={67}
+                className="h-10 w-auto"
+                priority
+              />
+            </Link>
+          ) : (
+            <Link href="/dashboard" className="flex items-center justify-center">
+              <Image
+                src="/logo/logo fav.png"
+                alt="Zumbaton"
+                width={40}
+                height={40}
+                className="h-10 w-10 rounded-xl"
+                priority
+              />
+            </Link>
+          )}
         </div>
+        
+        {/* Mobile Close Button - absolute positioned */}
+        <button
+          onClick={onMobileClose}
+          className="absolute right-2 lg:hidden p-2 rounded-lg hover:bg-gray-800 transition-colors"
+          aria-label="Close menu"
+        >
+          <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        
+        {/* Desktop Collapse Toggle - absolute positioned */}
+        <button
+          onClick={toggleCollapse}
+          className="absolute right-2 hidden lg:block p-2 rounded-lg hover:bg-gray-800 transition-colors"
+          aria-label="Toggle sidebar"
+        >
+          <svg
+            className={`w-5 h-5 text-gray-300 transition-transform ${
+              isCollapsed ? "rotate-180" : ""
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+          </svg>
+        </button>
       </div>
 
       {/* User Info */}
-      <div className={`p-4 border-b border-gray-200 dark:border-gray-700 shrink-0 ${isCollapsed ? "text-center" : ""}`}>
+      <div className={`p-4 border-b border-gray-800 shrink-0 ${isCollapsed ? "text-center" : ""}`}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-            <span className="text-primary font-semibold">
+          <div className="w-10 h-10 rounded-full bg-lime-500/20 flex items-center justify-center shrink-0">
+            <span className="text-lime-400 font-semibold">
               {user?.name?.charAt(0) || "U"}
             </span>
           </div>
           {!isCollapsed && (
             <div className="overflow-hidden">
-              <p className="font-medium text-dark dark:text-white truncate">
+              <p className="font-medium text-white truncate">
                 {user?.name || "User"}
               </p>
-              <p className="text-sm text-body-color dark:text-gray-400 truncate">
+              <p className="text-sm text-gray-400 truncate">
                 {user?.email || ""}
               </p>
             </div>
@@ -207,55 +220,61 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
         </div>
       </div>
 
-      {/* Main Navigation */}
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        {menuItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                isActive
-                  ? "bg-primary text-white"
-                  : "text-body-color dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-              } ${isCollapsed ? "justify-center" : ""}`}
-              title={isCollapsed ? item.name : undefined}
-            >
-              {item.icon}
-              {!isCollapsed && <span className="font-medium">{item.name}</span>}
-            </Link>
-          );
-        })}
-      </nav>
+      {/* Main Content Wrapper - Same as Admin */}
+      <div className="flex flex-col flex-1 overflow-hidden">
+        {/* Scrollable Navigation Area */}
+        <div className="flex-1 overflow-y-auto">
+          <nav className="p-4 space-y-2">
+            {menuItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                    isActive
+                      ? "bg-lime-500 text-gray-900 font-semibold"
+                      : "text-gray-300 hover:bg-gray-800 hover:text-lime-400"
+                  } ${isCollapsed ? "justify-center" : ""}`}
+                  title={isCollapsed ? item.name : undefined}
+                >
+                  {item.icon}
+                  {!isCollapsed && <span className="font-medium">{item.name}</span>}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
-      {/* Bottom Navigation */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2 shrink-0">
-        {bottomMenuItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                isActive
-                  ? "bg-primary text-white"
-                  : "text-body-color dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-              } ${isCollapsed ? "justify-center" : ""}`}
-              title={isCollapsed ? item.name : undefined}
-            >
-              {item.icon}
-              {!isCollapsed && <span className="font-medium">{item.name}</span>}
-            </Link>
-          );
-        })}
-      </div>
+        {/* Fixed Bottom Section - Never Scrolls */}
+        <div className="pt-4 pb-5 border-t border-gray-800">
+          {/* Bottom Navigation */}
+          <div className="px-4 space-y-2 mb-4">
+            {bottomMenuItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                    isActive
+                      ? "bg-lime-500 text-gray-900 font-semibold"
+                      : "text-gray-300 hover:bg-gray-800 hover:text-lime-400"
+                  } ${isCollapsed ? "justify-center" : ""}`}
+                  title={isCollapsed ? item.name : undefined}
+                >
+                  {item.icon}
+                  {!isCollapsed && <span className="font-medium">{item.name}</span>}
+                </Link>
+              );
+            })}
+          </div>
 
-      {/* Logout Button - Absolute Bottom */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700 shrink-0">
+          {/* Logout Button - Always at Bottom */}
+          <div className="px-4">
         <button
           onClick={() => setShowLogoutModal(true)}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ${
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-400 hover:bg-red-900/30 transition-colors ${
             isCollapsed ? "justify-center" : ""
           }`}
           title={isCollapsed ? "Logout" : undefined}
@@ -265,6 +284,8 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
           </svg>
           {!isCollapsed && <span className="font-medium">Logout</span>}
         </button>
+          </div>
+        </div>
       </div>
 
       {/* Logout Confirmation Modal */}

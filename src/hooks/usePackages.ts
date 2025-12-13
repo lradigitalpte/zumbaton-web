@@ -1,5 +1,6 @@
 /**
  * React Query hooks for token packages
+ * Uses global defaults from providers.tsx for retry logic and caching
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -20,8 +21,9 @@ export function useAvailablePackages() {
   return useQuery({
     queryKey: packageKeys.list(),
     queryFn: getAvailablePackages,
-    staleTime: 5 * 60 * 1000, // 5 minutes (packages don't change often)
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes (packages rarely change)
+    gcTime: 30 * 60 * 1000, // 30 minutes - keep packages cached longer
+    // Uses global retry logic from providers.tsx (max 2 retries, circuit breaker)
   })
 }
 

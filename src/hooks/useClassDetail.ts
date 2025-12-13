@@ -1,5 +1,6 @@
 /**
  * React Query hooks for class details
+ * Uses global defaults from providers.tsx for retry logic and caching
  */
 
 import { useQuery } from '@tanstack/react-query'
@@ -20,8 +21,9 @@ export function useClassDetail(classId: string | undefined) {
     queryKey: classDetailKeys.detail(classId || ''),
     queryFn: () => getClassDetail(classId!),
     enabled: !!classId,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // 5 minutes
+    // Uses global retry logic from providers.tsx (max 2 retries, circuit breaker)
   })
 }
 

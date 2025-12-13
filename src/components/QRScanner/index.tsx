@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 
 interface QRScannerProps {
@@ -10,9 +10,10 @@ interface QRScannerProps {
 }
 
 interface AttendanceData {
+  bookingId: string;
   classId: string;
-  className: string;
-  date: string;
+  className?: string;
+  date?: string;
   token: string;
 }
 
@@ -23,17 +24,54 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Define stopScanning before it's used in useEffect
+  const stopScanning = useCallback(async () => {
+    if (scannerRef.current && isScanning) {
+      try {
+        await scannerRef.current.stop();
+        setIsScanning(false);
+      } catch (err: any) {
+        // Handle case where scanner is already stopped
+        if (err.message?.includes("not running") || err.message?.includes("not paused")) {
+          setIsScanning(false);
+        } else {
+          console.error("Error stopping scanner:", err);
+          setIsScanning(false);
+        }
+      }
+    }
+  }, [isScanning]);
+
+  // Initialize scanner when opened
   useEffect(() => {
     if (isOpen && !scannerRef.current) {
       scannerRef.current = new Html5Qrcode("qr-reader");
     }
+  }, [isOpen]);
 
+  // Cleanup scanner when closed or unmounted
+  useEffect(() => {
     return () => {
-      if (scannerRef.current && isScanning) {
-        scannerRef.current.stop().catch(console.error);
+      if (scannerRef.current) {
+        // Try to stop the scanner, but handle errors gracefully
+        // The scanner might already be stopped or not running
+        scannerRef.current.stop().catch((err: any) => {
+          // Ignore errors if scanner is not running or already stopped
+          if (!err.message?.includes("not running") && !err.message?.includes("not paused")) {
+            console.error("Error stopping scanner:", err);
+          }
+        });
+        scannerRef.current = null;
       }
     };
-  }, [isOpen, isScanning]);
+  }, []);
+
+  // Stop scanning when panel closes
+  useEffect(() => {
+    if (!isOpen && isScanning) {
+      stopScanning();
+    }
+  }, [isOpen, isScanning, stopScanning]);
 
   const startScanning = async () => {
     if (!scannerRef.current) {
@@ -53,12 +91,26 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
           // Successfully scanned
           try {
             const data = JSON.parse(decodedText) as AttendanceData;
-            if (data.classId && data.token) {
+            if (data.bookingId && data.classId && data.token) {
               // Stop scanning
-              scannerRef.current?.stop().then(() => {
-                setIsScanning(false);
-                onScanSuccess(data);
-              });
+              scannerRef.current?.stop()
+                .then(() => {
+                  setIsScanning(false);
+                  onScanSuccess(data);
+                })
+                .catch((err: any) => {
+                  // Handle case where scanner is already stopped
+                  if (err.message?.includes("not running") || err.message?.includes("not paused")) {
+                    setIsScanning(false);
+                    onScanSuccess(data);
+                  } else {
+                    console.error("Error stopping scanner after scan:", err);
+                    setIsScanning(false);
+                    onScanSuccess(data);
+                  }
+                });
+            } else {
+              console.log("QR code missing required fields, keep scanning...");
             }
           } catch {
             // Invalid QR code format, keep scanning
@@ -74,14 +126,8 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
     } catch (err) {
       console.error("Camera error:", err);
       setHasPermission(false);
-      setError("Camera access denied. Please allow camera permission to scan QR codes.");
-    }
-  };
-
-  const stopScanning = async () => {
-    if (scannerRef.current && isScanning) {
-      await scannerRef.current.stop();
       setIsScanning(false);
+      setError("Camera access denied. Please allow camera permission to scan QR codes.");
     }
   };
 
