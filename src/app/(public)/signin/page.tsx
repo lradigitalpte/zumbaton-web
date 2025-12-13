@@ -1,20 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/Toast";
 
 const SigninPage = () => {
   const router = useRouter();
-  const { signIn, signInWithGoogle, isLoading: authLoading } = useAuth();
+  const { signIn, signInWithGoogle, isLoading: authLoading, isAuthenticated } = useAuth();
   const toast = useToast();
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingRedirect, setPendingRedirect] = useState(false);
+
+  // Watch for authentication state change and redirect when authenticated
+  useEffect(() => {
+    if (pendingRedirect && isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [pendingRedirect, isAuthenticated, router]);
+
+  // Also redirect if user is already authenticated (e.g., navigating back to signin)
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -33,15 +48,23 @@ const SigninPage = () => {
       
       if (response.success) {
         toast.success("Welcome back!", "Redirecting to your dashboard...");
-        router.push("/dashboard");
+        // Set pending redirect flag - the useEffect will handle navigation
+        // once isAuthenticated becomes true in the context
+        setPendingRedirect(true);
+        
+        // Fallback: If state doesn't update within 2 seconds, force navigate
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 2000);
       } else {
         toast.error("Sign in failed", response.error?.message || "Invalid email or password");
+        setIsSubmitting(false);
       }
     } catch (err) {
       toast.error("Error", "An unexpected error occurred. Please try again.");
-    } finally {
       setIsSubmitting(false);
     }
+    // Note: Don't reset isSubmitting on success - keep showing loading until redirect
   };
 
   return (

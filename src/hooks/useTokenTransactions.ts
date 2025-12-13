@@ -1,5 +1,6 @@
 /**
  * React Query hooks for token transactions
+ * Uses global defaults from providers.tsx for retry logic and caching
  */
 
 import { useQuery } from '@tanstack/react-query'
@@ -25,8 +26,9 @@ export function useTokenTransactions(
     queryKey: tokenTransactionKeys.list(userId || '', filter),
     queryFn: () => getTokenTransactions(userId!, filter),
     enabled: !!userId,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // 5 minutes
+    // Uses global retry logic from providers.tsx (max 2 retries, circuit breaker)
   })
 }
 
@@ -38,8 +40,9 @@ export function useTokenBalanceStats(userId: string | undefined) {
     queryKey: tokenTransactionKeys.stats(userId || ''),
     queryFn: () => getTokenBalanceStats(userId!),
     enabled: !!userId,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 2 * 60 * 1000, // 2 minutes - stats don't change frequently
     gcTime: 5 * 60 * 1000, // 5 minutes
+    // Uses global retry logic from providers.tsx
   })
 }
 

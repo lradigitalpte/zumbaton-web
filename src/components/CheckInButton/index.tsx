@@ -5,32 +5,38 @@ import QRScanner from "@/components/QRScanner";
 
 interface AttendanceData {
   classId: string;
-  className: string;
-  date: string;
+  className?: string;
+  date?: string;
   token: string;
+  bookingId: string;
 }
 
 export default function CheckInButton() {
   const [isOpen, setIsOpen] = useState(false);
-  const [checkInStatus, setCheckInStatus] = useState<"idle" | "success" | "error">("idle");
-  const [checkedClass, setCheckedClass] = useState<string | null>(null);
 
   const handleScanSuccess = (data: AttendanceData) => {
-    // Here you would call your API to mark attendance
-    console.log("Scanned attendance data:", data);
+    // Close scanner
+    setIsOpen(false);
     
-    // Simulate API call
-    setTimeout(() => {
-      setCheckInStatus("success");
-      setCheckedClass(data.className);
+    // Encode QR data as base64 and navigate to check-in page
+    try {
+      const qrData = {
+        bookingId: data.bookingId,
+        classId: data.classId,
+        token: data.token,
+        className: data.className,
+        date: data.date,
+      };
       
-      // Reset after 3 seconds
-      setTimeout(() => {
-        setIsOpen(false);
-        setCheckInStatus("idle");
-        setCheckedClass(null);
-      }, 3000);
-    }, 500);
+      // Encode as base64 for URL safety
+      const encoded = btoa(JSON.stringify(qrData));
+      
+      // Navigate to check-in page
+      window.location.href = `/check-in/${encoded}`;
+    } catch (error) {
+      console.error("[CheckInButton] Error encoding QR data:", error);
+      alert("Failed to process QR code. Please try again.");
+    }
   };
 
   return (
@@ -49,29 +55,10 @@ export default function CheckInButton() {
 
       {/* QR Scanner Modal */}
       <QRScanner
-        isOpen={isOpen && checkInStatus === "idle"}
+        isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         onScanSuccess={handleScanSuccess}
       />
-
-      {/* Success Modal */}
-      {isOpen && checkInStatus === "success" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-          <div className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-white p-8 text-center shadow-2xl dark:bg-gray-900">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-              <svg className="h-10 w-10 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">You're Checked In!</h2>
-            <p className="mb-4 text-gray-600 dark:text-gray-400">
-              Welcome to <span className="font-semibold text-amber-600">{checkedClass}</span>
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500">Have a great workout!</p>
-          </div>
-        </div>
-      )}
     </>
   );
 }

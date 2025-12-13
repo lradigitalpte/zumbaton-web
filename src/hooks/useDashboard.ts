@@ -1,5 +1,6 @@
 /**
  * React Query hooks for dashboard data
+ * Uses global defaults from providers.tsx for retry logic and caching
  */
 
 import { useQuery } from '@tanstack/react-query'
@@ -21,8 +22,9 @@ export function useDashboardTokenBalance(userId: string | undefined) {
     queryKey: dashboardKeys.tokenBalance(userId || ''),
     queryFn: () => getTokenBalance(userId!),
     enabled: !!userId,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 60 * 1000, // 1 minute - balance updates are important but not instant
     gcTime: 5 * 60 * 1000, // 5 minutes
+    // Uses global retry logic from providers.tsx (max 2 retries, circuit breaker)
   })
 }
 
@@ -34,8 +36,9 @@ export function useDashboardUpcomingBookings(userId: string | undefined) {
     queryKey: dashboardKeys.upcomingBookings(userId || ''),
     queryFn: () => getUpcomingBookings(userId!),
     enabled: !!userId,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // 5 minutes
+    // Uses global retry logic from providers.tsx
   })
 }
 
@@ -47,8 +50,9 @@ export function useDashboardUserStats(userId: string | undefined) {
     queryKey: dashboardKeys.userStats(userId || ''),
     queryFn: () => getUserStats(userId!),
     enabled: !!userId,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 2 * 60 * 1000, // 2 minutes - stats don't change frequently
     gcTime: 5 * 60 * 1000, // 5 minutes
+    // Uses global retry logic from providers.tsx
   })
 }
 

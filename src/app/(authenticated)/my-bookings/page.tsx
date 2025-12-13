@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useUserBookings, useCancelBooking } from "@/hooks/useBookings";
@@ -9,15 +9,31 @@ import Modal from "@/components/Modal/Modal";
 
 type FilterType = "upcoming" | "past" | "all";
 
+const MAX_LOADING_TIME = 10000; // 10 seconds max loading time
+
 const MyBookingsPage = () => {
   const { user, isAuthenticated } = useAuth();
   const [filter, setFilter] = useState<FilterType>("upcoming");
   const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
 
   // React Query hooks
-  const { data: bookings = [], isLoading } = useUserBookings(user?.id, filter);
+  const { data: bookings = [], isLoading, isError, error } = useUserBookings(user?.id, filter);
   const cancelBookingMutation = useCancelBooking();
+
+  // Add timeout protection for loading state
+  useEffect(() => {
+    if (isLoading && !loadingTimeout) {
+      const timeoutId = setTimeout(() => {
+        setLoadingTimeout(true);
+      }, MAX_LOADING_TIME);
+
+      return () => clearTimeout(timeoutId);
+    } else if (!isLoading) {
+      setLoadingTimeout(false);
+    }
+  }, [isLoading, loadingTimeout]);
 
   const handleCancelClick = (bookingId: string) => {
     setCancelBookingId(bookingId);
@@ -142,9 +158,35 @@ const MyBookingsPage = () => {
       </div>
 
       {/* Bookings List - Mobile App Style */}
-      {isLoading ? (
+      {isLoading && !loadingTimeout ? (
         <div className="flex items-center justify-center py-16">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      ) : (loadingTimeout || isError) ? (
+        <div className="bg-white dark:bg-dark rounded-2xl shadow-md border border-gray-100 dark:border-gray-800 p-8 sm:p-12 text-center">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 sm:w-10 sm:h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className="text-body-color dark:text-gray-400 text-base sm:text-lg mb-2 font-semibold">
+            {loadingTimeout ? "Loading is taking longer than expected" : "Failed to load bookings"}
+          </p>
+          <p className="text-sm text-body-color dark:text-gray-400 mb-6">
+            {loadingTimeout 
+              ? "Please check your internet connection and try again"
+              : error?.message || "An error occurred while fetching your bookings"}
+          </p>
+          <button
+            onClick={() => {
+              setLoadingTimeout(false);
+              // Force refetch by invalidating query
+              window.location.reload();
+            }}
+            className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors active:scale-95 shadow-md"
+          >
+            Try Again
+          </button>
         </div>
       ) : bookings.length === 0 ? (
         <div className="bg-white dark:bg-dark rounded-2xl shadow-md border border-gray-100 dark:border-gray-800 p-8 sm:p-12 text-center">
