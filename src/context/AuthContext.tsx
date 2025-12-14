@@ -8,7 +8,8 @@ import type { User } from '@supabase/supabase-js'
 import { refreshSessionIfNeeded, isSessionValid } from '@/lib/session'
 
 const AUTH_TIMEOUT = 10000 // 10 seconds max for auth check
-const SIGN_IN_TIMEOUT = 15000 // 15 seconds max for sign-in operation
+const SIGN_IN_TIMEOUT = 10000 // 10 seconds max for sign-in operation (reduced from 15s)
+const SUPABASE_CALL_TIMEOUT = 8000 // 8 seconds max for Supabase API call
 
 // Helper function to add timeout to any promise
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
@@ -252,20 +253,81 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signIn = async (credentials: SignInRequest): Promise<ApiResponse<SignInResponse>> => {
+    // Validate input first
+    if (!credentials.email || !credentials.password) {
+      return {
+        success: false as const,
+        error: {
+          code: 'VALIDATION_ERROR' as const,
+          message: 'Please enter both email and password',
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      }
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(credentials.email)) {
+      return {
+        success: false as const,
+        error: {
+          code: 'VALIDATION_ERROR' as const,
+          message: 'Please enter a valid email address',
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      }
+    }
+
     try {
       // Wrap the entire sign-in process with a timeout to prevent infinite loading
       const signInPromise = async () => {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: credentials.email,
+        // Add nested timeout for Supabase call specifically
+        const supabaseCall = supabase.auth.signInWithPassword({
+          email: credentials.email.trim(),
           password: credentials.password,
         })
 
+        const supabaseTimeout = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Supabase request timed out')), SUPABASE_CALL_TIMEOUT)
+        )
+
+        let data, error
+        try {
+          const result = await Promise.race([supabaseCall, supabaseTimeout]) as { data: any; error: any }
+          data = result.data
+          error = result.error
+        } catch (timeoutError: any) {
+          console.error('[Auth] Supabase call timed out:', timeoutError)
+          return {
+            success: false as const,
+            error: {
+              code: 'TIMEOUT_ERROR' as const,
+              message: 'Connection timeout. Please check your internet connection and try again.',
+              details: timeoutError,
+              timestamp: new Date().toISOString(),
+            },
+            timestamp: new Date().toISOString(),
+          }
+        }
+
         if (error) {
+          // Handle specific error codes
+          let errorMessage = error.message || 'Invalid email or password'
+          if (error.status === 400) {
+            errorMessage = 'Invalid email or password. Please check your credentials and try again.'
+          } else if (error.status === 429) {
+            errorMessage = 'Too many login attempts. Please try again later.'
+          } else if (error.message?.includes('Email not confirmed')) {
+            errorMessage = 'Please verify your email address before signing in.'
+          }
+
           return {
             success: false as const,
             error: {
               code: 'AUTHENTICATION_ERROR' as const,
-              message: error.message || 'Invalid email or password',
+              message: errorMessage,
               details: error,
               timestamp: new Date().toISOString(),
             },
@@ -338,13 +400,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         SIGN_IN_TIMEOUT,
         'Sign in timed out. Please check your connection and try again.'
       )
-    } catch (error) {
+    } catch (error: any) {
       console.error('[Auth] Sign in failed:', error)
+      
+      // Handle timeout specifically
+      if (error?.message?.includes('timed out') || error?.message?.includes('timeout')) {
+        return {
+          success: false as const,
+          error: {
+            code: 'TIMEOUT_ERROR' as const,
+            message: 'Sign in timed out. Please check your internet connection and try again.',
+            details: error,
+            timestamp: new Date().toISOString(),
+          },
+          timestamp: new Date().toISOString(),
+        }
+      }
+      
+      // Handle network errors
+      if (error?.message?.includes('fetch') || error?.message?.includes('network')) {
+        return {
+          success: false as const,
+          error: {
+            code: 'NETWORK_ERROR' as const,
+            message: 'Network error. Please check your internet connection and try again.',
+            details: error,
+            timestamp: new Date().toISOString(),
+          },
+          timestamp: new Date().toISOString(),
+        }
+      }
+      
       return {
-        success: false,
+        success: false as const,
         error: {
-          code: 'UNKNOWN_ERROR',
-          message: error instanceof Error ? error.message : 'An unexpected error occurred',
+          code: 'UNKNOWN_ERROR' as const,
+          message: error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.',
           details: error,
           timestamp: new Date().toISOString(),
         },

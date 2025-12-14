@@ -31,8 +31,61 @@ export async function getUserBookings(
   const supabase = getSupabaseClient()
   const now = new Date().toISOString()
 
-  // Add timeout protection (30 seconds)
-  const QUERY_TIMEOUT = 30000
+  // Quick check: Look for refresh token in localStorage first (fast path)
+  // This prevents waiting for session refresh if token is missing
+  if (typeof window !== 'undefined') {
+    const storageKeys = Object.keys(localStorage).filter(key => 
+      key.startsWith('sb-') && key.includes('-auth-token')
+    )
+    
+    if (storageKeys.length === 0) {
+      console.warn('[Bookings] No auth token in localStorage, returning empty array')
+      return []
+    }
+  }
+
+  // Check session first - if no valid session, return empty array immediately
+  // Add timeout to prevent hanging on session refresh
+  try {
+    const sessionPromise = supabase.auth.getSession()
+    const sessionTimeoutPromise = new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error('Session check timeout')), 2000)
+    )
+    
+    const { data: { session }, error: sessionError } = await Promise.race([
+      sessionPromise,
+      sessionTimeoutPromise,
+    ]) as { data: { session: any }; error: any }
+    
+    if (sessionError || !session?.user) {
+      console.warn('[Bookings] No valid session, returning empty array')
+      return []
+    }
+
+    // Verify session is for the correct user
+    if (session.user.id !== userId) {
+      console.warn('[Bookings] Session user ID mismatch, returning empty array')
+      return []
+    }
+
+    // Check if session is expired
+    if (session.expires_at && session.expires_at < Date.now() / 1000) {
+      // Session expired - check if we have refresh token
+      if (!session.refresh_token) {
+        console.warn('[Bookings] Session expired and no refresh token, returning empty array')
+        return []
+      }
+      // Session expired but has refresh token - Supabase will try to auto-refresh
+      // But we'll proceed with query anyway (it might fail, but that's handled)
+      console.log('[Bookings] Session expired, but refresh token exists - proceeding with query')
+    }
+  } catch (sessionCheckError: any) {
+    console.error('[Bookings] Error checking session (timeout or error):', sessionCheckError?.message || sessionCheckError)
+    return []
+  }
+
+  // Reduced timeout - 8 seconds to fail fast
+  const QUERY_TIMEOUT = 8000
   
   let query = supabase
     .from(TABLES.BOOKINGS)
@@ -60,7 +113,7 @@ export async function getUserBookings(
   try {
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => {
-        reject(new Error('Query timeout after 30s'))
+        reject(new Error('Query timeout after 8s - database may be slow or session expired'))
       }, QUERY_TIMEOUT)
     })
 
@@ -73,12 +126,17 @@ export async function getUserBookings(
     error = result.error
   } catch (timeoutError: any) {
     // If timeout occurs, return empty array instead of throwing
-    console.error('Bookings query timeout:', timeoutError)
+    console.error('[Bookings] Query timeout after 8s:', timeoutError?.message || timeoutError)
+    console.warn('[Bookings] This may indicate: expired session, slow database, or RLS blocking query')
     return []
   }
 
   if (error) {
-    console.error('Error fetching user bookings:', error)
+    console.error('[Bookings] Error fetching user bookings:', error)
+    // Check if it's an auth error
+    if (error.code === 'PGRST301' || error.message?.includes('JWT') || error.message?.includes('session')) {
+      console.warn('[Bookings] Authentication error - session may be expired')
+    }
     return []
   }
 

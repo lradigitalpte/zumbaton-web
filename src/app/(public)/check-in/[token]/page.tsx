@@ -8,9 +8,12 @@ import Image from "next/image";
 import Link from "next/link";
 
 interface QRData {
-  bookingId: string;
+  bookingId?: string; // Optional - will be found by classId if not provided
   classId: string;
   token: string;
+  sessionDate?: string;
+  sessionTime?: string;
+  expiresAt?: number;
   className?: string;
   date?: string;
 }
@@ -37,7 +40,8 @@ export default function CheckInPage() {
           decoded = JSON.parse(token);
         }
         
-        if (decoded.bookingId && decoded.classId && decoded.token) {
+        // Validate QR code - must have classId and token
+        if (decoded.classId && decoded.token) {
           setQrData(decoded);
         } else {
           setErrorMessage("Invalid QR code format");
@@ -81,16 +85,31 @@ export default function CheckInPage() {
     setCheckInStatus("checking");
 
     try {
+      // Use new QR check-in endpoint if bookingId is not provided (new QR format)
       const response = await fetch("/api/attendance/check-in", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          bookingId: data.bookingId,
-          classId: data.classId,
-          token: data.token,
-        }),
+        body: JSON.stringify(
+          data.bookingId
+            ? {
+                // Old format with bookingId
+                bookingId: data.bookingId,
+                classId: data.classId,
+                token: data.token,
+              }
+            : {
+                // New format with qrData (will find booking by classId)
+                qrData: {
+                  classId: data.classId,
+                  token: data.token,
+                  sessionDate: data.sessionDate,
+                  sessionTime: data.sessionTime,
+                  expiresAt: data.expiresAt,
+                },
+              }
+        ),
       });
 
       const result = await response.json();
