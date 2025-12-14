@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/Toast";
+import { supabase } from "@/lib/supabase";
 
-const SigninPage = () => {
+function SigninPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signIn, signInWithGoogle, isLoading: authLoading, isAuthenticated } = useAuth();
   const toast = useToast();
   
@@ -16,6 +18,60 @@ const SigninPage = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+
+  // Show success message if password reset was successful
+  useEffect(() => {
+    if (searchParams.get('password-reset') === 'success') {
+      toast.success("Password Reset Successful", "Your password has been reset. Please sign in with your new password.");
+      // Remove the query parameter from URL
+      router.replace('/signin');
+    }
+  }, [searchParams, toast, router]);
+
+  // Fast check: Look for existing session in localStorage and auto-login
+  useEffect(() => {
+    let hasRedirected = false;
+    
+    const checkExistingSession = async () => {
+      try {
+        // Check localStorage directly for Supabase session
+        // Supabase stores session as: sb-{project-ref}-auth-token
+        const storageKeys = Object.keys(localStorage).filter(key => 
+          key.startsWith('sb-') && key.includes('-auth-token')
+        );
+        
+        if (storageKeys.length > 0) {
+          // Session exists in storage, try to get it (with timeout)
+          const sessionPromise = supabase.auth.getSession();
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 1000)
+          );
+          
+          try {
+            const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+            
+            if (!error && session?.user) {
+              // Valid session found - redirect to dashboard immediately
+              console.log('[Signin] Existing session found, redirecting to dashboard');
+              hasRedirected = true;
+              router.replace("/dashboard");
+              return;
+            }
+          } catch (error) {
+            // Timeout or error - continue to show signin form
+            console.log('[Signin] Session check timed out or failed, showing signin form');
+          }
+        }
+      } catch (error) {
+        console.error('[Signin] Error checking existing session:', error);
+      } finally {
+        setIsCheckingSession(false);
+      }
+    };
+
+    checkExistingSession();
+  }, [router]);
 
   // Watch for authentication state change and redirect when authenticated
   useEffect(() => {
@@ -26,10 +82,10 @@ const SigninPage = () => {
 
   // Also redirect if user is already authenticated (e.g., navigating back to signin)
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
+    if (!authLoading && !isCheckingSession && isAuthenticated) {
       router.push("/dashboard");
     }
-  }, [authLoading, isAuthenticated, router]);
+  }, [authLoading, isAuthenticated, isCheckingSession, router]);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -57,15 +113,37 @@ const SigninPage = () => {
           router.push("/dashboard");
         }, 2000);
       } else {
-        toast.error("Sign in failed", response.error?.message || "Invalid email or password");
+        // Show specific error message from response
+        const errorMessage = response.error?.message || "Invalid email or password";
+        toast.error("Sign in failed", errorMessage);
         setIsSubmitting(false);
       }
-    } catch (err) {
-      toast.error("Error", "An unexpected error occurred. Please try again.");
+    } catch (err: any) {
+      // Handle unexpected errors
+      const errorMessage = err?.message || "An unexpected error occurred. Please try again.";
+      console.error('[Signin] Unexpected error:', err);
+      toast.error("Error", errorMessage);
       setIsSubmitting(false);
     }
     // Note: Don't reset isSubmitting on success - keep showing loading until redirect
   };
+
+  // Show loading while checking for existing session
+  if (isCheckingSession) {
+    return (
+      <section className="relative z-10 overflow-hidden pt-20 pb-16 md:pb-20 lg:pt-32 lg:pb-28 min-h-screen flex items-center">
+        <div className="container">
+          <div className="-mx-4 flex flex-wrap">
+            <div className="w-full px-4">
+              <div className="shadow-three dark:bg-dark mx-auto max-w-[480px] rounded-2xl bg-white px-8 py-12 sm:p-12 border border-gray-100 dark:border-gray-800 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <>
@@ -202,12 +280,12 @@ const SigninPage = () => {
                       </label>
                     </div>
                     <div>
-                      <a
-                        href="#0"
+                      <Link
+                        href="/forgot-password"
                         className="text-primary text-sm font-medium hover:underline"
                       >
                         Forgot Password?
-                      </a>
+                      </Link>
                     </div>
                   </div>
                   <div className="mb-6">
@@ -237,6 +315,28 @@ const SigninPage = () => {
       </section>
     </>
   );
-};
+}
 
-export default SigninPage;
+function SigninPageFallback() {
+  return (
+    <section className="relative z-10 overflow-hidden pt-20 pb-16 md:pb-20 lg:pt-32 lg:pb-28 min-h-screen flex items-center">
+      <div className="container">
+        <div className="-mx-4 flex flex-wrap">
+          <div className="w-full px-4">
+            <div className="shadow-three dark:bg-dark mx-auto max-w-[480px] rounded-2xl bg-white px-8 py-12 sm:p-12 border border-gray-100 dark:border-gray-800 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default function SigninPage() {
+  return (
+    <Suspense fallback={<SigninPageFallback />}>
+      <SigninPageContent />
+    </Suspense>
+  );
+}

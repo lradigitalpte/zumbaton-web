@@ -3,9 +3,16 @@ import { getSupabaseClient } from '@/lib/supabase'
 import { z } from 'zod'
 
 const CheckInRequestSchema = z.object({
-  bookingId: z.string().uuid('Invalid booking ID'),
+  bookingId: z.string().uuid('Invalid booking ID').optional(),
   classId: z.string().uuid('Invalid class ID').optional(),
   token: z.string().optional(), // QR code token for validation
+  qrData: z.object({
+    classId: z.string().uuid(),
+    token: z.string().min(1),
+    sessionDate: z.string().optional(),
+    sessionTime: z.string().optional(),
+    expiresAt: z.number().optional(),
+  }).optional(), // Full QR code data
 })
 
 export async function POST(request: NextRequest) {
@@ -47,10 +54,60 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { bookingId, classId, token } = parseResult.data
+    const { bookingId, classId, token, qrData } = parseResult.data
 
     // Get admin API URL from environment
     const adminApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'
+    
+    // If QR code data is provided, use QR check-in endpoint
+    if (qrData) {
+      const adminResponse = await fetch(`${adminApiUrl}/attendance/qr-check-in`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          qrData,
+          userId,
+        }),
+      })
+
+      const adminData = await adminResponse.json()
+
+      if (!adminResponse.ok) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: adminData.error?.code || 'QR_CHECK_IN_ERROR',
+              message: adminData.error?.message || 'Failed to check in via QR code',
+              details: adminData.error,
+            },
+          },
+          { status: adminResponse.status }
+        )
+      }
+
+      return NextResponse.json({
+        success: true,
+        data: adminData.data,
+        message: adminData.data?.message || 'Successfully checked in via QR code',
+      })
+    }
+
+    // Otherwise, use regular check-in (requires bookingId)
+    if (!bookingId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Either bookingId or qrData is required',
+          },
+        },
+        { status: 400 }
+      )
+    }
     
     // Call admin API to mark attendance
     const adminResponse = await fetch(`${adminApiUrl}/attendance/check-in`, {
@@ -64,9 +121,9 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         bookingId,
-        method: 'qr-code',
+        method: token ? 'qr-code' : 'manual',
         checkedInBy: userId,
-        notes: token ? `QR code check-in (token: ${token.substring(0, 8)}...)` : 'QR code check-in',
+        notes: token ? `QR code check-in (token: ${token.substring(0, 8)}...)` : 'Manual check-in',
       }),
     })
 
