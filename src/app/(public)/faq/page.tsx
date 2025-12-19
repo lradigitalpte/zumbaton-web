@@ -1,5 +1,5 @@
 import PageHero from "@/components/Common/PageHero";
-import { FAQSection } from "@/components/FAQ";
+import { FAQSection, FAQMap } from "@/components/FAQ";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -19,6 +19,7 @@ const FAQPage = () => {
         backgroundImage="https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=2070"
       />
       <FAQSection />
+      <FAQMap />
     </>
   );
 };

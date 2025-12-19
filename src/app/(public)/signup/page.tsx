@@ -14,8 +14,10 @@ const SignupPage = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
 
   const handleGoogleSignIn = async () => {
     try {
@@ -28,6 +30,21 @@ const SignupPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Client-side password validation
+    if (password !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+      toast.error("Validation Error", "Passwords do not match");
+      return;
+    }
+    
+    if (password.length < 8) {
+      setPasswordError("Password must be at least 8 characters");
+      toast.error("Validation Error", "Password must be at least 8 characters");
+      return;
+    }
+    
+    setPasswordError("");
+    
     if (!acceptTerms) {
       toast.warning("Terms Required", "Please accept the Terms and Conditions");
       return;
@@ -36,7 +53,7 @@ const SignupPage = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await signUp({ name, email, password, confirmPassword: password });
+      const response = await signUp({ name, email, password, confirmPassword });
       
       if (response.success) {
         // Check if email confirmation is required (session is null but user exists)
@@ -61,22 +78,23 @@ const SignupPage = () => {
 
   return (
     <>
-      <section className="relative z-10 overflow-hidden pt-20 pb-16 md:pb-20 lg:pt-32 lg:pb-28 min-h-screen flex items-center">
-        <div className="container">
-          <div className="-mx-4 flex flex-wrap">
-            <div className="w-full px-4">
-              <div className="shadow-three dark:bg-dark mx-auto max-w-[480px] rounded-2xl bg-white px-8 py-12 sm:p-12 border border-gray-100 dark:border-gray-800">
-                <h3 className="mb-2 text-center text-3xl font-bold text-black sm:text-4xl dark:text-white">
-                  Create your account
-                </h3>
-                <p className="text-body-color mb-10 text-center text-base font-normal">
-                  Get started with Zumbaton today
-                </p>
+      <section className="relative z-10 overflow-hidden min-h-[calc(100vh-80px)] pt-8 sm:pt-12 lg:pt-16 pb-12 bg-gray-50 dark:bg-gray-950">
+        {/* Centered Card Container */}
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+            <div className="w-full max-w-5xl">
+              {/* Main Card */}
+              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col lg:flex-row">
+                {/* Left Side - Sign Up Form */}
+                <div className="w-full lg:w-1/2 p-8 sm:p-10 lg:p-12">
+                  <h3 className="mb-6 text-3xl font-bold text-gray-900 sm:text-4xl dark:text-white">
+                    Signup
+                  </h3>
 
                 <button 
                   onClick={handleGoogleSignIn}
                   disabled={isSubmitting || authLoading}
-                  className="border-stroke dark:text-body-color-dark dark:shadow-two text-body-color hover:border-primary hover:bg-primary/5 hover:text-primary dark:hover:border-primary dark:hover:bg-primary/5 dark:hover:text-primary mb-8 flex w-full items-center justify-center rounded-lg border bg-[#f8f8f8] px-6 py-3 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:hover:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="mb-6 flex w-full items-center justify-center rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-3.5 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
                 >
                   <span className="mr-3">
                     <svg
@@ -113,21 +131,20 @@ const SignupPage = () => {
                   </span>
                   Sign up with Google
                 </button>
-                <div className="mb-8 flex items-center justify-center">
-                  <span className="bg-body-color/50 hidden h-[1px] w-full max-w-[60px] sm:block"></span>
-                  <p className="text-body-color w-full px-5 text-center text-base font-medium">
-                    Or, register with your email
+                <div className="mb-6 flex items-center justify-center">
+                  <span className="bg-gray-300 dark:bg-gray-600 h-[1px] w-full max-w-[70px]"></span>
+                  <p className="text-gray-500 dark:text-gray-400 w-full px-5 text-center text-sm font-medium">
+                    Or continue with email
                   </p>
-                  <span className="bg-body-color/50 hidden h-[1px] w-full max-w-[60px] sm:block"></span>
+                  <span className="bg-gray-300 dark:bg-gray-600 h-[1px] w-full max-w-[70px]"></span>
                 </div>
                 <form onSubmit={handleSubmit}>
-                  <div className="mb-8">
+                  <div className="mb-5">
                     <label
                       htmlFor="name"
-                      className="text-dark mb-3 block text-sm dark:text-white"
+                      className="text-gray-700 dark:text-gray-200 mb-2 block text-sm font-medium"
                     >
-                      {" "}
-                      Full Name{" "}
+                      Full Name
                     </label>
                     <input
                       type="text"
@@ -137,16 +154,15 @@ const SignupPage = () => {
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Enter your full name"
                       required
-                      className="border-stroke dark:text-body-color-dark dark:shadow-two text-body-color focus:border-primary dark:focus:border-primary w-full rounded-lg border bg-[#f8f8f8] px-6 py-3.5 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:focus:shadow-none"
+                      className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-green-500 dark:focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all duration-300"
                     />
                   </div>
-                  <div className="mb-8">
+                  <div className="mb-5">
                     <label
                       htmlFor="email"
-                      className="text-dark mb-3 block text-sm dark:text-white"
+                      className="text-gray-700 dark:text-gray-200 mb-2 block text-sm font-medium"
                     >
-                      {" "}
-                      Work Email{" "}
+                      Email
                     </label>
                     <input
                       type="email"
@@ -154,35 +170,76 @@ const SignupPage = () => {
                       id="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your Email"
+                      placeholder="Enter your email"
                       required
-                      className="border-stroke dark:text-body-color-dark dark:shadow-two text-body-color focus:border-primary dark:focus:border-primary w-full rounded-lg border bg-[#f8f8f8] px-6 py-3.5 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:focus:shadow-none"
+                      className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-green-500 dark:focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all duration-300"
                     />
                   </div>
-                  <div className="mb-8">
+                  <div className="mb-5">
                     <label
                       htmlFor="password"
-                      className="text-dark mb-3 block text-sm dark:text-white"
+                      className="text-gray-700 dark:text-gray-200 mb-2 block text-sm font-medium"
                     >
-                      {" "}
-                      Your Password{" "}
+                      Password
                     </label>
                     <input
                       type="password"
                       name="password"
                       id="password"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your Password"
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (confirmPassword && e.target.value !== confirmPassword) {
+                          setPasswordError("Passwords do not match");
+                        } else {
+                          setPasswordError("");
+                        }
+                      }}
+                      placeholder="Enter your password"
                       required
                       minLength={8}
-                      className="border-stroke dark:text-body-color-dark dark:shadow-two text-body-color focus:border-primary dark:focus:border-primary w-full rounded-lg border bg-[#f8f8f8] px-6 py-3.5 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:focus:shadow-none"
+                      className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-green-500 dark:focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all duration-300"
                     />
                   </div>
-                  <div className="mb-8 flex">
+                  <div className="mb-6">
+                    <label
+                      htmlFor="confirmPassword"
+                      className="text-gray-700 dark:text-gray-200 mb-2 block text-sm font-medium"
+                    >
+                      Confirm Password
+                    </label>
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      id="confirmPassword"
+                      value={confirmPassword}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        if (password && e.target.value !== password) {
+                          setPasswordError("Passwords do not match");
+                        } else {
+                          setPasswordError("");
+                        }
+                      }}
+                      placeholder="Confirm your password"
+                      required
+                      minLength={8}
+                      className={`w-full rounded-xl border-2 bg-white dark:bg-gray-800 px-4 py-3 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all duration-300 ${
+                        passwordError 
+                          ? "border-red-500 dark:border-red-500" 
+                          : "border-gray-200 dark:border-gray-700 focus:border-green-500 dark:focus:border-green-500"
+                      }`}
+                    />
+                    {passwordError && (
+                      <p className="mt-2 text-sm text-red-500 dark:text-red-400">
+                        {passwordError}
+                      </p>
+                    )}
+                  </div>
+                  <div className="mb-6 flex">
                     <label
                       htmlFor="checkboxLabel"
-                      className="text-body-color flex cursor-pointer text-sm font-medium select-none"
+                      className="text-gray-700 dark:text-gray-300 flex cursor-pointer text-sm font-medium select-none"
                     >
                       <div className="relative">
                         <input
@@ -212,15 +269,13 @@ const SignupPage = () => {
                         </div>
                       </div>
                       <span>
-                        By creating account means you agree to the
-                        <a href="#0" className="text-primary hover:underline">
-                          {" "}
-                          Terms and Conditions{" "}
+                        By creating account means you agree to the{" "}
+                        <a href="#0" className="text-green-600 dark:text-green-400 hover:underline">
+                          Terms and Conditions
                         </a>
-                        , and our
-                        <a href="#0" className="text-primary hover:underline">
-                          {" "}
-                          Privacy Policy{" "}
+                        , and our{" "}
+                        <a href="#0" className="text-green-600 dark:text-green-400 hover:underline">
+                          Privacy Policy
                         </a>
                       </span>
                     </label>
@@ -229,25 +284,40 @@ const SignupPage = () => {
                     <button 
                       type="submit"
                       disabled={isSubmitting || authLoading}
-                      className="shadow-submit dark:shadow-submit-dark bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex w-full items-center justify-center rounded-lg px-9 py-4 text-base font-semibold text-white duration-300"
+                      className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center rounded-xl px-6 py-3.5 text-base font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
                     >
                       {isSubmitting ? "Creating account..." : "Sign up"}
                     </button>
                   </div>
                 </form>
-                <p className="text-body-color text-center text-base font-medium">
-                  Already have an account?{" "}
-                  <Link href="/signin" className="text-primary hover:underline">
-                    Sign in
-                  </Link>
-                </p>
+                </div>
+
+                {/* Right Side - Welcome Section with Gradient */}
+                <div className="w-full lg:w-1/2 relative bg-gradient-to-br from-green-600 via-green-500 to-teal-400 p-8 sm:p-10 lg:p-12 flex flex-col justify-center items-center text-center">
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
+                    style={{
+                      backgroundImage: "url(https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=2070)"
+                    }}
+                  ></div>
+                  <div className="relative z-10 text-white">
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+                      Start Your Journey!
+                    </h2>
+                    <p className="text-white/90 text-base sm:text-lg mb-8 max-w-md">
+                      Join our vibrant community and experience the power of dance fitness. Transform your body and mind with Zumbaton.
+                    </p>
+                    <Link
+                      href="/signin"
+                      className="inline-block bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:scale-105 border border-white/30"
+                    >
+                      Already have an account? Signin.
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl"></div>
         </div>
       </section>
     </>
