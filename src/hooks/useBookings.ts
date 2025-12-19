@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getUserBookings, type UserBooking } from '@/lib/bookings-queries'
 import { cancelBooking } from '@/lib/classes-queries'
 import { useToast } from '@/components/Toast'
+import { handleApiResponse, handleMutationError } from '@/lib/toast-helper'
 
 // Query keys
 export const bookingKeys = {
@@ -51,14 +52,16 @@ export function useCancelBooking() {
       // Invalidate dashboard to refresh upcoming bookings and token balance
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       
-      // Show success toast
+      // Show success toast with penalty or refund message
       const message = data.penalty
         ? `Booking cancelled. ${data.tokensRefunded} token(s) consumed as late cancellation penalty.`
         : `Booking cancelled. ${data.tokensRefunded} token(s) refunded.`
-      toast.success('Booking Cancelled', message)
+      handleApiResponse({ success: true, message }, toast, {
+        successTitle: 'Booking Cancelled'
+      })
     },
     onError: (error: Error) => {
-      toast.error('Cancellation Failed', error.message || 'Failed to cancel booking. Please try again.')
+      handleMutationError(error, toast, 'Cancellation')
     },
   })
 }

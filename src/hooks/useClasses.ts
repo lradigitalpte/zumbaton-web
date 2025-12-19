@@ -6,6 +6,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getUpcomingClasses, bookClass, cancelBooking, leaveWaitlist, type ClassWithAvailability } from '@/lib/classes-queries'
 import { useToast } from '@/components/Toast'
+import { handleApiResponse, handleBatchResponse, handleMutationError } from '@/lib/toast-helper'
 
 // Re-export type for convenience
 export type { ClassWithAvailability }
@@ -27,6 +28,8 @@ export function useUpcomingClasses(filters?: {
   type?: string
   difficulty?: string
   date?: string
+  recurrenceType?: 'single' | 'recurring' | 'course' | 'all'
+  categoryId?: string
 }) {
   return useQuery({
     queryKey: classKeys.list(filters),
@@ -53,24 +56,24 @@ export function useBookClass() {
       return result
     },
     onSuccess: (data, variables) => {
-      // Invalidate classes list to refresh availability
+      // Invalidate queries
       queryClient.invalidateQueries({ queryKey: classKeys.lists() })
-      // Invalidate dashboard to refresh upcoming bookings and token balance
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       
       // Show success toast
-      if (data.waitlistPosition) {
-        toast.success(
-          'Added to Waitlist',
-          `You are now #${data.waitlistPosition} on the waitlist. You'll be notified if a spot opens up.`
-        )
-      } else {
-        toast.success('Class Booked!', data.message || 'Your booking has been confirmed.')
-      }
+      handleApiResponse(
+        { success: true, data, message: data.message || 'Your booking has been confirmed.' },
+        toast,
+        {
+          successTitle: data.waitlistPosition ? 'Added to Waitlist' : 'Class Booked!',
+          successMessage: data.waitlistPosition
+            ? `You are now #${data.waitlistPosition} on the waitlist. You'll be notified if a spot opens up.`
+            : data.message || 'Your booking has been confirmed.',
+        }
+      )
     },
     onError: (error: Error) => {
-      const errorMessage = error.message || 'Failed to book class. Please try again.'
-      toast.error('Booking Failed', errorMessage)
+      handleMutationError(error, toast, 'Booking')
     },
   })
 }
@@ -86,19 +89,21 @@ export function useCancelBooking() {
     mutationFn: ({ userId, bookingId, reason }: { userId: string; bookingId: string; reason?: string }) =>
       cancelBooking(userId, bookingId, reason),
     onSuccess: (data) => {
-      // Invalidate classes list to refresh availability
+      // Invalidate queries
       queryClient.invalidateQueries({ queryKey: classKeys.lists() })
-      // Invalidate dashboard to refresh upcoming bookings and token balance
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       
       // Show success toast
       const message = data.penalty
         ? `Booking cancelled. ${data.tokensRefunded} token(s) consumed as late cancellation penalty.`
         : `Booking cancelled. ${data.tokensRefunded} token(s) refunded.`
-      toast.success('Booking Cancelled', message)
+      handleApiResponse({ success: true, message }, toast, {
+        successTitle: 'Booking Cancelled',
+        successMessage: message,
+      })
     },
     onError: (error: Error) => {
-      toast.error('Cancellation Failed', error.message || 'Failed to cancel booking. Please try again.')
+      handleMutationError(error, toast, 'Cancellation')
     },
   })
 }
@@ -116,11 +121,59 @@ export function useLeaveWaitlist() {
     onSuccess: () => {
       // Invalidate classes list
       queryClient.invalidateQueries({ queryKey: classKeys.lists() })
-      toast.success('Left Waitlist', 'You have been removed from the waitlist.')
+      handleApiResponse({ success: true, message: 'You have been removed from the waitlist.' }, toast, {
+        successTitle: 'Left Waitlist',
+      })
     },
     onError: (error: Error) => {
-      toast.error('Failed to Leave Waitlist', error.message || 'Please try again.')
+      handleMutationError(error, toast, 'Waitlist removal')
     },
   })
 }
 
+/**
+ * Hook to batch book multiple classes (all-or-nothing)
+ */
+export function useBookBatchClasses() {
+  const queryClient = useQueryClient()
+  const toast = useToast()
+
+  return useMutation({
+    mutationFn: async ({ userId, classIds }: { userId: string; classIds: string[] }) => {
+      const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+      try {
+        const response = await fetch(`${adminApiUrl}/api/bookings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId,
+            classIds,
+          }),
+        })
+
+        const result = await response.json()
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.error?.message || 'Failed to batch book classes')
+        }
+
+        return result.data
+      } catch (error) {
+        throw error instanceof Error ? error : new Error('Failed to batch book classes')
+      }
+    },
+    onSuccess: (data, variables) => {
+      // Show success toast with count
+      handleBatchResponse({ success: true, data }, toast, variables.classIds.length)
+      
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: classKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+    onError: (error: Error) => {
+      handleMutationError(error, toast, 'Batch booking')
+    },
+  })
+}

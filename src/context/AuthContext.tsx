@@ -184,8 +184,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true)
     
     try {
-      // Get current session first
-      const { data: { session }, error } = await supabase.auth.getSession()
+      // Get current session first with timeout to prevent hanging
+      const sessionPromise = supabase.auth.getSession()
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Session check timed out')), SUPABASE_CALL_TIMEOUT)
+      )
+      
+      let sessionResult: { data: { session: any }; error: any }
+      try {
+        sessionResult = await Promise.race([sessionPromise, timeoutPromise]) as { data: { session: any }; error: any }
+      } catch (timeoutError: any) {
+        console.warn('[Auth] Session check timed out, proceeding without session')
+        // On timeout, assume no session and continue
+        setUser(null)
+        setIsAuthenticated(false)
+        setIsLoading(false)
+        isInitializingRef.current = false
+        return
+      }
+
+      const { data: { session }, error } = sessionResult
 
       if (error) {
         console.error('[Auth] Session error:', error)
@@ -215,7 +233,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsAuthenticated(true)
         
         // Fetch profile in background and update if it exists (non-blocking)
-        mapSupabaseUserToUserResponse(session.user).then((profileUser) => {
+        // Add timeout to prevent hanging
+        withTimeout(
+          mapSupabaseUserToUserResponse(session.user),
+          5000,
+          'Profile fetch timed out'
+        ).then((profileUser) => {
           if (profileUser) {
             setUser(profileUser)
           }
@@ -233,6 +256,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsAuthenticated(false)
     } finally {
       setIsLoading(false)
+      isInitializingRef.current = false
     }
   }
 
@@ -515,6 +539,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           setUser(userResponse)
           setIsAuthenticated(true)
+
+          // Send welcome notification via admin API
+          try {
+            const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+            await fetch(`${adminApiUrl}/api/notifications/welcome`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: userResponse.id }),
+            })
+          } catch (welcomeError) {
+            console.error('[Auth] Failed to send welcome notification:', welcomeError)
+          }
 
           return {
             success: true as const,

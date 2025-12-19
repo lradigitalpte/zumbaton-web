@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Html5Qrcode } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 
 interface QRScannerProps {
   isOpen: boolean;
@@ -22,56 +22,70 @@ interface AttendanceData {
 
 type CheckInStatus = "idle" | "checking" | "success" | "error";
 
+interface CheckInError {
+  code: string;
+  message: string;
+  action?: "book" | "waitlist" | "purchase";
+  classId?: string;
+  classTitle?: string;
+}
+
 export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerProps) {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<CheckInError | null>(null);
   const [checkInStatus, setCheckInStatus] = useState<CheckInStatus>("idle");
   const [checkInMessage, setCheckInMessage] = useState<string>("");
+  const [wasWalkIn, setWasWalkIn] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMountedRef = useRef(true);
 
-  // Define stopScanning before it's used in useEffect
+  // Cleanup on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Safe state update helper
+  const safeSetState = useCallback(<T,>(setter: React.Dispatch<React.SetStateAction<T>>, value: T) => {
+    if (isMountedRef.current) {
+      setter(value);
+    }
+  }, []);
+
+  // Stop scanning
   const stopScanning = useCallback(async () => {
-    if (scannerRef.current && isScanning) {
+    if (scannerRef.current) {
       try {
-        await scannerRef.current.stop();
-        setIsScanning(false);
-      } catch (err: any) {
-        // Handle case where scanner is already stopped
-        if (err.message?.includes("not running") || err.message?.includes("not paused")) {
-          setIsScanning(false);
-        } else {
-          console.error("Error stopping scanner:", err);
-          setIsScanning(false);
+        const state = scannerRef.current.getState();
+        if (state === Html5QrcodeScannerState.SCANNING || state === Html5QrcodeScannerState.PAUSED) {
+          await scannerRef.current.stop();
+        }
+      } catch (err: unknown) {
+        // Ignore errors when stopping - scanner might already be stopped
+        const error = err as { message?: string };
+        if (!error.message?.includes("not running") && !error.message?.includes("not paused")) {
+          console.warn("Error stopping scanner:", err);
         }
       }
     }
-  }, [isScanning]);
-
-  // Initialize scanner when opened
-  useEffect(() => {
-    if (isOpen && !scannerRef.current) {
-      scannerRef.current = new Html5Qrcode("qr-reader");
-    }
-  }, [isOpen]);
+    safeSetState(setIsScanning, false);
+  }, [safeSetState]);
 
   // Cleanup scanner when closed or unmounted
   useEffect(() => {
     return () => {
       if (scannerRef.current) {
-        // Try to stop the scanner, but handle errors gracefully
-        // The scanner might already be stopped or not running
-        scannerRef.current.stop().catch((err: any) => {
-          // Ignore errors if scanner is not running or already stopped
-          if (!err.message?.includes("not running") && !err.message?.includes("not paused")) {
-            console.error("Error stopping scanner:", err);
-          }
+        stopScanning().then(() => {
+          scannerRef.current = null;
         });
-        scannerRef.current = null;
       }
     };
-  }, []);
+  }, [stopScanning]);
 
   // Stop scanning when panel closes
   useEffect(() => {
@@ -80,19 +94,46 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
     }
   }, [isOpen, isScanning, stopScanning]);
 
+  // Reset state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setCheckInStatus("idle");
+      setError(null);
+      setErrorDetails(null);
+      setCheckInMessage("");
+      setWasWalkIn(false);
+    }
+  }, [isOpen]);
+
   const startScanning = async () => {
+    // Create scanner instance if not exists
     if (!scannerRef.current) {
+      const element = document.getElementById("qr-reader");
+      if (!element) {
+        setError("Scanner container not found. Please refresh the page.");
+        return;
+      }
       scannerRef.current = new Html5Qrcode("qr-reader");
     }
 
     setError(null);
+    setErrorDetails(null);
 
     try {
+      // Check if we have cameras
+      const cameras = await Html5Qrcode.getCameras();
+      if (!cameras || cameras.length === 0) {
+        setHasPermission(false);
+        setError("No camera found. Please ensure your device has a camera.");
+        return;
+      }
+
       await scannerRef.current.start(
         { facingMode: "environment" },
         {
           fps: 10,
           qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0,
         },
         async (decodedText) => {
           // Successfully scanned
@@ -112,7 +153,7 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
                 try {
                   const decoded = JSON.parse(atob(encodedData));
                   data = decoded as AttendanceData;
-                } catch (decodeError) {
+                } catch {
                   console.log("Failed to decode URL token, keep scanning...");
                   return;
                 }
@@ -132,20 +173,11 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
             }
 
             // Stop scanning immediately
-            try {
-              await scannerRef.current?.stop();
-              setIsScanning(false);
-            } catch (err: any) {
-              // Handle case where scanner is already stopped
-              if (!err.message?.includes("not running") && !err.message?.includes("not paused")) {
-                console.error("Error stopping scanner after scan:", err);
-              }
-              setIsScanning(false);
-            }
+            await stopScanning();
 
             // Call backend API to check in
             await handleCheckIn(data);
-          } catch (parseError) {
+          } catch {
             // Invalid QR code format, keep scanning
             console.log("Invalid QR format, keep scanning...");
           }
@@ -154,43 +186,47 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
           // QR code not found in frame, ignore
         }
       );
+      
       setIsScanning(true);
       setHasPermission(true);
     } catch (err) {
       console.error("Camera error:", err);
       setHasPermission(false);
       setIsScanning(false);
-      setError("Camera access denied. Please allow camera permission to scan QR codes.");
+      
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      if (errorMessage.includes("NotAllowedError") || errorMessage.includes("Permission")) {
+        setError("Camera access denied. Please allow camera permission in your browser settings.");
+      } else if (errorMessage.includes("NotFoundError")) {
+        setError("No camera found. Please ensure your device has a camera.");
+      } else if (errorMessage.includes("NotReadableError") || errorMessage.includes("in use")) {
+        setError("Camera is in use by another app. Please close other apps using the camera.");
+      } else {
+        setError("Failed to access camera. Please check your device settings and try again.");
+      }
     }
   };
 
   const handleCheckIn = async (data: AttendanceData) => {
     setCheckInStatus("checking");
     setError(null);
+    setErrorDetails(null);
     setCheckInMessage("Processing check-in...");
 
     try {
       // Normalize date field - handle both "date" and "sessionDate" formats
-      const sessionDate = data.sessionDate || (data as any).date;
+      const sessionDate = data.sessionDate || (data as { date?: string }).date;
       
-      // Prepare request body based on QR data format
-      const requestBody = data.bookingId
-        ? {
-            // Old format with bookingId
-            bookingId: data.bookingId,
-            classId: data.classId,
-            token: data.token,
-          }
-        : {
-            // New format with qrData (will find booking by classId)
-            qrData: {
-              classId: data.classId,
-              token: data.token,
-              sessionDate: sessionDate,
-              sessionTime: data.sessionTime,
-              expiresAt: data.expiresAt,
-            },
-          };
+      // Always use qrData format for consistency
+      const requestBody = {
+        qrData: {
+          classId: data.classId,
+          token: data.token,
+          sessionDate: sessionDate,
+          sessionTime: data.sessionTime,
+          expiresAt: data.expiresAt,
+        },
+      };
 
       const response = await fetch("/api/attendance/check-in", {
         method: "POST",
@@ -203,11 +239,19 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        throw new Error(result.error?.message || "Failed to check in");
+        const errorData = result.error || {};
+        throw {
+          code: errorData.code || "CHECK_IN_ERROR",
+          message: errorData.message || "Failed to check in",
+          action: errorData.action,
+          classId: errorData.classId,
+          classTitle: errorData.classTitle,
+        };
       }
 
       // Success!
       setCheckInStatus("success");
+      setWasWalkIn(result.data?.wasWalkIn || false);
       setCheckInMessage(
         result.data?.message || 
         `Successfully checked in! ${result.data?.tokensConsumed ? `(${result.data.tokensConsumed} token${result.data.tokensConsumed > 1 ? 's' : ''} used)` : ''}`
@@ -223,14 +267,11 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
     } catch (err) {
       console.error("[QRScanner] Check-in error:", err);
       setCheckInStatus("error");
-      setError(err instanceof Error ? err.message : "Failed to check in. Please try again.");
+      
+      const checkInErr = err as CheckInError;
+      setErrorDetails(checkInErr);
+      setError(checkInErr.message || "Failed to check in. Please try again.");
       setCheckInMessage("");
-
-      // Allow user to try scanning again after error
-      setTimeout(() => {
-        setCheckInStatus("idle");
-        setError(null);
-      }, 3000);
     }
   };
 
@@ -238,11 +279,50 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
     await stopScanning();
     setCheckInStatus("idle");
     setError(null);
+    setErrorDetails(null);
     setCheckInMessage("");
+    setWasWalkIn(false);
     onClose();
   };
 
+  const handleRetry = () => {
+    setCheckInStatus("idle");
+    setError(null);
+    setErrorDetails(null);
+    setCheckInMessage("");
+  };
+
   if (!isOpen) return null;
+
+  // Get action button text based on error
+  const getActionButton = () => {
+    if (!errorDetails?.action) return null;
+
+    switch (errorDetails.action) {
+      case "book":
+        return (
+          <a
+            href={`/classes/${errorDetails.classId}`}
+            className="mt-4 inline-block px-4 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors"
+            onClick={handleClose}
+          >
+            Book This Class
+          </a>
+        );
+      case "purchase":
+        return (
+          <a
+            href="/packages"
+            className="mt-4 inline-block px-4 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors"
+            onClick={handleClose}
+          >
+            Buy Tokens
+          </a>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -309,7 +389,9 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <p className="mb-2 text-center text-sm font-semibold text-white">Check-in Successful!</p>
+                    <p className="mb-2 text-center text-sm font-semibold text-white">
+                      {wasWalkIn ? "Walk-in Check-in Successful!" : "Check-in Successful!"}
+                    </p>
                     <p className="mb-4 px-4 text-center text-xs text-gray-300">
                       {checkInMessage || "Your attendance has been marked"}
                     </p>
@@ -318,13 +400,19 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
                   <>
                     <div className="mb-4 rounded-full bg-red-100 p-4 dark:bg-red-900/30">
                       <svg className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
                     </div>
                     <p className="mb-2 text-center text-sm font-semibold text-white">Check-in Failed</p>
-                    <p className="mb-4 px-4 text-center text-xs text-gray-300">
+                    <p className="mb-2 px-4 text-center text-xs text-gray-300">
                       {error || "Please try scanning again"}
                     </p>
+                    {errorDetails?.classTitle && (
+                      <p className="mb-2 px-4 text-center text-xs text-amber-400">
+                        Class: {errorDetails.classTitle}
+                      </p>
+                    )}
+                    {getActionButton()}
                   </>
                 ) : hasPermission === false ? (
                   <>
@@ -335,7 +423,7 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
                     </div>
                     <p className="mb-2 text-center text-sm text-white">Camera access denied</p>
                     <p className="mb-4 px-4 text-center text-xs text-gray-400">
-                      Please enable camera permission in your browser settings
+                      {error || "Please enable camera permission in your browser settings"}
                     </p>
                   </>
                 ) : (
@@ -355,7 +443,7 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
             )}
 
             {/* Scanning Frame Overlay */}
-            {isScanning && (
+            {isScanning && checkInStatus === "idle" && (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                 <div className="relative h-[200px] w-[200px]">
                   {/* Corner Brackets */}
@@ -406,6 +494,21 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
             >
               Processing...
             </button>
+          ) : checkInStatus === "error" ? (
+            <div className="flex gap-3">
+              <button
+                onClick={handleRetry}
+                className="flex-1 rounded-xl bg-gray-200 px-6 py-3 text-base font-semibold text-gray-700 transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={handleClose}
+                className="flex-1 rounded-xl bg-amber-500 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-amber-600"
+              >
+                Close
+              </button>
+            </div>
           ) : isScanning ? (
             <button
               onClick={stopScanning}
@@ -416,15 +519,14 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
           ) : (
             <button
               onClick={startScanning}
-              disabled={checkInStatus === "error"}
-              className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3 text-base font-semibold text-white shadow-lg transition-all hover:from-amber-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3 text-base font-semibold text-white shadow-lg transition-all hover:from-amber-600 hover:to-orange-700"
             >
               <span className="flex items-center justify-center gap-2">
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                {checkInStatus === "error" ? "Try Again" : "Start Camera"}
+                Start Camera
               </span>
             </button>
           )}
