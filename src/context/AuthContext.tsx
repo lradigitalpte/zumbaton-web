@@ -543,7 +543,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Send welcome notification via admin API
           try {
             const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-            await fetch(`${adminApiUrl}/api/notifications/welcome`, {
+            const notificationUrl = adminApiUrl.endsWith('/api') 
+              ? `${adminApiUrl}/notifications/welcome`
+              : `${adminApiUrl}/api/notifications/welcome`
+            
+            await fetch(notificationUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ userId: userResponse.id }),
