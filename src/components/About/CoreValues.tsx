@@ -47,7 +47,7 @@ const CoreValues = () => {
   const headerInView = useInView(headerRef, { once: true, margin: "-50px" });
 
   return (
-    <section className="py-16 md:py-20 lg:py-28 bg-white dark:bg-gray-dark">
+    <section className="py-16 md:py-20 lg:py-28 bg-white dark:bg-gray-900 relative">
       <div className="container">
         {/* Header */}
         <motion.div
@@ -57,7 +57,7 @@ const CoreValues = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <div className="text-green-600 dark:text-green-500 font-semibold text-sm uppercase tracking-wide mb-3">
+          <div className="text-green-600 dark:text-green-400 font-semibold text-sm uppercase tracking-wide mb-3">
             What Drives Us
           </div>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
@@ -86,10 +86,10 @@ const ValueCard = ({ value, index }: { value: typeof values[0]; index: number })
       initial={{ opacity: 0, y: 40 }}
       animate={cardInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="group text-center p-6 md:p-8 rounded-2xl bg-gray-50 dark:bg-dark-2 hover:bg-green-600 dark:hover:bg-green-600 transition-all duration-300 hover:shadow-xl hover:-translate-y-2"
+      className="group text-center p-6 md:p-8 rounded-2xl bg-gray-50 dark:bg-gray-800/50 hover:bg-green-600 dark:hover:bg-green-600 transition-all duration-300 hover:shadow-xl hover:-translate-y-2 border border-gray-200 dark:border-white/20"
     >
       {/* Icon */}
-      <div className="inline-flex items-center justify-center w-16 h-16 mb-5 text-green-600 dark:text-green-500 group-hover:text-white transition-colors duration-300">
+      <div className="inline-flex items-center justify-center w-16 h-16 mb-5 text-green-600 dark:text-green-400 group-hover:text-white transition-colors duration-300">
         {value.icon}
       </div>
       
@@ -99,7 +99,7 @@ const ValueCard = ({ value, index }: { value: typeof values[0]; index: number })
       </h3>
       
       {/* Description */}
-      <p className="text-gray-600 dark:text-gray-400 group-hover:text-white/90 transition-colors duration-300 leading-relaxed">
+      <p className="text-gray-600 dark:text-gray-300 group-hover:text-white/90 transition-colors duration-300 leading-relaxed">
         {value.description}
       </p>
     </motion.div>

@@ -25,7 +25,7 @@ const ContactForm = () => {
   };
 
   return (
-    <section ref={sectionRef} className="py-16 md:py-20 lg:py-28 bg-gray-50 dark:bg-dark">
+    <section ref={sectionRef} className="py-16 md:py-20 lg:py-28 bg-gray-50 dark:bg-gray-900">
       <div className="container">
         <div className="grid lg:grid-cols-2 gap-12 items-start">
           {/* Left Content */}
@@ -100,7 +100,7 @@ const ContactForm = () => {
                   <a
                     key={social.name}
                     href="#"
-                    className="w-10 h-10 bg-gray-200 dark:bg-dark-2 hover:bg-green-600 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-white transition-all duration-300"
+                    className="w-10 h-10 bg-gray-200 dark:bg-gray-800/50 hover:bg-green-600 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-white transition-all duration-300 border border-gray-200 dark:border-white/20"
                     aria-label={social.name}
                   >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -120,7 +120,7 @@ const ContactForm = () => {
           >
             <form 
               onSubmit={handleSubmit}
-              className="bg-white dark:bg-dark-2 rounded-2xl p-8 shadow-lg"
+              className="bg-white dark:bg-gray-800/50 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-white/20"
             >
               {submitted ? (
                 <div className="text-center py-8">
@@ -144,7 +144,7 @@ const ContactForm = () => {
                         id="name"
                         name="name"
                         required
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-dark rounded-lg bg-gray-50 dark:bg-dark focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white transition-all"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-white/20 rounded-lg bg-gray-50 dark:bg-gray-900/50 focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white transition-all"
                         placeholder="John Doe"
                       />
                     </div>
@@ -157,7 +157,7 @@ const ContactForm = () => {
                         id="email"
                         name="email"
                         required
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-dark rounded-lg bg-gray-50 dark:bg-dark focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white transition-all"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-white/20 rounded-lg bg-gray-50 dark:bg-gray-900/50 focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white transition-all"
                         placeholder="john@example.com"
                       />
                     </div>
@@ -172,7 +172,7 @@ const ContactForm = () => {
                         type="tel"
                         id="phone"
                         name="phone"
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-dark rounded-lg bg-gray-50 dark:bg-dark focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white transition-all"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-white/20 rounded-lg bg-gray-50 dark:bg-gray-900/50 focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white transition-all"
                         placeholder="+1 (555) 123-4567"
                       />
                     </div>
@@ -184,7 +184,7 @@ const ContactForm = () => {
                         id="subject"
                         name="subject"
                         required
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-dark rounded-lg bg-gray-50 dark:bg-dark focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white transition-all"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-white/20 rounded-lg bg-gray-50 dark:bg-gray-900/50 focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white transition-all"
                       >
                         <option value="">Select a subject</option>
                         <option value="membership">Membership Inquiry</option>
@@ -205,7 +205,7 @@ const ContactForm = () => {
                       name="message"
                       required
                       rows={5}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-dark rounded-lg bg-gray-50 dark:bg-dark focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white transition-all resize-none"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-white/20 rounded-lg bg-gray-50 dark:bg-gray-900/50 focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white transition-all resize-none"
                       placeholder="Tell us how we can help you..."
                     ></textarea>
                   </div>

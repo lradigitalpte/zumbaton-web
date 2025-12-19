@@ -27,6 +27,18 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleStickyNavbar);
   }, []);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (navbarOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [navbarOpen]);
+
   // submenu handler
   const [openIndex, setOpenIndex] = useState(-1);
   const handleSubmenu = (index: number) => {
@@ -42,20 +54,20 @@ const Header = () => {
   return (
     <>
       <header
-        className={`header top-0 left-0 z-40 flex w-full items-center ${
+        className={`header top-0 left-0 z-40 w-full flex items-center transition-all duration-300 ${
           sticky
-            ? "dark:bg-gray-dark dark:shadow-sticky-dark shadow-sticky fixed z-9999 bg-white/95 backdrop-blur-sm transition"
-            : "absolute bg-transparent pb-4"
+            ? "dark:bg-gray-dark dark:shadow-sticky-dark shadow-sticky fixed z-9999 bg-white/95 backdrop-blur-sm"
+            : "absolute bg-transparent pb-2 sm:pb-4"
         }`}
       >
-        <div className="container">
-          <div className="relative -mx-4 flex items-center justify-between">
-            <div className="w-60 max-w-full px-4 xl:mr-12">
+        <div className="w-full px-2 sm:px-4 md:px-6 lg:px-8">
+          <div className="relative flex items-center justify-between">
+            <div className="w-32 sm:w-40 md:w-60 max-w-full flex-shrink-0">
               <Link
                 href="/"
                 className={`header-logo block w-full ${
-                  sticky ? "py-5 lg:py-2" : "py-8"
-                } `}
+                  sticky ? "py-2 sm:py-3 lg:py-2" : "py-3 sm:py-4 md:py-8"
+                }`}
               >
                 {/* Zumbaton Logo */}
                 <Image
@@ -63,124 +75,198 @@ const Header = () => {
                   alt="Zumbaton Logo"
                   width={80}
                   height={80}
-                  className="h-16 w-auto object-contain"
+                  className="h-10 sm:h-12 md:h-16 w-auto object-contain"
                   priority
                 />
               </Link>
             </div>
-            <div className="flex w-full items-center justify-between px-4">
-              <div className="flex-1 lg:flex-none">
-                <button
+            <div className="flex-1 flex items-center justify-center">
+              <button
+                onClick={navbarToggleHandler}
+                id="navbarToggler"
+                aria-label="Mobile Menu"
+                className={`ring-primary block rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 focus:ring-2 lg:hidden z-50 touch-center transition-colors ${
+                  sticky ? "bg-gray-100 dark:bg-gray-800" : ""
+                }`}
+              >
+                <span
+                  className={`relative my-1 sm:my-1.5 block h-0.5 w-6 sm:w-[30px] transition-all duration-300 ${
+                    sticky ? "bg-black dark:bg-white" : "bg-white"
+                  } ${navbarOpen ? "top-[7px] rotate-45" : ""}`}
+                />
+                <span
+                  className={`relative my-1 sm:my-1.5 block h-0.5 w-6 sm:w-[30px] transition-all duration-300 ${
+                    sticky ? "bg-black dark:bg-white" : "bg-white"
+                  } ${navbarOpen ? "opacity-0" : ""}`}
+                />
+                <span
+                  className={`relative my-1 sm:my-1.5 block h-0.5 w-6 sm:w-[30px] transition-all duration-300 ${
+                    sticky ? "bg-black dark:bg-white" : "bg-white"
+                  } ${navbarOpen ? "top-[-8px] -rotate-45" : ""}`}
+                />
+              </button>
+              
+              {/* Mobile Menu Overlay */}
+              {navbarOpen && (
+                <div
+                  className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
                   onClick={navbarToggleHandler}
-                  id="navbarToggler"
-                  aria-label="Mobile Menu"
-                  className="ring-primary block rounded-lg px-3 py-2 focus:ring-2 lg:hidden z-50"
-                >
-                  <span
-                    className={`relative my-1.5 block h-0.5 w-[30px] transition-all duration-300 ${
-                      sticky ? "bg-black dark:bg-white" : "bg-white"
-                    } ${navbarOpen ? "top-[7px] rotate-45" : ""}`}
-                  />
-                  <span
-                    className={`relative my-1.5 block h-0.5 w-[30px] transition-all duration-300 ${
-                      sticky ? "bg-black dark:bg-white" : "bg-white"
-                    } ${navbarOpen ? "opacity-0" : ""}`}
-                  />
-                  <span
-                    className={`relative my-1.5 block h-0.5 w-[30px] transition-all duration-300 ${
-                      sticky ? "bg-black dark:bg-white" : "bg-white"
-                    } ${navbarOpen ? "top-[-8px] -rotate-45" : ""}`}
-                  />
-                </button>
-                <nav
-                  id="navbarCollapse"
-                  className={`navbar border-body-color/50 dark:border-body-color/20 dark:bg-dark absolute right-0 z-30 w-[250px] rounded border-[.5px] bg-white px-6 py-4 duration-300 lg:visible lg:static lg:w-auto lg:border-none lg:!bg-transparent lg:p-0 lg:opacity-100 ${
-                    navbarOpen
-                      ? "visibility top-full opacity-100"
-                      : "invisible top-[120%] opacity-0"
-                  }`}
-                >
-                  <ul className="block lg:flex lg:space-x-12">
+                />
+              )}
+
+              <nav
+                id="navbarCollapse"
+                className={`navbar fixed top-0 right-0 z-50 h-screen w-80 max-w-[85vw] bg-white dark:bg-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out lg:relative lg:h-auto lg:w-auto lg:max-h-none lg:overflow-visible lg:transform-none lg:shadow-none lg:bg-transparent lg:dark:bg-transparent ${
+                  navbarOpen
+                    ? "translate-x-0"
+                    : "translate-x-full lg:translate-x-0"
+                }`}
+              >
+                {/* Mobile Menu Header */}
+                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 lg:hidden">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Menu</h2>
+                  <button
+                    onClick={navbarToggleHandler}
+                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    aria-label="Close Menu"
+                  >
+                    <svg
+                      className="w-6 h-6 text-gray-600 dark:text-gray-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Menu Items */}
+                <div className="overflow-y-auto h-[calc(100vh-80px)] lg:overflow-visible lg:h-auto">
+                  <ul className="flex flex-col lg:flex-row lg:space-x-8 xl:space-x-12 lg:justify-center p-4 lg:p-0">
                     {menuData.map((menuItem, index) => (
                       <li key={index} className="group relative">
                         {menuItem.path ? (
                           <Link
                             href={menuItem.path}
-                            className={`flex py-2 text-base font-medium lg:mr-0 lg:inline-flex lg:px-0 lg:py-6 ${
+                            className={`flex items-center py-3 px-4 rounded-lg text-base font-medium transition-colors lg:py-6 lg:px-0 lg:rounded-none ${
                               usePathName === menuItem.path
-                                ? "text-amber-500"
+                                ? "text-amber-500 bg-amber-50 dark:bg-amber-900/20 lg:bg-transparent"
                                 : sticky
-                                ? "text-dark hover:text-amber-500 dark:text-white/90 dark:hover:text-amber-500"
-                                : "text-white/90 hover:text-white lg:text-white/90 lg:hover:text-white"
+                                ? "text-gray-700 hover:text-amber-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-amber-500 dark:hover:bg-gray-800 lg:hover:bg-transparent"
+                                : "text-gray-700 hover:text-amber-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-amber-500 dark:hover:bg-gray-800 lg:text-white/90 lg:hover:text-white lg:hover:bg-transparent"
                             }`}
+                            onClick={() => setNavbarOpen(false)}
                           >
                             {menuItem.title}
                           </Link>
                         ) : (
                           <>
-                            <p
+                            <button
                               onClick={() => handleSubmenu(index)}
-                              className={`flex cursor-pointer items-center justify-between py-2 text-base font-medium lg:mr-0 lg:inline-flex lg:px-0 lg:py-6 ${
+                              className={`w-full flex items-center justify-between py-3 px-4 rounded-lg text-base font-medium transition-colors lg:py-6 lg:px-0 lg:rounded-none ${
                                 sticky
-                                  ? "text-dark hover:text-amber-500 dark:text-white/90 dark:hover:text-amber-500"
-                                  : "text-white/90 hover:text-white"
+                                  ? "text-gray-700 hover:text-amber-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-amber-500 dark:hover:bg-gray-800 lg:hover:bg-transparent"
+                                  : "text-gray-700 hover:text-amber-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-amber-500 dark:hover:bg-gray-800 lg:text-white/90 lg:hover:text-white lg:hover:bg-transparent"
                               }`}
                             >
                               {menuItem.title}
-                              <span className="pl-3">
-                                <svg width="25" height="24" viewBox="0 0 25 24">
-                                  <path
-                                    fillRule="evenodd"
-                                    clipRule="evenodd"
-                                    d="M6.29289 8.8427C6.68342 8.45217 7.31658 8.45217 7.70711 8.8427L12 13.1356L16.2929 8.8427C16.6834 8.45217 17.3166 8.45217 17.7071 8.8427C18.0976 9.23322 18.0976 9.86639 17.7071 10.2569L12 15.964L6.29289 10.2569C5.90237 9.86639 5.90237 9.23322 6.29289 8.8427Z"
-                                    fill="currentColor"
-                                  />
-                                </svg>
-                              </span>
-                            </p>
+                              <svg
+                                className={`w-5 h-5 transition-transform lg:hidden ${
+                                  openIndex === index ? "rotate-180" : ""
+                                }`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 9l-7 7-7-7"
+                                />
+                              </svg>
+                            </button>
                             <div
-                              className={`submenu dark:bg-dark relative top-full left-0 rounded-sm bg-white transition-[top] duration-300 group-hover:opacity-100 lg:invisible lg:absolute lg:top-[110%] lg:block lg:w-[250px] lg:p-4 lg:opacity-0 lg:shadow-lg lg:group-hover:visible lg:group-hover:top-full ${
-                                openIndex === index ? "block" : "hidden"
+                              className={`overflow-hidden transition-all duration-300 lg:absolute lg:top-full lg:left-0 lg:w-64 lg:bg-white lg:dark:bg-gray-800 lg:rounded-lg lg:shadow-xl lg:border lg:border-gray-200 lg:dark:border-gray-700 lg:opacity-0 lg:invisible lg:group-hover:opacity-100 lg:group-hover:visible ${
+                                openIndex === index ? "max-h-96 lg:max-h-none" : "max-h-0 lg:max-h-none"
                               }`}
                             >
-                              {menuItem.submenu?.map((submenuItem, subIndex) => (
-                                <Link
-                                  href={submenuItem.path}
-                                  key={subIndex}
-                                  className="text-dark hover:text-amber-500 block rounded-sm py-2.5 text-sm lg:px-3 dark:text-white/70 dark:hover:text-amber-500"
-                                >
-                                  {submenuItem.title}
-                                </Link>
-                              ))}
+                              <div className="pl-4 lg:pl-0 lg:p-4 space-y-1">
+                                {menuItem.submenu?.map((submenuItem, subIndex) => (
+                                  <Link
+                                    href={submenuItem.path}
+                                    key={subIndex}
+                                    className="block py-2 px-4 rounded-lg text-sm text-gray-600 hover:text-amber-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-amber-500 dark:hover:bg-gray-800 transition-colors lg:px-3"
+                                    onClick={() => setNavbarOpen(false)}
+                                  >
+                                    {submenuItem.title}
+                                  </Link>
+                                ))}
+                              </div>
                             </div>
                           </>
                         )}
                       </li>
                     ))}
                   </ul>
-                </nav>
-              </div>
-              <div className="flex items-center justify-end gap-3 lg:gap-4">
+                </div>
+              </nav>
+            </div>
+            <div className="hidden lg:flex items-center justify-end gap-3 sm:gap-4 lg:gap-5 ml-3 sm:ml-4 flex-shrink-0">
                 <Link
                   href="/signin"
-                  className={`hidden px-6 py-2.5 text-base font-medium transition-colors md:block ${
+                  className={`px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 text-xs sm:text-sm md:text-base font-medium transition-colors ${
                     sticky
-                      ? "text-green-600 hover:text-green-700 dark:text-green-500 dark:hover:text-green-600"
-                      : "text-green-400 hover:text-green-300"
+                      ? "text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                      : "text-green-300 hover:text-white"
                   }`}
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/signup"
-                  className="hidden rounded-full bg-gradient-to-r from-green-600 to-green-700 px-7 py-2.5 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:from-green-700 hover:to-green-800 hover:shadow-xl md:block"
+                  className={`rounded-lg px-5 sm:px-6 md:px-7 py-2 sm:py-2.5 text-xs sm:text-sm md:text-base font-semibold text-white shadow-md transition-colors ${
+                    sticky
+                      ? "bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+                      : "bg-green-600 hover:bg-green-700"
+                  }`}
+                >
+                  Join Now
+                </Link>
+                <div className="flex-shrink-0 relative z-50 ml-2 sm:ml-3">
+                  <ThemeToggler />
+                </div>
+            </div>
+            <div className="flex lg:hidden items-center gap-2 sm:gap-3 flex-shrink-0">
+                <Link
+                  href="/signin"
+                  className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-colors rounded-lg ${
+                    sticky
+                      ? "text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/20"
+                      : "text-white/90 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/signup"
+                  className={`rounded-lg px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white shadow-md transition-colors ${
+                    sticky
+                      ? "bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+                      : "bg-green-600 hover:bg-green-700"
+                  }`}
                 >
                   Join Now
                 </Link>
                 <div className="flex-shrink-0 relative z-50">
                   <ThemeToggler />
                 </div>
-              </div>
             </div>
           </div>
         </div>

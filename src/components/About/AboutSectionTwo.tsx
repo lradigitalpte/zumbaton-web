@@ -31,7 +31,7 @@ const AboutSectionTwo = () => {
   const feature3InView = useInView(feature3Ref, { once: true, margin: "-50px" });
 
   return (
-    <section ref={sectionRef} className="relative py-16 md:py-20 lg:py-28 overflow-hidden">
+    <section ref={sectionRef} className="relative py-12 sm:py-16 md:py-20 lg:py-28 overflow-hidden">
       {/* Background Image with Parallax */}
       <motion.div 
         style={{ y: backgroundY }}
@@ -50,26 +50,26 @@ const AboutSectionTwo = () => {
       </motion.div>
 
       {/* Content */}
-      <div className="container relative z-10">
+      <div className="container relative z-10 px-3 sm:px-4">
         {/* Header */}
         <motion.div
           ref={headerRef}
           initial={{ opacity: 0, y: 30 }}
           animate={headerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-center mb-12"
+          className="text-center mb-8 sm:mb-12"
         >
-          <div className="text-green-400 dark:text-green-500 font-semibold text-sm uppercase tracking-wide mb-3">
+          <div className="text-green-400 dark:text-green-500 font-semibold text-xs sm:text-sm uppercase tracking-wide mb-2 sm:mb-3">
             Why Choose Us
           </div>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
             Build Strength, Endurance, and Confidence with Us
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-start lg:items-center">
           {/* Left Side - Images */}
-          <div className="relative">
+          <div className="relative hidden lg:block">
             <motion.div
               ref={image1Ref}
               initial={{ opacity: 0, scale: 0.9 }}
@@ -116,16 +116,16 @@ const AboutSectionTwo = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={feature1InView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="relative mb-8 pl-20"
+              className="relative mb-6 sm:mb-8 pl-16 sm:pl-20"
             >
-              <div className="absolute left-0 w-16 h-16 bg-green-600 dark:bg-green-500 text-white text-center text-3xl font-bold rounded-lg flex items-center justify-center">
+              <div className="absolute left-0 w-12 sm:w-16 h-12 sm:h-16 bg-green-600 dark:bg-green-500 text-white text-center text-2xl sm:text-3xl font-bold rounded-lg flex items-center justify-center flex-shrink-0">
                 1
               </div>
               <div>
-                <h4 className="text-2xl font-bold mb-3 text-white">
+                <h4 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 text-white">
                   Certified Zumba Instructors
                 </h4>
-                <p className="text-white/90 leading-relaxed">
+                <p className="text-xs sm:text-sm md:text-base text-white/90 leading-relaxed">
                   Train with professionals who guide your every move — ensuring proper form, safety, and faster results for your fitness goals.
                 </p>
               </div>
@@ -136,16 +136,16 @@ const AboutSectionTwo = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={feature2InView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="relative mb-8 pl-20"
+              className="relative mb-6 sm:mb-8 pl-16 sm:pl-20"
             >
-              <div className="absolute left-0 w-16 h-16 bg-green-600 dark:bg-green-500 text-white text-center text-3xl font-bold rounded-lg flex items-center justify-center">
+              <div className="absolute left-0 w-12 sm:w-16 h-12 sm:h-16 bg-green-600 dark:bg-green-500 text-white text-center text-2xl sm:text-3xl font-bold rounded-lg flex items-center justify-center flex-shrink-0">
                 2
               </div>
               <div>
-                <h4 className="text-2xl font-bold mb-3 text-white">
+                <h4 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 text-white">
                   High-Energy Classes
                 </h4>
-                <p className="text-white/90 leading-relaxed">
+                <p className="text-xs sm:text-sm md:text-base text-white/90 leading-relaxed">
                   Experience dynamic Zumba classes that combine Latin rhythms with easy-to-follow dance moves, making every workout effective, fun, and challenging.
                 </p>
               </div>
@@ -156,16 +156,16 @@ const AboutSectionTwo = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={feature3InView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="relative pl-20"
+              className="relative pl-16 sm:pl-20"
             >
-              <div className="absolute left-0 w-16 h-16 bg-green-600 dark:bg-green-500 text-white text-center text-3xl font-bold rounded-lg flex items-center justify-center">
+              <div className="absolute left-0 w-12 sm:w-16 h-12 sm:h-16 bg-green-600 dark:bg-green-500 text-white text-center text-2xl sm:text-3xl font-bold rounded-lg flex items-center justify-center flex-shrink-0">
                 3
               </div>
               <div>
-                <h4 className="text-2xl font-bold mb-3 text-white">
+                <h4 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 text-white">
                   Motivating Environment
                 </h4>
-                <p className="text-white/90 leading-relaxed">
+                <p className="text-xs sm:text-sm md:text-base text-white/90 leading-relaxed">
                   Join a supportive community that inspires you to stay consistent, push your limits, and celebrate every milestone along the way.
                 </p>
               </div>

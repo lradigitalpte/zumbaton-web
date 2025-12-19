@@ -18,6 +18,14 @@ interface QRData {
   date?: string;
 }
 
+interface CheckInError {
+  code: string;
+  message: string;
+  action?: "book" | "waitlist" | "purchase";
+  classId?: string;
+  classTitle?: string;
+}
+
 export default function CheckInPage() {
   const router = useRouter();
   const params = useParams();
@@ -25,7 +33,10 @@ export default function CheckInPage() {
   const [qrData, setQrData] = useState<QRData | null>(null);
   const [checkInStatus, setCheckInStatus] = useState<"idle" | "checking" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [errorDetails, setErrorDetails] = useState<CheckInError | null>(null);
   const [showLoginOptions, setShowLoginOptions] = useState(false);
+  const [wasWalkIn, setWasWalkIn] = useState(false);
+  const [tokensUsed, setTokensUsed] = useState<number | null>(null);
 
   useEffect(() => {
     // Decode QR data from token parameter
@@ -44,7 +55,7 @@ export default function CheckInPage() {
         if (decoded.classId && decoded.token) {
           setQrData(decoded);
         } else {
-          setErrorMessage("Invalid QR code format");
+          setErrorMessage("Invalid QR code format - missing required fields");
           setCheckInStatus("error");
         }
       } catch (error) {
@@ -85,48 +96,49 @@ export default function CheckInPage() {
     setCheckInStatus("checking");
 
     try {
-      // Use new QR check-in endpoint if bookingId is not provided (new QR format)
+      // Always use qrData format for consistency
       const response = await fetch("/api/attendance/check-in", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(
-          data.bookingId
-            ? {
-                // Old format with bookingId
-                bookingId: data.bookingId,
-                classId: data.classId,
-                token: data.token,
-              }
-            : {
-                // New format with qrData (will find booking by classId)
-                qrData: {
-                  classId: data.classId,
-                  token: data.token,
-                  sessionDate: data.sessionDate,
-                  sessionTime: data.sessionTime,
-                  expiresAt: data.expiresAt,
-                },
-              }
-        ),
+        body: JSON.stringify({
+          qrData: {
+            classId: data.classId,
+            token: data.token,
+            sessionDate: data.sessionDate,
+            sessionTime: data.sessionTime,
+            expiresAt: data.expiresAt,
+          },
+        }),
       });
 
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        throw new Error(result.error?.message || "Failed to check in");
+        const errData = result.error || {};
+        throw {
+          code: errData.code || "CHECK_IN_ERROR",
+          message: errData.message || "Failed to check in",
+          action: errData.action,
+          classId: errData.classId,
+          classTitle: errData.classTitle,
+        };
       }
 
       setCheckInStatus("success");
+      setWasWalkIn(result.data?.wasWalkIn || false);
+      setTokensUsed(result.data?.tokensConsumed || null);
       
-      // Redirect to dashboard after 2 seconds
+      // Redirect to dashboard after 3 seconds
       setTimeout(() => {
         router.push("/dashboard");
-      }, 2000);
+      }, 3000);
     } catch (error) {
       console.error("[Check-In] Error marking attendance:", error);
-      setErrorMessage(error instanceof Error ? error.message : "Failed to check in");
+      const checkInErr = error as CheckInError;
+      setErrorDetails(checkInErr);
+      setErrorMessage(checkInErr.message || "Failed to check in");
       setCheckInStatus("error");
     }
   };
@@ -136,6 +148,7 @@ export default function CheckInPage() {
     // The callback will redirect back here and auto-check-in
   };
 
+  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
@@ -159,6 +172,7 @@ export default function CheckInPage() {
     );
   }
 
+  // Checking in state
   if (checkInStatus === "checking") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
@@ -187,6 +201,7 @@ export default function CheckInPage() {
     );
   }
 
+  // Success state
   if (checkInStatus === "success") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
@@ -218,11 +233,16 @@ export default function CheckInPage() {
               </svg>
             </div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Successfully Checked In!
+              {wasWalkIn ? "Walk-in Check-in Successful!" : "Successfully Checked In!"}
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-gray-600 dark:text-gray-400 mb-2">
               {qrData?.className ? `Welcome to ${qrData.className}` : "Your attendance has been recorded."}
             </p>
+            {tokensUsed && (
+              <p className="text-sm text-amber-600 dark:text-amber-400 mb-4">
+                {tokensUsed} token{tokensUsed > 1 ? 's' : ''} used
+              </p>
+            )}
             <p className="text-sm text-gray-500 dark:text-gray-500">
               Redirecting to your dashboard...
             </p>
@@ -232,6 +252,7 @@ export default function CheckInPage() {
     );
   }
 
+  // Error state
   if (checkInStatus === "error") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
@@ -258,27 +279,55 @@ export default function CheckInPage() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                 />
               </svg>
             </div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
               Check-In Failed
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">{errorMessage}</p>
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                Go to Dashboard
-              </button>
-              <button
-                onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-              >
-                Try Again
-              </button>
+            <p className="text-gray-600 dark:text-gray-400 mb-2">{errorMessage}</p>
+            
+            {errorDetails?.classTitle && (
+              <p className="text-sm text-amber-600 dark:text-amber-400 mb-4">
+                Class: {errorDetails.classTitle}
+              </p>
+            )}
+
+            <div className="flex flex-col gap-3 mt-6">
+              {/* Action-specific buttons */}
+              {errorDetails?.action === "book" && errorDetails.classId && (
+                <Link
+                  href={`/classes/${errorDetails.classId}`}
+                  className="w-full px-4 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium"
+                >
+                  Book This Class
+                </Link>
+              )}
+              
+              {errorDetails?.action === "purchase" && (
+                <Link
+                  href="/packages"
+                  className="w-full px-4 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium"
+                >
+                  Buy Tokens
+                </Link>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => router.push("/dashboard")}
+                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  Go to Dashboard
+                </button>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -286,6 +335,7 @@ export default function CheckInPage() {
     );
   }
 
+  // Login options state
   if (showLoginOptions) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-12">
@@ -336,6 +386,7 @@ export default function CheckInPage() {
     );
   }
 
+  // Default/processing state
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
       <div className="w-full max-w-md">
@@ -357,4 +408,3 @@ export default function CheckInPage() {
     </div>
   );
 }
-

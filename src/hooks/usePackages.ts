@@ -6,6 +6,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAvailablePackages, type Package } from '@/lib/packages-queries'
 import { useToast } from '@/components/Toast'
+import { handleApiResponse, handleMutationError } from '@/lib/toast-helper'
 
 // Query keys
 export const packageKeys = {
@@ -54,13 +55,15 @@ export function usePurchasePackage() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       
       if (data.checkout_url) {
-        toast.success('Redirecting to checkout...', 'Please complete your payment')
+        handleApiResponse({ success: true, message: 'Please complete your payment' }, toast, {
+          successTitle: 'Redirecting to checkout...'
+        })
         // In production, redirect to payment provider
         // window.location.href = data.checkout_url
       }
     },
     onError: (error: Error) => {
-      toast.error('Purchase Failed', error.message || 'Failed to initiate purchase. Please try again.')
+      handleMutationError(error, toast, 'Purchase')
     },
   })
 }

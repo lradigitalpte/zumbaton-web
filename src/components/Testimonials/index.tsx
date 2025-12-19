@@ -68,7 +68,7 @@ const Testimonials = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative text-white py-20 md:py-28 overflow-hidden">
+    <section ref={sectionRef} className="relative text-white py-12 sm:py-16 md:py-20 lg:py-28 overflow-hidden">
       {/* Background Image with Parallax */}
       <motion.div 
         style={{ y: backgroundY }}
@@ -86,7 +86,7 @@ const Testimonials = () => {
       </motion.div>
 
       {/* Content */}
-      <div className="container relative z-10">
+      <div className="container relative z-10 px-3 sm:px-4">
         <div className="max-w-4xl mx-auto text-center">
           <div className="owl-carousel">
             {testimonials.map((testimonial, index) => (
@@ -101,19 +101,19 @@ const Testimonials = () => {
                 {currentIndex === index && (
                   <>
                     {/* Stars */}
-                    <div className="flex justify-center gap-1 mb-6">
+                    <div className="flex justify-center gap-0.5 sm:gap-1 mb-4 sm:mb-6">
                       {[...Array(5)].map((_, i) => (
                         <StarIcon key={i} />
                       ))}
                     </div>
 
                     {/* Quote */}
-                    <h3 className="text-3xl md:text-4xl font-bold mb-6 leading-relaxed">
+                    <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6 leading-relaxed px-3 sm:px-0">
                       {testimonial.quote}
                     </h3>
 
                     {/* Author */}
-                    <div className="text-lg text-white/80">
+                    <div className="text-sm sm:text-base md:text-lg text-white/80">
                       {testimonial.author}, {testimonial.location}
                     </div>
                   </>
@@ -123,15 +123,15 @@ const Testimonials = () => {
           </div>
 
           {/* Dots Indicator */}
-          <div className="flex justify-center gap-2 mt-8">
+          <div className="flex justify-center gap-1.5 sm:gap-2 mt-6 sm:mt-8">
             {testimonials.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
-                className={`h-2 rounded-full transition-all duration-300 ${
+                className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
                   currentIndex === index
-                    ? "w-8 bg-green-500"
-                    : "w-2 bg-white/40 hover:bg-white/60"
+                    ? "w-6 sm:w-8 bg-green-500"
+                    : "w-1.5 sm:w-2 bg-white/40 hover:bg-white/60"
                 }`}
                 aria-label={`Go to testimonial ${index + 1}`}
               />

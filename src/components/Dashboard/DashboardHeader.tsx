@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
 import SearchPanel from "./SearchPanel";
 
 interface DashboardHeaderProps {
@@ -50,22 +51,36 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const notifications = [
-    {
-      id: 1,
-      title: "Class Reminder",
-      message: "Zumba Fitness starts in 2 hours",
-      time: "2 hours ago",
-      unread: true,
-    },
-    {
-      id: 2,
-      title: "Booking Confirmed",
-      message: "Your Salsa class has been booked",
-      time: "1 day ago",
-      unread: false,
-    },
-  ];
+  // Fetch real notifications from API
+  const [notifications, setNotifications] = useState<any[]>([]);
+  
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        // Get the session token
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session?.access_token) {
+          console.error('Failed to get session token:', sessionError);
+          return;
+        }
+        
+        const response = await fetch('/api/notifications', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setNotifications((data.notifications || []).slice(0, 5)); // Show latest 5
+        }
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+        setNotifications([]); // Show empty state if fetch fails
+      }
+    };
+    
+    fetchNotifications();
+  }, []);
 
   return (
     <header

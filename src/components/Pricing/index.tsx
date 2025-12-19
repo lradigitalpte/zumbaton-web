@@ -18,7 +18,7 @@ const Pricing = () => {
   const backgroundY = useTransform(scrollYProgress, [0, 1], [0, 150]);
 
   return (
-    <section ref={sectionRef} id="pricing" className="relative text-gray-900 dark:text-white py-20 md:py-28 overflow-hidden bg-gray-50 dark:bg-gray-900">
+    <section ref={sectionRef} id="pricing" className="relative text-gray-900 dark:text-white py-12 sm:py-16 md:py-20 lg:py-28 overflow-hidden bg-gray-50 dark:bg-gray-900">
       {/* Background Image with Parallax */}
       <motion.div 
         style={{ y: backgroundY }}
@@ -37,9 +37,9 @@ const Pricing = () => {
       </motion.div>
 
       {/* Content */}
-      <div className="container relative z-10">
-        <div className="text-center mb-12">
-          <div className="text-green-600 dark:text-green-400 font-semibold text-sm uppercase tracking-wide mb-3">
+      <div className="container relative z-10 px-3 sm:px-4">
+        <div className="text-center mb-8 sm:mb-12">
+          <div className="text-green-600 dark:text-green-400 font-semibold text-xs sm:text-sm uppercase tracking-wide mb-2 sm:mb-3">
             Pricing Plans
           </div>
           <SectionTitle
@@ -50,7 +50,7 @@ const Pricing = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:gap-8 lg:gap-x-8 md:grid-cols-2 lg:grid-cols-3">
           <PricingBox
             packageName="Starter Pack"
             price="45"
@@ -66,7 +66,7 @@ const Pricing = () => {
           </PricingBox>
 
           <div className="relative">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-600 dark:bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-600 dark:bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
               Most Popular
             </div>
             <PricingBox
@@ -99,8 +99,8 @@ const Pricing = () => {
           </PricingBox>
         </div>
 
-        <div className="mt-12 text-center">
-          <p className="text-gray-700 dark:text-white/80 mb-4 text-base">
+        <div className="mt-10 sm:mt-12 text-center px-3 sm:px-0">
+          <p className="text-gray-700 dark:text-white/80 mb-3 sm:mb-4 text-sm sm:text-base">
             Ready to start your fitness journey?{" "}
             <Link href="/signup" className="text-green-600 dark:text-green-400 hover:underline font-semibold">
               Sign up now

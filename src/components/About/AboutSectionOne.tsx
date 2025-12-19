@@ -57,10 +57,10 @@ const AboutSectionOne = () => {
   const buttonInView = useInView(buttonRef, { once: true, margin: "-50px" });
 
   return (
-    <section className="relative z-20 -mt-24 pt-24 py-16 md:py-20 lg:py-28 bg-white dark:bg-gray-dark rounded-t-3xl shadow-xl">
-      <div className="container">
+    <section className="relative z-20 -mt-16 sm:-mt-24 pt-16 sm:pt-24 py-12 sm:py-16 md:py-20 lg:py-28 bg-white dark:bg-gray-dark rounded-t-2xl sm:rounded-t-3xl shadow-xl">
+      <div className="container px-3 sm:px-4">
         {/* Main About Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center mb-16 md:mb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-center mb-12 sm:mb-16 md:mb-20">
           {/* Left Side - Images with Experience Card */}
           <div className="relative">
             {/* Experience Card - Centered Overlay (fadeIn animation) */}
@@ -69,20 +69,20 @@ const AboutSectionOne = () => {
               initial={{ opacity: 0 }}
               animate={experienceInView ? { opacity: 1 } : { opacity: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 p-4 mt-3 bg-green-600 dark:bg-green-500 text-white rounded-xl text-center shadow-2xl"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 p-3 sm:p-4 mt-2 sm:mt-3 bg-green-600 dark:bg-green-500 text-white rounded-lg sm:rounded-xl text-center shadow-2xl"
               >
-              <h1 className="text-6xl md:text-7xl font-bold mb-1">5</h1>
-              <div className="text-base leading-tight">Years of Experience</div>
+              <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold mb-0.5 sm:mb-1">5</h1>
+              <div className="text-xs sm:text-base leading-tight">Years of Experience</div>
             </motion.div>
 
             {/* Image Grid - Full width images (matching PowerFlow w-100) */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2 sm:gap-4">
               <motion.div
                 ref={image1Ref}
                 initial={{ opacity: 0, x: 50 }}
                 animate={image1InView ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="relative rounded-xl overflow-hidden w-full"
+                className="relative rounded-lg sm:rounded-xl overflow-hidden w-full"
               >
                 <div className="relative w-full aspect-square">
                   <Image
@@ -100,7 +100,7 @@ const AboutSectionOne = () => {
                 initial={{ opacity: 0, x: 50 }}
                 animate={image2InView ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
-                className="relative rounded-xl overflow-hidden w-full"
+                className="relative rounded-lg sm:rounded-xl overflow-hidden w-full"
               >
                 <div className="relative w-full aspect-square">
                 <Image
@@ -117,13 +117,13 @@ const AboutSectionOne = () => {
           </div>
 
           {/* Right Side - Content */}
-          <div className="lg:pl-8">
+          <div className="lg:pl-8 px-0">
             <motion.div
               ref={subtitleRef}
               initial={{ opacity: 0, y: 30 }}
               animate={subtitleInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
               transition={{ duration: 0.6, delay: 0 }}
-              className="text-green-600 dark:text-green-500 font-semibold text-sm uppercase tracking-wide mb-3"
+              className="text-green-600 dark:text-green-500 font-semibold text-xs sm:text-sm uppercase tracking-wide mb-2 sm:mb-3"
             >
               Welcome to Zumbaton
             </motion.div>
@@ -132,7 +132,7 @@ const AboutSectionOne = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={headingInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-gray-900 dark:text-white leading-tight"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-gray-900 dark:text-white leading-tight"
             >
               Push Beyond Limits And Unlock Your Strength
             </motion.h2>
@@ -141,7 +141,7 @@ const AboutSectionOne = () => {
               initial={{ opacity: 0 }}
               animate={textInView ? { opacity: 1 } : { opacity: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="text-base md:text-lg text-gray-600 dark:text-gray-300 mb-8 leading-relaxed"
+              className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-300 mb-6 sm:mb-8 leading-relaxed"
             >
               Step into a fitness experience designed to challenge your body and sharpen your mind. With expert Zumba instructors, high-energy classes, and programs built for all levels, you'll gain the power, confidence, and results you've always wanted. Every dance moves you closer to becoming your strongest self.
             </motion.p>
@@ -153,7 +153,7 @@ const AboutSectionOne = () => {
             >
               <Link
                 href="/signup"
-                className="inline-block px-5 py-1.5 text-sm font-bold text-white uppercase bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-all duration-300 rounded-none"
+                className="inline-block px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-white uppercase bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-all duration-300 rounded-none"
               >
                 <span>Join Now</span>
               </Link>
@@ -162,7 +162,7 @@ const AboutSectionOne = () => {
         </div>
 
         {/* Stats Section - Part of same section (matching PowerFlow) */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-8">
           <StatCard value={5000} label="Training Hours" delay={0} />
           <StatCard value={500} label="Active Members" delay={200} />
           <StatCard value={1000} label="Classes Taught" delay={400} />
@@ -184,13 +184,13 @@ const StatCard = ({ value, label, delay }: { value: number; label: string; delay
       initial={{ opacity: 0, x: 50 }}
       animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
       transition={{ duration: 0.6, delay: delay / 1000 }}
-      className="text-center"
+      className="text-center px-2 sm:px-0"
     >
-      <h3 className="text-4xl md:text-5xl font-bold mb-1 text-gray-900 dark:text-white">
+      <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-0.5 sm:mb-1 text-gray-900 dark:text-white">
         <span>{count.toLocaleString()}</span>
         <span className="text-green-600 dark:text-green-500">+</span>
       </h3>
-      <div className="text-sm md:text-base text-gray-600 dark:text-gray-300">{label}</div>
+      <div className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-300">{label}</div>
     </motion.div>
   );
 };
