@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAvailablePackages, type Package } from '@/lib/packages-queries'
 import { useToast } from '@/components/Toast'
 import { handleApiResponse, handleMutationError } from '@/lib/toast-helper'
+import { getSupabaseClient } from '@/lib/supabase'
 
 // Query keys
 export const packageKeys = {
@@ -29,8 +30,8 @@ export function useAvailablePackages() {
 }
 
 /**
- * Hook to initiate package purchase
- * Note: This would typically redirect to payment provider
+ * Hook to initiate package purchase via HitPay
+ * Creates a payment request and redirects to HitPay checkout
  */
 export function usePurchasePackage() {
   const queryClient = useQueryClient()
@@ -38,28 +39,49 @@ export function usePurchasePackage() {
 
   return useMutation({
     mutationFn: async ({ packageId }: { packageId: string }) => {
-      // In a real implementation, this would call a payment API
-      // For now, we'll just simulate it
-      return new Promise<{ checkout_url?: string }>((resolve) => {
-        setTimeout(() => {
-          resolve({ checkout_url: `/checkout?package=${packageId}` })
-        }, 500)
+      // Get auth token from Supabase
+      const supabase = getSupabaseClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session?.access_token) {
+        throw new Error('Please log in to purchase')
+      }
+
+      const response = await fetch('/api/payments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ packageId }),
       })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create payment')
+      }
+
+      return data as { 
+        success: boolean
+        paymentUrl: string
+        paymentRequestId: string
+        amount: number
+        currency: string
+      }
     },
     onSuccess: (data) => {
-      // Invalidate packages (in case prices change)
+      // Invalidate queries
       queryClient.invalidateQueries({ queryKey: packageKeys.all })
-      // Invalidate token balance
       queryClient.invalidateQueries({ queryKey: ['token-balance'] })
-      // Invalidate dashboard to refresh token balance
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       
-      if (data.checkout_url) {
-        handleApiResponse({ success: true, message: 'Please complete your payment' }, toast, {
-          successTitle: 'Redirecting to checkout...'
+      if (data.paymentUrl) {
+        handleApiResponse({ success: true, message: 'Redirecting to payment...' }, toast, {
+          successTitle: 'Opening checkout...'
         })
-        // In production, redirect to payment provider
-        // window.location.href = data.checkout_url
+        // Redirect to HitPay checkout page
+        window.location.href = data.paymentUrl
       }
     },
     onError: (error: Error) => {
