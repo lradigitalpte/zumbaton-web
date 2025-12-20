@@ -29,42 +29,28 @@ function SigninPageContent() {
     }
   }, [searchParams, toast, router]);
 
-  // Fast check: Look for existing session in localStorage and auto-login
+  // Check for existing session - Supabase handles token refresh automatically
   useEffect(() => {
     let hasRedirected = false;
     
     const checkExistingSession = async () => {
       try {
-        // Check localStorage directly for Supabase session
-        // Supabase stores session as: sb-{project-ref}-auth-token
-        const storageKeys = Object.keys(localStorage).filter(key => 
-          key.startsWith('sb-') && key.includes('-auth-token')
-        );
+        // Simply check if session exists - Supabase manages refresh automatically
+        // No need to check localStorage or manually refresh
+        const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (storageKeys.length > 0) {
-          // Session exists in storage, try to get it (with timeout)
-          const sessionPromise = supabase.auth.getSession();
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout')), 1000)
-          );
-          
-          try {
-            const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]) as any;
-            
-            if (!error && session?.user) {
-              // Valid session found - redirect to dashboard immediately
-              console.log('[Signin] Existing session found, redirecting to dashboard');
-              hasRedirected = true;
-              router.replace("/dashboard");
-              return;
-            }
-          } catch (error) {
-            // Timeout or error - continue to show signin form
-            console.log('[Signin] Session check timed out or failed, showing signin form');
-          }
+        if (!error && session?.user) {
+          // Valid session found - redirect to dashboard immediately
+          console.log('[Signin] Existing session found, redirecting to dashboard');
+          hasRedirected = true;
+          router.replace("/dashboard");
+          return;
         }
       } catch (error) {
-        console.error('[Signin] Error checking existing session:', error);
+        // Error checking session - continue to show signin form
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[Signin] Session check failed, showing signin form');
+        }
       } finally {
         setIsCheckingSession(false);
       }

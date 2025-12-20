@@ -31,31 +31,10 @@ export async function getUserBookings(
   const supabase = getSupabaseClient()
   const now = new Date().toISOString()
 
-  // Quick check: Look for refresh token in localStorage first (fast path)
-  // This prevents waiting for session refresh if token is missing
-  if (typeof window !== 'undefined') {
-    const storageKeys = Object.keys(localStorage).filter(key => 
-      key.startsWith('sb-') && key.includes('-auth-token')
-    )
-    
-    if (storageKeys.length === 0) {
-      console.warn('[Bookings] No auth token in localStorage, returning empty array')
-      return []
-    }
-  }
-
-  // Check session first - if no valid session, return empty array immediately
-  // Add timeout to prevent hanging on session refresh
+  // Check session - Supabase handles token refresh automatically
+  // No need to manually check expiry or refresh tokens
   try {
-    const sessionPromise = supabase.auth.getSession()
-    const sessionTimeoutPromise = new Promise<never>((_, reject) => 
-      setTimeout(() => reject(new Error('Session check timeout')), 2000)
-    )
-    
-    const { data: { session }, error: sessionError } = await Promise.race([
-      sessionPromise,
-      sessionTimeoutPromise,
-    ]) as { data: { session: any }; error: any }
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     
     if (sessionError || !session?.user) {
       console.warn('[Bookings] No valid session, returning empty array')
@@ -68,17 +47,8 @@ export async function getUserBookings(
       return []
     }
 
-    // Check if session is expired
-    if (session.expires_at && session.expires_at < Date.now() / 1000) {
-      // Session expired - check if we have refresh token
-      if (!session.refresh_token) {
-        console.warn('[Bookings] Session expired and no refresh token, returning empty array')
-        return []
-      }
-      // Session expired but has refresh token - Supabase will try to auto-refresh
-      // But we'll proceed with query anyway (it might fail, but that's handled)
-      console.log('[Bookings] Session expired, but refresh token exists - proceeding with query')
-    }
+    // Supabase handles token refresh automatically - no need to check expiry
+    // If session exists, proceed with query (Supabase will auto-refresh if needed)
   } catch (sessionCheckError: any) {
     console.error('[Bookings] Error checking session (timeout or error):', sessionCheckError?.message || sessionCheckError)
     return []

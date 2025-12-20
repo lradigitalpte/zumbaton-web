@@ -5,11 +5,11 @@ import { supabase, getSupabaseClient } from '@/lib/supabase'
 import type { UserResponse, SignInResponse, SignUpResponse, SignInRequest, SignUpRequest } from '@/api/schemas'
 import { ApiResponse } from '@/lib/api-error'
 import type { User } from '@supabase/supabase-js'
-import { refreshSessionIfNeeded, isSessionValid } from '@/lib/session'
+import { isSessionValid } from '@/lib/session'
 
-const AUTH_TIMEOUT = 10000 // 10 seconds max for auth check
-const SIGN_IN_TIMEOUT = 10000 // 10 seconds max for sign-in operation (reduced from 15s)
-const SUPABASE_CALL_TIMEOUT = 8000 // 8 seconds max for Supabase API call
+const AUTH_TIMEOUT = 15000 // 15 seconds max for auth check (increased for production)
+const SIGN_IN_TIMEOUT = 15000 // 15 seconds max for sign-in operation
+const SUPABASE_CALL_TIMEOUT = 12000 // 12 seconds max for Supabase API call (increased for production network latency)
 
 // Helper function to add timeout to any promise
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
@@ -158,23 +158,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     )
 
-    // Set up periodic session refresh (every 5 minutes)
-    // Check session directly instead of using isAuthenticated state to avoid re-renders
-    const refreshInterval = setInterval(async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.user) {
-          await refreshSessionIfNeeded()
-        }
-      } catch (error) {
-        // Silently handle errors
-      }
-    }, 5 * 60 * 1000) // 5 minutes
+    // No need for manual refresh - Supabase handles auto-refresh automatically
+    // The auth state listener will update when tokens refresh
 
     return () => {
       isMounted = false
       subscription.unsubscribe()
-      clearInterval(refreshInterval)
     }
   }, []) // Empty dependency array - only run once on mount
 
@@ -194,7 +183,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         sessionResult = await Promise.race([sessionPromise, timeoutPromise]) as { data: { session: any }; error: any }
       } catch (timeoutError: any) {
-        console.warn('[Auth] Session check timed out, proceeding without session')
+        // Only log timeout in development - production networks can be slower
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[Auth] Session check timed out, proceeding without session')
+        }
         // On timeout, assume no session and continue
         setUser(null)
         setIsAuthenticated(false)
@@ -262,14 +254,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkSession = async (): Promise<boolean> => {
     try {
-      const isValid = await isSessionValid()
-      if (isValid) {
-        // Refresh session if needed
-        await refreshSessionIfNeeded()
-        // Re-initialize auth to update user state
+      // Just check if session exists - Supabase handles refresh automatically
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        // Re-initialize auth to update user state if needed
         await initializeAuth()
+        return true
       }
-      return isValid
+      return false
     } catch (error) {
       console.error('[Auth] Error checking session:', error)
       return false

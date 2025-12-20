@@ -1,6 +1,9 @@
 /**
  * Session management utilities for Supabase authentication
- * Handles session validation, refresh, and persistence
+ * 
+ * NOTE: Supabase handles token refresh automatically via autoRefreshToken: true
+ * We don't manually refresh tokens - Supabase does it in the background
+ * These utilities just check session state, not manage refresh
  */
 
 import { getSupabaseClient } from './supabase'
@@ -8,7 +11,8 @@ import type { Session } from '@supabase/supabase-js'
 
 /**
  * Check if a session exists and is valid
- * @returns Promise<boolean> - true if session is valid, false otherwise
+ * Supabase handles token refresh automatically, so if session exists, it's valid
+ * @returns Promise<boolean> - true if session exists, false otherwise
  */
 export async function isSessionValid(): Promise<boolean> {
   try {
@@ -19,15 +23,8 @@ export async function isSessionValid(): Promise<boolean> {
       return false
     }
     
-    // Check if access token is expired
-    // Note: Supabase auto-refreshes tokens, so we just check if session exists
-    // Don't manually refresh here to avoid errors when refresh token is missing
-    if (session.expires_at && session.expires_at < Date.now() / 1000) {
-      // Token is expired, but if refresh token exists, Supabase will auto-refresh
-      // Just return true if session exists (Supabase handles auto-refresh)
-      return !!session.refresh_token
-    }
-    
+    // Supabase handles token refresh automatically via autoRefreshToken: true
+    // If session exists, it's valid (Supabase will auto-refresh expired tokens in background)
     return true
   } catch (error) {
     console.error('[Session] Error checking session validity:', error)
