@@ -50,12 +50,19 @@ const Header = () => {
   };
 
   const usePathName = usePathname();
+  
+  // Pages with light backgrounds that need dark text on header
+  const lightBackgroundPages = ['/signin', '/signup', '/forgot-password', '/schedule', '/packages'];
+  const isLightBackgroundPage = lightBackgroundPages.some(path => usePathName?.startsWith(path));
+  
+  // Force sticky/background on light pages when not scrolled
+  const needsBackground = sticky || isLightBackgroundPage;
 
   return (
     <>
       <header
         className={`header top-0 left-0 z-40 w-full flex items-center transition-all duration-300 ${
-          sticky
+          needsBackground
             ? "dark:bg-gray-dark dark:shadow-sticky-dark shadow-sticky fixed z-9999 bg-white/95 backdrop-blur-sm"
             : "absolute bg-transparent pb-2 sm:pb-4"
         }`}
@@ -66,7 +73,7 @@ const Header = () => {
               <Link
                 href="/"
                 className={`header-logo block w-full ${
-                  sticky ? "py-2 sm:py-3 lg:py-2" : "py-3 sm:py-4 md:py-8"
+                  needsBackground ? "py-2 sm:py-3 lg:py-2" : "py-3 sm:py-4 md:py-8"
                 }`}
               >
                 {/* Zumbaton Logo */}
@@ -86,22 +93,22 @@ const Header = () => {
                 id="navbarToggler"
                 aria-label="Mobile Menu"
                 className={`ring-primary block rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 focus:ring-2 lg:hidden z-50 touch-center transition-colors ${
-                  sticky ? "bg-gray-100 dark:bg-gray-800" : ""
+                  needsBackground ? "bg-gray-100 dark:bg-gray-800" : ""
                 }`}
               >
                 <span
                   className={`relative my-1 sm:my-1.5 block h-0.5 w-6 sm:w-[30px] transition-all duration-300 ${
-                    sticky ? "bg-black dark:bg-white" : "bg-white"
+                    needsBackground ? "bg-black dark:bg-white" : "bg-white"
                   } ${navbarOpen ? "top-[7px] rotate-45" : ""}`}
                 />
                 <span
                   className={`relative my-1 sm:my-1.5 block h-0.5 w-6 sm:w-[30px] transition-all duration-300 ${
-                    sticky ? "bg-black dark:bg-white" : "bg-white"
+                    needsBackground ? "bg-black dark:bg-white" : "bg-white"
                   } ${navbarOpen ? "opacity-0" : ""}`}
                 />
                 <span
                   className={`relative my-1 sm:my-1.5 block h-0.5 w-6 sm:w-[30px] transition-all duration-300 ${
-                    sticky ? "bg-black dark:bg-white" : "bg-white"
+                    needsBackground ? "bg-black dark:bg-white" : "bg-white"
                   } ${navbarOpen ? "top-[-8px] -rotate-45" : ""}`}
                 />
               </button>
@@ -157,7 +164,7 @@ const Header = () => {
                             className={`flex items-center py-3 px-4 rounded-lg text-base font-medium transition-colors lg:py-6 lg:px-0 lg:rounded-none ${
                               usePathName === menuItem.path
                                 ? "text-amber-500 bg-amber-50 dark:bg-amber-900/20 lg:bg-transparent"
-                                : sticky
+                                : needsBackground
                                 ? "text-gray-700 hover:text-amber-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-amber-500 dark:hover:bg-gray-800 lg:hover:bg-transparent"
                                 : "text-gray-700 hover:text-amber-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-amber-500 dark:hover:bg-gray-800 lg:text-white/90 lg:hover:text-white lg:hover:bg-transparent"
                             }`}
@@ -170,7 +177,7 @@ const Header = () => {
                             <button
                               onClick={() => handleSubmenu(index)}
                               className={`w-full flex items-center justify-between py-3 px-4 rounded-lg text-base font-medium transition-colors lg:py-6 lg:px-0 lg:rounded-none ${
-                                sticky
+                                needsBackground
                                   ? "text-gray-700 hover:text-amber-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-amber-500 dark:hover:bg-gray-800 lg:hover:bg-transparent"
                                   : "text-gray-700 hover:text-amber-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-amber-500 dark:hover:bg-gray-800 lg:text-white/90 lg:hover:text-white lg:hover:bg-transparent"
                               }`}
@@ -222,7 +229,7 @@ const Header = () => {
                 <Link
                   href="/signin"
                   className={`px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 text-xs sm:text-sm md:text-base font-medium transition-colors ${
-                    sticky
+                    needsBackground
                       ? "text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
                       : "text-green-300 hover:text-white"
                   }`}
@@ -247,7 +254,7 @@ const Header = () => {
                 <Link
                   href="/signin"
                   className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-colors rounded-lg ${
-                    sticky
+                    needsBackground
                       ? "text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/20"
                       : "text-white/90 hover:text-white hover:bg-white/10"
                   }`}
