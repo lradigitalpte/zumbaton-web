@@ -131,9 +131,9 @@ function SigninPageContent() {
   // Show loading while checking for existing session
   if (isCheckingSession) {
     return (
-      <section className="relative z-10 overflow-hidden min-h-[calc(100vh-80px)] pt-8 sm:pt-12 lg:pt-16 pb-12 bg-gray-50 dark:bg-gray-950">
+      <section className="relative z-10 overflow-hidden min-h-screen pt-24 sm:pt-28 lg:pt-32 pb-12 bg-gray-50 dark:bg-gray-950">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+          <div className="flex justify-center items-center min-h-[60vh]">
             <div className="w-full max-w-5xl">
               <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-12 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
@@ -147,7 +147,7 @@ function SigninPageContent() {
 
   return (
     <>
-      <section className="relative z-10 overflow-hidden min-h-[calc(100vh-80px)] pt-8 sm:pt-12 lg:pt-16 pb-12 bg-gray-50 dark:bg-gray-950">
+      <section className="relative z-10 overflow-hidden min-h-screen pt-24 sm:pt-28 lg:pt-32 pb-12 bg-gray-50 dark:bg-gray-950">
         {/* Centered Card Container */}
         <div className="container mx-auto px-4 sm:px-6">
           <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
@@ -329,9 +329,9 @@ function SigninPageContent() {
 
 function SigninPageFallback() {
   return (
-    <section className="relative z-10 overflow-hidden min-h-[calc(100vh-80px)] pt-8 sm:pt-12 lg:pt-16 pb-12 bg-gray-50 dark:bg-gray-950">
+    <section className="relative z-10 overflow-hidden min-h-screen pt-24 sm:pt-28 lg:pt-32 pb-12 bg-gray-50 dark:bg-gray-950">
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+        <div className="flex justify-center items-center min-h-[60vh]">
           <div className="w-full max-w-5xl">
             <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-12 flex items-center justify-center">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>

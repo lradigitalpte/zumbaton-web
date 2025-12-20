@@ -1,13 +1,32 @@
 "use client";
 
-import { useAvailablePackages, usePurchasePackage } from "@/hooks/usePackages";
+import { useState } from "react";
+import { useAvailablePackages } from "@/hooks/usePackages";
+import PaymentModal from "@/components/Payment/PaymentModal";
+
+interface Package {
+  id: string;
+  name: string;
+  description?: string;
+  token_count: number;
+  price_cents: number;
+  currency: string;
+  validity_days: number;
+}
 
 const PackagesPage = () => {
   const { data: packages = [], isLoading } = useAvailablePackages();
-  const purchaseMutation = usePurchasePackage();
+  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-  const handlePurchase = (packageId: string) => {
-    purchaseMutation.mutate({ packageId });
+  const handlePurchase = (pkg: Package) => {
+    setSelectedPackage(pkg);
+    setIsPaymentModalOpen(true);
+  };
+
+  const handleClosePayment = () => {
+    setIsPaymentModalOpen(false);
+    setSelectedPackage(null);
   };
 
   const formatPrice = (priceCents: number, currency: string) => {
@@ -106,15 +125,14 @@ const PackagesPage = () => {
                 </ul>
 
                 <button
-                  onClick={() => handlePurchase(pkg.id)}
-                  disabled={purchaseMutation.isPending}
+                  onClick={() => handlePurchase(pkg)}
                   className={`w-full py-2 xl:py-3 rounded-lg xl:rounded-lg rounded-xl text-xs xl:text-base font-bold xl:font-medium transition-all active:scale-95 xl:active:scale-100 shadow-md xl:shadow-none ${
                     isPopular
                       ? "bg-primary text-white hover:bg-primary/90 shadow-primary/20 xl:shadow-none"
                       : "bg-gray-100 dark:bg-gray-800 text-dark dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
-                  } disabled:opacity-50`}
+                  }`}
                 >
-                  {purchaseMutation.isPending ? "Processing..." : "Purchase"}
+                  Purchase
                 </button>
               </div>
             );
@@ -158,6 +176,13 @@ const PackagesPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={handleClosePayment}
+        selectedPackage={selectedPackage}
+      />
     </div>
   );
 };
