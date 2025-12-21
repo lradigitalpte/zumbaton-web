@@ -196,9 +196,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           .insert({
             user_id: payment.user_id,
             package_id: payment.package_id,
-            payment_id: payment.id,
-            tokens_purchased: pkg.token_count,
+            payment_id: payment.id.toString(), // Convert UUID to string for VARCHAR(255) column
             tokens_remaining: pkg.token_count,
+            tokens_held: 0, // Initialize held tokens to 0
             expires_at: expiresAt.toISOString(),
             status: 'active',
           })
