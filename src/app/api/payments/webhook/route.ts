@@ -223,12 +223,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           .insert({
             user_id: payment.user_id,
             user_package_id: userPackage.id,
-            type: 'purchase',
-            amount: pkg.token_count,
-            balance_after: pkg.token_count,
+            transaction_type: 'purchase',
+            tokens_change: pkg.token_count, // positive = tokens added
+            tokens_before: 0, // Before purchase, user had 0 tokens from this package
+            tokens_after: pkg.token_count, // After purchase, user has all tokens
             description: `Purchased ${pkg.name}`,
-            reference_type: 'payment',
-            reference_id: payment.id,
           })
 
         if (txError) {
