@@ -147,11 +147,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsLoading(false)
           setLoadingTooLong(false)
         } else if (event === 'SIGNED_OUT') {
+          // Handle sign out - can be triggered by user action or refresh token failure
+          console.log('[Auth] User signed out (event:', event, ')')
           setUser(null)
           setIsAuthenticated(false)
           setIsLoading(false)
           setLoadingTooLong(false)
+          
+          // Clear any stale session data (idempotent - safe to call multiple times)
+          try {
+            await supabase.auth.signOut()
+          } catch (error) {
+            // Ignore errors during cleanup - session is already cleared
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('[Auth] Error during signout cleanup (ignored):', error)
+            }
+          }
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          // Token was successfully refreshed
+          const userResponse = await mapSupabaseUserToUserResponse(session.user)
+          setUser(userResponse)
+        } else if (event === 'USER_UPDATED' && session?.user) {
+          // User data was updated
           const userResponse = await mapSupabaseUserToUserResponse(session.user)
           setUser(userResponse)
         }
@@ -198,6 +215,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data: { session }, error } = sessionResult
 
       if (error) {
+        // Check if it's a refresh token error
+        const isRefreshTokenError = error?.message?.includes('refresh_token_not_found') || 
+                                     error?.message?.includes('Refresh Token Not Found') ||
+                                     error?.code === 'refresh_token_not_found'
+        
+        if (isRefreshTokenError) {
+          console.warn('[Auth] Refresh token not found - clearing session')
+          // Clear session and sign out to remove invalid tokens
+          setUser(null)
+          setIsAuthenticated(false)
+          setIsLoading(false)
+          isInitializingRef.current = false
+          
+          // Sign out to clear invalid tokens (idempotent)
+          supabase.auth.signOut().catch(() => {
+            // Ignore errors during cleanup
+          })
+          return
+        }
+        
         console.error('[Auth] Session error:', error)
         setUser(null)
         setIsAuthenticated(false)
@@ -255,13 +292,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkSession = async (): Promise<boolean> => {
     try {
       // Just check if session exists - Supabase handles refresh automatically
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) {
-        // Re-initialize auth to update user state if needed
-        await initializeAuth()
-        return true
+      // Don't call initializeAuth() here - it can cause refresh loops
+      // The auth state listener will update user state when tokens refresh
+      const { data: { session }, error } = await supabase.auth.getSession()
+      
+      if (error) {
+        // Check if it's a refresh token error
+        const isRefreshTokenError = error?.message?.includes('refresh_token_not_found') || 
+                                     error?.message?.includes('Refresh Token Not Found') ||
+                                     error?.code === 'refresh_token_not_found'
+        
+        if (isRefreshTokenError) {
+          console.warn('[Auth] Refresh token not found in checkSession')
+          // Clear session state
+          setUser(null)
+          setIsAuthenticated(false)
+          // Sign out to clear invalid tokens
+          supabase.auth.signOut().catch(() => {
+            // Ignore errors during cleanup
+          })
+        }
+        return false
       }
-      return false
+      
+      return !!session?.user
     } catch (error) {
       console.error('[Auth] Error checking session:', error)
       return false

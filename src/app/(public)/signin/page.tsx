@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/Toast";
@@ -19,6 +19,7 @@ function SigninPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const hasRedirectedRef = useRef(false); // Guard to prevent multiple redirects
 
   // Show success message if password reset was successful
   useEffect(() => {
@@ -29,25 +30,31 @@ function SigninPageContent() {
     }
   }, [searchParams, toast, router]);
 
-  // Check for existing session - Supabase handles token refresh automatically
+  // Consolidated redirect logic - prevents multiple redirects
   useEffect(() => {
-    let hasRedirected = false;
-    
+    // Guard: prevent multiple redirects
+    if (hasRedirectedRef.current) {
+      return;
+    }
+
+    const handleRedirect = () => {
+      if (hasRedirectedRef.current) return;
+      hasRedirectedRef.current = true;
+      router.replace("/dashboard");
+    };
+
+    // Case 1: Check existing session on mount
     const checkExistingSession = async () => {
       try {
-        // Simply check if session exists - Supabase manages refresh automatically
-        // No need to check localStorage or manually refresh
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (!error && session?.user) {
-          // Valid session found - redirect to dashboard immediately
           console.log('[Signin] Existing session found, redirecting to dashboard');
-          hasRedirected = true;
-          router.replace("/dashboard");
+          handleRedirect();
+          setIsCheckingSession(false);
           return;
         }
       } catch (error) {
-        // Error checking session - continue to show signin form
         if (process.env.NODE_ENV === 'development') {
           console.log('[Signin] Session check failed, showing signin form');
         }
@@ -56,22 +63,23 @@ function SigninPageContent() {
       }
     };
 
-    checkExistingSession();
-  }, [router]);
-
-  // Watch for authentication state change and redirect when authenticated
-  useEffect(() => {
+    // Case 2: User just authenticated (pendingRedirect flag)
     if (pendingRedirect && isAuthenticated) {
-      router.push("/dashboard");
+      handleRedirect();
+      return;
     }
-  }, [pendingRedirect, isAuthenticated, router]);
 
-  // Also redirect if user is already authenticated (e.g., navigating back to signin)
-  useEffect(() => {
+    // Case 3: User is already authenticated (e.g., navigating back to signin)
     if (!authLoading && !isCheckingSession && isAuthenticated) {
-      router.push("/dashboard");
+      handleRedirect();
+      return;
     }
-  }, [authLoading, isAuthenticated, isCheckingSession, router]);
+
+    // Initial session check
+    if (isCheckingSession) {
+      checkExistingSession();
+    }
+  }, [router, pendingRedirect, isAuthenticated, authLoading, isCheckingSession]);
 
   const handleGoogleSignIn = async () => {
     try {

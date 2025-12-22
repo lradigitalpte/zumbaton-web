@@ -24,28 +24,20 @@ export default function NotificationsPage() {
     // Fetch notifications for the user
     const fetchNotifications = async () => {
       try {
-        if (!user?.id) return;
-        
-        // Get the session token
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session?.access_token) {
-          console.error('Failed to get session token:', sessionError);
+        if (!user?.id) {
           setLoading(false);
           return;
         }
         
-        const response = await fetch('/api/notifications', {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-          },
+        // Use centralized API fetch with automatic token refresh
+        const { apiFetchJson } = await import('@/lib/api-fetch');
+        
+        const data = await apiFetchJson<{ notifications: Notification[] }>('/api/notifications', {
+          method: 'GET',
+          requireAuth: true,
         });
         
-        if (response.ok) {
-          const data = await response.json();
-          setNotifications(data.notifications || []);
-        } else {
-          console.error('Failed to fetch notifications:', response.statusText);
-        }
+        setNotifications(data.notifications || []);
       } catch (error) {
         console.error('Failed to fetch notifications:', error);
       } finally {
