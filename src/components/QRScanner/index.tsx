@@ -228,18 +228,21 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
         },
       };
 
-      const response = await fetch("/api/attendance/check-in", {
+      // Use centralized API fetch with automatic token refresh
+      const { apiFetchJson } = await import('@/lib/api-fetch');
+      
+      const result = await apiFetchJson<{
+        success: boolean;
+        data?: any;
+        error?: { code?: string; message?: string; action?: string; classId?: string; classTitle?: string };
+      }>("/api/attendance/check-in", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(requestBody),
+        requireAuth: true,
       });
 
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        const errorData = result.error || {};
+      if (!result.success) {
+        const errorData = (result.error || {}) as { code?: string; message?: string; action?: string; classId?: string; classTitle?: string };
         throw {
           code: errorData.code || "CHECK_IN_ERROR",
           message: errorData.message || "Failed to check in",

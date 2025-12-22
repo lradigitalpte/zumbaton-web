@@ -632,20 +632,23 @@ export async function bookClass(userId: string, classId: string): Promise<{
     // The admin API handles: single classes, recurring class sessions, and course packages
     const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
     try {
-      const response = await fetch(`${adminApiUrl}/api/bookings`, {
+      // Use centralized API fetch with automatic token refresh
+      const { apiFetchJson } = await import('@/lib/api-fetch')
+      
+      const result = await apiFetchJson<{
+        success: boolean;
+        data?: any;
+        error?: { code: string; message: string };
+      }>(`${adminApiUrl}/api/bookings`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           userId,
           classId,
         }),
+        requireAuth: true,
       })
 
-      const result = await response.json()
-
-      if (!response.ok || !result.success) {
+      if (!result.success) {
         return {
           success: false,
           message: result.error?.message || 'Failed to book class',
@@ -1022,20 +1025,23 @@ export async function cancelBooking(
   // Use admin API for cancellations to ensure notifications are triggered
   const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
   try {
-    const response = await fetch(`${adminApiUrl}/api/bookings/${bookingId}`, {
+    // Use centralized API fetch with automatic token refresh
+    const { apiFetchJson } = await import('@/lib/api-fetch')
+    
+    const result = await apiFetchJson<{
+      success: boolean;
+      data?: any;
+      error?: { code: string; message: string };
+    }>(`${adminApiUrl}/api/bookings/${bookingId}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({
         userId,
         reason,
       }),
+      requireAuth: true,
     })
 
-    const result = await response.json()
-
-    if (!response.ok || !result.success) {
+    if (!result.success) {
       return {
         success: false,
         message: result.error?.message || 'Failed to cancel booking',

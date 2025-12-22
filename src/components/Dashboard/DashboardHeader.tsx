@@ -57,22 +57,15 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        // Get the session token
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session?.access_token) {
-          console.error('Failed to get session token:', sessionError);
-          return;
-        }
+        // Use centralized API fetch with automatic token refresh
+        const { apiFetchJson } = await import('@/lib/api-fetch');
         
-        const response = await fetch('/api/notifications', {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-          },
+        const data = await apiFetchJson<{ notifications: any[] }>('/api/notifications', {
+          method: 'GET',
+          requireAuth: true,
         });
-        if (response.ok) {
-          const data = await response.json();
-          setNotifications((data.notifications || []).slice(0, 5)); // Show latest 5
-        }
+        
+        setNotifications((data.notifications || []).slice(0, 5)); // Show latest 5
       } catch (error) {
         console.error('Failed to fetch notifications:', error);
         setNotifications([]); // Show empty state if fetch fails

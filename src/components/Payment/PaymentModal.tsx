@@ -52,34 +52,27 @@ export default function PaymentModal({
     setError(null);
 
     try {
-      // Get auth token
-      const supabase = getSupabaseClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session?.access_token) {
-        throw new Error("Please log in to purchase");
-      }
-
-      // Create payment request
-      const response = await fetch("/api/payments", {
+      // Use centralized API fetch with automatic token refresh
+      const { apiFetchJson } = await import('@/lib/api-fetch');
+      
+      const data = await apiFetchJson<{
+        success: boolean;
+        paymentUrl: string;
+        paymentRequestId: string;
+        amount: number;
+        currency: string;
+      }>("/api/payments", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
         body: JSON.stringify({ packageId: selectedPackage.id }),
+        requireAuth: true,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to create payment");
-      }
-
       // Redirect to HitPay checkout
-      window.location.href = data.paymentUrl;
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+      } else {
+        throw new Error("No payment URL received");
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Payment failed";
       setError(message);

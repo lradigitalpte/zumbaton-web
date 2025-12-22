@@ -39,36 +39,22 @@ export function usePurchasePackage() {
 
   return useMutation({
     mutationFn: async ({ packageId }: { packageId: string }) => {
-      // Get auth token from Supabase
-      const supabase = getSupabaseClient()
-      const { data: { session } } = await supabase.auth.getSession()
+      // Use centralized API fetch with automatic token refresh
+      const { apiFetchJson } = await import('@/lib/api-fetch')
       
-      if (!session?.access_token) {
-        throw new Error('Please log in to purchase')
-      }
-
-      const response = await fetch('/api/payments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ packageId }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to create payment')
-      }
-
-      return data as { 
+      const data = await apiFetchJson<{ 
         success: boolean
         paymentUrl: string
         paymentRequestId: string
         amount: number
         currency: string
-      }
+      }>('/api/payments', {
+        method: 'POST',
+        body: JSON.stringify({ packageId }),
+        requireAuth: true,
+      })
+
+      return data
     },
     onSuccess: (data) => {
       // Invalidate queries

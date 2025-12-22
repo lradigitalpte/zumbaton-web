@@ -141,21 +141,25 @@ export function useBookBatchClasses() {
   return useMutation({
     mutationFn: async ({ userId, classIds }: { userId: string; classIds: string[] }) => {
       const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+      
+      // Use centralized API fetch with automatic token refresh
+      const { apiFetchJson } = await import('@/lib/api-fetch')
+      
       try {
-        const response = await fetch(`${adminApiUrl}/api/bookings`, {
+        const result = await apiFetchJson<{
+          success: boolean;
+          data?: any;
+          error?: { code: string; message: string };
+        }>(`${adminApiUrl}/api/bookings`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
           body: JSON.stringify({
             userId,
             classIds,
           }),
+          requireAuth: true,
         })
 
-        const result = await response.json()
-
-        if (!response.ok || !result.success) {
+        if (!result.success) {
           throw new Error(result.error?.message || 'Failed to batch book classes')
         }
 

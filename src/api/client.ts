@@ -156,6 +156,75 @@ export class ApiClient {
 
       if (!response.ok) {
         if (response.status === 401) {
+          // Attempt token refresh before calling onUnauthorized
+          if (typeof window !== 'undefined') {
+            try {
+              const { getSupabaseClient } = await import('@/lib/supabase')
+              const supabase = getSupabaseClient()
+              
+              // Attempt to refresh the session
+              const { data: { session: refreshedSession }, error: refreshError } = 
+                await supabase.auth.refreshSession()
+
+              if (!refreshError && refreshedSession?.access_token) {
+                // Retry request with new token
+                const retryHeaders: HeadersInit = {
+                  ...headers,
+                  'Authorization': `Bearer ${refreshedSession.access_token}`,
+                }
+
+                const retryResponse = await fetch(url, {
+                  ...fetchOptions,
+                  headers: retryHeaders,
+                })
+
+                if (retryResponse.ok) {
+                  // Retry succeeded - continue with retry response
+                  const retryContentType = retryResponse.headers.get('content-type')
+                  let retryBody: unknown
+
+                  if (retryContentType?.includes('application/json')) {
+                    retryBody = await retryResponse.json()
+                  } else {
+                    retryBody = await retryResponse.text()
+                  }
+
+                  // Validate retry response
+                  if (!Array.isArray(retryBody) && typeof retryBody === 'object' && retryBody !== null) {
+                    const retryBodyObj = retryBody as Record<string, unknown>
+                    if ('success' in retryBodyObj && !retryBodyObj.success && 'error' in retryBodyObj) {
+                      const retryErrorObj = retryBodyObj.error as Record<string, unknown> | undefined
+                      const retryErrorCode = (retryErrorObj?.code as string) || 'SERVER_ERROR'
+                      const validCodes = ['VALIDATION_ERROR', 'AUTHENTICATION_ERROR', 'AUTHORIZATION_ERROR', 'NOT_FOUND_ERROR', 'CONFLICT_ERROR', 'RATE_LIMIT_ERROR', 'SERVER_ERROR', 'NETWORK_ERROR', 'TIMEOUT_ERROR', 'UNKNOWN_ERROR']
+                      throw new ApiError(
+                        validCodes.includes(retryErrorCode) ? retryErrorCode as 'SERVER_ERROR' : 'SERVER_ERROR',
+                        (retryErrorObj?.message as string) || 'Server returned an error',
+                        retryResponse.status,
+                        retryErrorObj?.details
+                      )
+                    }
+                  }
+
+                  const retryValidationResult = options.schema.safeParse(retryBody)
+                  if (!retryValidationResult.success) {
+                    throw new ApiError(
+                      'VALIDATION_ERROR',
+                      'Response validation failed',
+                      500,
+                      retryValidationResult.error.errors
+                    )
+                  }
+
+                  return createSuccessResponse(retryValidationResult.data as T)
+                }
+              }
+            } catch (refreshErr) {
+              // Refresh failed - continue to onUnauthorized callback
+              console.warn('[API Client] Token refresh failed:', refreshErr)
+            }
+          }
+          
+          // Call onUnauthorized callback if refresh failed or not attempted
           this.onUnauthorized?.()
         }
 
