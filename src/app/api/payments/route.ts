@@ -121,8 +121,36 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    // Create HitPay payment request
-    const amount = (pkg.price_cents / 100).toFixed(2)
+    // Check for available promotions and apply discount
+    let finalAmountCents = pkg.price_cents
+    let discountPercent = 0
+    let discountAmountCents = 0
+    let promoType: 'referral' | 'early_bird' | null = null
+    let promoUsageId: string | null = null
+
+    // Check for available promotions and apply discount
+    try {
+      const { getPromoEligibility, applyDiscount } = await import('@/lib/promo-utils')
+      
+      const eligibility = await getPromoEligibility(user.id)
+      
+      // Auto-apply best available discount (early bird takes priority)
+      if (eligibility.maxDiscountPercent > 0) {
+        const selectedPromoType = eligibility.hasEarlyBirdDiscount ? 'early_bird' : 'referral'
+        const discount = await applyDiscount(user.id, pkg.price_cents, selectedPromoType)
+        
+        finalAmountCents = discount.finalAmountCents
+        discountPercent = discount.discountPercent
+        discountAmountCents = discount.discountAmountCents
+        promoType = discount.promoType
+      }
+    } catch (promoError) {
+      console.warn('[Payment] Failed to check promotions, proceeding without discount:', promoError)
+      // Continue without discount if promo service fails
+    }
+
+    // Create HitPay payment request with discounted amount
+    const amount = (finalAmountCents / 100).toFixed(2)
     const currency = pkg.currency || 'SGD'
     const referenceNumber = `${user.id}-${packageId}-${Date.now()}`
 
@@ -155,13 +183,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    // Save payment record to database
+    // Save payment record to database (with discount info)
     const { error: insertError } = await supabase
       .from('payments')
       .insert({
         user_id: user.id,
         package_id: packageId,
-        amount_cents: pkg.price_cents,
+        amount_cents: finalAmountCents, // Discounted amount
+        original_amount_cents: pkg.price_cents, // Original price
+        discount_percent: discountPercent,
+        discount_amount_cents: discountAmountCents,
+        promo_type: promoType,
         currency: currency,
         status: 'pending',
         provider: 'hitpay',
@@ -171,6 +203,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           package_name: pkg.name,
           token_count: pkg.token_count,
           reference_number: referenceNumber,
+          discount_applied: discountPercent > 0,
+          discount_percent: discountPercent,
         },
       })
 
@@ -181,12 +215,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     console.log(`[Payment] Created payment request for user ${user.id}, package ${pkg.name}`)
 
-    // Return the checkout URL
+    // Return the checkout URL with discount info
     return NextResponse.json({
       success: true,
       paymentUrl: hitpayData.url,
       paymentRequestId: hitpayData.id,
-      amount: pkg.price_cents,
+      amount: finalAmountCents,
+      originalAmount: pkg.price_cents,
+      discountPercent,
+      discountAmount: discountAmountCents,
+      promoType,
       currency: currency,
     })
   } catch (error) {

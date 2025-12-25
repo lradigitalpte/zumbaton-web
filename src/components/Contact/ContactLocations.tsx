@@ -6,10 +6,10 @@ import { useRef } from "react";
 const locations = [
   {
     city: "Singapore",
-    address: "Coming Soon - More details will be shared",
-    phone: "+65 6789-0123",
-    email: "info@zumbathon.com",
-    hours: "Open 7 days a week",
+    address: "2 JALAN KLAPA, #2-A, SINGAPORE 199314",
+    phone: "+65 8492 7347",
+    email: "info@zumbaton.sg",
+    hours: "Mon - Sun: 9AM - 9PM",
     lat: 1.3521,
     lng: 103.8198
   }
@@ -46,7 +46,7 @@ const ContactLocations = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="relative max-w-5xl mx-auto mb-12 overflow-hidden rounded-3xl shadow-2xl"
+            className="relative max-w-6xl mx-auto mb-12 overflow-hidden rounded-3xl shadow-2xl"
           >
             {/* Gradient Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-green-600 via-green-500 to-lime-500 dark:from-green-700 dark:via-green-600 dark:to-lime-600"></div>
@@ -59,7 +59,7 @@ const ContactLocations = () => {
 
             {/* Content */}
             <div className="relative z-10 p-8 md:p-12 lg:p-16">
-              <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
                 {/* Left Side - Location Info */}
                 <div className="text-white">
                   <div className="flex items-center gap-4 mb-6">
@@ -82,9 +82,9 @@ const ContactLocations = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                         </svg>
                       </div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-white/80 text-sm font-medium mb-1">Address</p>
-                        <p className="text-white text-base font-semibold">{location.address}</p>
+                        <p className="text-white text-sm md:text-base font-semibold leading-relaxed break-words">{location.address}</p>
                       </div>
                     </div>
 
@@ -95,9 +95,9 @@ const ContactLocations = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                           </svg>
                         </div>
-                        <div>
+                        <div className="flex-1 min-w-0">
                           <p className="text-white/80 text-xs font-medium mb-1">Phone</p>
-                          <a href={`tel:${location.phone.replace(/\D/g, '')}`} className="text-white text-sm font-semibold hover:text-lime-200 transition-colors">
+                          <a href={`tel:${location.phone.replace(/\D/g, '')}`} className="text-white text-sm font-semibold hover:text-lime-200 transition-colors break-words">
                             {location.phone}
                           </a>
                         </div>
@@ -109,7 +109,7 @@ const ContactLocations = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                           </svg>
                         </div>
-                        <div>
+                        <div className="flex-1 min-w-0">
                           <p className="text-white/80 text-xs font-medium mb-1">Email</p>
                           <a href={`mailto:${location.email}`} className="text-white text-sm font-semibold hover:text-lime-200 transition-colors break-all">
                             {location.email}
@@ -124,9 +124,9 @@ const ContactLocations = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-white/80 text-xs font-medium mb-1">Operating Hours</p>
-                        <p className="text-white text-sm font-semibold">{location.hours}</p>
+                        <p className="text-white text-sm font-semibold break-words">{location.hours}</p>
                       </div>
                     </div>
                   </div>
@@ -164,7 +164,7 @@ const ContactLocations = () => {
         >
           <div className="w-full h-96 sm:h-[500px] bg-gray-200 dark:bg-gray-800 relative">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.8152087374577!2d103.8198!3d1.3521!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31da190a7da0d701%3A0x1234567890!2sSingapore!5e0!3m2!1sen!2ssg!4v1234567890"
+              src="https://www.google.com/maps?q=2+Jalan+Klapa+Singapore+199314&output=embed&zoom=17"
               width="100%"
               height="100%"
               style={{ border: 0 }}
@@ -172,6 +172,7 @@ const ContactLocations = () => {
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               className="w-full h-full"
+              title="Zumbaton Location - 2 JALAN KLAPA, #2-A, SINGAPORE 199314"
             />
           </div>
         </motion.div>

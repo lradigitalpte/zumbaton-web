@@ -76,9 +76,9 @@ const MissionVision = () => {
               <h4 className="text-2xl font-bold text-white">Our Mission</h4>
             </div>
             <p className="text-white/90 leading-relaxed text-lg">
-              To empower individuals to live healthier, stronger, and more joyful lives through the transformative power of Zumba. 
-              We combine expert instruction, high-energy dance fitness, and a supportive community that makes every workout 
-              exciting, sustainable, and life-changing.
+              Zumbaton exists to make fitness fun, inclusive, and empowering through high-energy dance-based workouts. 
+              We aim to create a supportive community where people of all fitness levels can move with confidence, 
+              improve their physical and mental well-being, and enjoy every step of their fitness journey.
             </p>
           </motion.div>
 
@@ -100,9 +100,9 @@ const MissionVision = () => {
               <h4 className="text-2xl font-bold text-white">Our Vision</h4>
             </div>
             <p className="text-white/90 leading-relaxed text-lg">
-              To become the leading Zumba fitness destination that inspires people across the globe to pursue wellness, 
-              happiness, and balance in all aspects of life — both physically and mentally. We envision a world where 
-              dance and fitness unite to create healthier, happier communities.
+              To become a leading dance-fitness community that inspires people to move freely, live actively, and embrace a healthier lifestyle 
+              — not just as a workout, but as a way of life. Zumbaton envisions a world where fitness is joyful, accessible, 
+              and driven by connection, rhythm, and self-expression.
             </p>
           </motion.div>
         </div>

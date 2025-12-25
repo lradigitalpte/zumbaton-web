@@ -22,7 +22,7 @@ export default function Video() {
         <div className="container relative z-10">
           <SectionTitle
             title="Feel the Zumba Energy"
-            paragraph="See the rhythm, color, and community that make our sessions addictive. One minute of real class energy—imagine yourself dancing with us."
+            paragraph="See the rhythm, color, and community that make our sessions so much fun. One minute of real class energy — imagine yourself dancing with us. One beat. One step. One happy you."
             center
             mb="80px"
           />

@@ -40,19 +40,19 @@ const ContactCTA = () => {
           className="max-w-3xl mx-auto text-center"
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
-            Ready to Start Your <span className="text-green-400">Dance Journey?</span>
+            Ready to Start <span className="text-green-400">Dancing?</span>
           </h2>
           <p className="text-lg text-gray-300 mb-8 max-w-xl mx-auto">
-            Try your first class free! No commitment, just pure fun and fitness. 
-            Come experience why thousands love Zumbaton.
+            Find your Zumba class and join our vibrant community. 
+            One beat. One step. One happy you.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/pricing"
+              href="/packages"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-all duration-300 hover:scale-105"
             >
-              View Membership Plans
+              View Packages
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>

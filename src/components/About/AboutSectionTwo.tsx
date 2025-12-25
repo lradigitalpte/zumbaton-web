@@ -63,7 +63,7 @@ const AboutSectionTwo = () => {
             Why Choose Us
           </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
-            Build Strength, Endurance, and Confidence with Us
+            Community. Music. Movement.
           </h2>
         </motion.div>
 
@@ -123,10 +123,10 @@ const AboutSectionTwo = () => {
               </div>
               <div>
                 <h4 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 text-white">
-                  Certified Zumba Instructors
+                  Friendly, Supportive Instructors
                 </h4>
                 <p className="text-xs sm:text-sm md:text-base text-white/90 leading-relaxed">
-                  Train with professionals who guide your every move — ensuring proper form, safety, and faster results for your fitness goals.
+                  Dance with instructors who make every class feel like your own. No certified pressure — just pure dance joy. Move at your pace, smile through every step.
                 </p>
               </div>
             </motion.div>
@@ -143,10 +143,10 @@ const AboutSectionTwo = () => {
               </div>
               <div>
                 <h4 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 text-white">
-                  High-Energy Classes
+                  Feel-Good Classes for Everyone
                 </h4>
                 <p className="text-xs sm:text-sm md:text-base text-white/90 leading-relaxed">
-                  Experience dynamic Zumba classes that combine Latin rhythms with easy-to-follow dance moves, making every workout effective, fun, and challenging.
+                  Find a Zumba class that feels like your own. We have Zumba step classes for everyone. Not about pushing limits — just joyful movement with good energy.
                 </p>
               </div>
             </motion.div>
@@ -163,10 +163,10 @@ const AboutSectionTwo = () => {
               </div>
               <div>
                 <h4 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 text-white">
-                  Motivating Environment
+                  A Community That Transforms Lives
                 </h4>
                 <p className="text-xs sm:text-sm md:text-base text-white/90 leading-relaxed">
-                  Join a supportive community that inspires you to stay consistent, push your limits, and celebrate every milestone along the way.
+                  Join a vibrant community transforming lives one Zumba step at a time. Dance happy, get fit naturally. Not fitness pressure — fitness pleasure.
                 </p>
               </div>
             </motion.div>

@@ -7,37 +7,37 @@ import { motion, useScroll, useTransform } from "framer-motion";
 const testimonials = [
   {
     id: 1,
-    quote: "The instructors pushed me beyond my limits while keeping every workout fun and motivating.",
+    quote: "I found a Zumba class that feels like my own! No pressure, just pure dance joy. I smile through every step.",
     author: "Anna L.",
     location: "Paris",
   },
   {
     id: 2,
-    quote: "I've gained strength, lost weight, and found a community that truly inspires me.",
+    quote: "Dance first, fitness follows — that's exactly what I needed. The community here is transforming my life one Zumba step at a time.",
     author: "Michael H.",
     location: "Toronto",
   },
   {
     id: 3,
-    quote: "The classes are top-notch. Every session leaves me feeling stronger and more energized.",
+    quote: "Not hardcore training, just joyful movement with good energy. Every class leaves me feeling happy and alive.",
     author: "Nadia R.",
     location: "Dubai",
   },
   {
     id: 4,
-    quote: "Joining Zumbaton completely changed my lifestyle. It's the best decision I ever made.",
+    quote: "One beat, one step, one happy me! This is not about perfection — it's about moving, dancing, and feeling alive.",
     author: "Tom S.",
     location: "Los Angeles",
   },
   {
     id: 5,
-    quote: "From the group classes to the amazing instructors, everything is professional and motivating.",
+    quote: "Beginner-friendly, feel-good classes for all. I move at my pace and love every moment. No stress, just fun!",
     author: "Elise K.",
     location: "Amsterdam",
   },
   {
     id: 6,
-    quote: "Amazing atmosphere, skilled instructors, and results I never thought possible.",
+    quote: "Fitness is a happy side effect! I dance happy and get fit naturally. Not fitness pressure — fitness pleasure.",
     author: "David M.",
     location: "Singapore",
   },

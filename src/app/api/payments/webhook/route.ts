@@ -217,6 +217,48 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
         console.log('[Webhook] Created user package:', userPackage?.id)
 
+        // Record promo usage if discount was applied
+        if (payment.promo_type && payment.discount_percent && payment.discount_percent > 0) {
+          const { error: promoError } = await supabase
+            .from('promo_usage')
+            .insert({
+              user_id: payment.user_id,
+              promo_type: payment.promo_type,
+              discount_percent: payment.discount_percent,
+              discount_amount_cents: payment.discount_amount_cents || 0,
+              package_id: payment.package_id,
+              payment_id: payment.id,
+            })
+
+          if (promoError) {
+            console.error('[Webhook] Failed to record promo usage:', promoError)
+            // Don't fail the webhook - payment succeeded
+          } else {
+            console.log('[Webhook] Recorded promo usage:', payment.promo_type, payment.discount_percent + '%')
+
+            // If referral discount was used, update referral status
+            if (payment.promo_type === 'referral') {
+              const { data: referral } = await supabase
+                .from('referrals')
+                .select('id')
+                .eq('referred_id', payment.user_id)
+                .in('status', ['pending', 'completed'])
+                .single()
+
+              if (referral) {
+                await supabase
+                  .from('referrals')
+                  .update({
+                    status: 'used',
+                    discount_used_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq('id', referral.id)
+              }
+            }
+          }
+        }
+
         // Create token transaction
         const { error: txError } = await supabase
           .from('token_transactions')

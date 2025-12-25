@@ -69,11 +69,11 @@ const HomeContact = () => {
             Get In Touch
           </span>
           <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4">
-            Ready to Start Your <span className="text-green-600">Fitness Journey?</span>
+            Ready to Start <span className="text-green-600">Dancing?</span>
           </h2>
           <p className="text-sm sm:text-base text-gray-600 dark:text-white/70 max-w-2xl mx-auto">
-            Have questions about our classes, memberships, or anything else? 
-            We&apos;re here to help you every step of the way.
+            Have questions about our classes, packages, or anything else? 
+            We&apos;re here to help you every step of the way. Join our community and start your Zumbaton journey today!
           </p>
         </motion.div>
 
@@ -101,8 +101,8 @@ const HomeContact = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-1">Call Us</h4>
-                    <a href="tel:+1800555ZUMBA" className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-semibold hover:underline break-all">
-                      +1 (800) 555-ZUMBA
+                    <a href="tel:+6584927347" className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-semibold hover:underline break-all">
+                      +65 8492 7347
                     </a>
                   </div>
                 </div>
@@ -116,8 +116,8 @@ const HomeContact = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-1">Email Us</h4>
-                    <a href="mailto:hello@zumbaton.com" className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-semibold hover:underline break-all">
-                      hello@zumbaton.com
+                    <a href="mailto:info@zumbaton.sg" className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-semibold hover:underline break-all">
+                      info@zumbaton.sg
                     </a>
                   </div>
                 </div>
@@ -131,7 +131,7 @@ const HomeContact = () => {
                   </div>
                   <div>
                     <h4 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-1">Business Hours</h4>
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Mon - Sun: 6AM - 10PM</p>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Mon - Sun: 9AM - 9PM</p>
                   </div>
                 </div>
               </div>
@@ -167,7 +167,7 @@ const HomeContact = () => {
                   Join Our Community
                 </h3>
                 <p className="text-sm sm:text-base text-gray-600 dark:text-white/70">
-                  Get exclusive access to new classes, special events, member-only offers, and fitness tips delivered to your inbox.
+                  Get exclusive access to new classes, special events, member-only offers, and dance tips delivered to your inbox. Be part of a community transforming lives one Zumba step at a time.
                 </p>
               </div>
 

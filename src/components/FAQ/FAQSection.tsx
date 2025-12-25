@@ -7,87 +7,77 @@ import { useRef } from "react";
 // FAQ Data
 const faqCategories = [
   {
-    id: "membership",
-    name: "Membership & Plans",
+    id: "about",
+    name: "About the Classes",
     questions: [
       {
-        q: "What token packages do you offer?",
-        a: "We offer flexible token packages starting from 5 tokens up to 50-token bundles. Tokens can be used for any class, any time, with no expiration. The more tokens you buy, the better the value."
+        q: "What is Zumbaton (ZT)?",
+        a: "Zumbaton is a high-energy dance fitness program inspired by Zumba-style movements, combining cardio, rhythm, and fun choreography to help you stay active while enjoying the music."
       },
       {
-        q: "How do I purchase tokens?",
-        a: "You can purchase tokens directly through the Zumbaton website portal or at the studio. First-time members get a welcome discount. Tokens are instantly added to your account."
+        q: "Do I need dance experience to join?",
+        a: "Not at all! Zumbaton classes are designed for everyone — beginners to experienced dancers. Just follow along and move at your own pace."
       },
       {
-        q: "Can I share my tokens with family or friends?",
-        a: "Tokens are linked to your personal account. However, we offer family packages where family members can have their own accounts and get discounted rates together."
-      },
-      {
-        q: "Can I pause my membership or tokens?",
-        a: "Token packages have an expiration date listed at purchase, but once you book a class with a token, that token doesn't expire. You can use booked tokens anytime, even after your package expires!"
-      },
-      {
-        q: "Do you have referral bonuses?",
-        a: "Yes! Refer a friend and both of you get bonus tokens. Share your referral code in the app and start earning rewards!"
+        q: "What kind of music is used in ZT classes?",
+        a: "Our classes feature a dynamic mix of music styles including K-pop, EDM, Latin, Pop, Bollywood, Hip-hop, and global beats, keeping every workout energetic, fun, and exciting."
       }
     ]
   },
   {
-    id: "classes",
-    name: "Classes & Schedule",
+    id: "fitness",
+    name: "Fitness & Requirements",
     questions: [
       {
-        q: "What types of Zumba classes do you offer?",
-        a: "We offer Zumba Fitness, Zumba Toning, Zumba Gold (low-impact), and Aqua Zumba. Check our schedule in the app to see class times and find what works best for you."
+        q: "What fitness level is required?",
+        a: "All fitness levels are welcome. You can modify movements to suit your comfort and ability."
       },
       {
-        q: "How do I book a class?",
-        a: "Simply open the Zumbaton web portal, browse available classes, and tap 'Book Class'. Use tokens to reserve your spot. Cancel up to 2 hours before class if plans change."
+        q: "Is Zumbaton suitable for beginners?",
+        a: "Yes! Beginners are encouraged to join. Our instructors guide you through the routines and ensure a welcoming environment."
       },
       {
-        q: "Do I need dance experience?",
-        a: "Not at all! Zumba is for everyone. Our certified instructors provide modifications for all levels. Come as you are and have fun!"
-      },
-      {
-        q: "Can I try a class for free?",
-        a: "Yes! New members get a free trial class. No token needed. Just sign up in the app and choose your first class."
-      },
-      {
-        q: "What if I need to cancel my booking?",
-        a: "You can cancel from the app up to 2 hours before class. Your token will be returned to your account. No cancellation fees!"
+        q: "What should I wear or bring?",
+        a: "Comfortable workout clothing, supportive sneakers, a towel, and water."
       }
     ]
   },
   {
-    id: "account",
-    name: "Account & Support",
+    id: "signups",
+    name: "Sign-Ups & Packages",
     questions: [
       {
-        q: "How do I reset my password?",
-        a: "Tap 'Forgot Password' on the login screen and enter your email. You'll receive a reset link. Create a new password and you're back in!"
+        q: "How do I sign up for classes?",
+        a: "You can sign up via our website or social media platforms. Class schedules and booking information are available on our website."
       },
       {
-        q: "How do I view my class history?",
-        a: "Go to 'My Profile' → 'Class History' to see all your past and upcoming classes. You can also see your progress and favorite instructors."
+        q: "Are there packages available?",
+        a: "We offer single-class passes and multi-class packages to suit different lifestyles. You can refer to our packages tab on our website or our Instagram story highlights for more information."
       },
       {
-        q: "Can I update my payment method?",
-        a: "Yes! Go to 'Settings' → 'Payment Methods' to add or update your card. Your information is secure and encrypted."
+        q: "Can I cancel or reschedule a class?",
+        a: "Yes, cancellations and rescheduling are allowed within the stated policy timeframe (details provided during booking)."
+      }
+    ]
+  },
+  {
+    id: "community",
+    name: "Community & Safety",
+    questions: [
+      {
+        q: "Is Zumbaton suitable for all ages?",
+        a: "Most classes are suitable for adults of all ages. Age-specific classes or guidelines will be stated where applicable. For example: Kids will have to be supervised by a guardian/parent."
       },
       {
-        q: "How do I contact support?",
-        a: "Tap the help icon in the app or email us at hello@zumbaton.com. Our team responds within 24 hours."
-      },
-      {
-        q: "Is my personal data safe?",
-        a: "Absolutely! We use industry-standard encryption to protect your data. Read our Privacy Policy in the app for details."
+        q: "What if I have an injury or medical condition?",
+        a: "Please consult your doctor before joining and inform the instructor prior to class so modifications can be suggested."
       }
     ]
   }
 ];
 
 const FAQSection = () => {
-  const [activeCategory, setActiveCategory] = useState("membership");
+  const [activeCategory, setActiveCategory] = useState("signups");
   const [openQuestion, setOpenQuestion] = useState<string | null>(null);
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-50px" });

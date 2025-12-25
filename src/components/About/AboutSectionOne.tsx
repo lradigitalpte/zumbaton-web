@@ -134,7 +134,7 @@ const AboutSectionOne = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-gray-900 dark:text-white leading-tight"
             >
-              Push Beyond Limits And Unlock Your Strength
+              Your Pace. Your Dance. Your Zumbaton.
             </motion.h2>
             <motion.p
               ref={textRef}
@@ -143,7 +143,7 @@ const AboutSectionOne = () => {
               transition={{ duration: 0.6, delay: 0.4 }}
               className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-300 mb-6 sm:mb-8 leading-relaxed"
             >
-              Step into a fitness experience designed to challenge your body and sharpen your mind. With expert Zumba instructors, high-energy classes, and programs built for all levels, you'll gain the power, confidence, and results you've always wanted. Every dance moves you closer to becoming your strongest self.
+              No strict rules. No intimidating workouts. Just music, movement, and motivation. Find your Zumba vibe with us — beginner-friendly, feel-good classes for all. Join a community where dance comes first and fitness follows naturally. Every step is a celebration, every beat brings joy.
             </motion.p>
             <motion.div
               ref={buttonRef}

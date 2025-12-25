@@ -23,10 +23,10 @@ const ScheduleCTA = () => {
             className="text-center md:text-left"
           >
             <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2">
-              Ready to join the party?
+              Ready to Start Dancing?
             </h3>
-            <p className="text-white/80 text-lg">
-              Book your first Zumba class today and feel the rhythm!
+            <p className="text-white/90 text-lg">
+              Join now and find your Zumba class. One beat. One step. One happy you!
             </p>
           </motion.div>
 

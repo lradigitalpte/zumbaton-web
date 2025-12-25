@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import ThemeToggler from "./ThemeToggler";
 import menuData from "./menuData";
+import WhatsAppLeadModal from "@/components/WhatsApp/WhatsAppLeadModal";
 
 const Header = () => {
   // Navbar toggle
@@ -48,6 +49,9 @@ const Header = () => {
       setOpenIndex(index);
     }
   };
+
+  // WhatsApp Lead Modal
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
 
   const usePathName = usePathname();
   
@@ -236,8 +240,11 @@ const Header = () => {
                 >
                   Sign In
                 </Link>
-                <Link
-                  href="/signup"
+                <button
+                  onClick={() => {
+                    setShowWhatsAppModal(true);
+                    setNavbarOpen(false);
+                  }}
                   className={`rounded-lg px-5 sm:px-6 md:px-7 py-2 sm:py-2.5 text-xs sm:text-sm md:text-base font-semibold text-white shadow-md transition-colors ${
                     sticky
                       ? "bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
@@ -245,7 +252,7 @@ const Header = () => {
                   }`}
                 >
                   Join Now
-                </Link>
+                </button>
                 <div className="flex-shrink-0 relative z-50 ml-2 sm:ml-3">
                   <ThemeToggler />
                 </div>
@@ -261,8 +268,11 @@ const Header = () => {
                 >
                   Sign In
                 </Link>
-                <Link
-                  href="/signup"
+                <button
+                  onClick={() => {
+                    setShowWhatsAppModal(true);
+                    setNavbarOpen(false);
+                  }}
                   className={`rounded-lg px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white shadow-md transition-colors ${
                     sticky
                       ? "bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
@@ -270,7 +280,7 @@ const Header = () => {
                   }`}
                 >
                   Join Now
-                </Link>
+                </button>
                 <div className="flex-shrink-0 relative z-50">
                   <ThemeToggler />
                 </div>
@@ -278,6 +288,12 @@ const Header = () => {
           </div>
         </div>
       </header>
+
+      {/* WhatsApp Lead Modal */}
+      <WhatsAppLeadModal
+        isOpen={showWhatsAppModal}
+        onClose={() => setShowWhatsAppModal(false)}
+      />
     </>
   );
 };

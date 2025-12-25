@@ -5,7 +5,8 @@ import SectionTitle from "../Common/SectionTitle";
 import OfferList from "./OfferList";
 import PricingBox from "./PricingBox";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
+import { useAvailablePackages } from "@/hooks/usePackages";
 
 const Pricing = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -16,6 +17,31 @@ const Pricing = () => {
   
   // Background moves slower (parallax)
   const backgroundY = useTransform(scrollYProgress, [0, 1], [0, 150]);
+
+  // Fetch adult packages (for landing page, we show adults only)
+  const { data: allPackages = [], isLoading } = useAvailablePackages('adults');
+
+  // Get first 3 packages for featured display
+  const featuredPackages = useMemo(() => {
+    return allPackages.slice(0, 3);
+  }, [allPackages]);
+
+  const formatPrice = (priceCents: number, currency: string) => {
+    return new Intl.NumberFormat("en-SG", {
+      style: "currency",
+      currency: currency || "SGD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(priceCents / 100);
+  };
+
+  const formatValidity = (days: number) => {
+    if (days === 7) return "1 week";
+    if (days === 30) return "1 month";
+    if (days === 60) return "2 months";
+    if (days === 90) return "3 months";
+    return `${days} days`;
+  };
 
   return (
     <section ref={sectionRef} id="pricing" className="relative text-gray-900 dark:text-white py-12 sm:py-16 md:py-20 lg:py-28 overflow-hidden bg-gray-50 dark:bg-gray-900">
@@ -44,70 +70,61 @@ const Pricing = () => {
           </div>
           <SectionTitle
             title="Choose the Perfect Plan That Truly Fits You"
-            paragraph="Flexible token packages for every lifestyle. Pick a pack, join the rhythm, and use tokens whenever you want."
+            paragraph="Flexible token packages for every lifestyle. Pick a pack, join the rhythm, and dance whenever you want. Your pace. Your dance. Your Zumbaton."
             center
             width="720px"
           />
         </div>
 
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
+          </div>
+        ) : featuredPackages.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600 dark:text-gray-400">No packages available at the moment. Check back soon!</p>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 gap-4 sm:gap-6 md:gap-8 lg:gap-x-8 md:grid-cols-2 lg:grid-cols-3">
-          <PricingBox
-            packageName="Starter Pack"
-            price="45"
-            duration="pack"
-            subtitle="Perfect for trying out our classes and finding your rhythm."
-          >
-            <OfferList text="5 Class Tokens" status="active" />
-            <OfferList text="Valid for 30 days" status="active" />
-            <OfferList text="All class types included" status="active" />
-            <OfferList text="Easy online booking" status="active" />
-            <OfferList text="Priority booking" status="inactive" />
-            <OfferList text="Guest passes" status="inactive" />
-          </PricingBox>
-
-          <div className="relative">
+            {featuredPackages.map((pkg, index) => {
+              const isPopular = index === Math.floor(featuredPackages.length / 2);
+              const priceFormatted = formatPrice(pkg.price_cents, pkg.currency);
+              
+              return (
+                <div key={pkg.id} className={isPopular ? "relative" : ""}>
+                  {isPopular && (
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-600 dark:bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
               Most Popular
             </div>
+                  )}
             <PricingBox
-              packageName="Fitness Enthusiast"
-              price="80"
+                    packageName={pkg.name}
+                    price={priceFormatted}
               duration="pack"
-              subtitle="Our most popular package for regular dancers who love variety."
+                    subtitle={pkg.description || `${pkg.token_count} class tokens - Perfect for finding your Zumba vibe.`}
             >
-              <OfferList text="10 Class Tokens" status="active" />
-              <OfferList text="Valid for 60 days" status="active" />
+                    <OfferList text={`${pkg.token_count} Class ${pkg.token_count === 1 ? 'Token' : 'Tokens'}`} status="active" />
+                    <OfferList text={`Valid for ${formatValidity(pkg.validity_days)}`} status="active" />
               <OfferList text="All class types included" status="active" />
               <OfferList text="Easy online booking" status="active" />
-              <OfferList text="Priority booking" status="active" />
-              <OfferList text="1 guest pass included" status="active" />
+                    <OfferList text="Priority booking" status={isPopular ? "active" : "inactive"} />
+                    <OfferList text={isPopular ? "1 guest pass included" : "Guest passes"} status={isPopular ? "active" : "inactive"} />
             </PricingBox>
+                </div>
+              );
+            })}
           </div>
-
-          <PricingBox
-            packageName="Unlimited Energy"
-            price="140"
-            duration="pack"
-            subtitle="Best value for dedicated fitness lovers who dance multiple times per week."
-          >
-            <OfferList text="20 Class Tokens" status="active" />
-            <OfferList text="Valid for 90 days" status="active" />
-            <OfferList text="All class types included" status="active" />
-            <OfferList text="Easy online booking" status="active" />
-            <OfferList text="Priority booking" status="active" />
-            <OfferList text="2 guest passes + free merchandise" status="active" />
-          </PricingBox>
-        </div>
+        )}
 
         <div className="mt-10 sm:mt-12 text-center px-3 sm:px-0">
           <p className="text-gray-700 dark:text-white/80 mb-3 sm:mb-4 text-sm sm:text-base">
-            Ready to start your fitness journey?{" "}
-            <Link href="/signup" className="text-green-600 dark:text-green-400 hover:underline font-semibold">
-              Sign up now
+            Ready to start dancing?{" "}
+            <Link href="/pricing" className="text-green-600 dark:text-green-400 hover:underline font-semibold">
+              View all packages
             </Link>{" "}
             or{" "}
-            <Link href="/classes" className="text-green-600 dark:text-green-400 hover:underline font-semibold">
-              browse our classes
+            <Link href="/signup" className="text-green-600 dark:text-green-400 hover:underline font-semibold">
+              sign up now
             </Link>
             .
           </p>

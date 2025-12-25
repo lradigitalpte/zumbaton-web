@@ -18,11 +18,12 @@ export const packageKeys = {
 
 /**
  * Hook to fetch available packages
+ * @param packageType - Optional filter by 'adults' or 'kids'
  */
-export function useAvailablePackages() {
+export function useAvailablePackages(packageType?: 'adults' | 'kids') {
   return useQuery({
-    queryKey: packageKeys.list(),
-    queryFn: getAvailablePackages,
+    queryKey: [...packageKeys.list(), packageType || 'all'],
+    queryFn: () => getAvailablePackages(packageType),
     staleTime: 10 * 60 * 1000, // 10 minutes (packages rarely change)
     gcTime: 30 * 60 * 1000, // 30 minutes - keep packages cached longer
     // Uses global retry logic from providers.tsx (max 2 retries, circuit breaker)

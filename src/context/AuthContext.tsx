@@ -586,6 +586,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(userResponse)
           setIsAuthenticated(true)
 
+          // Process referral code if provided
+          if (data.referralCode && data.referralCode.trim()) {
+            try {
+              await fetch('/api/referrals/process', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  userId: userResponse.id,
+                  referralCode: data.referralCode.trim(),
+                }),
+              })
+            } catch (referralError) {
+              console.error('[Auth] Failed to process referral code:', referralError)
+              // Don't fail signup if referral processing fails
+            }
+          }
+
           // Send welcome notification via admin API
           try {
             const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
