@@ -9,8 +9,8 @@ import Video from "@/components/Video";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Zumbaton - Book Your Fitness Classes",
-  description: "Book and manage your fitness classes with Zumbaton. Join our vibrant community and transform your fitness journey.",
+  title: "Zumbaton - Dance Happy, Get Fit Naturally",
+  description: "Fun into fitness with Zumbaton! Not hardcore training — just joyful movement with good energy. Join our community transforming lives one Zumba step at a time.",
 };
 
 export default function Home() {

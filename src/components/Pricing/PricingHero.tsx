@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import Link from "next/link";
 
-const ScheduleHero = () => {
+const PricingHero = () => {
   const sectionRef = useRef<HTMLElement>(null);
   
   const { scrollYProgress } = useScroll({
@@ -46,10 +46,10 @@ const ScheduleHero = () => {
           transition={{ duration: 0.8, delay: 0.2 }}
         >
           <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-white mb-4 md:mb-6">
-            Find Zumba Class of Your Own
+            Pricing & Packages
           </h1>
           <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-6 max-w-3xl mx-auto px-4">
-            We have Zumba step class for everyone. Join now — this is the schedule.
+            Choose the perfect package that fits your schedule. Your pace. Your dance. Your Zumbaton.
           </p>
           
           {/* Breadcrumb */}
@@ -58,7 +58,7 @@ const ScheduleHero = () => {
               Home
             </Link>
             <span className="text-green-500">/</span>
-            <span className="text-green-400">Schedule</span>
+            <span className="text-green-400">Pricing</span>
           </nav>
         </motion.div>
       </motion.div>
@@ -69,4 +69,5 @@ const ScheduleHero = () => {
   );
 };
 
-export default ScheduleHero;
+export default PricingHero;
+

@@ -9,28 +9,28 @@ import { motion } from "framer-motion";
       id: 1,
       type: "image",
       image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=2070",
-      headline: "Transform Your Body with",
+      headline: "Fun into Fitness with",
       highlight: "Zumbaton",
       description:
-        "World-class Zumba training with expert instructors. Achieve your fitness goals through high-energy dance classes.",
+        "Not world-class training. No pushing beyond your limits. Fitness is a happy side effect! Move at your pace. Smile through every step.",
     },
     {
       id: 2,
       type: "image",
       image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=2070",
-      headline: "Dance Your Way to",
-      highlight: "Fitness & Fun",
+      headline: "Dance First",
+      highlight: "Fitness Follows",
       description:
-        "Join our vibrant community. From beginners to pros, everyone is welcome to experience the joy of movement.",
+        "No pressure, no stress. Not hardcore training. Just joyful movement with good energy. One Zumba step at a time, we're building a healthier, happier community.",
     },
     {
       id: 3,
       type: "image",
       image: "https://images.unsplash.com/photo-1534367507873-d2d7e24c797f?q=80&w=2070",
-      headline: "Feel the Rhythm",
-      highlight: "Move with Energy",
+      headline: "One Beat. One Step.",
+      highlight: "One Happy You",
       description:
-        "Experience the power of dance fitness. Every class is a celebration of movement, music, and motivation.",
+        "This is not about perfection. This is not about pushing harder. This is about moving, dancing, and feeling alive. Join a community transforming lives one Zumba step at a time.",
     },
   ];
 
@@ -140,8 +140,11 @@ const Hero = () => {
                 {slide.headline}{" "}
                 <span className="text-green-400 dark:text-green-500">{slide.highlight}</span>
               </h1>
-              <p className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl mb-5 sm:mb-7 md:mb-10 lg:mb-12 text-white/90 max-w-3xl mx-auto leading-relaxed">
+              <p className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl mb-3 sm:mb-5 md:mb-7 lg:mb-8 text-white/90 max-w-3xl mx-auto leading-relaxed">
                 {slide.description}
+              </p>
+              <p className="text-xs xs:text-sm sm:text-base md:text-lg font-bold text-green-400 dark:text-green-500 mb-5 sm:mb-7 md:mb-10 lg:mb-12 uppercase tracking-wider">
+                Step it up!
               </p>
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 lg:gap-6 justify-center items-center w-full max-w-md sm:max-w-none">
                 <Link

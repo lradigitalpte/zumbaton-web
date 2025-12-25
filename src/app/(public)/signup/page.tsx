@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/Toast";
 
-const SignupPage = () => {
+const SignupForm = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signUp, signInWithGoogle, isLoading: authLoading } = useAuth();
   const toast = useToast();
   
@@ -15,9 +16,18 @@ const SignupPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+
+  // Check for referral code in URL
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
+    if (refCode) {
+      setReferralCode(refCode.toUpperCase());
+    }
+  }, [searchParams]);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -53,7 +63,13 @@ const SignupPage = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await signUp({ name, email, password, confirmPassword });
+      const response = await signUp({ 
+        name, 
+        email, 
+        password, 
+        confirmPassword,
+        referralCode: referralCode.trim() || undefined 
+      });
       
       if (response.success) {
         // Check if email confirmation is required (session is null but user exists)
@@ -236,6 +252,26 @@ const SignupPage = () => {
                       </p>
                     )}
                   </div>
+                  <div className="mb-5">
+                    <label
+                      htmlFor="referralCode"
+                      className="text-gray-700 dark:text-gray-200 mb-2 block text-sm font-medium"
+                    >
+                      Referral Code <span className="text-gray-400 dark:text-gray-500 text-xs font-normal">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="referralCode"
+                      id="referralCode"
+                      value={referralCode}
+                      onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                      placeholder="ZUMB-XXXXX"
+                      className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-green-500 dark:focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all duration-300"
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Get 8% off your first package purchase when you use a referral code
+                    </p>
+                  </div>
                   <div className="mb-6 flex">
                     <label
                       htmlFor="checkboxLabel"
@@ -321,6 +357,31 @@ const SignupPage = () => {
         </div>
       </section>
     </>
+  );
+};
+
+const SignupPage = () => {
+  return (
+    <Suspense fallback={
+      <section className="relative z-10 overflow-hidden min-h-screen pt-24 sm:pt-28 lg:pt-32 pb-12 bg-gray-50 dark:bg-gray-950">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="flex justify-center items-center min-h-[60vh]">
+            <div className="w-full max-w-5xl">
+              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 sm:p-10 lg:p-12">
+                <div className="animate-pulse space-y-4">
+                  <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    }>
+      <SignupForm />
+    </Suspense>
   );
 };
 

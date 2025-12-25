@@ -41,7 +41,7 @@ const ContactForm = () => {
               We&apos;d Love to <span className="text-green-600">Hear From You</span>
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-8">
-              Have questions about our classes, memberships, or anything else? 
+              Have questions about our classes, packages, or anything else? 
               Fill out the form and our team will get back to you within 24 hours.
             </p>
 
@@ -55,8 +55,8 @@ const ContactForm = () => {
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900 dark:text-white">Call Us</h4>
-                  <a href="tel:+1800555ZUMBA" className="text-gray-600 dark:text-gray-400 hover:text-green-600 transition-colors">
-                    +1 (800) 555-ZUMBA
+                  <a href="tel:+6584927347" className="text-gray-600 dark:text-gray-400 hover:text-green-600 transition-colors">
+                    +65 8492 7347
                   </a>
                 </div>
               </div>
@@ -69,8 +69,8 @@ const ContactForm = () => {
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900 dark:text-white">Email Us</h4>
-                  <a href="mailto:hello@zumbaton.com" className="text-gray-600 dark:text-gray-400 hover:text-green-600 transition-colors">
-                    hello@zumbaton.com
+                  <a href="mailto:info@zumbaton.sg" className="text-gray-600 dark:text-gray-400 hover:text-green-600 transition-colors">
+                    info@zumbaton.sg
                   </a>
                 </div>
               </div>
@@ -82,8 +82,8 @@ const ContactForm = () => {
                   </svg>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-white">Support Hours</h4>
-                  <p className="text-gray-600 dark:text-gray-400">Mon-Fri: 8AM-8PM EST</p>
+                  <h4 className="font-semibold text-gray-900 dark:text-white">Business Hours</h4>
+                  <p className="text-gray-600 dark:text-gray-400">Mon - Sun: 9AM - 9PM</p>
                 </div>
               </div>
             </div>
@@ -173,7 +173,7 @@ const ContactForm = () => {
                         id="phone"
                         name="phone"
                         className="w-full px-4 py-3 border border-gray-300 dark:border-white/20 rounded-lg bg-gray-50 dark:bg-gray-900/50 focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white transition-all"
-                        placeholder="+1 (555) 123-4567"
+                        placeholder="+65 8492 7347"
                       />
                     </div>
                     <div>
@@ -187,10 +187,10 @@ const ContactForm = () => {
                         className="w-full px-4 py-3 border border-gray-300 dark:border-white/20 rounded-lg bg-gray-50 dark:bg-gray-900/50 focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 dark:text-white transition-all"
                       >
                         <option value="">Select a subject</option>
-                        <option value="membership">Membership Inquiry</option>
+                        <option value="packages">Package Inquiry</option>
                         <option value="classes">Class Information</option>
                         <option value="pricing">Pricing & Plans</option>
-                        <option value="trial">Free Trial</option>
+                        <option value="packages">Packages & Pricing</option>
                         <option value="other">Other</option>
                       </select>
                     </div>

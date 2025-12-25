@@ -16,6 +16,10 @@ export const ClassTypeSchema = z.enum([
 ])
 export type ClassType = z.infer<typeof ClassTypeSchema>
 
+// Package type enum
+export const PackageTypeSchema = z.enum(['adults', 'kids'])
+export type PackageType = z.infer<typeof PackageTypeSchema>
+
 // Package entity - matches Supabase 'packages' table
 export const PackageSchema = BaseTimestampsSchema.extend({
   id: UuidSchema,
@@ -23,9 +27,11 @@ export const PackageSchema = BaseTimestampsSchema.extend({
   description: z.string().max(500).nullable(),
   tokenCount: z.number().int().positive(),
   priceCents: z.number().int().nonnegative(),
-  currency: z.string().length(3).default('USD'),
+  currency: z.string().length(3).default('SGD'),
   validityDays: z.number().int().positive(),
   classTypes: z.array(ClassTypeSchema).default(['all']),
+  packageType: PackageTypeSchema.default('adults'),
+  ageRequirement: z.string().max(200).nullable().optional(),
   isActive: z.boolean().default(true),
 })
 export type Package = z.infer<typeof PackageSchema>

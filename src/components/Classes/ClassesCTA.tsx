@@ -23,10 +23,10 @@ const ClassesCTA = () => {
             className="text-center md:text-left"
           >
             <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2">
-              Ready to start your Zumba journey?
+              Ready to Start Dancing?
             </h3>
-            <p className="text-white/80 text-lg">
-              Join now and get your first class free!
+            <p className="text-white/90 text-lg">
+              Join our community and find your Zumba class. Your pace. Your dance. Your Zumbaton.
             </p>
           </motion.div>
 

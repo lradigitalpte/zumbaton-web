@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface ModalProps {
   isOpen: boolean;
@@ -24,6 +25,12 @@ const Modal = ({
   showCloseButton = true,
 }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Ensure component is mounted before rendering portal
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Handle escape key
   useEffect(() => {
@@ -61,8 +68,6 @@ const Modal = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
-
   const sizeClasses = {
     sm: "max-w-sm",
     md: "max-w-md",
@@ -70,8 +75,10 @@ const Modal = ({
     xl: "max-w-xl",
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  if (!isOpen || !isMounted) return null;
+
+  const modalContent = (
+    <div className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-0 sm:p-4" style={{ position: 'fixed' }}>
       {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/50 transition-opacity duration-300"
@@ -130,6 +137,13 @@ const Modal = ({
       </div>
     </div>
   );
+
+  // Render modal at root level using portal
+  if (typeof window !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+
+  return null;
 };
 
 export default Modal;

@@ -18,7 +18,7 @@ const PricingBox = (props: {
             <h2 className="text-lg sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2 text-gray-900 dark:text-white">{packageName}</h2>
             <div className="mb-3 sm:mb-4 text-xs sm:text-sm md:text-base text-gray-600 dark:text-white/70">{subtitle}</div>
             <h3 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 text-green-600 dark:text-green-400">
-              ${price} <span className="text-sm sm:text-lg text-gray-600 dark:text-white/70">/{duration}</span>
+              {price} <span className="text-sm sm:text-lg text-gray-600 dark:text-white/70">/{duration}</span>
           </h3>
             <h4 className="text-xs sm:text-sm md:text-base text-gray-900 dark:text-white font-semibold mb-3 sm:mb-4">Benefits:</h4>
         </div>
