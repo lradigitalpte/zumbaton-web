@@ -244,16 +244,28 @@ const HomeContact = () => {
               <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-200 dark:border-white/20">
                 <div className="grid grid-cols-3 gap-4 sm:gap-6 text-center">
                   <div>
-                    <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400 mb-1">50K+</p>
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-white/70">Active Members</p>
+                    <div className="flex justify-center mb-2">
+                      <svg className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </div>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-white/70 font-semibold">Inclusive Community</p>
                   </div>
                   <div>
-                    <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400 mb-1">15+</p>
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-white/70">Class Types</p>
+                    <div className="flex justify-center mb-2">
+                      <svg className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                      </svg>
+                    </div>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-white/70 font-semibold">Multiple Class Types</p>
                   </div>
                   <div>
-                    <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400 mb-1">15+</p>
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-white/70">Expert Instructors</p>
+                    <div className="flex justify-center mb-2">
+                      <svg className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                      </svg>
+                    </div>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-white/70 font-semibold">Expert Instructors</p>
                   </div>
                 </div>
               </div>
