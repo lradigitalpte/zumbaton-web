@@ -4,12 +4,20 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useTokenTransactions, useTokenBalanceStats } from "@/hooks/useTokenTransactions";
+import { useDashboardUpcomingBookings } from "@/hooks/useDashboard";
+import { apiFetchJson } from "@/lib/api-fetch";
+import { useToast } from "@/components/Toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { dashboardKeys } from "@/hooks/useDashboard";
 
 type FilterType = "all" | "purchase" | "used" | "refund" | "bonus" | "expired";
 
 const TokensPage = () => {
   const { user } = useAuth();
+  const toast = useToast();
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<FilterType>("all");
+  const [checkingIn, setCheckingIn] = useState<string | null>(null);
 
   // React Query hooks
   const { data: transactions = [], isLoading: isLoadingTransactions } = useTokenTransactions(
@@ -17,6 +25,55 @@ const TokensPage = () => {
     filter === "all" ? undefined : filter
   );
   const { data: tokenBalance, isLoading: isLoadingBalance } = useTokenBalanceStats(user?.id);
+  const { data: upcomingBookings = [], isLoading: isLoadingBookings } = useDashboardUpcomingBookings(user?.id);
+
+  const handleCheckIn = async (bookingId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (checkingIn) return;
+    
+    setCheckingIn(bookingId);
+    
+    try {
+      const result = await apiFetchJson<{
+        success: boolean;
+        data?: any;
+        error?: { code?: string; message?: string };
+      }>("/api/attendance/check-in", {
+        method: "POST",
+        body: JSON.stringify({
+          bookingId,
+        }),
+        requireAuth: true,
+      });
+
+      if (!result.success) {
+        throw new Error(result.error?.message || "Failed to check in");
+      }
+
+      toast.success("Checked in successfully!", "Your attendance has been marked.");
+      
+      // Invalidate dashboard and token queries to refresh data
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['tokenTransactions'] });
+      
+      // Reset checking in state after a short delay
+      setTimeout(() => setCheckingIn(null), 1000);
+    } catch (error: any) {
+      console.error("[Tokens] Check-in error:", error);
+      toast.error("Check-in failed", error?.message || "Failed to check in. Please try again.");
+      setCheckingIn(null);
+    }
+  };
+
+  const canCheckIn = (scheduledAt: string) => {
+    const classTime = new Date(scheduledAt);
+    const now = new Date();
+    // Can check in 30 minutes before class starts
+    const thirtyMinutesBefore = new Date(classTime.getTime() - 30 * 60 * 1000);
+    return now >= thirtyMinutesBefore && now <= new Date(classTime.getTime() + 2 * 60 * 60 * 1000); // Allow up to 2 hours after class start
+  };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -261,6 +318,89 @@ const TokensPage = () => {
           </div>
         )}
       </div>
+
+      {/* Upcoming Classes with Check-In - Mobile Optimized */}
+      {!isLoadingBookings && upcomingBookings.length > 0 && (
+        <div className="bg-white dark:bg-dark rounded-xl xl:rounded-xl rounded-2xl shadow-sm xl:shadow-sm shadow-md border border-gray-100 dark:border-gray-800 mt-6 xl:mt-8">
+          <div className="p-4 xl:p-6 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base xl:text-lg font-semibold text-dark dark:text-white">
+                Upcoming Classes
+              </h2>
+              <Link
+                href="/my-bookings"
+                className="text-primary text-xs xl:text-sm font-semibold hover:underline"
+              >
+                View all →
+              </Link>
+            </div>
+          </div>
+          <div className="divide-y divide-gray-100 dark:divide-gray-800">
+            {upcomingBookings.slice(0, 5).map((booking) => {
+              const isCheckingIn = checkingIn === booking.id;
+              const showCheckIn = canCheckIn(booking.scheduled_at);
+              
+              return (
+                <div
+                  key={booking.id}
+                  className="p-3 xl:p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3 xl:gap-4">
+                    <div className="w-10 h-10 xl:w-12 xl:h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <svg className="w-5 h-5 xl:w-6 xl:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <Link href={`/my-bookings`} className="flex-1 min-w-0">
+                      <h4 className="text-sm xl:text-base font-semibold text-dark dark:text-white mb-0.5 xl:mb-1 truncate">
+                        {booking.class_name}
+                      </h4>
+                      <p className="text-xs xl:text-sm text-body-color dark:text-gray-400 truncate">
+                        {booking.instructor_name} • {booking.location}
+                      </p>
+                    </Link>
+                    <div className="flex items-center gap-2 xl:gap-3 shrink-0">
+                      <div className="text-right">
+                        <p className="text-xs xl:text-sm font-semibold text-dark dark:text-white mb-0.5">
+                          {new Date(booking.scheduled_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </p>
+                        <p className="text-[10px] xl:text-xs text-body-color dark:text-gray-400">
+                          {new Date(booking.scheduled_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      </div>
+                      {showCheckIn && (
+                        <button
+                          onClick={(e) => handleCheckIn(booking.id, e)}
+                          disabled={isCheckingIn}
+                          className="px-3 xl:px-4 py-1.5 xl:py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-400 disabled:cursor-not-allowed text-white text-xs xl:text-sm font-semibold rounded-lg transition-colors flex items-center gap-1.5 xl:gap-2 whitespace-nowrap"
+                        >
+                          {isCheckingIn ? (
+                            <>
+                              <svg className="animate-spin h-3 w-3 xl:h-4 xl:w-4" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              <span className="hidden xl:inline">Checking In...</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-3 h-3 xl:w-4 xl:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              <span>Check In</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

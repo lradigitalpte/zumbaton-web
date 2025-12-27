@@ -333,7 +333,7 @@ const SignupForm = () => {
                   <div 
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
                     style={{
-                      backgroundImage: "url(https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=2070)"
+                      backgroundImage: "url(/images/images/20251227_0814_Energetic Zumbathon Vibes_simple_compose_01kdfdy7cse3htgvxspp828dwf.png)"
                     }}
                   ></div>
                   <div className="relative z-10 text-white">

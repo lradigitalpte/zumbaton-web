@@ -27,7 +27,7 @@ const ContactCTA = () => {
       >
         <div 
           className="absolute inset-0 w-full h-[140%] -top-[20%] bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1524594152303-9fd13543fe6e?q=80&w=2070')" }}
+          style={{ backgroundImage: "url('/images/images/image2z.jpg')" }}
         />
         <div className="absolute inset-0 bg-black/70"></div>
       </motion.div>

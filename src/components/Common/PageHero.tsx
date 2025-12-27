@@ -13,7 +13,7 @@ interface PageHeroProps {
 const PageHero = ({ 
   title, 
   breadcrumbs = [{ label: "Home", href: "/" }, { label: title }],
-  backgroundImage = "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=2070"
+  backgroundImage = "/images/images/20251227_0814_Energetic Zumbathon Vibes_simple_compose_01kdfdy7cse3htgvxspp828dwf.png"
 }: PageHeroProps) => {
   const sectionRef = useRef<HTMLElement>(null);
   
@@ -29,7 +29,7 @@ const PageHero = ({
   return (
     <section 
       ref={sectionRef}
-      className="relative h-[50vh] md:h-[60vh] flex items-center justify-center overflow-hidden"
+      className="relative h-[60vh] md:h-[70vh] lg:h-[75vh] flex items-center justify-center overflow-hidden"
     >
       {/* Parallax Background Image */}
       <motion.div 
@@ -37,7 +37,7 @@ const PageHero = ({
         className="absolute inset-0 -z-10"
       >
         <div 
-          className="absolute inset-0 w-full h-[130%] bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 w-full h-[120%] bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url('${backgroundImage}')` }}
         />
         <div className="absolute inset-0 bg-black/60"></div>

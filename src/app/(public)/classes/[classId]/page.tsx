@@ -19,7 +19,7 @@ export default function ClassDetailPage() {
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Class Not Found</h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">The class you&apos;re looking for doesn&apos;t exist.</p>
-          <Link href="/classes" className="text-green-600 hover:text-green-700 font-semibold">
+          <Link href="/classes" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-semibold transition-colors">
             ← Back to Classes
           </Link>
         </div>
@@ -62,10 +62,10 @@ const ClassDetailContent = ({ classData }: { classData: ZumbaClass }) => {
                   <Link
                     key={c.id}
                     href={`/classes/${c.slug}`}
-                    className={`block p-4 rounded-lg transition-all duration-300 ${
+                    className={`block p-4 rounded-lg transition-all duration-300 border ${
                       c.slug === classData.slug
-                        ? "bg-green-600 text-white"
-                        : "bg-gray-100 dark:bg-dark-2 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-dark"
+                        ? "bg-green-600 dark:bg-green-600 text-white border-green-700 dark:border-green-500"
+                        : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -104,19 +104,19 @@ const ClassDetailContent = ({ classData }: { classData: ZumbaClass }) => {
               
               {/* Quick Stats Overlay */}
               <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-4">
-                <div className="bg-white/90 dark:bg-dark/90 backdrop-blur-sm px-4 py-2 rounded-lg">
+                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20 dark:border-gray-700/50">
                   <span className="text-sm text-gray-500 dark:text-gray-400">Duration</span>
                   <p className="font-bold text-gray-900 dark:text-white">{classData.duration}</p>
                 </div>
-                <div className="bg-white/90 dark:bg-dark/90 backdrop-blur-sm px-4 py-2 rounded-lg">
+                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20 dark:border-gray-700/50">
                   <span className="text-sm text-gray-500 dark:text-gray-400">Intensity</span>
                   <p className="font-bold text-gray-900 dark:text-white">{classData.intensity}</p>
                 </div>
-                <div className="bg-white/90 dark:bg-dark/90 backdrop-blur-sm px-4 py-2 rounded-lg">
+                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20 dark:border-gray-700/50">
                   <span className="text-sm text-gray-500 dark:text-gray-400">Calories</span>
                   <p className="font-bold text-gray-900 dark:text-white">{classData.calories}</p>
                 </div>
-                <div className="bg-white/90 dark:bg-dark/90 backdrop-blur-sm px-4 py-2 rounded-lg">
+                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20 dark:border-gray-700/50">
                   <span className="text-sm text-gray-500 dark:text-gray-400">Instructor</span>
                   <p className="font-bold text-gray-900 dark:text-white">{classData.instructor}</p>
                 </div>
@@ -150,12 +150,12 @@ const ClassDetailContent = ({ classData }: { classData: ZumbaClass }) => {
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6">
                 Class Schedule
               </h2>
-              <div className="bg-gray-100 dark:bg-dark-2 rounded-xl p-6">
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {classData.schedule.map((slot, index) => (
                     <div 
                       key={index}
-                      className="flex items-center gap-4 p-4 bg-white dark:bg-dark rounded-lg"
+                      className="flex items-center gap-4 p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
                     >
                       <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center shrink-0">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -712,15 +712,81 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
+    // Clear local state immediately (don't wait for API)
+    clearAuth()
+    
     try {
-      const { error } = await supabase.auth.signOut()
-      if (error) {
-        console.error('[Auth] Sign out error:', error)
+      // Try to call logout API endpoint with timeout protection
+      if (typeof window !== 'undefined') {
+        try {
+          // Get session before calling API (with timeout)
+          let session = null
+          try {
+            const sessionResult = await withTimeout(
+              supabase.auth.getSession(),
+              2000, // 2 seconds to get session
+              'Get session timeout (ignored - already logged out locally)'
+            )
+            session = sessionResult.data?.session || null
+          } catch {
+            // Session fetch timed out or failed - skip API call
+            session = null
+          }
+          
+          if (session?.access_token) {
+            const logoutPromise = fetch('/api/auth/logout', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+            })
+            
+            // Add timeout to prevent hanging
+            await withTimeout(
+              logoutPromise,
+              5000, // 5 seconds timeout
+              'Logout timeout (ignored - already logged out locally)'
+            ).catch(() => {
+              // Ignore timeout errors - we've already cleared local state
+            })
+          }
+        } catch (apiError) {
+          // Ignore API errors - we've already cleared local state
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[Auth] Logout API error (ignored):', apiError)
+          }
+        }
+      }
+      
+      // Also try direct Supabase signOut as backup (with timeout)
+      try {
+        const signOutPromise = supabase.auth.signOut()
+        await withTimeout(
+          signOutPromise,
+          3000, // 3 seconds timeout
+          'Direct signOut timeout (ignored - already logged out locally)'
+        ).catch(() => {
+          // Ignore timeout errors - we've already cleared local state
+        })
+      } catch (signOutError) {
+        // Ignore signOut errors - we've already cleared local state
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[Auth] Direct signOut error (ignored):', signOutError)
+        }
       }
     } catch (error) {
-      console.error('[Auth] Sign out failed:', error)
-    } finally {
-      clearAuth()
+      // Ignore all errors - we've already cleared local state
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[Auth] Logout error (ignored):', error)
+      }
+    }
+    
+    // Redirect to signin page after a short delay to ensure state is cleared
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        window.location.href = '/signin'
+      }, 100)
     }
   }
 

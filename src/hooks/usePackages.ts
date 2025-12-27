@@ -24,8 +24,8 @@ export function useAvailablePackages(packageType?: 'adults' | 'kids') {
   return useQuery({
     queryKey: [...packageKeys.list(), packageType || 'all'],
     queryFn: () => getAvailablePackages(packageType),
-    staleTime: 10 * 60 * 1000, // 10 minutes (packages rarely change)
-    gcTime: 30 * 60 * 1000, // 30 minutes - keep packages cached longer
+    staleTime: 30 * 60 * 1000, // 30 minutes (packages rarely change)
+    gcTime: 60 * 60 * 1000, // 1 hour - keep packages cached longer
     // Uses global retry logic from providers.tsx (max 2 retries, circuit breaker)
   })
 }

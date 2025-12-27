@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/Toast";
+import { apiFetch } from "@/lib/api-fetch";
+import { useRouter } from "next/navigation";
 
 const SettingsPage = () => {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const toast = useToast();
+  const router = useRouter();
   
   const [notifications, setNotifications] = useState({
     classReminders: true,
@@ -20,6 +23,8 @@ const SettingsPage = () => {
     showStats: false,
   });
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -27,14 +32,106 @@ const SettingsPage = () => {
     confirmPassword: "",
   });
 
-  const handleNotificationChange = (key: keyof typeof notifications) => {
-    setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
-    toast.success("Settings updated", "Your notification preferences have been saved.");
+  // Load settings on mount
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Load notification preferences
+      const notificationsResponse = await apiFetch('/api/settings/notifications');
+      if (notificationsResponse.ok) {
+        const notificationsData = await notificationsResponse.json();
+        if (notificationsData.success) {
+          setNotifications({
+            classReminders: notificationsData.data.classReminders,
+            bookingConfirmations: notificationsData.data.bookingConfirmations,
+            promotions: notificationsData.data.promotions,
+            newClasses: notificationsData.data.newClasses,
+          });
+        }
+      }
+
+      // Load privacy preferences
+      const privacyResponse = await apiFetch('/api/settings/privacy');
+      if (privacyResponse.ok) {
+        const privacyData = await privacyResponse.json();
+        if (privacyData.success) {
+          setPrivacy({
+            showProfile: privacyData.data.showProfile,
+            showStats: privacyData.data.showStats,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+      toast.error('Error', 'Failed to load settings');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handlePrivacyChange = (key: keyof typeof privacy) => {
-    setPrivacy((prev) => ({ ...prev, [key]: !prev[key] }));
-    toast.success("Settings updated", "Your privacy settings have been saved.");
+  const handleNotificationChange = async (key: keyof typeof notifications) => {
+    const updatedNotifications = { ...notifications, [key]: !notifications[key] };
+    setNotifications(updatedNotifications);
+    
+    try {
+      setIsSaving(true);
+      const response = await apiFetch('/api/settings/notifications', {
+        method: 'PUT',
+        body: JSON.stringify(updatedNotifications),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        // Revert on error
+        setNotifications(notifications);
+        toast.error('Error', errorData.error?.message || 'Failed to update notification preferences');
+        return;
+      }
+
+      toast.success("Settings updated", "Your notification preferences have been saved.");
+    } catch (error) {
+      // Revert on error
+      setNotifications(notifications);
+      console.error('Error updating notifications:', error);
+      toast.error('Error', 'Failed to update notification preferences');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePrivacyChange = async (key: keyof typeof privacy) => {
+    const updatedPrivacy = { ...privacy, [key]: !privacy[key] };
+    setPrivacy(updatedPrivacy);
+    
+    try {
+      setIsSaving(true);
+      const response = await apiFetch('/api/settings/privacy', {
+        method: 'PUT',
+        body: JSON.stringify(updatedPrivacy),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        // Revert on error
+        setPrivacy(privacy);
+        toast.error('Error', errorData.error?.message || 'Failed to update privacy settings');
+        return;
+      }
+
+      toast.success("Settings updated", "Your privacy settings have been saved.");
+    } catch (error) {
+      // Revert on error
+      setPrivacy(privacy);
+      console.error('Error updating privacy:', error);
+      toast.error('Error', 'Failed to update privacy settings');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handlePasswordChange = async () => {
@@ -48,19 +145,90 @@ const SettingsPage = () => {
       return;
     }
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    toast.success("Password changed", "Your password has been updated successfully.");
-    setIsChangingPassword(false);
-    setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-  };
+    try {
+      setIsSaving(true);
+      const response = await apiFetch('/api/settings/password', {
+        method: 'POST',
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        }),
+      });
 
-  const handleDeleteAccount = () => {
-    if (confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-      toast.info("Account deletion", "Please contact support to delete your account.");
+      if (!response.ok) {
+        const errorData = await response.json();
+        toast.error('Error', errorData.error?.message || 'Failed to change password');
+        return;
+      }
+      
+      toast.success("Password changed", "Your password has been updated successfully.");
+      setIsChangingPassword(false);
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    } catch (error) {
+      console.error('Error changing password:', error);
+      toast.error('Error', 'Failed to change password');
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = confirm("Are you sure you want to delete your account? This action cannot be undone. All your data will be permanently deleted.");
+    
+    if (!confirmed) {
+      return;
+    }
+
+    // Double confirmation
+    const doubleConfirmed = confirm("This is your final warning. Your account and all data will be permanently deleted. Are you absolutely sure?");
+    
+    if (!doubleConfirmed) {
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      const response = await apiFetch('/api/settings/delete-account', {
+        method: 'POST',
+        body: JSON.stringify({ confirm: true }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        toast.error('Error', errorData.error?.message || 'Failed to delete account');
+        return;
+      }
+
+      toast.success("Account deleted", "Your account has been permanently deleted.");
+      
+      // Sign out and redirect to home
+      await signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast.error('Error', 'Failed to delete account');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-dark dark:text-white mb-1">
+            Settings
+          </h1>
+          <p className="text-body-color dark:text-gray-400">
+            Manage your account settings and preferences
+          </p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -92,7 +260,8 @@ const SettingsPage = () => {
               </div>
               <button
                 onClick={() => handleNotificationChange("classReminders")}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
+                disabled={isSaving}
+                className={`relative w-12 h-6 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                   notifications.classReminders ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
                 }`}
               >
@@ -111,7 +280,8 @@ const SettingsPage = () => {
               </div>
               <button
                 onClick={() => handleNotificationChange("bookingConfirmations")}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
+                disabled={isSaving}
+                className={`relative w-12 h-6 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                   notifications.bookingConfirmations ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
                 }`}
               >
@@ -130,7 +300,8 @@ const SettingsPage = () => {
               </div>
               <button
                 onClick={() => handleNotificationChange("newClasses")}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
+                disabled={isSaving}
+                className={`relative w-12 h-6 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                   notifications.newClasses ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
                 }`}
               >
@@ -149,7 +320,8 @@ const SettingsPage = () => {
               </div>
               <button
                 onClick={() => handleNotificationChange("promotions")}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
+                disabled={isSaving}
+                className={`relative w-12 h-6 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                   notifications.promotions ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
                 }`}
               >
@@ -180,7 +352,8 @@ const SettingsPage = () => {
               </div>
               <button
                 onClick={() => handlePrivacyChange("showProfile")}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
+                disabled={isSaving}
+                className={`relative w-12 h-6 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                   privacy.showProfile ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
                 }`}
               >
@@ -199,7 +372,8 @@ const SettingsPage = () => {
               </div>
               <button
                 onClick={() => handlePrivacyChange("showStats")}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
+                disabled={isSaving}
+                className={`relative w-12 h-6 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                   privacy.showStats ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
                 }`}
               >
@@ -280,12 +454,13 @@ const SettingsPage = () => {
                 >
                   Cancel
                 </button>
-                <button
-                  onClick={handlePasswordChange}
-                  className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors"
-                >
-                  Update Password
-                </button>
+              <button
+                onClick={handlePasswordChange}
+                disabled={isSaving}
+                className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSaving ? "Updating..." : "Update Password"}
+              </button>
               </div>
             </div>
           )}
@@ -307,9 +482,10 @@ const SettingsPage = () => {
             </div>
             <button
               onClick={handleDeleteAccount}
-              className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              disabled={isSaving}
+              className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Delete Account
+              {isSaving ? "Deleting..." : "Delete Account"}
             </button>
           </div>
         </div>

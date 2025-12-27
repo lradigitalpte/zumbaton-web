@@ -28,8 +28,8 @@ export function useUserBookings(
     queryKey: bookingKeys.list(userId || '', filter),
     queryFn: () => getUserBookings(userId!, filter),
     enabled: !!userId,
-    staleTime: 60 * 1000, // 1 minute - bookings are important to keep fresh
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 3 * 60 * 1000, // 3 minutes - bookings can change when user books/cancels
+    gcTime: 15 * 60 * 1000, // 15 minutes - keep bookings cached longer
     // Uses global retry logic from providers.tsx (max 2 retries, circuit breaker)
   })
 }

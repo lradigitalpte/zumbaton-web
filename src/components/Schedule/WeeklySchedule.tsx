@@ -160,8 +160,8 @@ const ClassCard = ({ classItem, isSpecial }: { classItem: ClassItem; isSpecial: 
   return (
     <div className={`p-4 rounded-lg transition-all duration-300 hover:scale-105 cursor-pointer ${
       isSpecial 
-        ? "bg-lime-500/10 dark:bg-lime-500/20 border border-lime-500/30 hover:bg-lime-500/20" 
-        : "bg-gray-100 dark:bg-dark-2 hover:bg-gray-200 dark:hover:bg-dark"
+        ? "bg-lime-500/10 dark:bg-lime-500/20 border border-lime-500/30 dark:border-lime-500/40 hover:bg-lime-500/20 dark:hover:bg-lime-500/30" 
+        : "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
     }`}>
       {/* Time */}
       <div className={`text-sm font-semibold mb-1 ${
