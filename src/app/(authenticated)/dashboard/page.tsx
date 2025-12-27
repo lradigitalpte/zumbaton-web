@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -7,9 +8,16 @@ import {
   useDashboardUpcomingBookings,
   useDashboardUserStats,
 } from "@/hooks/useDashboard";
+import { apiFetchJson } from "@/lib/api-fetch";
+import { useToast } from "@/components/Toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { dashboardKeys } from "@/hooks/useDashboard";
 
 const DashboardPage = () => {
   const { user } = useAuth();
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const [checkingIn, setCheckingIn] = useState<string | null>(null);
 
   // React Query hooks with caching
   const { data: tokenBalance = { available: 0, pending: 0, total: 0 }, isLoading: isLoadingBalance } = useDashboardTokenBalance(user?.id);
@@ -17,6 +25,45 @@ const DashboardPage = () => {
   const { data: stats = { totalClassesAttended: 0, tokensUsed: 0, currentStreak: 0 }, isLoading: isLoadingStats } = useDashboardUserStats(user?.id);
 
   const isDataLoading = isLoadingBalance || isLoadingBookings || isLoadingStats;
+
+  const handleCheckIn = async (bookingId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (checkingIn) return;
+    
+    setCheckingIn(bookingId);
+    
+    try {
+      const result = await apiFetchJson<{
+        success: boolean;
+        data?: any;
+        error?: { code?: string; message?: string };
+      }>("/api/attendance/check-in", {
+        method: "POST",
+        body: JSON.stringify({
+          bookingId,
+        }),
+        requireAuth: true,
+      });
+
+      if (!result.success) {
+        throw new Error(result.error?.message || "Failed to check in");
+      }
+
+      toast.success("Checked in successfully!", "Your attendance has been marked.");
+      
+      // Invalidate dashboard queries to refresh data
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      
+      // Reset checking in state after a short delay
+      setTimeout(() => setCheckingIn(null), 1000);
+    } catch (error: any) {
+      console.error("[Dashboard] Check-in error:", error);
+      toast.error("Check-in failed", error?.message || "Failed to check in. Please try again.");
+      setCheckingIn(null);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -27,6 +74,14 @@ const DashboardPage = () => {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const canCheckIn = (scheduledAt: string) => {
+    const classTime = new Date(scheduledAt);
+    const now = new Date();
+    // Can check in 30 minutes before class starts
+    const thirtyMinutesBefore = new Date(classTime.getTime() - 30 * 60 * 1000);
+    return now >= thirtyMinutesBefore && now <= new Date(classTime.getTime() + 2 * 60 * 60 * 1000); // Allow up to 2 hours after class start
   };
 
   return (
@@ -214,36 +269,66 @@ const DashboardPage = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {upcomingBookings.slice(0, 5).map((booking) => (
-              <Link
-                key={booking.id}
-                href={`/my-bookings`}
-                className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-[0.98] border border-transparent hover:border-primary/20"
-              >
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <svg className="w-6 h-6 sm:w-7 sm:h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+            {upcomingBookings.slice(0, 5).map((booking) => {
+              const isCheckingIn = checkingIn === booking.id;
+              const showCheckIn = canCheckIn(booking.scheduled_at);
+              
+              return (
+                <div
+                  key={booking.id}
+                  className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-transparent hover:border-primary/20"
+                >
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <svg className="w-6 h-6 sm:w-7 sm:h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <Link href={`/my-bookings`} className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-dark dark:text-white mb-1 truncate">
+                      {booking.class_name}
+                    </h4>
+                    <p className="text-sm text-body-color dark:text-gray-400 truncate">
+                      {booking.instructor_name} • {booking.location}
+                    </p>
+                  </Link>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right">
+                      <p className="font-semibold text-dark dark:text-white text-sm mb-1">
+                        {new Date(booking.scheduled_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </p>
+                      <p className="text-xs text-body-color dark:text-gray-400">
+                        {new Date(booking.scheduled_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    </div>
+                    {showCheckIn && (
+                      <button
+                        onClick={(e) => handleCheckIn(booking.id, e)}
+                        disabled={isCheckingIn}
+                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-400 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+                      >
+                        {isCheckingIn ? (
+                          <>
+                            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>Checking In...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>Check In</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-dark dark:text-white mb-1 truncate">
-                    {booking.class_name}
-                  </h4>
-                  <p className="text-sm text-body-color dark:text-gray-400 truncate">
-                    {booking.instructor_name} • {booking.location}
-                  </p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="font-semibold text-dark dark:text-white text-sm mb-1">
-                    {new Date(booking.scheduled_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                  </p>
-                  <p className="text-xs text-body-color dark:text-gray-400">
-                    {new Date(booking.scheduled_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
-                  </p>
-                </div>
-              </Link>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

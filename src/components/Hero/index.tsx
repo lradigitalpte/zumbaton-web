@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
     {
       id: 1,
       type: "image",
-      image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=2070",
+      image: "/images/images/hero1z.jpg",
       headline: "Fun into Fitness with",
       highlight: "Zumbaton",
       description:
@@ -17,7 +17,7 @@ import { motion } from "framer-motion";
     {
       id: 2,
       type: "image",
-      image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=2070",
+      image: "/images/images/vecteezy_ai-generated-hip-hop-dancing-class-advertisment-background_37246263.jpg",
       headline: "Dance First",
       highlight: "Fitness Follows",
       description:
@@ -26,7 +26,7 @@ import { motion } from "framer-motion";
     {
       id: 3,
       type: "image",
-      image: "https://images.unsplash.com/photo-1534367507873-d2d7e24c797f?q=80&w=2070",
+      image: "/images/images/hero3z.jpg",
       headline: "One Beat. One Step.",
       highlight: "One Happy You",
       description:
@@ -111,8 +111,9 @@ const Hero = () => {
                   },
                 }}
               />
-              <div className="absolute inset-0 w-full h-full bg-gradient-to-b from-black/70 via-black/60 to-black/80" />
-              <div className="absolute inset-0 w-full h-full bg-gradient-to-t from-black/50 to-transparent" />
+              {/* Dark overlay for better text readability */}
+              <div className="absolute inset-0 w-full h-full bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
+              <div className="absolute inset-0 w-full h-full bg-gradient-to-t from-black/40 to-transparent" />
             </motion.div>
           ))}
         </div>

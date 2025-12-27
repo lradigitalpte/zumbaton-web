@@ -17,7 +17,7 @@ const ContactPage = () => {
           { label: "Home", href: "/" },
           { label: "Contact Us" }
         ]}
-        backgroundImage="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?q=80&w=2070"
+        backgroundImage="/images/images/contactimg.jpeg"
       />
 
       <ContactLocations />

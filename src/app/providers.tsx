@@ -49,11 +49,13 @@ function isNonRetryableError(error: any): boolean {
 const queryClientOptions = {
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh for 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes - keep cache longer than stale time
+      staleTime: 5 * 60 * 1000, // 5 minutes - balanced default for user-facing data
+      gcTime: 30 * 60 * 1000, // 30 minutes - keep cache in memory longer
       refetchOnWindowFocus: false, // Don't refetch on window focus
-      refetchOnMount: true, // Refetch on mount only if data is stale
-      refetchOnReconnect: false, // Don't auto-refetch on reconnect (can cause loops)
+      refetchOnMount: 'always' as const, // Always refetch on mount for fresh data (auto-refresh on page visit)
+      refetchOnReconnect: true, // Refetch when internet reconnects
+      // Keep previous data visible while refetching (smooth transitions)
+      placeholderData: (previousData: unknown) => previousData,
       // Circuit breaker retry logic - HARD LIMIT on retries
       retry: (failureCount: number, error: any) => {
         // HARD LIMIT: Never retry more than MAX_RETRIES times

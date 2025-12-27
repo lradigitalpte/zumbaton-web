@@ -12,6 +12,11 @@ const nextConfig = {
         hostname: "images.unsplash.com",
         port: "",
       },
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        port: "",
+      },
     ],
   },
 };

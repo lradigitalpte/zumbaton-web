@@ -19,7 +19,7 @@ const ScheduleHero = () => {
   return (
     <section 
       ref={sectionRef}
-      className="relative h-[50vh] md:h-[60vh] flex items-center justify-center overflow-hidden"
+      className="relative h-[60vh] md:h-[70vh] lg:h-[75vh] flex items-center justify-center overflow-hidden"
     >
       {/* Parallax Background Image */}
       <motion.div 
@@ -27,9 +27,9 @@ const ScheduleHero = () => {
         className="absolute inset-0 -z-10"
       >
         <div 
-          className="absolute inset-0 w-full h-[130%] bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 w-full h-[120%] bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=2070')",
+            backgroundImage: "url('/images/images/vecteezy_ai-generated-a-group-of-women-dance-in-a-sports-complex_36795113.jpeg')",
           }}
         />
         <div className="absolute inset-0 bg-black/60"></div>

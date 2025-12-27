@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Modal from "@/components/Modal/Modal";
 import ReferralShare from "@/components/Promo/ReferralShare";
+import { useProfile } from "@/hooks/useProfile";
 
 interface SidebarProps {
   isMobileOpen?: boolean;
@@ -17,6 +18,7 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { data: profile } = useProfile();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showReferralModal, setShowReferralModal] = useState(false);
@@ -219,10 +221,30 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
       {/* User Info */}
       <div className={`p-4 border-b border-gray-800 shrink-0 ${isCollapsed ? "text-center" : ""}`}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-lime-500/20 flex items-center justify-center shrink-0">
-            <span className="text-lime-400 font-semibold">
-              {user?.name?.charAt(0) || "U"}
-            </span>
+          <div className="w-10 h-10 rounded-full bg-lime-500/20 flex items-center justify-center shrink-0 overflow-hidden">
+            {profile?.avatarUrl ? (
+              <img
+                src={profile.avatarUrl}
+                alt={user?.name || "User"}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback to initials if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent && !parent.querySelector('span')) {
+                    const span = document.createElement('span');
+                    span.className = 'text-lime-400 font-semibold';
+                    span.textContent = user?.name?.charAt(0)?.toUpperCase() || "U";
+                    parent.appendChild(span);
+                  }
+                }}
+              />
+            ) : (
+              <span className="text-lime-400 font-semibold">
+                {user?.name?.charAt(0)?.toUpperCase() || "U"}
+              </span>
+            )}
           </div>
           {!isCollapsed && (
             <div className="overflow-hidden">

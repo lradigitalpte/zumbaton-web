@@ -33,7 +33,7 @@ export default function Video() {
               <div className="mx-auto max-w-[770px] overflow-hidden rounded-2xl shadow-2xl border border-white/30 bg-white/60 backdrop-blur">
                 <div className="relative aspect-[16/9] items-center justify-center">
                   <Image
-                    src="https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1600"
+                    src="/images/images/image2z.jpg"
                     alt="Zumba dance session"
                     className="object-cover"
                     fill

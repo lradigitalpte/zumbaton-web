@@ -54,11 +54,31 @@ export async function getTokenTransactions(
     }
   }
 
-  const { data, error } = await query
+  // Timeout protection - 15 seconds
+  const QUERY_TIMEOUT = 15000
+  let data: any, error: any
+  try {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('Query timeout after 15s'))
+      }, QUERY_TIMEOUT)
+    })
+
+    const result = await Promise.race([
+      query,
+      timeoutPromise,
+    ]) as { data: any; error: any }
+    
+    data = result.data
+    error = result.error
+  } catch (timeoutError: any) {
+    console.error('[Token Transactions] Query timeout:', timeoutError?.message)
+    throw new Error(`Token transactions query timeout: ${timeoutError?.message || 'Request took too long'}`)
+  }
 
   if (error) {
     console.error('Error fetching token transactions:', error)
-    return []
+    throw new Error(`Failed to fetch token transactions: ${error.message || 'Unknown error'}`)
   }
 
   return (data || []).map((tx: any) => ({
@@ -79,14 +99,35 @@ export async function getTokenTransactions(
 export async function getTokenBalanceStats(userId: string): Promise<TokenBalanceStats> {
   const supabase = getSupabaseClient()
   const now = new Date().toISOString()
+  const QUERY_TIMEOUT = 15000 // 15 seconds
 
-  // Get active packages
-  const { data: activePackages } = await supabase
-    .from(TABLES.USER_PACKAGES)
-    .select('tokens_remaining, tokens_held, expires_at')
-    .eq('user_id', userId)
-    .eq('status', 'active')
-    .gt('expires_at', now)
+  // Get active packages with timeout
+  let activePackages: any
+  try {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('Query timeout after 15s'))
+      }, QUERY_TIMEOUT)
+    })
+
+    const packagesResult = await Promise.race([
+      supabase
+        .from(TABLES.USER_PACKAGES)
+        .select('tokens_remaining, tokens_held, expires_at')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .gt('expires_at', now),
+      timeoutPromise,
+    ]) as { data: any; error: any }
+    
+    if (packagesResult.error) {
+      throw new Error(packagesResult.error.message)
+    }
+    activePackages = packagesResult.data
+  } catch (timeoutError: any) {
+    console.error('[Token Balance Stats] Query timeout for packages:', timeoutError?.message)
+    throw new Error(`Token balance stats query timeout: ${timeoutError?.message || 'Request took too long'}`)
+  }
 
   let available = 0
   let pending = 0
@@ -96,25 +137,65 @@ export async function getTokenBalanceStats(userId: string): Promise<TokenBalance
     pending += pkg.tokens_held || 0
   }
 
-  // Get used tokens from transactions
-  const { data: usedTransactions } = await supabase
-    .from(TABLES.TOKEN_TRANSACTIONS)
-    .select('tokens_change')
-    .eq('user_id', userId)
-    .in('transaction_type', ['attendance-consume', 'no-show-consume', 'late-cancel-consume'])
-    .lt('tokens_change', 0) // Negative values
+  // Get used tokens from transactions (with timeout)
+  let usedTransactions: any
+  try {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('Query timeout after 15s'))
+      }, QUERY_TIMEOUT)
+    })
+
+    const usedResult = await Promise.race([
+      supabase
+        .from(TABLES.TOKEN_TRANSACTIONS)
+        .select('tokens_change')
+        .eq('user_id', userId)
+        .in('transaction_type', ['attendance-consume', 'no-show-consume', 'late-cancel-consume'])
+        .lt('tokens_change', 0),
+      timeoutPromise,
+    ]) as { data: any; error: any }
+    
+    if (usedResult.error) {
+      throw new Error(usedResult.error.message)
+    }
+    usedTransactions = usedResult.data
+  } catch (timeoutError: any) {
+    console.warn('[Token Balance Stats] Query timeout for used transactions:', timeoutError?.message)
+    usedTransactions = [] // Use empty array on timeout (non-critical)
+  }
 
   const used = Math.abs(
     (usedTransactions || []).reduce((sum, tx) => sum + (tx.tokens_change || 0), 0)
   )
 
-  // Get expired tokens
-  const { data: expiredTransactions } = await supabase
-    .from(TABLES.TOKEN_TRANSACTIONS)
-    .select('tokens_change')
-    .eq('user_id', userId)
-    .eq('transaction_type', 'expire')
-    .lt('tokens_change', 0)
+  // Get expired tokens (with timeout)
+  let expiredTransactions: any
+  try {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('Query timeout after 15s'))
+      }, QUERY_TIMEOUT)
+    })
+
+    const expiredResult = await Promise.race([
+      supabase
+        .from(TABLES.TOKEN_TRANSACTIONS)
+        .select('tokens_change')
+        .eq('user_id', userId)
+        .eq('transaction_type', 'expire')
+        .lt('tokens_change', 0),
+      timeoutPromise,
+    ]) as { data: any; error: any }
+    
+    if (expiredResult.error) {
+      throw new Error(expiredResult.error.message)
+    }
+    expiredTransactions = expiredResult.data
+  } catch (timeoutError: any) {
+    console.warn('[Token Balance Stats] Query timeout for expired transactions:', timeoutError?.message)
+    expiredTransactions = [] // Use empty array on timeout (non-critical)
+  }
 
   const expired = Math.abs(
     (expiredTransactions || []).reduce((sum, tx) => sum + (tx.tokens_change || 0), 0)

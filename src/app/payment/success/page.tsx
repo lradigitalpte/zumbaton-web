@@ -115,7 +115,7 @@ function PaymentSuccessContent() {
         {/* Actions */}
         <div className="space-y-3">
           <Link
-            href="/schedule"
+            href="/book-classes"
             className="block w-full py-3 px-6 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
           >
             Browse Classes

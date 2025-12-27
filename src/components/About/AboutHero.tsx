@@ -30,7 +30,7 @@ const AboutHero = () => {
         <div 
           className="absolute inset-0 w-full h-[120%] bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=2070')",
+            backgroundImage: "url('/images/images/20251227_0814_Energetic Zumbathon Vibes_simple_compose_01kdfdy7cse3htgvxspp828dwf.png')",
           }}
         />
         {/* Dark overlay */}

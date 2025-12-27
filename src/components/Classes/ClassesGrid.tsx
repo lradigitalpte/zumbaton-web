@@ -53,10 +53,10 @@ const ClassCard = ({ classItem, index }: ClassCardProps) => {
       transition={{ duration: 0.5, delay: index * 0.1 }}
     >
       <Link href={`/classes/${classItem.slug}`} className="block group">
-        <div className={`relative rounded-xl overflow-hidden ${
+        <div className={`relative rounded-xl overflow-hidden border transition-all duration-300 hover:shadow-xl ${
           isFeatured 
-            ? "bg-green-600 dark:bg-green-700" 
-            : "bg-gray-100 dark:bg-dark-2"
+            ? "bg-green-600 dark:bg-green-700 border-green-700 dark:border-green-600 hover:border-green-500 dark:hover:border-green-500" 
+            : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-lime-400 dark:hover:border-lime-400"
         }`}>
           <div className="flex flex-col md:flex-row">
             {/* Content Side */}
@@ -73,7 +73,11 @@ const ClassCard = ({ classItem, index }: ClassCardProps) => {
                   {classItem.intensity}
                 </span>
                 
-                <h3 className="text-xl md:text-2xl font-bold mb-3 group-hover:text-lime-400 transition-colors">
+                <h3 className={`text-xl md:text-2xl font-bold mb-3 transition-colors ${
+                  isFeatured 
+                    ? "group-hover:text-lime-300" 
+                    : "group-hover:text-lime-400 dark:group-hover:text-lime-400"
+                }`}>
                   {classItem.name}
                 </h3>
                 <p className={`text-sm md:text-base mb-4 line-clamp-3 ${
@@ -126,7 +130,7 @@ const ClassCard = ({ classItem, index }: ClassCardProps) => {
               <div className={`absolute inset-y-0 left-0 w-16 z-10 hidden md:block ${
                 isFeatured 
                   ? "bg-gradient-to-r from-green-600 dark:from-green-700 to-transparent" 
-                  : "bg-gradient-to-r from-gray-100 dark:from-dark-2 to-transparent"
+                  : "bg-gradient-to-r from-gray-100 dark:from-gray-800 to-transparent"
               }`} 
               style={{ 
                 clipPath: "polygon(0 0, 100% 15%, 100% 85%, 0 100%)" 

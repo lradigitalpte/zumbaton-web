@@ -165,12 +165,12 @@ const Header = () => {
                         {menuItem.path ? (
                           <Link
                             href={menuItem.path}
-                            className={`flex items-center py-3 px-4 rounded-lg text-base font-medium transition-colors lg:py-6 lg:px-0 lg:rounded-none ${
+                            className={`flex items-center py-3 px-4 rounded-lg text-base font-medium transition-colors lg:py-6 lg:px-0 lg:rounded-none relative ${
                               usePathName === menuItem.path
-                                ? "text-amber-500 bg-amber-50 dark:bg-amber-900/20 lg:bg-transparent"
+                                ? "text-lime-400 lg:text-lime-400 lg:bg-transparent lg:after:absolute lg:after:bottom-0 lg:after:left-0 lg:after:w-full lg:after:h-[2px] lg:after:bg-lime-400 lg:after:rounded-full"
                                 : needsBackground
-                                ? "text-gray-700 hover:text-amber-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-amber-500 dark:hover:bg-gray-800 lg:hover:bg-transparent"
-                                : "text-gray-700 hover:text-amber-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-amber-500 dark:hover:bg-gray-800 lg:text-white/90 lg:hover:text-white lg:hover:bg-transparent"
+                                ? "text-gray-700 hover:text-lime-400 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-lime-400 dark:hover:bg-gray-800 lg:hover:bg-transparent"
+                                : "text-gray-700 hover:text-lime-400 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-lime-400 dark:hover:bg-gray-800 lg:text-white/90 lg:hover:text-white lg:hover:bg-transparent"
                             }`}
                             onClick={() => setNavbarOpen(false)}
                           >
@@ -182,8 +182,8 @@ const Header = () => {
                               onClick={() => handleSubmenu(index)}
                               className={`w-full flex items-center justify-between py-3 px-4 rounded-lg text-base font-medium transition-colors lg:py-6 lg:px-0 lg:rounded-none ${
                                 needsBackground
-                                  ? "text-gray-700 hover:text-amber-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-amber-500 dark:hover:bg-gray-800 lg:hover:bg-transparent"
-                                  : "text-gray-700 hover:text-amber-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-amber-500 dark:hover:bg-gray-800 lg:text-white/90 lg:hover:text-white lg:hover:bg-transparent"
+                                  ? "text-gray-700 hover:text-lime-400 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-lime-400 dark:hover:bg-gray-800 lg:hover:bg-transparent"
+                                  : "text-gray-700 hover:text-lime-400 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-lime-400 dark:hover:bg-gray-800 lg:text-white/90 lg:hover:text-white lg:hover:bg-transparent"
                               }`}
                             >
                               {menuItem.title}
@@ -213,7 +213,7 @@ const Header = () => {
                                   <Link
                                     href={submenuItem.path}
                                     key={subIndex}
-                                    className="block py-2 px-4 rounded-lg text-sm text-gray-600 hover:text-amber-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-amber-500 dark:hover:bg-gray-800 transition-colors lg:px-3"
+                                    className="block py-2 px-4 rounded-lg text-sm text-gray-600 hover:text-lime-400 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-lime-400 dark:hover:bg-gray-800 transition-colors lg:px-3"
                                     onClick={() => setNavbarOpen(false)}
                                   >
                                     {submenuItem.title}

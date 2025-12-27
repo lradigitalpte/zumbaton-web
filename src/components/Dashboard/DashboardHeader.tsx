@@ -6,6 +6,7 @@ import { useTheme } from "next-themes";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import SearchPanel from "./SearchPanel";
+import { useProfile } from "@/hooks/useProfile";
 
 interface DashboardHeaderProps {
   sidebarCollapsed?: boolean;
@@ -14,6 +15,7 @@ interface DashboardHeaderProps {
 
 const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: DashboardHeaderProps) => {
   const { user, signOut } = useAuth();
+  const { data: profile } = useProfile();
   const { theme, setTheme } = useTheme();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -53,6 +55,7 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
 
   // Fetch real notifications from API
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -60,20 +63,40 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
         // Use centralized API fetch with automatic token refresh
         const { apiFetchJson } = await import('@/lib/api-fetch');
         
-        const data = await apiFetchJson<{ notifications: any[] }>('/api/notifications', {
+        const data = await apiFetchJson<{ 
+          notifications: any[];
+          unreadCount?: number;
+        }>('/api/notifications?limit=5', {
           method: 'GET',
           requireAuth: true,
         });
         
-        setNotifications((data.notifications || []).slice(0, 5)); // Show latest 5
+        // Map API response to component format
+        const mappedNotifications = (data.notifications || []).map((n: any) => ({
+          id: n.id,
+          title: n.subject || n.title || 'Notification',
+          message: n.body || n.message || '',
+          time: n.created_at ? new Date(n.created_at).toLocaleString() : '',
+          unread: !n.read_at, // unread if read_at is null
+          type: n.type || 'info',
+        }));
+        
+        setNotifications(mappedNotifications);
+        setUnreadCount(data.unreadCount || 0);
       } catch (error) {
         console.error('Failed to fetch notifications:', error);
         setNotifications([]); // Show empty state if fetch fails
+        setUnreadCount(0);
       }
     };
     
-    fetchNotifications();
-  }, []);
+    if (user?.id) {
+      fetchNotifications();
+      // Refresh notifications every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user?.id]);
 
   return (
     <header
@@ -156,34 +179,61 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
               <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
-              {notifications.some((n) => n.unread) && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              {unreadCount > 0 && (
+                <span className="absolute top-0.5 right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
               )}
             </button>
 
             {/* Notifications Dropdown */}
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-dark rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2">
-                <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+              <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-dark rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 max-h-[400px] overflow-y-auto">
+                <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-dark z-10">
                   <h3 className="font-semibold text-dark dark:text-white">Notifications</h3>
+                  {unreadCount > 0 && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {unreadCount} unread
+                    </p>
+                  )}
                 </div>
-                {notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer ${
-                      notification.unread ? "bg-primary/5" : ""
-                    }`}
-                  >
-                    <p className="font-medium text-dark dark:text-white text-sm">{notification.title}</p>
-                    <p className="text-body-color dark:text-gray-400 text-sm">{notification.message}</p>
-                    <p className="text-xs text-gray-400 mt-1">{notification.time}</p>
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-8 text-center">
+                    <svg className="w-12 h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">No notifications</p>
                   </div>
-                ))}
-                <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
-                  <Link href="/notifications" className="text-primary text-sm hover:underline">
-                    View all notifications
-                  </Link>
-                </div>
+                ) : (
+                  <>
+                    {notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-l-2 ${
+                          notification.unread 
+                            ? "bg-primary/5 border-primary" 
+                            : "border-transparent"
+                        }`}
+                      >
+                        <p className="font-medium text-dark dark:text-white text-sm">{notification.title}</p>
+                        <p className="text-body-color dark:text-gray-400 text-sm mt-0.5 line-clamp-2">{notification.message}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{notification.time}</p>
+                      </div>
+                    ))}
+                    <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 sticky bottom-0 bg-white dark:bg-dark">
+                      <Link 
+                        href="/notifications" 
+                        className="text-primary text-sm font-medium hover:underline flex items-center gap-1"
+                        onClick={() => setShowNotifications(false)}
+                      >
+                        View all notifications
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Link>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -198,10 +248,30 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
               className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               aria-label="User menu"
             >
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                <span className="text-primary font-semibold text-sm">
-                  {user?.name?.charAt(0) || "U"}
-                </span>
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
+                {profile?.avatarUrl ? (
+                  <img
+                    src={profile.avatarUrl}
+                    alt={user?.name || "User"}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Fallback to initials if image fails to load
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent && !parent.querySelector('span')) {
+                        const span = document.createElement('span');
+                        span.className = 'text-primary font-semibold text-sm';
+                        span.textContent = user?.name?.charAt(0)?.toUpperCase() || "U";
+                        parent.appendChild(span);
+                      }
+                    }}
+                  />
+                ) : (
+                  <span className="text-primary font-semibold text-sm">
+                    {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                  </span>
+                )}
               </div>
               <svg className="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

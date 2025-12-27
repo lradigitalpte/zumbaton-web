@@ -30,25 +30,70 @@ export interface ClassDetail {
  */
 export async function getClassDetail(classId: string): Promise<ClassDetail | null> {
   const supabase = getSupabaseClient()
+  const QUERY_TIMEOUT = 15000 // 15 seconds
 
-  // Get class details
-  const { data: classData, error: classError } = await supabase
-    .from(TABLES.CLASSES)
-    .select('*')
-    .eq('id', classId)
-    .maybeSingle()
+  // Get class details with timeout
+  let classData: any, classError: any
+  try {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('Query timeout after 15s'))
+      }, QUERY_TIMEOUT)
+    })
+
+    const classResult = await Promise.race([
+      supabase
+        .from(TABLES.CLASSES)
+        .select('*')
+        .eq('id', classId)
+        .maybeSingle(),
+      timeoutPromise,
+    ]) as { data: any; error: any }
+    
+    classData = classResult.data
+    classError = classResult.error
+  } catch (timeoutError: any) {
+    console.error('[Class Detail] Query timeout:', timeoutError?.message)
+    throw new Error(`Class detail query timeout: ${timeoutError?.message || 'Request took too long'}`)
+  }
 
   if (classError || !classData) {
     console.error('Error fetching class detail:', classError)
-    return null
+    // Return null if class doesn't exist (valid state)
+    if (classError?.code === 'PGRST116') {
+      return null
+    }
+    throw new Error(`Failed to fetch class detail: ${classError?.message || 'Unknown error'}`)
   }
 
-  // Get booking count
-  const { data: bookings, error: bookingError } = await supabase
-    .from(TABLES.BOOKINGS)
-    .select('id')
-    .eq('class_id', classId)
-    .eq('status', 'confirmed')
+  // Get booking count with timeout
+  let bookings: any
+  try {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('Query timeout after 15s'))
+      }, QUERY_TIMEOUT)
+    })
+
+    const bookingResult = await Promise.race([
+      supabase
+        .from(TABLES.BOOKINGS)
+        .select('id')
+        .eq('class_id', classId)
+        .eq('status', 'confirmed'),
+      timeoutPromise,
+    ]) as { data: any; error: any }
+    
+    if (bookingResult.error) {
+      console.warn('[Class Detail] Error fetching booking count:', bookingResult.error)
+      bookings = [] // Use empty array on error (non-critical)
+    } else {
+      bookings = bookingResult.data
+    }
+  } catch (timeoutError: any) {
+    console.warn('[Class Detail] Query timeout for booking count:', timeoutError?.message)
+    bookings = [] // Use empty array on timeout (non-critical)
+  }
 
   const bookedCount = bookings?.length || 0
 

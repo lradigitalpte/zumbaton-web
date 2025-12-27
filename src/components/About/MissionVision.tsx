@@ -32,7 +32,7 @@ const MissionVision = () => {
         <div 
           className="absolute inset-0 w-full h-full bg-cover bg-center bg-fixed"
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=2070')",
+            backgroundImage: "url('/images/images/image2z.jpg')",
           }}
         />
         <div className="absolute inset-0 bg-black/75"></div>

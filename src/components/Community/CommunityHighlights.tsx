@@ -52,7 +52,7 @@ const CommunityHighlights = () => {
         className="absolute inset-0 -z-10"
       >
         <Image
-          src="https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=2070"
+          src="/images/images/image2z.jpg"
           alt="Zumba community background"
           fill
           className="object-cover"

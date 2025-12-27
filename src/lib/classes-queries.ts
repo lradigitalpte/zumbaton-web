@@ -46,6 +46,264 @@ export interface ClassWithAvailability {
 }
 
 /**
+ * Helper function to process and group classes
+ * Extracted from getUpcomingClasses to be reused for API responses
+ */
+async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailability[]> {
+  const supabase = getSupabaseClient()
+  
+  if (!classes || classes.length === 0) {
+    return []
+  }
+
+  // Get all unique instructor IDs and names for avatar fetching
+  const instructorIds = new Set<string>()
+  const instructorNames = new Set<string>()
+  
+  classes.forEach((classItem: any) => {
+    if (classItem.instructor_id) {
+      instructorIds.add(classItem.instructor_id)
+    }
+    if (classItem.instructor_name) {
+      // For multiple instructors, split by comma
+      const names = classItem.instructor_name.split(',').map((n: string) => n.trim())
+      names.forEach((name: string) => instructorNames.add(name))
+    }
+  })
+
+  // Fetch instructor profiles for avatars
+  const instructorProfiles: Record<string, { id: string; name: string; avatar_url: string | null }> = {}
+  const instructorProfilesByName: Record<string, { id: string; name: string; avatar_url: string | null }> = {}
+  
+  if (instructorIds.size > 0) {
+    const { data: profiles } = await supabase
+      .from('user_profiles')
+      .select('id, name, avatar_url')
+      .in('id', Array.from(instructorIds))
+    
+    profiles?.forEach((profile: any) => {
+      instructorProfiles[profile.id] = {
+        id: profile.id,
+        name: profile.name,
+        avatar_url: profile.avatar_url,
+      }
+      instructorProfilesByName[profile.name] = {
+        id: profile.id,
+        name: profile.name,
+        avatar_url: profile.avatar_url,
+      }
+    })
+  }
+  
+  // Also fetch by name for multiple instructors (in case IDs aren't available)
+  if (instructorNames.size > 0) {
+    const nameArray = Array.from(instructorNames)
+    // Fetch in batches if needed (Supabase has limits)
+    for (let i = 0; i < nameArray.length; i += 10) {
+      const batch = nameArray.slice(i, i + 10)
+      const { data: profilesByName } = await supabase
+        .from('user_profiles')
+        .select('id, name, avatar_url')
+        .in('name', batch)
+      
+      profilesByName?.forEach((profile: any) => {
+        if (!instructorProfilesByName[profile.name]) {
+          instructorProfilesByName[profile.name] = {
+            id: profile.id,
+            name: profile.name,
+            avatar_url: profile.avatar_url,
+          }
+        }
+        if (!instructorProfiles[profile.id]) {
+          instructorProfiles[profile.id] = {
+            id: profile.id,
+            name: profile.name,
+            avatar_url: profile.avatar_url,
+          }
+        }
+      })
+    }
+  }
+
+  // Helper function to get initials from name
+  const getInitials = (name: string | null): string => {
+    if (!name) return "??"
+    if (name.includes(',')) {
+      // Multiple instructors
+      const names = name.split(',').map(n => n.trim())
+      return names
+        .map(n => n.split(' ')[0]?.[0] || '')
+        .join('')
+        .toUpperCase()
+        .slice(0, 3)
+    }
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
+
+  // Helper function to get instructor info array
+  const getInstructors = (classItem: any): InstructorInfo[] => {
+    const instructors: InstructorInfo[] = []
+    
+    if (classItem.instructor_name) {
+      const names = classItem.instructor_name.split(',').map((n: string) => n.trim())
+      names.forEach((name: string) => {
+        // Try to find by name first (for multiple instructors)
+        const profileByName = instructorProfilesByName[name]
+        // Fallback to ID lookup
+        const profileById = classItem.instructor_id ? instructorProfiles[classItem.instructor_id] : null
+        const profile = profileByName || profileById
+        
+        instructors.push({
+          id: profile?.id || classItem.instructor_id || '',
+          name: name,
+          avatar: profile?.avatar_url || null,
+          initials: getInitials(name),
+        })
+      })
+    } else if (classItem.instructor_id && instructorProfiles[classItem.instructor_id]) {
+      const profile = instructorProfiles[classItem.instructor_id]
+      instructors.push({
+        id: profile.id,
+        name: profile.name,
+        avatar: profile.avatar_url,
+        initials: getInitials(profile.name),
+      })
+    }
+    
+    return instructors.length > 0 ? instructors : [{
+      id: classItem.instructor_id || '',
+      name: classItem.instructor_name || 'Unassigned',
+      avatar: null,
+      initials: getInitials(classItem.instructor_name),
+    }]
+  }
+
+  // Separate parent classes and child instances
+  const parentClasses: any[] = []
+  const childInstances: any[] = []
+  
+  classes.forEach((classItem: any) => {
+    const isRecurringType = classItem.recurrence_type === 'recurring' || classItem.recurrence_type === 'course'
+    const isOccurrenceClass = /-\s*\d{1,2}\/\d{1,2}\/\d{4}$/.test(classItem.title)
+    
+    // Parent classes: have recurrence_type but no parent_class_id and no date suffix
+    if (isRecurringType && !classItem.parent_class_id && !isOccurrenceClass) {
+      // Include ALL recurring/course parents - they will be filtered in the next step
+      parentClasses.push(classItem)
+    } 
+    // Child instances: have parent_class_id or date suffix
+    else if (classItem.parent_class_id || isOccurrenceClass) {
+      // Include only scheduled/in-progress child instances
+      if (classItem.status === 'scheduled' || classItem.status === 'in-progress') {
+        childInstances.push(classItem)
+      }
+    }
+    // Single classes: show only scheduled/in-progress
+    else if (classItem.status === 'scheduled' || classItem.status === 'in-progress') {
+      parentClasses.push(classItem)
+    }
+  })
+
+  // Filter out recurring/course parents that don't have any scheduled children
+  const scheduledChildParentIds = new Set(
+    childInstances
+      .filter(c => c.status === 'scheduled' || c.status === 'in-progress')
+      .map(c => c.parent_class_id)
+      .filter(Boolean)
+  )
+  
+  const filteredParentClasses = parentClasses.filter(parent => {
+    // Keep single classes and parents with no recurrence type
+    if (!parent.recurrence_type) return true
+    // For recurring/course parents: keep if they're scheduled themselves, or if they have scheduled children
+    return parent.status === 'scheduled' || parent.status === 'in-progress' || scheduledChildParentIds.has(parent.id)
+  })
+
+  // Get booking counts for all classes (parents and children)
+  const allClassIds = [...filteredParentClasses, ...childInstances].map((c: any) => c.id)
+
+  let bookingCounts: Record<string, number> = {}
+  
+  if (allClassIds.length > 0) {
+    const { data: bookings, error: bookingError } = await supabase
+      .from(TABLES.BOOKINGS)
+      .select('class_id, status')
+      .in('class_id', allClassIds)
+      .eq('status', 'confirmed')
+    
+    if (bookingError) {
+      console.error('Error fetching booking counts:', bookingError)
+    } else {
+      // Count bookings per class
+      bookings?.forEach((booking: any) => {
+        bookingCounts[booking.class_id] = (bookingCounts[booking.class_id] || 0) + 1
+      })
+    }
+  }
+
+  // Transform parent classes and child instances with booking counts
+  const transformedParents = filteredParentClasses.map((classItem: any) => {
+    const bookedCount = bookingCounts[classItem.id] || 0
+    const room = Array.isArray(classItem.rooms) ? classItem.rooms[0] : classItem.rooms
+    const category = Array.isArray(classItem.class_categories) ? classItem.class_categories[0] : classItem.class_categories
+    
+    return {
+      ...classItem,
+      name: classItem.title || classItem.name,
+      title: classItem.title,
+      booked_count: bookedCount,
+      tokens_required: classItem.token_cost,
+      difficulty_level: classItem.level === 'all_levels' ? 'Beginner' : (classItem.level || 'all_levels').charAt(0).toUpperCase() + (classItem.level || 'all_levels').slice(1),
+      room_id: classItem.room_id || null,
+      room_name: room?.name || classItem.location || null,
+      category_id: classItem.category_id || null,
+      category_name: category?.name || null,
+      instructors: getInstructors(classItem),
+    }
+  })
+
+  const transformedChildren = childInstances.map((classItem: any) => {
+    const bookedCount = bookingCounts[classItem.id] || 0
+    const room = Array.isArray(classItem.rooms) ? classItem.rooms[0] : classItem.rooms
+    const category = Array.isArray(classItem.class_categories) ? classItem.class_categories[0] : classItem.class_categories
+  
+    return {
+      ...classItem,
+      name: classItem.title || classItem.name,
+      title: classItem.title,
+      booked_count: bookedCount,
+      tokens_required: classItem.token_cost,
+      difficulty_level: classItem.level === 'all_levels' ? 'Beginner' : (classItem.level || 'all_levels').charAt(0).toUpperCase() + (classItem.level || 'all_levels').slice(1),
+      room_id: classItem.room_id || null,
+      room_name: room?.name || classItem.location || null,
+      category_id: classItem.category_id || null,
+      category_name: category?.name || null,
+      instructors: getInstructors(classItem),
+    }
+  })
+
+  // Group recurring and course classes
+  try {
+    const grouped = groupRecurringClasses(transformedParents, transformedChildren, bookingCounts)
+    if (grouped.length === 0 && transformedParents.length > 0) {
+      console.log('Grouping returned empty, returning', transformedParents.length, 'transformed parents')
+      return transformedParents
+    }
+    console.log('Grouping returned', grouped.length, 'classes')
+    return grouped
+  } catch (error) {
+    console.error('Error grouping classes:', error)
+    console.log('Fallback: returning', transformedParents.length, 'transformed parents')
+    return transformedParents
+  }
+}
+
+/**
  * Get all upcoming classes with booking counts
  */
 export async function getUpcomingClasses(filters?: {
@@ -55,8 +313,54 @@ export async function getUpcomingClasses(filters?: {
   recurrenceType?: 'single' | 'recurring' | 'course' | 'all'
   categoryId?: string
 }): Promise<ClassWithAvailability[]> {
+  // Try API endpoint first (bypasses RLS, faster), fallback to direct Supabase query
+  // Only use API endpoint in browser (client-side)
+  if (typeof window !== 'undefined') {
+    try {
+      const params = new URLSearchParams()
+      if (filters?.type && filters.type !== 'all') params.append('type', filters.type)
+      if (filters?.difficulty && filters.difficulty !== 'all') params.append('difficulty', filters.difficulty)
+      if (filters?.date) params.append('date', filters.date)
+      if (filters?.recurrenceType && filters.recurrenceType !== 'all') params.append('recurrenceType', filters.recurrenceType)
+      if (filters?.categoryId) params.append('categoryId', filters.categoryId)
+
+      const baseUrl = window.location.origin
+      const queryString = params.toString()
+      const url = queryString ? `${baseUrl}/api/classes?${queryString}` : `${baseUrl}/api/classes`
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success && result.data && Array.isArray(result.data)) {
+          console.log(`📚 Fetched ${result.data.length} classes via API (bypassing RLS for faster queries)`)
+          // API returns classes data, but we still need to process it through the same grouping logic
+          // as the direct query path to ensure recurring/course classes are grouped correctly
+          const classes = result.data as any[]
+          
+          // Run the API response through the same processing pipeline as direct query
+          // This ensures consistent grouping behavior
+          return await processAndGroupClasses(classes)
+        }
+      } else {
+        console.warn('⚠️ API endpoint failed, falling back to direct Supabase query')
+      }
+    } catch (apiError) {
+      console.warn('⚠️ API endpoint error, falling back to direct Supabase query:', apiError)
+    }
+  }
+
+  // Fallback to direct Supabase query (works in both client and server)
   try {
   const supabase = getSupabaseClient()
+
+  // Timeout protection - 15 seconds to prevent infinite loading
+  const QUERY_TIMEOUT = 15000
 
   let query = supabase
     .from(TABLES.CLASSES)
@@ -119,11 +423,33 @@ export async function getUpcomingClasses(filters?: {
       .lte('scheduled_at', endOfDay.toISOString())
   }
 
-  const { data: classes, error } = await query
+  // Race between query and timeout to prevent infinite loading
+  let classes: any, error: any
+  try {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('Query timeout after 15s - database may be slow or session expired'))
+      }, QUERY_TIMEOUT)
+    })
+
+    const result = await Promise.race([
+      query,
+      timeoutPromise,
+    ]) as { data: any; error: any }
+    
+    classes = result.data
+    error = result.error
+  } catch (timeoutError: any) {
+    // If timeout occurs, throw error so React Query can handle it
+    console.error('[Classes] Query timeout after 15s:', timeoutError?.message || timeoutError)
+    console.warn('[Classes] This may indicate: expired session, slow database, or RLS blocking query')
+    throw new Error(`Classes query timeout: ${timeoutError?.message || 'Request took too long'}`)
+  }
 
   if (error) {
     console.error('Error fetching classes:', error)
-    return []
+    // Throw error so React Query can handle it properly (retry, show error state, etc.)
+    throw new Error(`Failed to fetch classes: ${error.message || 'Unknown error'}`)
   }
 
     if (!classes || classes.length === 0) {
@@ -133,270 +459,13 @@ export async function getUpcomingClasses(filters?: {
 
     console.log(`Fetched ${classes.length} classes from database`)
 
-    // Get all unique instructor IDs and names for avatar fetching
-    const instructorIds = new Set<string>()
-    const instructorNames = new Set<string>()
-    
-    classes.forEach((classItem: any) => {
-      if (classItem.instructor_id) {
-        instructorIds.add(classItem.instructor_id)
-      }
-      if (classItem.instructor_name) {
-        // For multiple instructors, split by comma
-        const names = classItem.instructor_name.split(',').map((n: string) => n.trim())
-        names.forEach((name: string) => instructorNames.add(name))
-      }
-    })
-
-    // Fetch instructor profiles for avatars
-    const instructorProfiles: Record<string, { id: string; name: string; avatar_url: string | null }> = {}
-    const instructorProfilesByName: Record<string, { id: string; name: string; avatar_url: string | null }> = {}
-    
-    if (instructorIds.size > 0) {
-      const { data: profiles } = await supabase
-        .from('user_profiles')
-        .select('id, name, avatar_url')
-        .in('id', Array.from(instructorIds))
-      
-      profiles?.forEach((profile: any) => {
-        instructorProfiles[profile.id] = {
-          id: profile.id,
-          name: profile.name,
-          avatar_url: profile.avatar_url,
-        }
-        instructorProfilesByName[profile.name] = {
-          id: profile.id,
-          name: profile.name,
-          avatar_url: profile.avatar_url,
-        }
-      })
-    }
-    
-    // Also fetch by name for multiple instructors (in case IDs aren't available)
-    if (instructorNames.size > 0) {
-      const nameArray = Array.from(instructorNames)
-      // Fetch in batches if needed (Supabase has limits)
-      for (let i = 0; i < nameArray.length; i += 10) {
-        const batch = nameArray.slice(i, i + 10)
-        const { data: profilesByName } = await supabase
-          .from('user_profiles')
-          .select('id, name, avatar_url')
-          .in('name', batch)
-        
-        profilesByName?.forEach((profile: any) => {
-          if (!instructorProfilesByName[profile.name]) {
-            instructorProfilesByName[profile.name] = {
-              id: profile.id,
-              name: profile.name,
-              avatar_url: profile.avatar_url,
-            }
-          }
-          if (!instructorProfiles[profile.id]) {
-            instructorProfiles[profile.id] = {
-              id: profile.id,
-              name: profile.name,
-              avatar_url: profile.avatar_url,
-            }
-          }
-        })
-      }
-    }
-
-    // Helper function to get initials from name
-    const getInitials = (name: string | null): string => {
-      if (!name) return "??"
-      if (name.includes(',')) {
-        // Multiple instructors
-        const names = name.split(',').map(n => n.trim())
-        return names
-          .map(n => n.split(' ')[0]?.[0] || '')
-          .join('')
-          .toUpperCase()
-          .slice(0, 3)
-      }
-      return name
-        .split(' ')
-        .map(n => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
-    }
-
-    // Helper function to get instructor info array
-    const getInstructors = (classItem: any): InstructorInfo[] => {
-      const instructors: InstructorInfo[] = []
-      
-      if (classItem.instructor_name) {
-        const names = classItem.instructor_name.split(',').map((n: string) => n.trim())
-        names.forEach((name: string) => {
-          // Try to find by name first (for multiple instructors)
-          const profileByName = instructorProfilesByName[name]
-          // Fallback to ID lookup
-          const profileById = classItem.instructor_id ? instructorProfiles[classItem.instructor_id] : null
-          const profile = profileByName || profileById
-          
-          instructors.push({
-            id: profile?.id || classItem.instructor_id || '',
-            name: name,
-            avatar: profile?.avatar_url || null,
-            initials: getInitials(name),
-          })
-        })
-      } else if (classItem.instructor_id && instructorProfiles[classItem.instructor_id]) {
-        const profile = instructorProfiles[classItem.instructor_id]
-        instructors.push({
-          id: profile.id,
-          name: profile.name,
-          avatar: profile.avatar_url,
-          initials: getInitials(profile.name),
-        })
-      }
-      
-      return instructors.length > 0 ? instructors : [{
-        id: classItem.instructor_id || '',
-        name: classItem.instructor_name || 'Unassigned',
-        avatar: null,
-        initials: getInitials(classItem.instructor_name),
-      }]
-    }
-
-    // Separate parent classes and child instances
-    // Show ALL classes regardless of date - let users filter if needed
-    const parentClasses: any[] = []
-    const childInstances: any[] = []
-    
-    if (!classes || classes.length === 0) {
-      return []
-    }
-    
-    classes.forEach((classItem: any) => {
-      const isRecurringType = classItem.recurrence_type === 'recurring' || classItem.recurrence_type === 'course'
-      const isOccurrenceClass = /-\s*\d{1,2}\/\d{1,2}\/\d{4}$/.test(classItem.title)
-      
-      // Parent classes: have recurrence_type but no parent_class_id and no date suffix
-      if (isRecurringType && !classItem.parent_class_id && !isOccurrenceClass) {
-        // Include ALL recurring/course parents - they will be filtered in the next step
-        parentClasses.push(classItem)
-      } 
-      // Child instances: have parent_class_id or date suffix
-      else if (classItem.parent_class_id || isOccurrenceClass) {
-        // Include only scheduled/in-progress child instances
-        if (classItem.status === 'scheduled' || classItem.status === 'in-progress') {
-          childInstances.push(classItem)
-        }
-      }
-      // Single classes: show only scheduled/in-progress
-      else if (classItem.status === 'scheduled' || classItem.status === 'in-progress') {
-        parentClasses.push(classItem)
-      }
-  })
-
-    // Filter out recurring/course parents that don't have any scheduled children
-    const scheduledChildParentIds = new Set(
-      childInstances
-        .filter(c => c.status === 'scheduled' || c.status === 'in-progress')
-        .map(c => c.parent_class_id)
-        .filter(Boolean)
-    )
-    
-    const filteredParentClasses = parentClasses.filter(parent => {
-      // Keep single classes and parents with no recurrence type
-      if (!parent.recurrence_type) return true
-      // For recurring/course parents: keep if they're scheduled themselves, or if they have scheduled children
-      return parent.status === 'scheduled' || parent.status === 'in-progress' || scheduledChildParentIds.has(parent.id)
-    })
-
-    console.log('[Classes Query] Before filtering:', {
-      totalFetched: classes.length,
-      parentClasses: parentClasses.length,
-      childInstances: childInstances.length,
-      scheduledChildParentIds: Array.from(scheduledChildParentIds),
-      filteredParents: filteredParentClasses.length,
-    })
-
-    // Get booking counts for all classes (parents and children)
-    const allClassIds = [...filteredParentClasses, ...childInstances].map((c: any) => c.id)
-  
-  let bookingCounts: Record<string, number> = {}
-  
-    if (allClassIds.length > 0) {
-    const { data: bookings, error: bookingError } = await supabase
-      .from(TABLES.BOOKINGS)
-      .select('class_id, status')
-        .in('class_id', allClassIds)
-      .eq('status', 'confirmed')
-    
-    if (bookingError) {
-      console.error('Error fetching booking counts:', bookingError)
-    } else {
-      // Count bookings per class
-      bookings?.forEach((booking: any) => {
-        bookingCounts[booking.class_id] = (bookingCounts[booking.class_id] || 0) + 1
-      })
-    }
-  }
-
-    // Transform parent classes and child instances with booking counts
-    // Ensure all classes have the correct structure with 'name' field
-    const transformedParents = filteredParentClasses.map((classItem: any) => {
-      const bookedCount = bookingCounts[classItem.id] || 0
-      const room = Array.isArray(classItem.rooms) ? classItem.rooms[0] : classItem.rooms
-      const category = Array.isArray(classItem.class_categories) ? classItem.class_categories[0] : classItem.class_categories
-      
-      return {
-        ...classItem,
-        name: classItem.title || classItem.name, // Ensure 'name' field exists
-        title: classItem.title,
-        booked_count: bookedCount,
-        tokens_required: classItem.token_cost,
-        difficulty_level: classItem.level === 'all_levels' ? 'Beginner' : (classItem.level || 'all_levels').charAt(0).toUpperCase() + (classItem.level || 'all_levels').slice(1),
-        room_id: classItem.room_id || null,
-        room_name: room?.name || classItem.location || null, // Use room name from rooms table, fallback to location field
-        category_id: classItem.category_id || null,
-        category_name: category?.name || null,
-        instructors: getInstructors(classItem),
-      }
-    })
-
-    const transformedChildren = childInstances.map((classItem: any) => {
-    const bookedCount = bookingCounts[classItem.id] || 0
-      const room = Array.isArray(classItem.rooms) ? classItem.rooms[0] : classItem.rooms
-      const category = Array.isArray(classItem.class_categories) ? classItem.class_categories[0] : classItem.class_categories
-    
-    return {
-        ...classItem,
-        name: classItem.title || classItem.name, // Ensure 'name' field exists
-      title: classItem.title,
-      booked_count: bookedCount,
-      tokens_required: classItem.token_cost,
-        difficulty_level: classItem.level === 'all_levels' ? 'Beginner' : (classItem.level || 'all_levels').charAt(0).toUpperCase() + (classItem.level || 'all_levels').slice(1),
-        room_id: classItem.room_id || null,
-        room_name: room?.name || classItem.location || null, // Use room name from rooms table, fallback to location field
-        category_id: classItem.category_id || null,
-        category_name: category?.name || null,
-        instructors: getInstructors(classItem),
-      }
-    })
-
-    // Group recurring and course classes
-    try {
-      const grouped = groupRecurringClasses(transformedParents, transformedChildren, bookingCounts)
-      // If grouping returns empty but we have classes, return them directly (they're already transformed)
-      if (grouped.length === 0 && transformedParents.length > 0) {
-        console.log('Grouping returned empty, returning', transformedParents.length, 'transformed parents')
-        return transformedParents
-      }
-      console.log('Grouping returned', grouped.length, 'classes')
-      return grouped
-    } catch (error) {
-      console.error('Error grouping classes:', error)
-      // Fallback: return transformed parents directly (they already have correct structure)
-      console.log('Fallback: returning', transformedParents.length, 'transformed parents')
-      return transformedParents
-    }
+    // Process and group classes using the shared helper function
+    return await processAndGroupClasses(classes)
   } catch (error) {
     console.error('Error in getUpcomingClasses:', error)
-    return []
+    // Re-throw error so React Query can handle it properly
+    // Don't return empty array as it masks the error
+    throw error
   }
 }
 
