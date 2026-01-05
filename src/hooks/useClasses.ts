@@ -42,33 +42,58 @@ export function useUpcomingClasses(filters?: {
 
 /**
  * Hook to book a class
+ * Calls API directly (like usePurchasePackage) to avoid lag from wrapper functions
  */
 export function useBookClass() {
   const queryClient = useQueryClient()
   const toast = useToast()
 
   return useMutation({
-    mutationFn: async ({ userId, classId }: { userId: string; classId: string }) => {
-      const result = await bookClass(userId, classId)
+    mutationFn: async ({ userId, classId, className }: { userId: string; classId: string; className?: string }) => {
+      // Use centralized API fetch with automatic token refresh
+      const { apiFetchJson } = await import('@/lib/api-fetch')
+      
+      const result = await apiFetchJson<{
+        success: boolean
+        data?: {
+          booking?: { id: string }
+          message?: string
+        }
+        error?: { code: string; message: string }
+      }>('/api/bookings', {
+        method: 'POST',
+        body: JSON.stringify({ userId, classId }),
+        requireAuth: true,
+      })
+
       if (!result.success) {
-        throw new Error(result.message || 'Failed to book class')
+        throw new Error(result.error?.message || 'Failed to book class')
       }
-      return result
+
+      return {
+        ...result.data,
+        bookingId: result.data?.booking?.id,
+        message: result.data?.message || 'Class booked successfully!',
+        className,
+      }
     },
     onSuccess: (data, variables) => {
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: classKeys.lists() })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       
-      // Show success toast
+      // Build success message with class name
+      const classInfo = data.className ? ` for "${data.className}"` : ''
+      
+      // Show success toast with clear message
       handleApiResponse(
         { success: true, data, message: data.message || 'Your booking has been confirmed.' },
         toast,
         {
-          successTitle: data.waitlistPosition ? 'Added to Waitlist' : 'Class Booked!',
+          successTitle: data.waitlistPosition ? 'Added to Waitlist!' : 'Class Booked Successfully!',
           successMessage: data.waitlistPosition
-            ? `You are now #${data.waitlistPosition} on the waitlist. You'll be notified if a spot opens up.`
-            : data.message || 'Your booking has been confirmed.',
+            ? `You are now #${data.waitlistPosition} on the waitlist${classInfo}. You'll be notified if a spot opens up.`
+            : `Your booking${classInfo} has been confirmed. See you in class!`,
         }
       )
     },
@@ -140,17 +165,17 @@ export function useBookBatchClasses() {
 
   return useMutation({
     mutationFn: async ({ userId, classIds }: { userId: string; classIds: string[] }) => {
-      const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-      
+      // Use local API endpoint first to avoid lag
       // Use centralized API fetch with automatic token refresh
       const { apiFetchJson } = await import('@/lib/api-fetch')
       
       try {
+        // Try local API first
         const result = await apiFetchJson<{
           success: boolean;
           data?: any;
           error?: { code: string; message: string };
-        }>(`${adminApiUrl}/api/bookings`, {
+        }>('/api/bookings', {
           method: 'POST',
           body: JSON.stringify({
             userId,
@@ -165,12 +190,40 @@ export function useBookBatchClasses() {
 
         return result.data
       } catch (error) {
-        throw error instanceof Error ? error : new Error('Failed to batch book classes')
+        // Fallback to admin API if local API fails
+        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+        try {
+          const result = await apiFetchJson<{
+            success: boolean;
+            data?: any;
+            error?: { code: string; message: string };
+          }>(`${adminApiUrl}/api/bookings`, {
+            method: 'POST',
+            body: JSON.stringify({
+              userId,
+              classIds,
+            }),
+            requireAuth: true,
+          })
+
+          if (!result.success) {
+            throw new Error(result.error?.message || 'Failed to batch book classes')
+          }
+
+          return result.data
+        } catch (adminError) {
+          throw error instanceof Error ? error : new Error('Failed to batch book classes')
+        }
       }
     },
     onSuccess: (data, variables) => {
       // Show success toast with count
-      handleBatchResponse({ success: true, data }, toast, variables.classIds.length)
+      const sessionCount = variables.classIds.length
+      const itemWord = sessionCount === 1 ? 'session' : 'sessions'
+      toast.success(
+        'Bookings Confirmed!',
+        `Successfully booked ${sessionCount} ${itemWord}. See you in class!`
+      )
       
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: classKeys.lists() })

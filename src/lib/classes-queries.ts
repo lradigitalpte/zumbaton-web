@@ -421,6 +421,9 @@ export async function getUpcomingClasses(filters?: {
     query = query
       .gte('scheduled_at', startOfDay.toISOString())
       .lte('scheduled_at', endOfDay.toISOString())
+  } else {
+    // If no date filter, exclude past classes (only show future classes)
+    query = query.gte('scheduled_at', new Date().toISOString())
   }
 
   // Race between query and timeout to prevent infinite loading
@@ -676,336 +679,48 @@ export async function bookClass(userId: string, classId: string): Promise<{
   bookingId?: string
   waitlistPosition?: number
 }> {
-  const supabase = getSupabaseClient()
-
+  // Always use API endpoint - never use direct Supabase queries to avoid lag
+  // Direct Supabase queries can lag after ~5 minutes due to session issues
+  // API endpoint uses server-side admin client which is always reliable
   try {
-    // Get booking settings
-    const settings = await getBookingSettings()
-
-    // 1. Get class details
-    const { data: classData, error: classError } = await supabase
-      .from(TABLES.CLASSES)
-      .select('*')
-      .eq('id', classId)
-      .eq('status', 'scheduled')
-      .single()
-
-    if (classError || !classData) {
-      return {
-        success: false,
-        message: 'Class not found or not available',
-      }
-    }
-
-    // Use admin API for ALL bookings to ensure notifications are triggered
-    // The admin API handles: single classes, recurring class sessions, and course packages
-    const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-    try {
-      // Use centralized API fetch with automatic token refresh
-      const { apiFetchJson } = await import('@/lib/api-fetch')
-      
-      const result = await apiFetchJson<{
-        success: boolean;
-        data?: any;
-        error?: { code: string; message: string };
-      }>(`${adminApiUrl}/api/bookings`, {
-        method: 'POST',
-        body: JSON.stringify({
-          userId,
-          classId,
-        }),
-        requireAuth: true,
-      })
-
-      if (!result.success) {
-        return {
-          success: false,
-          message: result.error?.message || 'Failed to book class',
-        }
-      }
-
-      return {
-        success: true,
-        message: result.data?.message || 'Class booked successfully!',
-        bookingId: result.data?.booking?.id,
-      }
-    } catch (error) {
-      console.error('Error booking class via admin API:', error)
-      // Fall back to local booking if admin API fails
-      console.log('Falling back to local booking...')
-    }
-
-    // FALLBACK: Local booking (if admin API is unavailable)
-    // Note: Notifications won't be triggered in fallback mode
+    const { apiFetchJson } = await import('@/lib/api-fetch')
     
-    // Check if class is in the future (for single/recurring classes)
-    if (new Date(classData.scheduled_at) <= new Date()) {
+    const startTime = Date.now()
+    console.log('[BookClass] Calling API endpoint: /api/bookings', { userId, classId })
+    
+    const result = await apiFetchJson<{
+      success: boolean;
+      data?: any;
+      error?: { code: string; message: string };
+    }>('/api/bookings', {
+      method: 'POST',
+      body: JSON.stringify({
+        userId,
+        classId,
+      }),
+      requireAuth: true,
+    })
+    
+    const duration = Date.now() - startTime
+    console.log(`[BookClass] API response received in ${duration}ms:`, result)
+
+    if (!result.success) {
       return {
         success: false,
-        message: 'Cannot book past classes',
+        message: result.error?.message || 'Failed to book class',
       }
-    }
-
-    // 2. Check if user already has a booking for this class
-    const { data: userBooking } = await supabase
-      .from(TABLES.BOOKINGS)
-      .select('id, status')
-      .eq('user_id', userId)
-      .eq('class_id', classId)
-      .maybeSingle()
-
-    if (userBooking) {
-      // Active bookings - can't book again
-      if (userBooking.status === 'confirmed' || userBooking.status === 'waitlist') {
-        return {
-          success: false,
-          message: 'You already have a booking for this class',
-        }
-      }
-      
-      // Attended - can't book again
-      if (userBooking.status === 'attended') {
-        return {
-          success: false,
-          message: 'You have already attended this class',
-        }
-      }
-      
-      // Cancelled bookings - we'll update the existing record instead of creating new one
-      // This handles the unique constraint issue
-      if (userBooking.status === 'cancelled' || userBooking.status === 'cancelled-late') {
-        // Continue to booking logic - we'll update the existing booking
-        // This is handled below in the insert logic
-      } else {
-        // No-show or other status
-        return {
-          success: false,
-          message: 'You already have a booking record for this class',
-        }
-      }
-    }
-
-    // Check for existing waitlist entry
-    const { data: existingWaitlist } = await supabase
-      .from(TABLES.WAITLIST)
-      .select('id, position, status')
-      .eq('user_id', userId)
-      .eq('class_id', classId)
-      .in('status', ['waiting', 'notified'])
-      .maybeSingle()
-
-    if (existingWaitlist) {
-      return {
-        success: false,
-        message: `You are already on the waitlist at position ${existingWaitlist.position}`,
-      }
-    }
-
-    // 3. Check max concurrent bookings limit
-    const { data: userBookings } = await supabase
-      .from(TABLES.BOOKINGS)
-      .select('id')
-      .eq('user_id', userId)
-      .in('status', ['confirmed', 'waitlist'])
-
-    const activeBookingsCount = userBookings?.length || 0
-    if (activeBookingsCount >= settings.maxBookingsPerUser) {
-      return {
-        success: false,
-        message: `You have reached the maximum of ${settings.maxBookingsPerUser} concurrent bookings. Please cancel a booking first.`,
-      }
-    }
-
-    // 4. Check capacity
-    const { data: existingBookings } = await supabase
-      .from(TABLES.BOOKINGS)
-      .select('id')
-      .eq('class_id', classId)
-      .eq('status', 'confirmed')
-
-    const bookedCount = existingBookings?.length || 0
-    const isFull = bookedCount >= classData.capacity
-
-    // 5. If class is full and waitlist is enabled, join waitlist instead
-    if (isFull && settings.waitlistEnabled) {
-      return await joinWaitlist(userId, classId, classData)
-    }
-
-    if (isFull) {
-      return {
-        success: false,
-        message: 'Class is full. Waitlist is currently disabled.',
-      }
-    }
-
-    // 6. Check token balance
-    const tokenBalance = await getTokenBalance(userId)
-    if (tokenBalance.available < classData.token_cost) {
-      return {
-        success: false,
-        message: `Insufficient tokens. You need ${classData.token_cost} token(s) but only have ${tokenBalance.available} available.`,
-      }
-    }
-
-    // 7. Get an available user package to use
-    const { data: userPackages } = await supabase
-      .from(TABLES.USER_PACKAGES)
-      .select('id, tokens_remaining, tokens_held')
-      .eq('user_id', userId)
-      .eq('status', 'active')
-      .gt('expires_at', new Date().toISOString())
-      .order('expires_at', { ascending: true })
-
-    if (!userPackages || userPackages.length === 0) {
-      return {
-        success: false,
-        message: 'No active token packages found',
-      }
-    }
-
-    // Find a package with enough tokens
-    let selectedPackage = userPackages.find(
-      (pkg: any) => (pkg.tokens_remaining - pkg.tokens_held) >= classData.token_cost
-    )
-
-    if (!selectedPackage) {
-      return {
-        success: false,
-        message: 'No package has enough available tokens',
-      }
-    }
-
-    // 8. Hold tokens (update tokens_held)
-    const { error: holdError } = await supabase
-      .from(TABLES.USER_PACKAGES)
-      .update({
-        tokens_held: (selectedPackage.tokens_held || 0) + classData.token_cost,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', selectedPackage.id)
-      .eq('user_id', userId) // Ensure user can only update their own packages
-
-    if (holdError) {
-      console.error('Error holding tokens:', holdError)
-      return {
-        success: false,
-        message: 'Failed to reserve tokens',
-      }
-    }
-
-    // 9. Check if there's a cancelled booking we can reuse
-    const { data: cancelledBooking } = await supabase
-      .from(TABLES.BOOKINGS)
-      .select('id, status')
-      .eq('user_id', userId)
-      .eq('class_id', classId)
-      .in('status', ['cancelled', 'cancelled-late'])
-      .maybeSingle()
-
-    let bookingId: string
-
-    if (cancelledBooking) {
-      // Update existing cancelled booking to confirmed
-      const { data: updatedBooking, error: updateError } = await supabase
-        .from(TABLES.BOOKINGS)
-        .update({
-          user_package_id: selectedPackage.id,
-          tokens_used: classData.token_cost,
-          status: 'confirmed',
-          booked_at: new Date().toISOString(),
-          cancelled_at: null,
-          cancellation_reason: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', cancelledBooking.id)
-        .select('id')
-        .single()
-
-      if (updateError) {
-        // Rollback: release tokens
-        await supabase
-          .from(TABLES.USER_PACKAGES)
-          .update({
-            tokens_held: selectedPackage.tokens_held || 0,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', selectedPackage.id)
-
-        return {
-          success: false,
-          message: 'Failed to update booking. Please try again.',
-        }
-      }
-
-      bookingId = updatedBooking.id
-    } else {
-      // Create new booking
-      const { data: booking, error: bookingError } = await supabase
-        .from(TABLES.BOOKINGS)
-        .insert({
-          user_id: userId,
-          class_id: classId,
-          user_package_id: selectedPackage.id,
-          tokens_used: classData.token_cost,
-          status: 'confirmed',
-          booked_at: new Date().toISOString(),
-        })
-        .select('id')
-        .single()
-
-      if (bookingError) {
-        // Rollback: release tokens
-        await supabase
-          .from(TABLES.USER_PACKAGES)
-          .update({
-            tokens_held: selectedPackage.tokens_held || 0,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', selectedPackage.id)
-
-        // Check for duplicate key error
-        if (bookingError.code === '23505') {
-          // Double-check for existing booking
-          const { data: existingBooking } = await supabase
-            .from(TABLES.BOOKINGS)
-            .select('id, status')
-            .eq('user_id', userId)
-            .eq('class_id', classId)
-            .maybeSingle()
-
-          if (existingBooking) {
-            if (existingBooking.status === 'confirmed' || existingBooking.status === 'waitlist') {
-              return {
-                success: false,
-                message: 'You already have a booking for this class',
-              }
-            }
-            return {
-              success: false,
-              message: 'Unable to create booking. Please try again or contact support.',
-            }
-          }
-        }
-
-        return {
-          success: false,
-          message: bookingError.message || 'Failed to create booking. Please try again.',
-        }
-      }
-
-      bookingId = booking.id
     }
 
     return {
       success: true,
-      message: 'Class booked successfully!',
-      bookingId: bookingId,
+      message: result.data?.message || 'Class booked successfully!',
+      bookingId: result.data?.booking?.id,
     }
   } catch (error) {
-    console.error('Error booking class:', error)
+    console.error('Error booking class via API:', error)
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'An unexpected error occurred',
+      message: error instanceof Error ? error.message : 'Failed to book class. Please try again.',
     }
   }
 }

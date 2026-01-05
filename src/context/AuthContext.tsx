@@ -190,7 +190,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true)
     
     try {
-      // Get current session first with timeout to prevent hanging
+      // Use API endpoint instead of direct Supabase query to avoid lag
+      // Get token from Supabase session (we still need this to get the token)
+      // But then verify via API endpoint which is faster for profile queries
+      let accessToken: string | null = null
+      try {
+        // Get session to extract token - this is still needed but we'll verify via API
+        const { data: { session } } = await supabase.auth.getSession()
+        accessToken = session?.access_token || null
+      } catch (sessionError) {
+        // If getSession fails, proceed without token
+        console.warn('[Auth] Failed to get session for token:', sessionError)
+      }
+
+      // Call API endpoint to verify session (faster than direct Supabase query)
+      if (accessToken) {
+        try {
+          const response = await fetch('/api/auth/session', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          })
+
+          const result = await response.json()
+
+          if (result.success && result.authenticated && result.data) {
+            // Session is valid - set user from API response
+            setUser(result.data)
+            setIsAuthenticated(true)
+            setIsLoading(false)
+            isInitializingRef.current = false
+            return
+          }
+        } catch (apiError) {
+          console.warn('[Auth] API session check failed, falling back to direct check:', apiError)
+          // Fall through to direct Supabase check as fallback
+        }
+      }
+
+      // Fallback: Direct Supabase check if API fails or no token
+      // This is slower but ensures we still work if API is down
       const sessionPromise = supabase.auth.getSession()
       const timeoutPromise = new Promise<never>((_, reject) => 
         setTimeout(() => reject(new Error('Session check timed out')), SUPABASE_CALL_TIMEOUT)

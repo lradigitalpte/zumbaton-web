@@ -157,6 +157,7 @@ export async function apiFetch(
 
 /**
  * Convenience wrapper that parses JSON response
+ * Returns the JSON response even for error status codes (so caller can handle it)
  */
 export async function apiFetchJson<T = any>(
   url: string,
@@ -164,16 +165,22 @@ export async function apiFetchJson<T = any>(
 ): Promise<T> {
   const response = await apiFetch(url, options)
   
+  // Parse JSON regardless of status code
+  const data = await response.json()
+  
+  // If response is not ok, the data should contain error information
+  // Return it anyway so the caller can check response.success or handle errors
   if (!response.ok) {
-    let errorMessage = `Request failed with status ${response.status}`
-    try {
-      const errorData = await response.json()
-      errorMessage = errorData.message || errorData.error || errorMessage
-    } catch {
-      // Ignore JSON parse errors
-    }
-    throw new Error(errorMessage)
+    // Return error response in expected format
+    return {
+      success: false,
+      error: {
+        message: data.message || data.error?.message || `Request failed with status ${response.status}`,
+        code: data.error?.code || 'API_ERROR',
+      },
+      ...data,
+    } as T
   }
 
-  return response.json()
+  return data
 }

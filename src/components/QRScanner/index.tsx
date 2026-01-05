@@ -143,32 +143,66 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
             // Check if scanned text is a URL (for phone camera scanning)
             if (decodedText.startsWith('http://') || decodedText.startsWith('https://')) {
               // Extract token from URL path: /check-in/{token}
-              const url = new URL(decodedText);
-              const pathParts = url.pathname.split('/');
-              const tokenIndex = pathParts.indexOf('check-in');
-              
-              if (tokenIndex !== -1 && pathParts[tokenIndex + 1]) {
-                // Decode base64 token from URL
-                const encodedData = pathParts[tokenIndex + 1];
-                try {
-                  const decoded = JSON.parse(atob(encodedData));
-                  data = decoded as AttendanceData;
-                } catch {
-                  console.log("Failed to decode URL token, keep scanning...");
+              try {
+                const url = new URL(decodedText);
+                // Use regex to extract token more robustly
+                const match = url.pathname.match(/\/check-in\/([^/?]+)/);
+                
+                if (!match || !match[1]) {
+                  setError("Invalid QR code. The URL format is incorrect. Please scan a valid class QR code.");
                   return;
                 }
-              } else {
-                console.log("Invalid URL format, keep scanning...");
+                
+                // Decode URL-safe base64 token from URL
+                const encodedData = match[1];
+                
+                // Try URL-safe base64 first (new format)
+                try {
+                  let base64Data = encodedData.replace(/-/g, '+').replace(/_/g, '/');
+                  // Add padding if needed (base64 strings must be multiple of 4)
+                  while (base64Data.length % 4) {
+                    base64Data += '=';
+                  }
+                  const decoded = JSON.parse(atob(base64Data));
+                  data = decoded as AttendanceData;
+                } catch (urlSafeError) {
+                  // Fallback: Try regular base64 (old format for backward compatibility)
+                  try {
+                    const decoded = JSON.parse(atob(encodedData));
+                    data = decoded as AttendanceData;
+                  } catch (regularError) {
+                    console.error("[QRScanner] Failed to decode URL token:", { urlSafeError, regularError });
+                    setError("Invalid QR code. Unable to decode the QR code data. Please try scanning again.");
+                    return;
+                  }
+                }
+              } catch (urlError) {
+                console.error("[QRScanner] Invalid URL:", urlError);
+                setError("Invalid QR code. The scanned URL is not valid. Please scan a valid class QR code.");
                 return;
               }
             } else {
-              // Try to parse as JSON (for in-app scanner or old format)
-              data = JSON.parse(decodedText) as AttendanceData;
+              // Try to parse as JSON (for legacy format - should not happen with current implementation)
+              try {
+                data = JSON.parse(decodedText) as AttendanceData;
+              } catch (error) {
+                console.error("[QRScanner] Failed to parse JSON:", error);
+                setError("Invalid QR code. The scanned data format is not recognized. Please scan a valid class QR code.");
+                return;
+              }
             }
             
             // Validate required fields
             if (!data.classId || !data.token) {
-              console.log("QR code missing required fields, keep scanning...");
+              console.error("[QRScanner] QR code missing required fields:", data);
+              setError("Invalid QR code. The QR code is missing required information.");
+              return;
+            }
+            
+            // Validate classId format (should be UUID)
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (!uuidRegex.test(data.classId)) {
+              setError("Invalid QR code. The class ID format is incorrect.");
               return;
             }
 
@@ -177,9 +211,11 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
 
             // Call backend API to check in
             await handleCheckIn(data);
-          } catch {
-            // Invalid QR code format, keep scanning
-            console.log("Invalid QR format, keep scanning...");
+          } catch (error) {
+            // Invalid QR code format, keep scanning but show error
+            console.error("[QRScanner] QR scan error:", error);
+            const errorMessage = error instanceof Error ? error.message : "Invalid QR code format";
+            setError(errorMessage);
           }
         },
         () => {

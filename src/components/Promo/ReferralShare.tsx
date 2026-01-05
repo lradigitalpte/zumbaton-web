@@ -19,32 +19,27 @@ export default function ReferralShare() {
 
   const fetchReferralCode = async () => {
     try {
-      // Get auth token from Supabase session
-      const { getSupabaseClient } = await import('@/lib/supabase');
-      const supabase = getSupabaseClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      // Use centralized API fetch with automatic token refresh
+      const { apiFetchJson } = await import('@/lib/api-fetch');
       
-      if (!session?.access_token) {
-        setReferralCode(generateCodeFromUserId(user!.id));
-        setIsLoading(false);
-        return;
-      }
-
-      const response = await fetch('/api/referrals/my-code', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+      const result = await apiFetchJson<{
+        success: boolean;
+        data?: { code: string };
+        error?: { message: string };
+      }>('/api/referrals/my-code', {
+        method: 'GET',
+        requireAuth: true,
       });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setReferralCode(data.code || generateCodeFromUserId(user!.id));
+
+      if (result.success && result.data?.code) {
+        setReferralCode(result.data.code);
       } else {
-        // Generate code from user ID as fallback
+        // Fallback: generate code from user ID
         setReferralCode(generateCodeFromUserId(user!.id));
       }
     } catch (error) {
       console.error('Failed to fetch referral code:', error);
+      // Fallback: generate code from user ID
       setReferralCode(generateCodeFromUserId(user!.id));
     } finally {
       setIsLoading(false);

@@ -43,24 +43,56 @@ export default function CheckInPage() {
     const token = params.token as string;
     if (token) {
       try {
-        // Try to decode base64 or JSON
         let decoded: QRData;
+        
+        // Try URL-safe base64 first (new format: - instead of +, _ instead of /, no = padding)
         try {
-          decoded = JSON.parse(atob(token));
-        } catch {
-          decoded = JSON.parse(token);
+          let base64Token = token.replace(/-/g, '+').replace(/_/g, '/');
+          // Add padding if needed (base64 strings must be multiple of 4)
+          while (base64Token.length % 4) {
+            base64Token += '=';
+          }
+          decoded = JSON.parse(atob(base64Token));
+        } catch (urlSafeError) {
+          // Fallback: Try regular base64 (old format for backward compatibility)
+          try {
+            decoded = JSON.parse(atob(token));
+          } catch (regularError) {
+            // Last resort: Try direct JSON parse (very old format)
+            try {
+              decoded = JSON.parse(token);
+            } catch (jsonError) {
+              console.error("[Check-In] All decode attempts failed:", {
+                urlSafe: urlSafeError,
+                regular: regularError,
+                json: jsonError
+              });
+              setErrorMessage("Invalid QR code. Please scan a valid class QR code.");
+              setCheckInStatus("error");
+              return;
+            }
+          }
         }
         
         // Validate QR code - must have classId and token
-        if (decoded.classId && decoded.token) {
-          setQrData(decoded);
-        } else {
-          setErrorMessage("Invalid QR code format - missing required fields");
+        if (!decoded.classId || !decoded.token) {
+          setErrorMessage("Invalid QR code. The QR code is missing required information.");
           setCheckInStatus("error");
+          return;
         }
+        
+        // Validate classId format (should be UUID)
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(decoded.classId)) {
+          setErrorMessage("Invalid QR code. The class ID format is incorrect.");
+          setCheckInStatus("error");
+          return;
+        }
+        
+        setQrData(decoded);
       } catch (error) {
-        console.error("[Check-In] Error decoding QR data:", error);
-        setErrorMessage("Invalid QR code");
+        console.error("[Check-In] Unexpected error decoding QR data:", error);
+        setErrorMessage("Invalid QR code. Please try scanning again or contact support if the problem persists.");
         setCheckInStatus("error");
       }
     }

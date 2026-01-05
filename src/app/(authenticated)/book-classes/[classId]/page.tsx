@@ -35,7 +35,7 @@ const ClassDetailPage = () => {
     }
 
     bookClassMutation.mutate(
-      { userId: user.id, classId: classDetail.id },
+      { userId: user.id, classId: classDetail.id, className: classDetail.name || classDetail.title },
       {
         onSuccess: () => {
           setIsConfirmationModalOpen(false);
