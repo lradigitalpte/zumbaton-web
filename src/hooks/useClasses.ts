@@ -58,6 +58,7 @@ export function useBookClass() {
         data?: {
           booking?: { id: string }
           message?: string
+          waitlistPosition?: number
         }
         error?: { code: string; message: string }
       }>('/api/bookings', {
@@ -74,6 +75,7 @@ export function useBookClass() {
         ...result.data,
         bookingId: result.data?.booking?.id,
         message: result.data?.message || 'Class booked successfully!',
+        waitlistPosition: result.data?.waitlistPosition,
         className,
       }
     },
