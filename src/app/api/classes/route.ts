@@ -84,6 +84,9 @@ export async function GET(request: NextRequest) {
       query = query
         .gte('scheduled_at', startOfDay.toISOString())
         .lte('scheduled_at', endOfDay.toISOString())
+    } else {
+      // If no date filter, exclude past classes (only show future classes)
+      query = query.gte('scheduled_at', new Date().toISOString())
     }
 
     const { data: classes, error } = await query

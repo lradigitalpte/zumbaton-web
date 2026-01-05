@@ -186,7 +186,7 @@ const ClassesPage = () => {
     }
 
     bookClassMutation.mutate(
-      { userId: user.id, classId: classToBook.id },
+      { userId: user.id, classId: classToBook.id, className: classToBook.name || classToBook.title },
       {
         onSuccess: async () => {
           // Toast is handled by the hook, just refresh balance and close modal
@@ -698,16 +698,21 @@ const ClassesPage = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          // For course parents, open sessions panel instead of booking directly
-                          // For recurring individual sessions, book directly
-                          if (isCourse && classItem._isParent && classItem._childInstances && classItem._childInstances.length > 0) {
+                          // For recurring parents, open sessions panel (book individual sessions)
+                          // For course parents, allow direct booking (books all sessions at once)
+                          if (isRecurring && classItem._isParent && classItem._childInstances && classItem._childInstances.length > 0) {
                             handleViewSessions(classItem, e);
+                          } else if (isCourse && classItem._isParent && classItem._childInstances && classItem._childInstances.length > 0) {
+                            // Course parent - book all sessions at once
+                            setClassToBook(classItem);
+                            setIsConfirmationModalOpen(true);
                           } else if (!isFull) {
+                            // Single class or child session - book directly
                             setClassToBook(classItem);
                             setIsConfirmationModalOpen(true);
                           }
                         }}
-                        disabled={isFull || bookClassMutation.isPending}
+                        disabled={isFull || bookClassMutation.isPending || (classItem._isParent && isRecurring)}
                         className={`px-4 xl:px-5 py-2 xl:py-2.5 rounded-xl text-xs xl:text-sm font-bold transition-all active:scale-95 xl:active:scale-100 shadow-md xl:shadow-md ${
                           isFull || bookClassMutation.isPending
                             ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800"
@@ -718,7 +723,7 @@ const ClassesPage = () => {
                             : "bg-primary text-white hover:bg-primary/90 shadow-primary/20 xl:shadow-primary/20"
                         }`}
                       >
-                        {bookClassMutation.isPending ? "Booking..." : isFull ? "Full" : isCourse && classItem._isParent ? "View Sessions" : "Book"}
+                        {bookClassMutation.isPending ? "Booking..." : isFull ? "Full" : isRecurring && classItem._isParent ? "View Sessions" : "Book"}
                       </button>
                     </div>
                   </div>
@@ -853,7 +858,13 @@ const ClassesPage = () => {
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
               <div className="space-y-3">
-                {sessionsPanel.sessions.map((session) => {
+                {sessionsPanel.sessions
+                  .filter((session) => {
+                    // Filter out past sessions
+                    const sessionDate = new Date(session.scheduled_at)
+                    return sessionDate > new Date()
+                  })
+                  .map((session) => {
                   const sessionSpots = session.capacity - session.booked_count;
                   const sessionIsFull = sessionSpots <= 0;
                   const sessionDate = new Date(session.scheduled_at);
