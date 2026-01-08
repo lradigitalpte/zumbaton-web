@@ -75,8 +75,8 @@ export function useBookClass() {
         ...result.data,
         bookingId: result.data?.booking?.id,
         message: result.data?.message || 'Class booked successfully!',
-        waitlistPosition: result.data?.waitlistPosition,
         className,
+        waitlistPosition: result.data?.waitlistPosition,
       }
     },
     onSuccess: (data, variables) => {

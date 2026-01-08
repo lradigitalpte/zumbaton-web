@@ -1,10 +1,11 @@
 /**
  * Forgot Password API Route
- * POST /api/auth/forgot-password - Send password reset email
+ * POST /api/auth/forgot-password - Send password reset email using custom SMTP
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getSupabaseClient } from '@/lib/supabase'
+import { getSupabaseAdminClient } from '@/lib/supabase'
+import { sendForgotPasswordEmail } from '@/lib/email'
 import { z } from 'zod'
 
 const ForgotPasswordRequestSchema = z.object({
@@ -13,6 +14,7 @@ const ForgotPasswordRequestSchema = z.object({
 
 /**
  * POST /api/auth/forgot-password - Send password reset email
+ * Uses custom email service instead of Supabase's default
  */
 export async function POST(request: NextRequest) {
   try {
@@ -32,30 +34,67 @@ export async function POST(request: NextRequest) {
 
     const { email } = parseResult.data
 
-    // Get the base URL for the redirect link
-    const baseUrl = process.env.NEXT_PUBLIC_WEB_APP_URL || 
-                   process.env.NEXT_PUBLIC_APP_URL ||
-                   process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
-                   'http://localhost:3001'
-    
-    // Construct the redirect URL - this should point to your reset-password page
-    const redirectTo = `${baseUrl}/reset-password`
+    // Check if user exists
+    const adminClient = getSupabaseAdminClient()
+    const { data: userProfile, error: userError } = await adminClient
+      .from('user_profiles')
+      .select('id, email, name')
+      .eq('email', email.toLowerCase().trim())
+      .single()
 
-    // Use Supabase client to send password reset email
-    const supabase = getSupabaseClient()
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo,
-    })
-
-    if (error) {
-      console.error('Error sending password reset email:', error)
-      
-      // Don't reveal if email exists or not (security best practice)
-      // Always return success to prevent email enumeration
+    // Don't reveal if email exists or not (security best practice)
+    // Always return success to prevent email enumeration
+    if (userError || !userProfile) {
+      console.log(`[ForgotPassword] Email not found: ${email}`)
       return NextResponse.json({
         success: true,
         message: 'If an account with that email exists, a password reset link has been sent.',
       })
+    }
+
+    // Get the base URL for the redirect link
+    const baseUrl = process.env.NEXT_PUBLIC_WEB_APP_URL || 
+                   process.env.NEXT_PUBLIC_APP_URL ||
+                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3001')
+    
+    // Generate password recovery token using Supabase Admin API
+    // This creates a secure recovery token that Supabase will validate
+    const { data: recoveryData, error: recoveryError } = await adminClient.auth.admin.generateLink({
+      type: 'recovery',
+      email: userProfile.email,
+      options: {
+        redirectTo: `${baseUrl}/reset-password`,
+      },
+    })
+
+    if (recoveryError || !recoveryData) {
+      console.error('[ForgotPassword] Error generating recovery link:', recoveryError)
+      // Still return success to prevent email enumeration
+      return NextResponse.json({
+        success: true,
+        message: 'If an account with that email exists, a password reset link has been sent.',
+      })
+    }
+
+    // Extract the recovery link from the response
+    // The recovery link contains the token that Supabase will validate
+    // Format: recoveryData.properties.action_link contains the full URL with token
+    const resetLink = recoveryData.properties?.action_link || 
+                     recoveryData.properties?.redirect_to || 
+                     `${baseUrl}/reset-password`
+
+    // Send email using our custom email service
+    try {
+      await sendForgotPasswordEmail({
+        userEmail: userProfile.email,
+        userName: userProfile.name || 'User',
+        resetLink: recoveryData.properties.action_link || resetLink,
+        expiresIn: '1 hour',
+      })
+      console.log(`[ForgotPassword] Password reset email sent to ${userProfile.email}`)
+    } catch (emailError) {
+      console.error('[ForgotPassword] Error sending email:', emailError)
+      // Still return success to prevent email enumeration
     }
 
     return NextResponse.json({
@@ -63,15 +102,12 @@ export async function POST(request: NextRequest) {
       message: 'If an account with that email exists, a password reset link has been sent.',
     })
   } catch (error) {
-    console.error('Error in forgot password endpoint:', error)
-    return NextResponse.json(
-      { 
-        success: false,
-        error: 'Internal Server Error',
-        message: 'Failed to process password reset request'
-      },
-      { status: 500 }
-    )
+    console.error('[ForgotPassword] Error in forgot password endpoint:', error)
+    // Always return success to prevent email enumeration
+    return NextResponse.json({
+      success: true,
+      message: 'If an account with that email exists, a password reset link has been sent.',
+    })
   }
 }
 

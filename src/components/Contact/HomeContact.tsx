@@ -116,8 +116,8 @@ const HomeContact = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-1">Email Us</h4>
-                    <a href="mailto:info@zumbaton.sg" className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-semibold hover:underline break-all">
-                      info@zumbaton.sg
+                    <a href="mailto:hello@zumbaton.sg" className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-semibold hover:underline break-all">
+                      hello@zumbaton.sg
                     </a>
                   </div>
                 </div>

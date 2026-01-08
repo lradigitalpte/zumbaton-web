@@ -227,11 +227,11 @@ const Footer = () => {
                 <span className="hidden sm:inline">+65 8492 7347</span>
                 <span className="sm:hidden">+65</span>
               </a>
-              <a href="mailto:info@zumbaton.sg" className="flex items-center gap-1.5 sm:gap-2 text-gray-400 hover:text-green-500 transition-colors">
+              <a href="mailto:hello@zumbaton.sg" className="flex items-center gap-1.5 sm:gap-2 text-gray-400 hover:text-green-500 transition-colors">
                 <svg className="w-3.5 sm:w-4 h-3.5 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                <span className="hidden sm:inline">info@zumbaton.sg</span>
+                <span className="hidden sm:inline">hello@zumbaton.sg</span>
                 <span className="sm:hidden">Email</span>
               </a>
               <span className="flex items-center gap-1.5 sm:gap-2 text-gray-400">
@@ -259,7 +259,7 @@ const Footer = () => {
         <div className="container px-3 sm:px-4 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-xs sm:text-sm">
             <p className="text-gray-500">
-              © {currentYear} <span className="text-green-500">Zumba</span><span className="text-yellow-500">ton</span>. All rights reserved.
+              © {currentYear} <span className="text-green-500">Zumba</span><span className="text-yellow-500">ton</span>. All rights reserved. Designed by <span className="text-gray-400">LRA Digital</span>.
             </p>
             <div className="flex items-center gap-3 sm:gap-6 flex-wrap justify-center sm:justify-end">
               {footerLinks.legal.map((link) => (

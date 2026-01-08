@@ -8,7 +8,7 @@ const locations = [
     city: "Singapore",
     address: "2 JALAN KLAPA, #2-A, SINGAPORE 199314",
     phone: "+65 8492 7347",
-    email: "info@zumbaton.sg",
+    email: "hello@zumbaton.sg",
     hours: "Mon - Sun: 9AM - 9PM",
     lat: 1.3521,
     lng: 103.8198

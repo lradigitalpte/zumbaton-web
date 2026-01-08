@@ -33,3 +33,7 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# documentation with credentials (keep templates, ignore actual secrets)
+*_SECRET_SETUP.md
+VERCEL_ENV_SETUP.md

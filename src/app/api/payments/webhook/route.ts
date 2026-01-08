@@ -296,6 +296,32 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           console.warn('[Webhook] Failed to update user stats:', statError)
           // Non-critical, continue
         }
+
+        // Send email confirmation
+        try {
+          const { data: userProfile } = await supabase
+            .from('user_profiles')
+            .select('email, name')
+            .eq('id', payment.user_id)
+            .single()
+
+          if (userProfile?.email && userPackage) {
+            const { sendTokenPurchaseEmail } = await import('@/lib/email')
+            await sendTokenPurchaseEmail({
+              userEmail: userProfile.email,
+              userName: userProfile.name || 'User',
+              packageName: pkg.name,
+              tokenCount: pkg.token_count,
+              amount: payment.amount_cents / 100,
+              currency: payment.currency,
+              expiresAt: userPackage.expires_at,
+            })
+            console.log('[Webhook] Token purchase email sent to:', userProfile.email)
+          }
+        } catch (emailError) {
+          console.error('[Webhook] Failed to send token purchase email:', emailError)
+          // Don't fail the webhook if email fails
+        }
       } else {
         console.error('[Webhook] Package data is missing for payment:', payment.id)
         return NextResponse.json({ received: true, error: 'Package data missing' })
@@ -325,7 +351,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           user_id: payment.user_id,
           type: 'payment_successful',
           channel: 'in_app',
-          subject: 'Payment Successful! 🎉',
+          subject: 'Payment Successful!',
           body: `Your purchase of ${pkg?.name || 'tokens'} was successful. ${pkg?.token_count || 0} tokens have been added to your account.`,
           status: 'sent',
           sent_at: new Date().toISOString(),

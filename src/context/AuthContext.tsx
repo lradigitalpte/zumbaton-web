@@ -644,7 +644,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           }
 
-          // Send welcome notification via admin API
+          // Send welcome email via API route (server-side only)
+          try {
+            await fetch('/api/email/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'welcome',
+                secret: process.env.NEXT_PUBLIC_EMAIL_API_SECRET || 'dev-secret',
+                data: {
+                  userEmail: data.email,
+                  userName: data.name,
+                },
+              }),
+            })
+            console.log('[Auth] Welcome email sent to:', data.email)
+          } catch (emailError) {
+            console.error('[Auth] Failed to send welcome email:', emailError)
+            // Don't fail signup if email fails
+          }
+
+          // Send welcome notification via admin API (in-app notification)
           try {
             const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
             const notificationUrl = adminApiUrl.endsWith('/api') 
