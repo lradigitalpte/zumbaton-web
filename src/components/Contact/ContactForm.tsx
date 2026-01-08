@@ -14,14 +14,43 @@ const ContactForm = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setIsSubmitting(false);
-    setSubmitted(true);
-    
-    // Reset after a few seconds
-    setTimeout(() => setSubmitted(false), 5000);
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      name: formData.get('name') as string,
+      email: formData.get('email') as string,
+      phone: formData.get('phone') as string,
+      subject: formData.get('subject') as string,
+      message: formData.get('message') as string,
+    };
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to send message');
+      }
+
+      setIsSubmitting(false);
+      setSubmitted(true);
+      
+      // Reset form
+      e.currentTarget.reset();
+      
+      // Reset success message after a few seconds
+      setTimeout(() => setSubmitted(false), 5000);
+    } catch (error) {
+      console.error('Error submitting contact form:', error);
+      setIsSubmitting(false);
+      alert(error instanceof Error ? error.message : 'Failed to send message. Please try again.');
+    }
   };
 
   return (
@@ -69,8 +98,8 @@ const ContactForm = () => {
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900 dark:text-white">Email Us</h4>
-                  <a href="mailto:info@zumbaton.sg" className="text-gray-600 dark:text-gray-400 hover:text-green-600 transition-colors">
-                    info@zumbaton.sg
+                  <a href="mailto:hello@zumbaton.sg" className="text-gray-600 dark:text-gray-400 hover:text-green-600 transition-colors">
+                    hello@zumbaton.sg
                   </a>
                 </div>
               </div>

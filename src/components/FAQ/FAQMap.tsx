@@ -86,10 +86,10 @@ const FAQMap = () => {
               Have questions about our location or want to know more?
             </p>
             <a
-              href="mailto:info@zumbaton.sg"
+              href="mailto:hello@zumbaton.sg"
               className="inline-flex items-center gap-2 text-green-600 dark:text-green-400 font-semibold hover:underline"
             >
-              info@zumbaton.sg
+              hello@zumbaton.sg
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
