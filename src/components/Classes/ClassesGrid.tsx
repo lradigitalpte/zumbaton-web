@@ -5,27 +5,34 @@ import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { zumbaClasses } from "@/data/classes";
+import { Clock, Flame, ArrowRight } from "lucide-react";
 
 const ClassesGrid = () => {
   return (
-    <section className="py-16 md:py-20 lg:py-28 bg-white dark:bg-gray-dark">
-      <div className="container">
+    <section className="py-16 md:py-20 lg:py-28 bg-gradient-to-b from-white to-gray-50 dark:from-gray-dark dark:to-gray-900">
+      <div className="container px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="text-green-600 dark:text-green-500 font-semibold text-sm uppercase tracking-wide mb-3">
-            Explore Our Programs
-          </div>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            Find Your Perfect Zumba Class
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            From high-energy dance parties to low-impact sessions, we have a Zumba class for everyone. 
-            Click on any class to learn more!
-          </p>
+        <div className="text-center mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="inline-block px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-sm font-semibold rounded-full mb-4">
+              Explore Our Programs
+            </div>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+              Find Your Perfect Zumba Class
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto text-lg">
+              From high-energy dance parties to low-impact sessions, we have a Zumba class for everyone. 
+              Click on any class to learn more!
+            </p>
+          </motion.div>
         </div>
 
-        {/* Classes Grid - PowerFlow Style */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Classes Grid - Modern Design */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 max-w-7xl mx-auto">
           {zumbaClasses.map((classItem, index) => (
             <ClassCard key={classItem.id} classItem={classItem} index={index} />
           ))}
@@ -42,111 +49,77 @@ interface ClassCardProps {
 
 const ClassCard = ({ classItem, index }: ClassCardProps) => {
   const cardRef = useRef(null);
-  const isInView = useInView(cardRef, { once: true, margin: "-50px" });
-  const isFeatured = classItem.featured;
+  const isInView = useInView(cardRef, { once: true, margin: "-100px" });
 
   return (
     <motion.div
       ref={cardRef}
-      initial={{ opacity: 0, y: 30 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      initial={{ opacity: 0, y: 50 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+      transition={{ duration: 0.6, delay: index * 0.15 }}
     >
-      <Link href={`/classes/${classItem.slug}`} className="block group">
-        <div className={`relative rounded-xl overflow-hidden border transition-all duration-300 hover:shadow-xl ${
-          isFeatured 
-            ? "bg-green-600 dark:bg-green-700 border-green-700 dark:border-green-600 hover:border-green-500 dark:hover:border-green-500" 
-            : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-lime-400 dark:hover:border-lime-400"
-        }`}>
-          <div className="flex flex-col md:flex-row">
-            {/* Content Side */}
-            <div className={`flex flex-col justify-between p-6 md:p-8 md:w-[45%] ${
-              isFeatured ? "text-white" : "text-gray-900 dark:text-white"
-            }`}>
-              <div>
-                {/* Intensity Badge */}
-                <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full mb-3 ${
-                  isFeatured 
-                    ? "bg-white/20 text-white" 
-                    : "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
-                }`}>
-                  {classItem.intensity}
-                </span>
-                
-                <h3 className={`text-xl md:text-2xl font-bold mb-3 transition-colors ${
-                  isFeatured 
-                    ? "group-hover:text-lime-300" 
-                    : "group-hover:text-lime-400 dark:group-hover:text-lime-400"
-                }`}>
-                  {classItem.name}
-                </h3>
-                <p className={`text-sm md:text-base mb-4 line-clamp-3 ${
-                  isFeatured ? "text-white/90" : "text-gray-600 dark:text-gray-400"
-                }`}>
-                  {classItem.shortDescription}
-                </p>
+      <Link href={`/classes/${classItem.slug}`} className="block group h-full">
+        <div className="relative h-full bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-200 dark:border-gray-700 hover:border-green-400 dark:hover:border-green-500">
+          {/* Image Section */}
+          <div className="relative h-64 md:h-72 overflow-hidden bg-gradient-to-br from-green-400 to-green-600">
+            <Image
+              src={classItem.image}
+              alt={classItem.name}
+              fill
+              className="object-cover group-hover:scale-110 transition-transform duration-700"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+            />
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+            
+            {/* Intensity Badge - Top Right */}
+            <div className="absolute top-4 right-4">
+              <span className="inline-flex items-center px-4 py-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm text-gray-900 dark:text-white text-xs font-bold rounded-full shadow-lg">
+                {classItem.intensity}
+              </span>
+            </div>
 
-                {/* Quick Info */}
-                <div className={`flex flex-wrap gap-4 text-sm ${
-                  isFeatured ? "text-white/80" : "text-gray-500 dark:text-gray-400"
-                }`}>
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {classItem.duration}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                    </svg>
-                    {classItem.calories} cal
-                  </span>
-                </div>
+            {/* Class Name Overlay - Bottom */}
+            <div className="absolute bottom-0 left-0 right-0 p-6">
+              <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 drop-shadow-lg">
+                {classItem.name}
+              </h3>
+            </div>
+          </div>
+
+          {/* Content Section */}
+          <div className="p-6 md:p-8">
+            {/* Description */}
+            <p className="text-gray-600 dark:text-gray-300 text-base leading-relaxed mb-6 line-clamp-3">
+              {classItem.shortDescription}
+            </p>
+
+            {/* Stats */}
+            <div className="flex items-center gap-6 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                <Clock className="w-5 h-5 text-green-600 dark:text-green-400" />
+                <span className="font-semibold">{classItem.duration}</span>
               </div>
-
-              <div className="mt-6">
-                <span className={`inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide ${
-                  isFeatured 
-                    ? "text-lime-400 group-hover:text-white" 
-                    : "text-green-600 dark:text-green-500 group-hover:text-green-500"
-                } transition-colors`}>
-                  View Details
-                  <svg 
-                    className="w-4 h-4 transform group-hover:translate-x-2 transition-transform" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </span>
+              <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                <Flame className="w-5 h-5 text-orange-500" />
+                <span className="font-semibold">{classItem.calories} cal</span>
               </div>
             </div>
 
-            {/* Image Side - Angled like PowerFlow */}
-            <div className="relative md:w-[55%] h-48 md:h-auto min-h-[250px]">
-              {/* Angled overlay */}
-              <div className={`absolute inset-y-0 left-0 w-16 z-10 hidden md:block ${
-                isFeatured 
-                  ? "bg-gradient-to-r from-green-600 dark:from-green-700 to-transparent" 
-                  : "bg-gradient-to-r from-gray-100 dark:from-gray-800 to-transparent"
-              }`} 
-              style={{ 
-                clipPath: "polygon(0 0, 100% 15%, 100% 85%, 0 100%)" 
-              }}></div>
-              
-              <Image
-                src={classItem.image}
-                alt={classItem.name}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-                sizes="(max-width: 768px) 100vw, 50vw"
-              />
-              
-              {/* Gradient overlay on image */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent md:bg-gradient-to-r md:from-transparent md:to-black/20"></div>
+            {/* CTA Button */}
+            <div className="flex items-center justify-between">
+              <span className="text-green-600 dark:text-green-400 font-semibold text-sm uppercase tracking-wide group-hover:text-green-700 dark:group-hover:text-green-300 transition-colors">
+                View Details
+              </span>
+              <div className="w-10 h-10 rounded-full bg-green-600 dark:bg-green-500 flex items-center justify-center group-hover:bg-green-700 dark:group-hover:bg-green-600 transition-all duration-300 group-hover:scale-110">
+                <ArrowRight className="w-5 h-5 text-white transform group-hover:translate-x-1 transition-transform" />
+              </div>
             </div>
+          </div>
+
+          {/* Hover Effect Glow */}
+          <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-green-500/10 to-transparent"></div>
           </div>
         </div>
       </Link>

@@ -3,62 +3,55 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 
-// Schedule data - Zumba focused classes
+// Schedule data - Updated to match actual classes
 const scheduleData = [
   {
     day: "Sunday",
     classes: [
-      { time: "09:00 - 10:00", name: "Zumba Basics", instructor: "Maria Garcia" },
-      { time: "11:30 - 12:30", name: "Zumba Gold", instructor: "Ana Rodriguez" },
-      { time: "17:00 - 18:00", name: "Zumba Fitness", instructor: "Carlos Martinez" },
+      { time: "09:00 - 10:00", name: "ZUMBATON", instructor: "Coach Lavs" },
+      { time: "17:00 - 18:00", name: "Choreographed Dance with Steppers", instructor: "Coach Lavs" },
     ],
   },
   {
     day: "Monday",
     classes: [
-      { time: "08:00 - 09:00", name: "Aqua Zumba", instructor: "Sofia Lopez" },
-      { time: "10:00 - 11:00", name: "Zumba Toning", instructor: "Maria Garcia" },
-      { time: "18:00 - 19:00", name: "Zumba Step", instructor: "Luis Hernandez" },
+      { time: "10:00 - 11:00", name: "Choreographed Dance with Steppers", instructor: "Coach Lavs" },
+      { time: "18:00 - 19:00", name: "ZUMBATON", instructor: "Coach Lavs" },
     ],
   },
   {
     day: "Tuesday",
     classes: [
-      { time: "07:30 - 08:30", name: "Zumba Strong", instructor: "Carlos Martinez" },
-      { time: "12:00 - 13:00", name: "Zumba Kids", instructor: "Ana Rodriguez" },
-      { time: "17:30 - 18:30", name: "Zumba Sentao", instructor: "Maria Garcia" },
+      { time: "09:00 - 10:00", name: "ZUMBATON", instructor: "Coach Lavs" },
+      { time: "17:30 - 18:30", name: "Choreographed Dance with Steppers", instructor: "Coach Lavs" },
     ],
   },
   {
     day: "Wednesday",
     classes: [
-      { time: "09:00 - 10:00", name: "Zumba Fitness", instructor: "Sofia Lopez" },
-      { time: "12:30 - 13:30", name: "Zumba Gold", instructor: "Ana Rodriguez" },
-      { time: "18:00 - 19:00", name: "Zumba Circuit", instructor: "Luis Hernandez" },
+      { time: "10:00 - 11:00", name: "Choreographed Dance with Steppers", instructor: "Coach Lavs" },
+      { time: "18:00 - 19:00", name: "ZUMBATON", instructor: "Coach Lavs" },
     ],
   },
   {
     day: "Thursday",
     classes: [
-      { time: "08:00 - 09:00", name: "Zumba Basics", instructor: "Maria Garcia" },
-      { time: "11:00 - 12:00", name: "Zumba Toning", instructor: "Carlos Martinez" },
-      { time: "17:00 - 18:00", name: "Zumba Strong", instructor: "Sofia Lopez" },
+      { time: "09:00 - 10:00", name: "ZUMBATON", instructor: "Coach Lavs" },
+      { time: "17:00 - 18:00", name: "Choreographed Dance with Steppers", instructor: "Coach Lavs" },
     ],
   },
   {
     day: "Friday",
     classes: [
-      { time: "07:00 - 08:00", name: "Aqua Zumba", instructor: "Ana Rodriguez" },
-      { time: "10:00 - 11:00", name: "Zumba Step", instructor: "Luis Hernandez" },
-      { time: "18:30 - 19:30", name: "Zumba Party", instructor: "Maria Garcia" },
+      { time: "10:00 - 11:00", name: "Choreographed Dance with Steppers", instructor: "Coach Lavs" },
+      { time: "18:00 - 19:00", name: "ZUMBATON", instructor: "Coach Lavs" },
     ],
   },
   {
     day: "Saturday",
     classes: [
-      { time: "09:00 - 10:00", name: "Zumba Kids Jr", instructor: "Ana Rodriguez" },
-      { time: "11:30 - 12:30", name: "Zumba Fitness", instructor: "Carlos Martinez" },
-      { time: "16:00 - 17:30", name: "Mega Zumba Party", instructor: "All Instructors" },
+      { time: "09:00 - 10:00", name: "ZUMBATON", instructor: "Coach Lavs" },
+      { time: "11:30 - 12:30", name: "Choreographed Dance with Steppers", instructor: "Coach Lavs" },
     ],
   },
 ];
@@ -93,10 +86,6 @@ const WeeklySchedule = () => {
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded bg-green-600"></div>
             <span className="text-gray-600 dark:text-gray-400">Regular Classes</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-lime-500"></div>
-            <span className="text-gray-600 dark:text-gray-400">Special Events</span>
           </div>
         </div>
       </div>
@@ -138,13 +127,18 @@ const DayColumn = ({ daySchedule, index }: { daySchedule: DaySchedule; index: nu
 
       {/* Classes */}
       <div className="flex flex-col gap-2 mt-2">
-        {daySchedule.classes.map((classItem, classIndex) => (
-          <ClassCard 
-            key={classIndex} 
-            classItem={classItem} 
-            isSpecial={classItem.name.includes("Party") || classItem.name.includes("Mega")}
-          />
-        ))}
+        {daySchedule.classes.length > 0 ? (
+          daySchedule.classes.map((classItem, classIndex) => (
+            <ClassCard 
+              key={classIndex} 
+              classItem={classItem}
+            />
+          ))
+        ) : (
+          <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 text-center text-gray-400 text-sm">
+            No classes
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -156,27 +150,21 @@ interface ClassItem {
   instructor: string;
 }
 
-const ClassCard = ({ classItem, isSpecial }: { classItem: ClassItem; isSpecial: boolean }) => {
+const ClassCard = ({ classItem }: { classItem: ClassItem }) => {
   return (
-    <div className={`p-4 rounded-lg transition-all duration-300 hover:scale-105 cursor-pointer ${
-      isSpecial 
-        ? "bg-lime-500/10 dark:bg-lime-500/20 border border-lime-500/30 dark:border-lime-500/40 hover:bg-lime-500/20 dark:hover:bg-lime-500/30" 
-        : "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
-    }`}>
+    <div className="p-4 rounded-lg transition-all duration-300 hover:scale-105 cursor-pointer bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700">
       {/* Time */}
-      <div className={`text-sm font-semibold mb-1 ${
-        isSpecial ? "text-lime-600 dark:text-lime-400" : "text-green-600 dark:text-green-500"
-      }`}>
+      <div className="text-sm font-semibold mb-1 text-green-600 dark:text-green-500">
         {classItem.time}
       </div>
       
       {/* Class Name */}
-      <div className="font-bold text-gray-900 dark:text-white mb-1">
+      <div className="font-bold text-gray-900 dark:text-white mb-2 text-sm leading-tight">
         {classItem.name}
       </div>
       
       {/* Instructor */}
-      <div className="text-sm text-gray-500 dark:text-gray-400">
+      <div className="text-xs text-gray-500 dark:text-gray-400">
         {classItem.instructor}
       </div>
     </div>

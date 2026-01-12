@@ -87,7 +87,7 @@ const SlidePanel = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-[9999]">
       {/* Overlay */}
       {showOverlay && (
         <div
@@ -96,6 +96,7 @@ const SlidePanel = ({
           }`}
           onClick={onClose}
           aria-hidden="true"
+          style={{ zIndex: 9998 }}
         />
       )}
 
@@ -103,10 +104,13 @@ const SlidePanel = ({
       <div
         ref={panelRef}
         className={`absolute top-0 h-full w-full ${sizeClasses[size]} ${positionClasses[position].panel} ${positionClasses[position].translate} transform transition-transform duration-300 ease-in-out bg-white dark:bg-dark shadow-xl`}
+        style={{ zIndex: 10000 }}
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="h-full flex flex-col">
+        <div className="h-full flex flex-col" style={{ pointerEvents: 'auto' }}>
           {/* Header */}
-          <div className="flex items-start justify-between p-6 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-start justify-between p-6 border-b border-gray-200 dark:border-gray-800" style={{ pointerEvents: 'auto', position: 'relative', zIndex: 1 }}>
             <div className="flex-1">
               <h2 className="text-xl font-semibold text-dark dark:text-white">
                 {title}
@@ -129,7 +133,7 @@ const SlidePanel = ({
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-6" style={{ pointerEvents: 'auto', position: 'relative', zIndex: 1 }}>
             {children}
           </div>
 
