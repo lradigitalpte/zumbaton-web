@@ -88,7 +88,7 @@ export function getWelcomeEmailTemplate(data: { userName: string }): { html: str
     </div>
     
     <div style="text-align: center; margin: 40px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/packages" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/packages" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
         Browse Packages
       </a>
@@ -110,7 +110,7 @@ Get Started:
 - Purchase token packages to book classes
 - Book your first session and start dancing!
 
-Visit: ${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/packages
+Visit: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/packages
 
 If you have any questions, feel free to reach out to us at hello@zumbaton.sg
 
@@ -173,14 +173,14 @@ export function getTokenPurchaseEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/my-packages" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-packages" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
         View My Packages
       </a>
     </div>
     
     <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;">
-      Ready to book a class? <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/classes" style="color: #16a34a; text-decoration: none; font-weight: 600;">Browse Classes</a>
+      Ready to book a class? <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes" style="color: #16a34a; text-decoration: none; font-weight: 600;">Browse Classes</a>
     </p>
   `, `Payment successful! ${data.tokenCount} tokens added to your account.`)
 
@@ -196,8 +196,8 @@ Tokens Added: ${data.tokenCount} tokens
 Amount Paid: ${formattedAmount}
 Expires: ${formattedExpiry}
 
-View your packages: ${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/my-packages
-Browse classes: ${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/classes
+View your packages: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-packages
+Browse classes: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes
 
 © ${new Date().getFullYear()} Zumbaton. All rights reserved.
   `.trim()
@@ -254,7 +254,7 @@ export function getTokenExpiryWarningEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/classes" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
         Book a Class Now
       </a>
@@ -274,7 +274,7 @@ Expiry Date: ${formattedExpiry}
 
 Important: Book a class now to use your tokens before they expire! Unused tokens will be lost after the expiry date.
 
-Book a class: ${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/classes
+Book a class: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes
 
 © ${new Date().getFullYear()} Zumbaton. All rights reserved.
   `.trim()
@@ -330,7 +330,7 @@ export function getClassReminderEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/my-bookings" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-bookings" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
         View My Bookings
       </a>
@@ -352,7 +352,7 @@ ${data.instructorName ? `Instructor: ${data.instructorName}` : ''}
 
 Reminder: Please arrive 10 minutes early. Bring water and wear comfortable workout clothes. We can't wait to see you!
 
-View bookings: ${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/my-bookings
+View bookings: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-bookings
 
 © ${new Date().getFullYear()} Zumbaton. All rights reserved.
   `.trim()
@@ -414,7 +414,7 @@ export function getBookingConfirmationEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/my-bookings" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-bookings" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
         View My Bookings
       </a>
@@ -438,7 +438,7 @@ Tokens: ${data.tokensUsed} token${data.tokensUsed !== 1 ? 's' : ''} used
 What's Next?
 You'll receive a reminder 3 hours before your class. Please arrive 10 minutes early and bring water!
 
-View bookings: ${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/my-bookings
+View bookings: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-bookings
 
 © ${new Date().getFullYear()} Zumbaton. All rights reserved.
   `.trim()
@@ -490,7 +490,7 @@ export function getTokenAdjustmentEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/my-packages" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-packages" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
         View My Packages
       </a>
@@ -509,7 +509,7 @@ New Balance: ${data.newBalance} tokens
 Reason: ${data.reason}
 ${data.adjustedBy ? `Adjusted By: ${data.adjustedBy}` : ''}
 
-View your packages: ${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/my-packages
+View your packages: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-packages
 
 © ${new Date().getFullYear()} Zumbaton. All rights reserved.
   `.trim()
@@ -554,7 +554,7 @@ export function getAdminCreatedUserEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/signin" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/signin" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
         Sign In Now
       </a>
@@ -581,7 +581,7 @@ Get Started:
 - ${data.temporaryPassword ? 'Change your temporary password' : 'Set up your profile'}
 - Browse classes and book your first session
 
-Sign in: ${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/signin
+Sign in: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/signin
 
 If you have any questions, feel free to reach out to us at hello@zumbaton.sg
 
@@ -643,7 +643,7 @@ export function getBookingCancellationEmailTemplate(data: {
     ` : ''}
     
     <div style="text-align: center; margin: 40px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/classes" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
         Book Another Class
       </a>
@@ -663,7 +663,7 @@ Time: ${data.classTime}
 ${data.tokensRefunded > 0 ? `Tokens: ${data.tokensRefunded} token${data.tokensRefunded !== 1 ? 's' : ''} refunded` : data.penalty ? 'Note: Late cancellation - tokens consumed' : ''}
 ${data.reason ? `Reason: ${data.reason}` : ''}
 
-Book another class: ${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/classes
+Book another class: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes
 
 © ${new Date().getFullYear()} Zumbaton. All rights reserved.
   `.trim()
@@ -780,7 +780,7 @@ export function getClassCancellationEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/classes" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
         Browse Other Classes
       </a>
@@ -802,7 +802,7 @@ Tokens: ${data.tokensRefunded} token${data.tokensRefunded !== 1 ? 's' : ''} refu
 What Happened?
 This class has been cancelled by our team. Your tokens have been automatically refunded to your account. We apologize for any inconvenience.
 
-Browse other classes: ${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/classes
+Browse other classes: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes
 
 © ${new Date().getFullYear()} Zumbaton. All rights reserved.
   `.trim()
@@ -865,7 +865,7 @@ export function getNoShowWarningEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/my-bookings" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-bookings" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
         View My Bookings
       </a>
@@ -889,7 +889,7 @@ ${data.isFlagged ? 'Your account has been flagged due to multiple no-shows. Plea
 
 Reminder: If you can't make it to a class, please cancel at least 24 hours in advance to avoid losing tokens. You can cancel bookings from your "My Bookings" page.
 
-View bookings: ${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/my-bookings
+View bookings: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-bookings
 
 © ${new Date().getFullYear()} Zumbaton. All rights reserved.
   `.trim()
@@ -990,7 +990,7 @@ export function getPasswordResetEmailTemplate(data: {
     ` : ''}
     
     <div style="text-align: center; margin: 40px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/signin" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/signin" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
         Sign In Now
       </a>
@@ -1014,7 +1014,7 @@ Please change this password after your first login for security.
 
 ${data.resetBy ? `Password reset by: ${data.resetBy}` : ''}
 
-Sign in: ${process.env.NEXT_PUBLIC_APP_URL || 'https://zumbaton-web.vercel.app'}/signin
+Sign in: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/signin
 
 If you didn't request this password reset, please contact us immediately at hello@zumbaton.sg
 

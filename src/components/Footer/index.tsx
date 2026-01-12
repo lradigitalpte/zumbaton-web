@@ -8,21 +8,17 @@ const Footer = () => {
 
   const footerLinks = {
     classes: [
-      { name: "Zumba Fitness", href: "/classes/zumba-fitness" },
-      { name: "Zumba Toning", href: "/classes/zumba-toning" },
-      { name: "Zumba Gold", href: "/classes/zumba-gold" },
-      { name: "Aqua Zumba", href: "/classes/aqua-zumba" },
+      { name: "Choreographed Dance with Steppers", href: "/classes/choreographed-dance-with-steppers" },
+      { name: "ZUMBATON", href: "/classes/zumbaton" },
       { name: "View Schedule", href: "/schedule" },
     ],
     company: [
       { name: "About Us", href: "/about" },
-      { name: "Our Instructors", href: "/about#team" },
+      { name: "Our Instructors", href: "/instructors" },
     ],
     support: [
       { name: "FAQ", href: "/faq" },
       { name: "Contact Us", href: "/contact" },
-      { name: "Support Center", href: "/support" },
-      { name: "Reset Password", href: "/forgot-password" },
     ],
     legal: [
       { name: "Privacy Policy", href: "/privacy" },
