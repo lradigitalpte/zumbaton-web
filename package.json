@@ -10,7 +10,8 @@
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
-    "test:debug": "playwright test --debug"
+    "test:debug": "playwright test --debug",
+    "test:qr-checkin": "node test-qr-checkin.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
