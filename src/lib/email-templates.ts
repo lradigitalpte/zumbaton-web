@@ -555,9 +555,17 @@ export function getAdminCreatedUserEmailTemplate(data: {
     
     <div style="text-align: center; margin: 40px 0;">
       <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/signin" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3); margin-bottom: 15px;">
         Sign In Now
       </a>
+      ${data.temporaryPassword ? `
+      <div style="margin-top: 20px;">
+        <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/forgot-password" 
+           style="color: #16a34a; text-decoration: none; font-size: 14px; font-weight: 500;">
+          Change your password
+        </a>
+      </div>
+      ` : ''}
     </div>
     
     <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;">
@@ -582,6 +590,7 @@ Get Started:
 - Browse classes and book your first session
 
 Sign in: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/signin
+${data.temporaryPassword ? `Change password: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/forgot-password` : ''}
 
 If you have any questions, feel free to reach out to us at hello@zumbaton.sg
 

@@ -67,13 +67,18 @@ export async function POST(request: NextRequest) {
     
     // Generate password recovery token using Supabase Admin API
     // This creates a secure recovery token that Supabase will validate
+    const redirectToUrl = `${baseUrl.replace(/\/$/, '')}/reset-password`
+    console.log('[ForgotPassword] Generating recovery link with redirectTo:', redirectToUrl)
+    
     const { data: recoveryData, error: recoveryError } = await adminClient.auth.admin.generateLink({
       type: 'recovery',
       email: userProfile.email,
       options: {
-        redirectTo: `${baseUrl}/reset-password`,
+        redirectTo: redirectToUrl,
       },
     })
+    
+    console.log('[ForgotPassword] Recovery link generated:', recoveryData?.properties?.action_link)
 
     if (recoveryError || !recoveryData) {
       console.error('[ForgotPassword] Error generating recovery link:', recoveryError)
