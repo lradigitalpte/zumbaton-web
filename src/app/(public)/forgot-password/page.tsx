@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 const ForgotPasswordPage = () => {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -13,6 +11,7 @@ const ForgotPasswordPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[ForgotPassword] Form submitted, email:', email);
     setError("");
 
     if (!email) {
@@ -27,9 +26,12 @@ const ForgotPasswordPage = () => {
       return;
     }
 
+    console.log('[ForgotPassword] Starting API call...');
     setIsSubmitting(true);
+    setError("");
     
     try {
+      console.log('[ForgotPassword] Making fetch request to /api/auth/forgot-password');
       const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: {
@@ -37,21 +39,38 @@ const ForgotPasswordPage = () => {
         },
         body: JSON.stringify({ email }),
       });
+      console.log('[ForgotPassword] Response received:', response.status, response.statusText);
 
-      const data = await response.json();
+      // Parse response JSON once
+      const data = await response.json().catch(() => {
+        // If JSON parsing fails, return empty object
+        return {};
+      });
 
+      // Check if request was successful (200-299 status codes)
       if (!response.ok) {
-        setError(data.error || 'Failed to send reset link. Please try again.');
+        const errorMessage = data.error || data.message || `Failed to send reset link (${response.status}). Please try again.`;
+        setError(errorMessage);
         setIsSubmitting(false);
         return;
       }
 
-      // Success - show confirmation message
+      // Check if the API returned success
+      if (data.success === false) {
+        const errorMessage = data.error || data.message || 'Failed to send reset link. Please try again.';
+        setError(errorMessage);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Success - show confirmation message (API always returns success: true for security)
       setIsSubmitted(true);
+      setIsSubmitting(false);
+      setError("");
     } catch (err) {
       console.error('Error sending password reset:', err);
-      setError('Something went wrong. Please try again.');
-    } finally {
+      const errorMessage = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      setError(errorMessage);
       setIsSubmitting(false);
     }
   };
