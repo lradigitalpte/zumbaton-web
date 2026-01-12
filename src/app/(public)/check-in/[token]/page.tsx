@@ -181,7 +181,17 @@ export default function CheckInPage() {
   const handleMagicLinkSuccess = () => {
     // Magic link sent, wait for user to click it
     // The callback will redirect back here and auto-check-in
+    // The magic-link-callback page will handle redirecting back to this check-in page
   };
+
+  // Handle case when user returns after signing in via magic link
+  useEffect(() => {
+    // If user becomes authenticated while we have QR data and were showing login options
+    if (isAuthenticated && user && qrData && showLoginOptions && checkInStatus === "idle" && !isLoading) {
+      setShowLoginOptions(false);
+      markAttendance(qrData);
+    }
+  }, [isAuthenticated, user, qrData, showLoginOptions, checkInStatus, isLoading]);
 
   // Loading state
   if (isLoading) {
@@ -370,7 +380,7 @@ export default function CheckInPage() {
     );
   }
 
-  // Login options state
+  // Login options state - streamlined for phone camera scanning
   if (showLoginOptions) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-12">
@@ -387,8 +397,11 @@ export default function CheckInPage() {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               Sign In to Check In
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Please sign in to mark your attendance
+            <p className="text-gray-600 dark:text-gray-400 mb-2">
+              {qrData?.className ? `Quick sign in to check into ${qrData.className}` : "Please sign in to mark your attendance"}
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Enter your email to receive an instant sign-in link
             </p>
           </div>
 

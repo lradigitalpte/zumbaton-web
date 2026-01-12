@@ -128,12 +128,28 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
         return;
       }
 
+      // Improved mobile camera settings
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const cameraConfig = isMobile 
+        ? { facingMode: "environment" } // Use back camera on mobile
+        : { facingMode: "environment" };
+      
+      const qrBoxConfig = isMobile
+        ? { width: 300, height: 300 } // Larger box for mobile
+        : { width: 250, height: 250 };
+
       await scannerRef.current.start(
-        { facingMode: "environment" },
+        cameraConfig,
         {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
+          fps: isMobile ? 15 : 10, // Higher FPS on mobile for better scanning
+          qrbox: qrBoxConfig,
           aspectRatio: 1.0,
+          disableFlip: false, // Allow rotation
+          videoConstraints: {
+            facingMode: "environment",
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
         },
         async (decodedText) => {
           // Successfully scanned
@@ -142,19 +158,18 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
 
             // Check if scanned text is a URL (for phone camera scanning)
             if (decodedText.startsWith('http://') || decodedText.startsWith('https://')) {
-              // Extract token from URL path: /check-in/{token}
               try {
                 const url = new URL(decodedText);
-                // Use regex to extract token more robustly
-                const match = url.pathname.match(/\/check-in\/([^/?]+)/);
                 
-                if (!match || !match[1]) {
-                  setError("Invalid QR code. The URL format is incorrect. Please scan a valid class QR code.");
+                // Check if it's a check-in URL
+                const checkInMatch = url.pathname.match(/\/check-in\/([^/?]+)/);
+                if (!checkInMatch || !checkInMatch[1]) {
+                  setError("Invalid QR code. The URL format is incorrect. Please scan a valid QR code.");
                   return;
                 }
                 
                 // Decode URL-safe base64 token from URL
-                const encodedData = match[1];
+                const encodedData = checkInMatch[1];
                 
                 // Try URL-safe base64 first (new format)
                 try {
