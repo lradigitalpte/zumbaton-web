@@ -20,14 +20,14 @@ const instructors: Instructor[] = [
     name: "Coach Lavs (Laavania)",
     role: "Zumba Instructor",
     bio: "Coach Lavs (Laavania) leads an active, wellness-driven lifestyle and believes fitness should be fun, empowering, and sustainable. With a performance background from Mediacorp Vasantham, her journey as a Zumba instructor stems from her love for dance, music, and helping people move with confidence. She creates high-energy yet welcoming classes where participants can sweat, smile, and feel good in their bodies.",
-    image: "/images/Image (1).jfif",
+    image: "/images/coach-lavs.jpg",
   },
   {
     id: "2",
     name: "Robert",
     role: "Certified Zumba Instructor",
     bio: "Hi everyone, my name is Robert. I'm 30 years old and a certified Zumba instructor, registered both in Singapore and internationally. I've been part of the Zumba community for over a year and have had the opportunity to teach in the Philippines. Now, I'm excited to continue this journey in Singapore and invite you to join me at Zumbaton. Don't be fooled by my size or how I look—Zumba is my forte and something I truly love. More than just dance, Zumba is about expressing yourself, being unapologetically you, and moving without judgment—whether from others or even yourself. What I love most about Zumba is the sense of freedom, joy, and community it brings, and I can't wait to share that experience with you. So come join us at Zumbaton, take that step forward, and let's move together. Peace ✌️",
-    image: "/images/Image (2).jfif",
+    image: "/images/robert.jpg",
   },
 ];
 
@@ -84,6 +84,12 @@ const InstructorsTabs = () => {
                       fill
                       className="object-cover"
                       sizes="(max-width: 1024px) 100vw, 50vw"
+                      unoptimized={true}
+                      onError={(e) => {
+                        console.error('Image load error:', instructors[currentIndex].image);
+                        // Fallback to placeholder
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full">
