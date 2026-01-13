@@ -39,6 +39,17 @@ function ResetPasswordForm() {
             });
             
             if (session && !error) {
+              // Check if user is an admin/staff - redirect to admin app
+              const userRole = session.user?.user_metadata?.role;
+              const isAdminUser = userRole === 'admin' || userRole === 'super_admin' || userRole === 'staff' || userRole === 'receptionist' || userRole === 'instructor';
+              
+              if (isAdminUser) {
+                // Redirect admin users to admin app's set-password page
+                const adminUrl = `https://admin.zumbaton.sg/set-password${window.location.hash}`;
+                window.location.href = adminUrl;
+                return;
+              }
+              
               setIsValidToken(true);
               return;
             }
@@ -47,6 +58,19 @@ function ResetPasswordForm() {
         
         // Check existing session
         const { data: { session } } = await supabase.auth.getSession();
+        
+        // If there's a session, check if user is admin and redirect
+        if (session) {
+          const userRole = session.user?.user_metadata?.role;
+          const isAdminUser = userRole === 'admin' || userRole === 'super_admin' || userRole === 'staff' || userRole === 'receptionist' || userRole === 'instructor';
+          
+          if (isAdminUser && window.location.pathname === '/reset-password') {
+            // Redirect admin users to admin app's set-password page
+            const adminUrl = `https://admin.zumbaton.sg/set-password${window.location.hash}`;
+            window.location.href = adminUrl;
+            return;
+          }
+        }
         
         // If there's a token in the URL or a session, we're good
         if (token || session) {
