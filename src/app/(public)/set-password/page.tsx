@@ -1,60 +1,78 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function SetPasswordPage() {
+  const [redirecting, setRedirecting] = useState(true);
+
   useEffect(() => {
-    const handleRedirect = async () => {
+    const handleRedirect = () => {
       try {
         // Check for hash fragments (Supabase recovery links use hash fragments)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get("access_token");
         const type = hashParams.get("type");
         
-        // If we have a recovery token, exchange it for a session
+        // If we have a recovery token, try to decode it to check role WITHOUT API call
         if (accessToken && type === 'recovery') {
-          const { data: { session }, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: hashParams.get("refresh_token") || '',
-          });
-          
-          if (session && !error) {
-            // Check if user is an admin/staff - redirect to admin app
+          try {
+            // Decode JWT token to get user metadata without API call
+            const parts = accessToken.split('.');
+            if (parts.length === 3) {
+              // Decode the payload (second part)
+              const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+              const userRole = payload?.user_metadata?.role;
+              const isAdminUser = userRole === 'admin' || userRole === 'super_admin' || userRole === 'staff' || userRole === 'receptionist' || userRole === 'instructor';
+              
+              console.log('[SetPassword] Decoded role from token:', userRole, 'isAdmin:', isAdminUser);
+              
+              if (isAdminUser) {
+                // Redirect immediately without waiting for API call
+                console.log('[SetPassword] Redirecting admin user to admin app');
+                window.location.replace(`https://admin.zumbaton.sg/set-password${window.location.hash}`);
+                return;
+              }
+            }
+          } catch (decodeError) {
+            console.warn('[SetPassword] Could not decode token, will check session:', decodeError);
+          }
+        }
+        
+        // If we couldn't decode or no token, check session (this is an API call but happens in parallel)
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) {
             const userRole = session.user?.user_metadata?.role;
             const isAdminUser = userRole === 'admin' || userRole === 'super_admin' || userRole === 'staff' || userRole === 'receptionist' || userRole === 'instructor';
             
             if (isAdminUser) {
-              // Redirect admin users to admin app's set-password page
-              window.location.href = `https://admin.zumbaton.sg/set-password${window.location.hash}`;
+              console.log('[SetPassword] Redirecting admin user to admin app (from session)');
+              window.location.replace(`https://admin.zumbaton.sg/set-password${window.location.hash}`);
               return;
             }
           }
-        }
-        
-        // Check existing session
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
-          const userRole = session.user?.user_metadata?.role;
-          const isAdminUser = userRole === 'admin' || userRole === 'super_admin' || userRole === 'staff' || userRole === 'receptionist' || userRole === 'instructor';
           
-          if (isAdminUser) {
-            // Redirect admin users to admin app's set-password page
-            window.location.href = `https://admin.zumbaton.sg/set-password${window.location.hash}`;
-            return;
-          }
-        }
+          // Regular users - redirect to reset-password page
+          console.log('[SetPassword] Redirecting regular user to reset-password');
+          window.location.replace(`/reset-password${window.location.hash}`);
+        }).catch((error) => {
+          console.error('[SetPassword] Error checking session:', error);
+          // Fallback: redirect to reset-password
+          window.location.replace(`/reset-password${window.location.hash}`);
+        });
         
-        // Regular users - redirect to reset-password page
-        window.location.href = `/reset-password${window.location.hash}`;
+        // If no token at all, redirect to reset-password
+        if (!accessToken) {
+          window.location.replace(`/reset-password${window.location.hash || ''}`);
+        }
       } catch (error) {
-        console.error('Error in set-password redirect:', error);
+        console.error('[SetPassword] Error in redirect:', error);
         // Fallback: redirect to reset-password
-        window.location.href = `/reset-password${window.location.hash}`;
+        window.location.replace(`/reset-password${window.location.hash || ''}`);
       }
     };
 
+    // Execute immediately - no delay needed
     handleRedirect();
   }, []);
 

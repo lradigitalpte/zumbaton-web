@@ -967,6 +967,78 @@ If you didn't request this password reset, please ignore this email. Your passwo
 }
 
 /**
+ * Forgot Password OTP Email Template (6-digit code)
+ */
+export function getForgotPasswordOTPEmailTemplate(data: {
+  userName: string
+  otpCode: string
+  verifyUrl?: string
+  expiresIn?: string
+}): { html: string; text: string } {
+  const html = getBaseTemplate(`
+    <div style="text-align: center; margin-bottom: 30px;">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;">Reset Your Password</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;">Enter the verification code below to reset your password</p>
+    </div>
+    
+    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 30px 0;">
+      <p style="margin: 0 0 15px 0; color: #374151; font-size: 15px; line-height: 1.6; text-align: center;">
+        <strong>Your verification code:</strong>
+      </p>
+      <div style="text-align: center; margin: 20px 0;">
+        <div style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; padding: 20px 40px; border-radius: 12px; font-size: 36px; font-weight: 700; letter-spacing: 8px; font-family: monospace; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+          ${escapeHtml(data.otpCode)}
+        </div>
+      </div>
+      <p style="margin: 15px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;">
+        This code will expire ${data.expiresIn || 'in 15 minutes'}.
+      </p>
+    </div>
+    
+    ${data.verifyUrl ? `
+    <div style="text-align: center; margin: 40px 0;">
+      <a href="${data.verifyUrl}" 
+         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+        Verify Code
+      </a>
+    </div>
+    ` : ''}
+    
+    <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 30px 0;">
+      <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;">
+        <strong>Security Note:</strong> If you didn't request this password reset, please ignore this email or contact us if you have concerns.
+      </p>
+    </div>
+    
+    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;">
+      If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
+    </p>
+  `, `Reset your password: Enter verification code ${data.otpCode}`)
+
+  const text = `
+Reset Your Password
+
+Hi ${data.userName},
+
+Enter this verification code to reset your password:
+
+${data.otpCode}
+
+This code will expire ${data.expiresIn || 'in 15 minutes'}.
+
+${data.verifyUrl ? `Visit this page to enter your code: ${data.verifyUrl}` : ''}
+
+Security Note: If you didn't request this password reset, please ignore this email.
+
+If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
+
+© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+  `.trim()
+
+  return { html, text }
+}
+
+/**
  * Password Reset Email Template (Admin reset password)
  */
 export function getPasswordResetEmailTemplate(data: {

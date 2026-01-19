@@ -11,6 +11,7 @@ interface ClassDetailsSlidePanelProps {
   onBookClick: () => void;
   isBooking?: boolean;
   isFull?: boolean;
+  isBookingWindowOpen?: boolean;
 }
 
 const ClassDetailsSlidePanel = ({
@@ -20,6 +21,7 @@ const ClassDetailsSlidePanel = ({
   onBookClick,
   isBooking = false,
   isFull = false,
+  isBookingWindowOpen = true,
 }: ClassDetailsSlidePanelProps) => {
   if (!classItem) return null;
 
@@ -60,17 +62,23 @@ const ClassDetailsSlidePanel = ({
               {spotsInfo.text}
             </span>
           </div>
-          <button
-            onClick={onBookClick}
-            disabled={isFull || isBooking}
-            className={`px-6 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              isFull || isBooking
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800"
-                : "bg-primary text-white hover:bg-primary/90"
-            }`}
-          >
-            {isBooking ? "Booking..." : isFull ? "Class Full" : "Book Now"}
-          </button>
+          <div className="text-right">
+            {!isBookingWindowOpen && (
+              <p className="text-xs text-red-600 dark:text-red-400 mb-2">Bookings are allowed only between 09:00 and 17:00 SGT</p>
+            )}
+            <button
+              onClick={onBookClick}
+              disabled={isFull || isBooking || !isBookingWindowOpen}
+              title={!isBookingWindowOpen ? 'Bookings are allowed only between 09:00–17:00 SGT' : undefined}
+              className={`px-6 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isFull || isBooking || !isBookingWindowOpen
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800"
+                  : "bg-primary text-white hover:bg-primary/90"
+              }`}
+            >
+              {isBooking ? "Booking..." : isFull ? "Class Full" : "Book Now"}
+            </button>
+          </div>
         </div>
       }
     >

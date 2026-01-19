@@ -213,6 +213,7 @@ import {
   getNoShowWarningEmailTemplate,
   getPasswordResetEmailTemplate,
   getForgotPasswordEmailTemplate,
+  getForgotPasswordOTPEmailTemplate,
 } from './email-templates'
 
 /**
@@ -531,6 +532,31 @@ export async function sendForgotPasswordEmail(data: {
   return sendEmail({
     to: data.userEmail,
     subject: 'Reset Your Password - Zumbaton',
+    html: template.html,
+    text: template.text,
+  })
+}
+
+/**
+ * Send forgot password OTP email (6-digit code)
+ */
+export async function sendForgotPasswordOTPEmail(data: {
+  userEmail: string
+  userName: string
+  otpCode: string
+  verifyUrl?: string
+  expiresIn?: string
+}): Promise<EmailResult> {
+  const template = getForgotPasswordOTPEmailTemplate({
+    userName: data.userName,
+    otpCode: data.otpCode,
+    verifyUrl: data.verifyUrl,
+    expiresIn: data.expiresIn,
+  })
+  
+  return sendEmail({
+    to: data.userEmail,
+    subject: 'Password Reset Verification Code - Zumbaton',
     html: template.html,
     text: template.text,
   })

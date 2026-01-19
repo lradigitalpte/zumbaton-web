@@ -93,6 +93,10 @@ export async function GET(request: NextRequest) {
         bio: profile.bio || null,
         createdAt: profile.created_at,
         updatedAt: profile.updated_at,
+        // Add early bird fields for promo system
+        earlyBirdEligible: profile.early_bird_eligible || false,
+        earlyBirdExpiresAt: profile.early_bird_expires_at || null,
+        earlyBirdGrantedAt: profile.early_bird_granted_at || null,
       },
     })
   } catch (error) {

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useMyPackages, MyPackage } from "@/hooks/useMyPackages";
 
-type StatusFilter = "all" | "active" | "expired" | "frozen" | "depleted";
+type StatusFilter = "all" | "active" | "expired" | "depleted";
 
 const MyPackagesPage = () => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -153,7 +153,7 @@ const MyPackagesPage = () => {
           {/* Filters */}
           <div className="mb-4 xl:mb-6">
             <div className="flex items-center gap-1.5 xl:gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {(["all", "active", "expired", "frozen", "depleted"] as StatusFilter[]).map((status) => (
+              {(["all", "active", "expired", "depleted"] as StatusFilter[]).map((status) => (
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}

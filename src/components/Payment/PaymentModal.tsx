@@ -18,6 +18,11 @@ interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedPackage: Package | null;
+  promoData?: {
+    hasEarlyBirdDiscount?: boolean;
+    earlyBirdDiscountPercent?: number;
+    earlyBirdDaysLeft?: number | null;
+  } | null;
 }
 
 type PaymentStatus = "idle" | "creating" | "error";
@@ -31,16 +36,46 @@ export default function PaymentModal({
   isOpen,
   onClose,
   selectedPackage,
+  promoData,
 }: PaymentModalProps) {
   const toast = useToast();
   const [status, setStatus] = useState<PaymentStatus>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [promo, setPromo] = useState<{
+    hasEarlyBirdDiscount: boolean
+    earlyBirdDiscountPercent: number
+    earlyBirdDaysLeft?: number | null
+  } | null>(null)
+  
+  // Calculate discounted price if applicable
+  const originalPrice = selectedPackage?.price_cents || 0
+  const discountPercent = promoData?.hasEarlyBirdDiscount ? 10 : 0
+  const discountAmount = Math.round((originalPrice * discountPercent) / 100)
+  const finalPrice = originalPrice - discountAmount
 
   // Reset state when modal opens/closes
   useEffect(() => {
     if (isOpen && selectedPackage) {
       setStatus("idle");
       setError(null);
+      // Fetch promo eligibility for current user
+      ;(async () => {
+        try {
+          const { apiFetchJson } = await import('@/lib/api-fetch')
+          const res = await apiFetchJson('/api/promos/eligibility', { method: 'GET', requireAuth: true })
+          if (res.success && res.data) {
+            setPromo({
+              hasEarlyBirdDiscount: res.data.hasEarlyBirdDiscount,
+              earlyBirdDiscountPercent: res.data.earlyBirdDiscountPercent || 0,
+              earlyBirdDaysLeft: res.data.earlyBirdDaysLeft ?? null,
+            })
+          } else {
+            setPromo(null)
+          }
+        } catch (e) {
+          setPromo(null)
+        }
+      })()
     }
   }, [isOpen, selectedPackage]);
 
@@ -63,7 +98,10 @@ export default function PaymentModal({
         currency: string;
       }>("/api/payments", {
         method: "POST",
-        body: JSON.stringify({ packageId: selectedPackage.id }),
+        body: JSON.stringify({ 
+          packageId: selectedPackage.id,
+          promoType: promoData?.hasEarlyBirdDiscount ? 'early_bird' : null
+        }),
         requireAuth: true,
       });
 
@@ -144,12 +182,26 @@ export default function PaymentModal({
               </span>
             </div>
             <div className="text-right">
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                {formatPrice(
-                  selectedPackage.price_cents,
-                  selectedPackage.currency
-                )}
-              </span>
+              {promoData?.hasEarlyBirdDiscount ? (
+                <div className="text-right">
+                  <div className="text-xs text-amber-600 font-medium mb-1">
+                    Early Steppers • 10% off
+                  </div>
+                  <div className="text-sm text-gray-500 line-through">
+                    {formatPrice(originalPrice, selectedPackage.currency)}
+                  </div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {formatPrice(finalPrice, selectedPackage.currency)}
+                  </div>
+                  {promoData.earlyBirdDaysLeft !== null && promoData.earlyBirdDaysLeft !== undefined && (
+                    <div className="text-xs text-amber-600">{promoData.earlyBirdDaysLeft} days left</div>
+                  )}
+                </div>
+              ) : (
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatPrice(originalPrice, selectedPackage.currency)}
+                </span>
+              )}
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-2">
@@ -232,7 +284,7 @@ export default function PaymentModal({
               <span>
                 Pay{" "}
                 {formatPrice(
-                  selectedPackage.price_cents,
+                  finalPrice,
                   selectedPackage.currency
                 )}
               </span>

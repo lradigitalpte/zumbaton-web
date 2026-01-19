@@ -27,6 +27,22 @@ const supabaseAdmin = createClient(
 )
 
 /**
+ * Helpers for Singapore time booking window
+ */
+function getSingaporeNow() {
+  const now = new Date()
+  const utcMs = now.getTime() + now.getTimezoneOffset() * 60000
+  return new Date(utcMs + 8 * 60 * 60 * 1000)
+}
+
+function isBookingWindowOpen() {
+  const nowSG = getSingaporeNow()
+  const hour = nowSG.getHours()
+  // Allow booking from 09:00 (inclusive) to 17:00 (exclusive)
+  return hour >= 9 && hour < 17
+}
+
+/**
  * Get authenticated user from Authorization header
  */
 async function getAuthenticatedUser(request: NextRequest) {
@@ -89,6 +105,13 @@ export async function POST(request: NextRequest) {
 
     // Check if batch booking or single booking
     if (classIds && Array.isArray(classIds) && classIds.length > 0) {
+      // Enforce booking window for batch bookings as well
+      if (!isBookingWindowOpen()) {
+        return NextResponse.json(
+          { success: false, error: { message: 'Bookings are only allowed between 09:00 and 17:00 SGT' } },
+          { status: 400 }
+        )
+      }
       // Batch booking - delegate to admin API for now (complex logic)
       const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
       
@@ -115,6 +138,13 @@ export async function POST(request: NextRequest) {
         )
       }
     } else if (classId) {
+      // Enforce booking window for single bookings
+      if (!isBookingWindowOpen()) {
+        return NextResponse.json(
+          { success: false, error: { message: 'Bookings are only allowed between 09:00 and 17:00 SGT' } },
+          { status: 400 }
+        )
+      }
       // Single booking - handle server-side
       return await handleSingleBooking(targetUserId, classId)
     } else {
@@ -187,6 +217,14 @@ async function handleSingleBooking(userId: string, classId: string) {
     if (new Date(classData.scheduled_at) <= new Date()) {
       return NextResponse.json(
         { success: false, error: { message: 'Cannot book past classes' } },
+        { status: 400 }
+      )
+    }
+
+    // 2.5. Enforce booking window on server-side (SGT)
+    if (!isBookingWindowOpen()) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Bookings are only allowed between 09:00 and 17:00 SGT' } },
         { status: 400 }
       )
     }
@@ -437,6 +475,14 @@ async function handleSingleBooking(userId: string, classId: string) {
 async function handleCourseBooking(userId: string, parentClassId: string, parentClassData: any) {
   try {
     const now = new Date()
+
+    // Enforce booking window for course bookings as well
+    if (!isBookingWindowOpen()) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Bookings are only allowed between 09:00 and 17:00 SGT' } },
+        { status: 400 }
+      )
+    }
 
     // 1. Find all child instances (sessions) for this course
     const { data: allSessions, error: sessionsError } = await supabaseAdmin

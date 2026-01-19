@@ -14,15 +14,7 @@ const SettingsPage = () => {
   const [notifications, setNotifications] = useState({
     classReminders: true,
     bookingConfirmations: true,
-    promotions: false,
-    newClasses: true,
   });
-  
-  const [privacy, setPrivacy] = useState({
-    showProfile: true,
-    showStats: false,
-  });
-
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -49,20 +41,6 @@ const SettingsPage = () => {
           setNotifications({
             classReminders: notificationsData.data.classReminders,
             bookingConfirmations: notificationsData.data.bookingConfirmations,
-            promotions: notificationsData.data.promotions,
-            newClasses: notificationsData.data.newClasses,
-          });
-        }
-      }
-
-      // Load privacy preferences
-      const privacyResponse = await apiFetch('/api/settings/privacy');
-      if (privacyResponse.ok) {
-        const privacyData = await privacyResponse.json();
-        if (privacyData.success) {
-          setPrivacy({
-            showProfile: privacyData.data.showProfile,
-            showStats: privacyData.data.showStats,
           });
         }
       }
@@ -99,36 +77,6 @@ const SettingsPage = () => {
       setNotifications(notifications);
       console.error('Error updating notifications:', error);
       toast.error('Error', 'Failed to update notification preferences');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handlePrivacyChange = async (key: keyof typeof privacy) => {
-    const updatedPrivacy = { ...privacy, [key]: !privacy[key] };
-    setPrivacy(updatedPrivacy);
-    
-    try {
-      setIsSaving(true);
-      const response = await apiFetch('/api/settings/privacy', {
-        method: 'PUT',
-        body: JSON.stringify(updatedPrivacy),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        // Revert on error
-        setPrivacy(privacy);
-        toast.error('Error', errorData.error?.message || 'Failed to update privacy settings');
-        return;
-      }
-
-      toast.success("Settings updated", "Your privacy settings have been saved.");
-    } catch (error) {
-      // Revert on error
-      setPrivacy(privacy);
-      console.error('Error updating privacy:', error);
-      toast.error('Error', 'Failed to update privacy settings');
     } finally {
       setIsSaving(false);
     }
@@ -273,7 +221,7 @@ const SettingsPage = () => {
               </button>
             </div>
             
-            <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-between py-3">
               <div>
                 <p className="font-medium text-dark dark:text-white">Booking Confirmations</p>
                 <p className="text-sm text-body-color dark:text-gray-400">Receive confirmation emails for bookings</p>
@@ -288,98 +236,6 @@ const SettingsPage = () => {
                 <span
                   className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${
                     notifications.bookingConfirmations ? "translate-x-6" : ""
-                  }`}
-                />
-              </button>
-            </div>
-            
-            <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800">
-              <div>
-                <p className="font-medium text-dark dark:text-white">New Classes</p>
-                <p className="text-sm text-body-color dark:text-gray-400">Be notified when new classes are added</p>
-              </div>
-              <button
-                onClick={() => handleNotificationChange("newClasses")}
-                disabled={isSaving}
-                className={`relative w-12 h-6 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                  notifications.newClasses ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
-                }`}
-              >
-                <span
-                  className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                    notifications.newClasses ? "translate-x-6" : ""
-                  }`}
-                />
-              </button>
-            </div>
-            
-            <div className="flex items-center justify-between py-3">
-              <div>
-                <p className="font-medium text-dark dark:text-white">Promotions</p>
-                <p className="text-sm text-body-color dark:text-gray-400">Receive promotional offers and discounts</p>
-              </div>
-              <button
-                onClick={() => handleNotificationChange("promotions")}
-                disabled={isSaving}
-                className={`relative w-12 h-6 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                  notifications.promotions ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
-                }`}
-              >
-                <span
-                  className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                    notifications.promotions ? "translate-x-6" : ""
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Privacy Settings */}
-        <div className="bg-white dark:bg-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6">
-          <h3 className="text-lg font-semibold text-dark dark:text-white mb-4 flex items-center gap-2">
-            <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            Privacy
-          </h3>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800">
-              <div>
-                <p className="font-medium text-dark dark:text-white">Show Profile</p>
-                <p className="text-sm text-body-color dark:text-gray-400">Allow other members to see your profile</p>
-              </div>
-              <button
-                onClick={() => handlePrivacyChange("showProfile")}
-                disabled={isSaving}
-                className={`relative w-12 h-6 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                  privacy.showProfile ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
-                }`}
-              >
-                <span
-                  className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                    privacy.showProfile ? "translate-x-6" : ""
-                  }`}
-                />
-              </button>
-            </div>
-            
-            <div className="flex items-center justify-between py-3">
-              <div>
-                <p className="font-medium text-dark dark:text-white">Show Stats</p>
-                <p className="text-sm text-body-color dark:text-gray-400">Display your attendance stats publicly</p>
-              </div>
-              <button
-                onClick={() => handlePrivacyChange("showStats")}
-                disabled={isSaving}
-                className={`relative w-12 h-6 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                  privacy.showStats ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
-                }`}
-              >
-                <span
-                  className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                    privacy.showStats ? "translate-x-6" : ""
                   }`}
                 />
               </button>
