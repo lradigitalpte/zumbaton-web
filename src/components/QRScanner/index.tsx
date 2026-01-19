@@ -311,6 +311,30 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
         `Successfully checked in! ${result.data?.tokensConsumed ? `(${result.data.tokensConsumed} token${result.data.tokensConsumed > 1 ? 's' : ''} used)` : ''}`
       );
 
+      // SUCCESS FEEDBACK: Play sound and vibrate
+      try {
+        // Play success sound
+        const audio = new Audio('/sounds/success-beep.mp3');
+        audio.volume = 0.5;
+        audio.play().catch(() => {
+          // Fallback for browsers that don't allow audio without user interaction
+          console.log('Audio playback blocked - user needs to interact with page first');
+        });
+        
+        // Haptic feedback for mobile devices
+        if ('vibrate' in navigator) {
+          navigator.vibrate([200, 100, 200]); // Short-long-short vibration pattern
+        }
+        
+        // Visual flash effect
+        document.body.style.backgroundColor = '#22c55e';
+        setTimeout(() => {
+          document.body.style.backgroundColor = '';
+        }, 200);
+      } catch (error) {
+        console.log('Feedback error (non-critical):', error);
+      }
+
       // Call onScanSuccess callback for backward compatibility
       onScanSuccess(data);
 

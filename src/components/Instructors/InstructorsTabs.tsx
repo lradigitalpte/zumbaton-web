@@ -26,7 +26,7 @@ const instructors: Instructor[] = [
     id: "2",
     name: "Robert",
     role: "Certified Zumba Instructor",
-    bio: "Hi everyone, my name is Robert. I'm 30 years old and a certified Zumba instructor, registered both in Singapore and internationally. I've been part of the Zumba community for over a year and have had the opportunity to teach in the Philippines. Now, I'm excited to continue this journey in Singapore and invite you to join me at Zumbaton. Don't be fooled by my size or how I look—Zumba is my forte and something I truly love. More than just dance, Zumba is about expressing yourself, being unapologetically you, and moving without judgment—whether from others or even yourself. What I love most about Zumba is the sense of freedom, joy, and community it brings, and I can't wait to share that experience with you. So come join us at Zumbaton, take that step forward, and let's move together. Peace ✌️",
+    bio: "Robert is a 30-year-old certified Zumba instructor, registered both in Singapore and internationally. He has been part of the Zumba community for over a year and has had the opportunity to teach in the Philippines.\n\nNow continuing his journey in Singapore, Robert invites you to join him at Zumbaton. Don't be fooled by his size or appearance—Zumba is his forte and a true passion. To him, Zumba is more than just dance; it's about self-expression, embracing who you are, and moving freely without judgment—from others or even yourself.\n\nWhat Robert loves most about Zumba is the sense of freedom, joy, and community it creates, and he is excited to share that experience with others. Join him at Zumbaton, take that step forward, and move together.",
     image: "/images/robert.jfif",
   },
 ];

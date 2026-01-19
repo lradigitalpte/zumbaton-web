@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const ForgotPasswordPage = () => {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,25 +49,20 @@ const ForgotPasswordPage = () => {
       });
 
       // Check if request was successful (200-299 status codes)
-      if (!response.ok) {
-        const errorMessage = data.error || data.message || `Failed to send reset link (${response.status}). Please try again.`;
+      if (!response.ok || data.success === false) {
+        const errorMessage = data.error || data.message || `Failed to send verification code. Please try again.`;
         setError(errorMessage);
         setIsSubmitting(false);
         return;
       }
 
-      // Check if the API returned success
-      if (data.success === false) {
-        const errorMessage = data.error || data.message || 'Failed to send reset link. Please try again.';
-        setError(errorMessage);
+      // Success - redirect to verify-otp page only if email exists and OTP was sent
+      if (response.ok && data.success) {
+        router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
+      } else {
+        setError(data.error || 'Failed to send verification code. Please try again.');
         setIsSubmitting(false);
-        return;
       }
-
-      // Success - show confirmation message (API always returns success: true for security)
-      setIsSubmitted(true);
-      setIsSubmitting(false);
-      setError("");
     } catch (err) {
       console.error('Error sending password reset:', err);
       const errorMessage = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
@@ -86,43 +82,10 @@ const ForgotPasswordPage = () => {
                   Forgot Password?
                 </h3>
                 <p className="text-body-color mb-10 text-center text-base font-normal">
-                  Enter your email address and we&apos;ll send you a link to reset your password.
+                  Enter your email address and we&apos;ll send you a 6-digit verification code to reset your password.
                 </p>
 
-                {isSubmitted ? (
-                  <div className="space-y-6">
-                    <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800">
-                      <div className="flex items-start gap-3">
-                        <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <div>
-                          <p className="font-medium text-emerald-800 dark:text-emerald-300">Check your email</p>
-                          <p className="text-sm text-emerald-700 dark:text-emerald-400 mt-1">
-                            We&apos;ve sent a password reset link to <strong>{email}</strong>
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                      Didn&apos;t receive the email?{" "}
-                      <button
-                        onClick={() => setIsSubmitted(false)}
-                        className="text-primary hover:underline"
-                      >
-                        Try again
-                      </button>
-                    </p>
-
-                    <Link href="/signin">
-                      <button className="shadow-submit dark:shadow-submit-dark bg-primary hover:bg-primary/90 flex w-full items-center justify-center rounded-lg px-9 py-4 text-base font-semibold text-white duration-300">
-                        Back to Sign In
-                      </button>
-                    </Link>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit}>
                     <div className="space-y-6">
                       {error && (
                         <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
@@ -155,12 +118,11 @@ const ForgotPasswordPage = () => {
                           disabled={isSubmitting}
                           className="shadow-submit dark:shadow-submit-dark bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex w-full items-center justify-center rounded-lg px-9 py-4 text-base font-semibold text-white duration-300"
                         >
-                          {isSubmitting ? "Sending..." : "Send Reset Link"}
+                          {isSubmitting ? "Sending..." : "Send Verification Code"}
                         </button>
                       </div>
                     </div>
                   </form>
-                )}
 
                 <p className="text-body-color text-center text-base font-medium mt-6">
                   Remember your password?{" "}

@@ -98,7 +98,8 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
   // Also fetch by name for multiple instructors (in case IDs aren't available)
   if (instructorNames.size > 0) {
     const nameArray = Array.from(instructorNames)
-    // Fetch in batches if needed (Supabase has limits)
+    
+    // Try exact match first
     for (let i = 0; i < nameArray.length; i += 10) {
       const batch = nameArray.slice(i, i + 10)
       const { data: profilesByName } = await supabase
@@ -122,6 +123,45 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
           }
         }
       })
+    }
+    
+    // Try case-insensitive match for names that didn't find exact match
+    const unfoundNames = nameArray.filter(name => !instructorProfilesByName[name])
+    if (unfoundNames.length > 0) {
+      for (let i = 0; i < unfoundNames.length; i += 10) {
+        const batch = unfoundNames.slice(i, i + 10)
+        
+        // Fetch all profiles and do client-side case-insensitive matching
+        const { data: allProfiles } = await supabase
+          .from('user_profiles')
+          .select('id, name, avatar_url')
+          .limit(500) // Fetch a reasonable number of profiles
+        
+        allProfiles?.forEach((profile: any) => {
+          // Match instructor names case-insensitively and with underscore/space variations
+          batch.forEach((instructorName: string) => {
+            const lowerInstructorName = instructorName.toLowerCase()
+            const lowerProfileName = profile.name.toLowerCase()
+            const instructorNameNormalized = lowerInstructorName.replace(/_/g, ' ').replace(/\s+/g, ' ')
+            const profileNameNormalized = lowerProfileName.replace(/_/g, ' ').replace(/\s+/g, ' ')
+            
+            if ((profileNameNormalized === instructorNameNormalized || lowerProfileName === lowerInstructorName) && !instructorProfilesByName[instructorName]) {
+              instructorProfilesByName[instructorName] = {
+                id: profile.id,
+                name: profile.name,
+                avatar_url: profile.avatar_url,
+              }
+              if (!instructorProfiles[profile.id]) {
+                instructorProfiles[profile.id] = {
+                  id: profile.id,
+                  name: profile.name,
+                  avatar_url: profile.avatar_url,
+                }
+              }
+            }
+          })
+        })
+      }
     }
   }
 
@@ -152,11 +192,33 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
     if (classItem.instructor_name) {
       const names = classItem.instructor_name.split(',').map((n: string) => n.trim())
       names.forEach((name: string) => {
-        // Try to find by name first (for multiple instructors)
-        const profileByName = instructorProfilesByName[name]
+        // Try multiple name variations for matching
+        let profile = null
+        
+        // Try exact match first
+        profile = instructorProfilesByName[name]
+        
+        // Try lowercase
+        if (!profile) {
+          profile = instructorProfilesByName[name.toLowerCase()]
+        }
+        
+        // Try replacing underscores with spaces and vice versa
+        if (!profile) {
+          const altName = name.includes('_') ? name.replace(/_/g, ' ') : name.replace(/ /g, '_')
+          profile = instructorProfilesByName[altName]
+        }
+        
+        // Try with alt name lowercase
+        if (!profile) {
+          const altName = name.includes('_') ? name.replace(/_/g, ' ') : name.replace(/ /g, '_')
+          profile = instructorProfilesByName[altName.toLowerCase()]
+        }
+        
         // Fallback to ID lookup
-        const profileById = classItem.instructor_id ? instructorProfiles[classItem.instructor_id] : null
-        const profile = profileByName || profileById
+        if (!profile && classItem.instructor_id) {
+          profile = instructorProfiles[classItem.instructor_id]
+        }
         
         instructors.push({
           id: profile?.id || classItem.instructor_id || '',
@@ -807,7 +869,9 @@ export async function cancelBooking(
   penalty?: boolean
 }> {
   // Use admin API for cancellations to ensure notifications are triggered
-  const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+  const adminApiUrlRaw = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+  // Normalize admin API base URL to avoid double '/api' when environment already includes it
+  const adminApiUrl = adminApiUrlRaw.replace(/\/api\/?$/, '').replace(/\/$/, '')
   try {
     // Use centralized API fetch with automatic token refresh
     const { apiFetchJson } = await import('@/lib/api-fetch')
@@ -826,17 +890,19 @@ export async function cancelBooking(
     })
 
     if (!result.success) {
+      // Admin API couldn't process the cancellation (e.g., 404). Fall back to local cancellation.
+      console.warn('Admin API cancellation returned non-success, falling back to local cancellation:', result.error)
+    } else {
       return {
-        success: false,
-        message: result.error?.message || 'Failed to cancel booking',
+        success: true,
+        // Ensure tokensRefunded and penalty are always defined to avoid 'undefined' in client messages
+        tokensRefunded: result.data?.tokensRefunded ?? 0,
+        penalty: result.data?.penalty ?? false,
+        message:
+          result.data?.message || (result.data?.penalty
+            ? `Booking cancelled. ${result.data?.tokensRefunded ?? 0} token(s) consumed as late cancellation penalty.`
+            : `Booking cancelled. ${result.data?.tokensRefunded ?? 0} token(s) refunded.`),
       }
-    }
-
-    return {
-      success: true,
-      message: result.data?.message || 'Booking cancelled successfully!',
-      tokensRefunded: result.data?.tokensRefunded,
-      penalty: result.data?.penalty,
     }
   } catch (error) {
     console.error('Error cancelling booking via admin API:', error)
@@ -903,9 +969,31 @@ export async function cancelBooking(
     }
 
     // 3. Check cancellation window
-    const hoursUntilClass = (classTime.getTime() - now.getTime()) / (1000 * 60 * 60)
-    const isWithinWindow = hoursUntilClass >= settings.cancellationWindow
-    const isLateCancel = !isWithinWindow && hoursUntilClass > 0
+    // Policy: refundable token only if cancellation is done the day before class, latest by 23:59 of the previous day.
+    // Disallow same-day cancellations (no cancellation on class date).
+    const classDateStart = new Date(classTime)
+    classDateStart.setHours(0, 0, 0, 0)
+
+    // End of previous day (23:59:59.999 before class date)
+    const previousDayEnd = new Date(classDateStart.getTime() - 1)
+
+    // If now is on the same calendar date as class -> disallow cancellation
+    const nowDate = new Date(now)
+    nowDate.setHours(0, 0, 0, 0)
+    const classDayDate = new Date(classDateStart)
+    classDayDate.setHours(0, 0, 0, 0)
+
+    if (nowDate.getTime() === classDayDate.getTime()) {
+      return {
+        success: false,
+        message: 'Same-day cancellations are not allowed. Please cancel by 23:59 the day before the class to receive a refund.',
+      }
+    }
+
+    // If now is before or equal to previousDayEnd => free cancellation (refund)
+    const isWithinWindow = now.getTime() <= previousDayEnd.getTime()
+    // If now is after previousDayEnd but before class start, treat as late cancellation (penalty)
+    const isLateCancel = now.getTime() > previousDayEnd.getTime() && now.getTime() < classTime.getTime()
 
     let newStatus: 'cancelled' | 'cancelled-late'
     let tokensRefunded = 0
@@ -1000,7 +1088,7 @@ export async function cancelBooking(
     return {
       success: true,
       message: isLateCancel
-        ? `Booking cancelled. ${booking.tokens_used} token(s) consumed as late cancellation penalty (cancelled less than ${settings.cancellationWindow} hours before class).`
+        ? `Booking cancelled. ${booking.tokens_used} token(s) consumed as late cancellation penalty (cancelled after 23:59 the day before the class).`
         : `Booking cancelled. ${tokensRefunded} token(s) refunded.`,
       tokensRefunded,
       penalty: isLateCancel,

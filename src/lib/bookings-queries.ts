@@ -10,6 +10,7 @@ export interface UserBooking {
   class_id: string
   class_name: string
   instructor_name: string
+  instructor_avatar?: string
   scheduled_at: string
   duration_minutes: number
   location: string
@@ -69,6 +70,7 @@ export async function getUserBookings(
       cancellation_reason,
       classes (
         title,
+        instructor_id,
         instructor_name,
         scheduled_at,
         duration_minutes,
@@ -110,14 +112,41 @@ export async function getUserBookings(
     return []
   }
 
+  // Collect unique instructor IDs to fetch avatars
+  const instructorIds = new Set<string>()
+  for (const booking of data || []) {
+    const classData = Array.isArray(booking.classes) ? booking.classes[0] : booking.classes
+    if (classData?.instructor_id) {
+      instructorIds.add(classData.instructor_id)
+    }
+  }
+
+  // Fetch instructor profiles with avatars
+  let instructorProfiles: Record<string, { avatar_url?: string }> = {}
+  if (instructorIds.size > 0) {
+    const { data: profiles, error: profilesError } = await supabase
+      .from('user_profiles')
+      .select('id, avatar_url')
+      .in('id', Array.from(instructorIds))
+
+    if (!profilesError && profiles) {
+      instructorProfiles = profiles.reduce((acc, profile) => {
+        acc[profile.id] = { avatar_url: profile.avatar_url }
+        return acc
+      }, {} as Record<string, { avatar_url?: string }>)
+    }
+  }
+
   let bookings = (data || []).map((booking: any) => {
     const classData = Array.isArray(booking.classes) ? booking.classes[0] : booking.classes
+    const instructorProfile = classData?.instructor_id ? instructorProfiles[classData.instructor_id] : null
 
     return {
       id: booking.id,
       class_id: booking.class_id,
       class_name: classData?.title || 'Unknown Class',
       instructor_name: classData?.instructor_name || 'TBA',
+      instructor_avatar: instructorProfile?.avatar_url,
       scheduled_at: classData?.scheduled_at || booking.booked_at,
       duration_minutes: classData?.duration_minutes || 60,
       location: classData?.location || 'Studio',

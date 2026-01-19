@@ -6,10 +6,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+export const dynamic = 'force-dynamic'
+
 // HitPay Configuration
 const HITPAY_ENV = process.env.HITPAY_ENV || 'sandbox'
 const HITPAY_API_URL =
-  HITPAY_ENV === 'production'
+  HITPAY_ENV === 'live'
     ? 'https://api.hit-pay.com/v1'
     : 'https://api.sandbox.hit-pay.com/v1'
 const HITPAY_API_KEY = process.env.HITPAY_API_KEY
@@ -17,19 +19,15 @@ const HITPAY_API_KEY = process.env.HITPAY_API_KEY
 // App URL for redirects
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-// Initialize Supabase client for auth
-const supabaseAuth = createClient(
+// Initialize Supabase admin client directly (no auth client needed)
+const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-  {
-    auth: {
-      persistSession: false,
-    },
-  }
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 )
 
 /**
  * Get authenticated user from Authorization header
+ * Uses admin client directly to avoid hanging on token validation
  */
 async function getAuthenticatedUser(request: NextRequest) {
   // Get the authorization header
@@ -41,29 +39,34 @@ async function getAuthenticatedUser(request: NextRequest) {
   // Get the token from the header
   const token = authHeader.replace('Bearer ', '')
 
-  // Verify the token by getting user data
-  const { data: { user }, error } = await supabaseAuth.auth.getUser(token)
-  
-  if (error || !user) {
+  try {
+    // Use admin client to verify JWT directly - faster and more reliable
+    const { data: { user }, error } = await Promise.race([
+      supabaseAdmin.auth.getUser(token),
+      new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Auth timeout')), 5000)
+      )
+    ])
+    
+    if (error || !user) {
+      return null
+    }
+
+    // Get user profile for name
+    const { data: profile } = await supabaseAdmin
+      .from('user_profiles')
+      .select('name, email')
+      .eq('id', user.id)
+      .single()
+
+    return {
+      id: user.id,
+      email: user.email || profile?.email,
+      name: profile?.name || 'Customer',
+    }
+  } catch (err) {
+    console.warn('[Payment] Auth check failed:', err)
     return null
-  }
-
-  // Get user profile for name using service role
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-
-  const { data: profile } = await supabaseAdmin
-    .from('user_profiles')
-    .select('name, email')
-    .eq('id', user.id)
-    .single()
-
-  return {
-    id: user.id,
-    email: user.email || profile?.email,
-    name: profile?.name || 'Customer',
   }
 }
 
@@ -92,7 +95,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Parse request body
     const body = await request.json()
-    const { packageId } = body
+    const { packageId, promoType: requestedPromoType } = body
 
     if (!packageId) {
       return NextResponse.json(
@@ -134,15 +137,31 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       
       const eligibility = await getPromoEligibility(user.id)
       
-      // Auto-apply best available discount (early bird takes priority)
-      if (eligibility.maxDiscountPercent > 0) {
-        const selectedPromoType = eligibility.hasEarlyBirdDiscount ? 'early_bird' : 'referral'
-        const discount = await applyDiscount(user.id, pkg.price_cents, selectedPromoType)
+      // Apply specific promo type if requested and eligible
+      if (requestedPromoType && eligibility.maxDiscountPercent > 0) {
+        let canApplyPromo = false
         
-        finalAmountCents = discount.finalAmountCents
-        discountPercent = discount.discountPercent
-        discountAmountCents = discount.discountAmountCents
-        promoType = discount.promoType
+        if (requestedPromoType === 'early_bird' && eligibility.hasEarlyBirdDiscount) {
+          canApplyPromo = true
+        } else if (requestedPromoType === 'referral' && eligibility.hasReferralDiscount) {
+          canApplyPromo = true
+        }
+        
+        if (canApplyPromo) {
+          const discount = await applyDiscount(user.id, pkg.price_cents, requestedPromoType)
+          
+          finalAmountCents = discount.finalAmountCents
+          discountPercent = discount.discountPercent
+          discountAmountCents = discount.discountAmountCents
+          promoType = discount.promoType
+          
+          console.log(`[Payment] Applied ${requestedPromoType} discount:`, {
+            originalPrice: pkg.price_cents,
+            discountPercent,
+            discountAmount: discountAmountCents,
+            finalPrice: finalAmountCents
+          })
+        }
       }
     } catch (promoError) {
       console.warn('[Payment] Failed to check promotions, proceeding without discount:', promoError)
@@ -153,6 +172,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const amount = (finalAmountCents / 100).toFixed(2)
     const currency = pkg.currency || 'SGD'
     const referenceNumber = `${user.id}-${packageId}-${Date.now()}`
+
+    console.log('[Payment] Creating HitPay request:', {
+      amount,
+      currency,
+      email: user.email,
+      apiKeyLength: HITPAY_API_KEY?.length,
+      apiKeyPrefix: HITPAY_API_KEY?.substring(0, 10),
+      url: `${HITPAY_API_URL}/payment-requests`,
+    })
 
     const hitpayResponse = await fetch(`${HITPAY_API_URL}/payment-requests`, {
       method: 'POST',

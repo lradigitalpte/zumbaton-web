@@ -69,6 +69,8 @@ export const TABLES = {
   ATTENDANCES: 'attendances',
   TOKEN_TRANSACTIONS: 'token_transactions',
   WAITLIST: 'waitlist',
+  USER_PROFILES: 'user_profiles',
+  PASSWORD_RESET_OTPS: 'password_reset_otps',
 } as const
 
 // Supabase error codes

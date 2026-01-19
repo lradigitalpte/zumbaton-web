@@ -11,6 +11,7 @@ interface BookingConfirmationModalProps {
   classItem: ClassWithAvailability | null;
   isBooking?: boolean;
   userTokenBalance?: number;
+  isBookingWindowOpen?: boolean;
 }
 
 const BookingConfirmationModal = ({
@@ -20,6 +21,7 @@ const BookingConfirmationModal = ({
   classItem,
   isBooking = false,
   userTokenBalance = 0,
+  isBookingWindowOpen = true,
 }: BookingConfirmationModalProps) => {
   if (!classItem) return null;
 
@@ -52,10 +54,10 @@ const BookingConfirmationModal = ({
           </button>
           <button
             onClick={onConfirm}
-            disabled={isBooking || !hasEnoughTokens}
+            disabled={isBooking || !hasEnoughTokens || !isBookingWindowOpen}
             className="flex-1 px-6 py-3 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 shadow-md shadow-primary/20"
           >
-            {isBooking ? "Booking..." : !hasEnoughTokens ? "Not Enough Tokens" : "Confirm"}
+            {isBooking ? "Booking..." : !isBookingWindowOpen ? "Booking Closed" : !hasEnoughTokens ? "Not Enough Tokens" : "Confirm"}
           </button>
         </div>
       }
@@ -119,6 +121,9 @@ const BookingConfirmationModal = ({
                 <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                   View sessions panel to select individual sessions
                 </p>
+              )}
+              {!isBookingWindowOpen && (
+                <p className="text-sm text-red-600 dark:text-red-400 mt-2">Bookings are allowed only between 09:00 and 17:00 SGT</p>
               )}
             </div>
           </div>

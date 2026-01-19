@@ -10,6 +10,7 @@ export interface ClassDetail {
   title: string
   description: string | null
   instructor_name: string | null
+  instructor_avatar?: string | null
   instructor_bio?: string | null
   scheduled_at: string
   duration_minutes: number
@@ -97,6 +98,34 @@ export async function getClassDetail(classId: string): Promise<ClassDetail | nul
 
   const bookedCount = bookings?.length || 0
 
+  // Fetch instructor avatar if instructor exists
+  let instructorAvatar: string | null = null
+  if (classData.instructor_id) {
+    try {
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Query timeout after 15s'))
+        }, QUERY_TIMEOUT)
+      })
+
+      const instructorResult = await Promise.race([
+        supabase
+          .from('user_profiles')
+          .select('avatar_url')
+          .eq('id', classData.instructor_id)
+          .maybeSingle(),
+        timeoutPromise,
+      ]) as { data: any; error: any }
+      
+      if (!instructorResult.error && instructorResult.data?.avatar_url) {
+        instructorAvatar = instructorResult.data.avatar_url
+      }
+    } catch (timeoutError: any) {
+      console.warn('[Class Detail] Timeout fetching instructor avatar:', timeoutError?.message)
+      // Non-critical, continue without avatar
+    }
+  }
+
   // Default what to bring based on class type
   const defaultWhatToBring: Record<string, string[]> = {
     zumba: ['Water bottle', 'Towel', 'Athletic shoes'],
@@ -126,6 +155,7 @@ export async function getClassDetail(classId: string): Promise<ClassDetail | nul
     title: classData.title,
     description: classData.description,
     instructor_name: classData.instructor_name,
+    instructor_avatar: instructorAvatar,
     instructor_bio: instructorBio,
     scheduled_at: classData.scheduled_at,
     duration_minutes: classData.duration_minutes,

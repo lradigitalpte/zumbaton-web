@@ -190,70 +190,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true)
     
     try {
-      // Use API endpoint instead of direct Supabase query to avoid lag
-      // Get token from Supabase session (we still need this to get the token)
-      // But then verify via API endpoint which is faster for profile queries
-      let accessToken: string | null = null
-      try {
-        // Get session to extract token - this is still needed but we'll verify via API
-        const { data: { session } } = await supabase.auth.getSession()
-        accessToken = session?.access_token || null
-      } catch (sessionError) {
-        // If getSession fails, proceed without token
-        console.warn('[Auth] Failed to get session for token:', sessionError)
-      }
-
-      // Call API endpoint to verify session (faster than direct Supabase query)
-      if (accessToken) {
-        try {
-          const response = await fetch('/api/auth/session', {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json',
-            },
-          })
-
-          const result = await response.json()
-
-          if (result.success && result.authenticated && result.data) {
-            // Session is valid - set user from API response
-            setUser(result.data)
-            setIsAuthenticated(true)
-            setIsLoading(false)
-            isInitializingRef.current = false
-            return
-          }
-        } catch (apiError) {
-          console.warn('[Auth] API session check failed, falling back to direct check:', apiError)
-          // Fall through to direct Supabase check as fallback
-        }
-      }
-
-      // Fallback: Direct Supabase check if API fails or no token
-      // This is slower but ensures we still work if API is down
-      const sessionPromise = supabase.auth.getSession()
-      const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Session check timed out')), SUPABASE_CALL_TIMEOUT)
-      )
+      // Use Supabase directly - no API calls, no admin logic
+      // This is simpler and more reliable
+      let session = null
+      let error = null
       
-      let sessionResult: { data: { session: any }; error: any }
       try {
-        sessionResult = await Promise.race([sessionPromise, timeoutPromise]) as { data: { session: any }; error: any }
+        const result = await withTimeout(
+          supabase.auth.getSession(),
+          SUPABASE_CALL_TIMEOUT,
+          'Session check timed out'
+        )
+        session = result.data.session
+        error = result.error
       } catch (timeoutError: any) {
-        // Only log timeout in development - production networks can be slower
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('[Auth] Session check timed out, proceeding without session')
-        }
         // On timeout, assume no session and continue
+        console.warn('[Auth] Session check timed out, proceeding without session')
         setUser(null)
         setIsAuthenticated(false)
         setIsLoading(false)
         isInitializingRef.current = false
         return
       }
-
-      const { data: { session }, error } = sessionResult
 
       if (error) {
         // Check if it's a refresh token error
@@ -678,6 +636,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             })
           } catch (welcomeError) {
             console.error('[Auth] Failed to send welcome notification:', welcomeError)
+          }
+
+          // Attempt to claim Early Steppers promo for this new user (fire-and-forget)
+          try {
+            console.log('[Auth] Attempting to claim Early Steppers for user:', userResponse.id)
+            fetch('/api/promos/claim', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: userResponse.id }),
+            })
+            .then(res => res.json())
+            .then(data => console.log('[Auth] Promo claim result:', data))
+            .catch((e) => console.warn('[Auth] claim promo failed', e))
+          } catch (promoErr) {
+            console.warn('[Auth] Failed to initiate promo claim:', promoErr)
           }
 
           return {

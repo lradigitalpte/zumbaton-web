@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import { useUserBookings, useCancelBooking } from "@/hooks/useBookings";
 import { formatDate, formatTime } from "@/lib/utils";
@@ -10,6 +11,30 @@ import Modal from "@/components/Modal/Modal";
 type FilterType = "upcoming" | "past" | "all";
 
 const MAX_LOADING_TIME = 10000; // 10 seconds max loading time
+
+const getInitials = (name: string): string => {
+  return name
+    .split(' ')
+    .map(part => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
+
+const getAvatarColor = (name: string): string => {
+  const colors = [
+    'from-blue-400 to-blue-600',
+    'from-purple-400 to-purple-600',
+    'from-pink-400 to-pink-600',
+    'from-red-400 to-red-600',
+    'from-green-400 to-green-600',
+    'from-yellow-400 to-yellow-600',
+    'from-indigo-400 to-indigo-600',
+    'from-cyan-400 to-cyan-600',
+  ];
+  const index = name.charCodeAt(0) % colors.length;
+  return colors[index];
+};
 
 const MyBookingsPage = () => {
   const { user, isAuthenticated } = useAuth();
@@ -108,10 +133,13 @@ const MyBookingsPage = () => {
 
   const canCancel = (booking: any) => {
     if (booking.status !== "confirmed") return false;
-    const classTime = new Date(booking.scheduled_at);
-    const now = new Date();
-    const hoursUntilClass = (classTime.getTime() - now.getTime()) / (1000 * 60 * 60);
-    return hoursUntilClass > 0;
+    // Disallow cancellations on the same calendar day as the class.
+    // Refunds are only valid if cancelled by 23:59 the previous day.
+    const classDate = new Date(booking.scheduled_at);
+    const today = new Date();
+    classDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    return classDate.getTime() !== today.getTime();
   };
 
   const selectedBooking = bookings.find(b => b.id === cancelBookingId);
@@ -263,9 +291,19 @@ const MyBookingsPage = () => {
                     {/* Class Info - Very compact on mobile */}
                     <div className="space-y-0.5 xl:space-y-2 mb-2 xl:mb-4">
                       <div className="flex items-center gap-1 xl:gap-2 text-[11px] xl:text-sm text-body-color dark:text-gray-400">
-                        <svg className="w-3 h-3 xl:w-4 xl:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
+                        {booking.instructor_avatar ? (
+                          <Image
+                            src={booking.instructor_avatar}
+                            alt={booking.instructor_name}
+                            width={16}
+                            height={16}
+                            className="w-4 h-4 rounded-full object-cover shrink-0"
+                          />
+                        ) : (
+                          <div className={`w-4 h-4 rounded-full bg-gradient-to-br ${getAvatarColor(booking.instructor_name)} flex items-center justify-center text-[7px] font-bold text-white shrink-0`}>
+                            {getInitials(booking.instructor_name)}
+                          </div>
+                        )}
                         <span className="truncate">{booking.instructor_name}</span>
                       </div>
                       <div className="flex items-center gap-1 xl:gap-2 text-[11px] xl:text-sm text-body-color dark:text-gray-400">
@@ -279,11 +317,12 @@ const MyBookingsPage = () => {
 
                     {/* Actions - Very compact on mobile */}
                     <div className="flex flex-col sm:flex-row gap-1.5 xl:gap-2 pt-1.5 xl:pt-3 border-t border-gray-100 dark:border-gray-800">
-                      {canCancel(booking) && (
+                      {booking.status === 'confirmed' && (
                         <button
                           onClick={() => handleCancelClick(booking.id)}
-                          disabled={cancelBookingMutation.isPending}
-                          className="flex-1 px-2.5 xl:px-4 py-1.5 xl:py-2.5 rounded-lg xl:rounded-xl text-[10px] xl:text-sm font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50 active:scale-95 xl:active:scale-100"
+                          disabled={cancelBookingMutation.isPending || !canCancel(booking)}
+                          title={!canCancel(booking) ? 'Same-day cancellations are not allowed. Please cancel by 23:59 the day before the class to receive a refund.' : undefined}
+                          className={`flex-1 px-2.5 xl:px-4 py-1.5 xl:py-2.5 rounded-lg xl:rounded-xl text-[10px] xl:text-sm font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 transition-colors active:scale-95 xl:active:scale-100 ${(!canCancel(booking) || cancelBookingMutation.isPending) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-100 dark:hover:bg-red-900/30'}`}
                         >
                           {cancelBookingMutation.isPending && cancelBookingId === booking.id ? "Cancelling..." : "Cancel"}
                         </button>

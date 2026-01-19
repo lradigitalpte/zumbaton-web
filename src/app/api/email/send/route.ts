@@ -21,6 +21,7 @@ import {
   sendNoShowWarningEmail,
   sendPasswordResetEmail,
   sendForgotPasswordEmail,
+  sendForgotPasswordOTPEmail,
 } from '@/lib/email'
 
 // Secret key to protect this endpoint (should match in admin app)
@@ -42,6 +43,7 @@ const EmailRequestSchema = z.object({
     'no-show-warning',
     'password-reset',
     'forgot-password',
+    'forgot-password-otp',
   ]),
   secret: z.string(),
   data: z.record(z.unknown()),
@@ -217,6 +219,16 @@ export async function POST(request: NextRequest) {
           userEmail: data.userEmail as string,
           userName: data.userName as string,
           resetLink: data.resetLink as string,
+          expiresIn: data.expiresIn as string | undefined,
+        })
+        break
+
+      case 'forgot-password-otp':
+        result = await sendForgotPasswordOTPEmail({
+          userEmail: data.userEmail as string,
+          userName: data.userName as string,
+          otpCode: data.otpCode as string,
+          verifyUrl: data.verifyUrl as string | undefined,
           expiresIn: data.expiresIn as string | undefined,
         })
         break

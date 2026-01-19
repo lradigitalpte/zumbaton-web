@@ -46,6 +46,20 @@ const ClassesPage = () => {
   const [classToBook, setClassToBook] = useState<ClassWithAvailability | null>(null);
   const [userTokenBalance, setUserTokenBalance] = useState(0);
 
+  // Booking window (Singapore time)
+  const getSingaporeNow = () => {
+    const now = new Date()
+    const utcMs = now.getTime() + now.getTimezoneOffset() * 60000
+    return new Date(utcMs + 8 * 60 * 60 * 1000)
+  }
+
+  const isBookingWindowOpen = () => {
+    const nowSG = getSingaporeNow()
+    const hour = nowSG.getHours()
+    return hour >= 9 && hour < 17
+  }
+  const bookingWindowOpen = isBookingWindowOpen()
+
   // Fetch token balance on mount and when user changes
   useEffect(() => {
     if (user?.id) {
@@ -216,9 +230,9 @@ const ClassesPage = () => {
 
   const getSpotsLeft = (capacity: number, booked: number) => {
     const spots = capacity - booked;
-    if (spots <= 0) return { text: "Full", color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/20" };
-    if (spots <= 3) return { text: `${spots} left`, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/20" };
-    return { text: `${spots} spots`, color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/20" };
+    if (spots <= 0) return { text: "Full", color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/20", left: 0 };
+    if (spots <= 3) return { text: `${spots} left`, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/20", left: spots };
+    return { text: `${spots} spots`, color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/20", left: spots };
   };
 
   const activeFiltersCount = [
@@ -288,13 +302,7 @@ const ClassesPage = () => {
               >
                 <option value="all">All Types</option>
                 <option value="zumba">Zumba</option>
-                <option value="yoga">Yoga</option>
-                <option value="pilates">Pilates</option>
-                <option value="hiit">HIIT</option>
                 <option value="dance">Dance</option>
-                <option value="strength">Strength</option>
-                <option value="cardio">Cardio</option>
-                <option value="stretch">Stretch</option>
               </select>
             </div>
 
@@ -315,22 +323,7 @@ const ClassesPage = () => {
               </select>
             </div>
 
-            {/* Difficulty */}
-            <div>
-              <label className="text-dark mb-2 block text-sm font-semibold dark:text-white">
-                Difficulty
-              </label>
-              <select
-                value={filter.difficulty}
-                onChange={(e) => setFilter({ ...filter, difficulty: e.target.value })}
-                className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3 text-dark dark:text-white outline-none focus:border-primary transition-colors text-sm font-medium"
-              >
-                <option value="all">All Levels</option>
-                <option value="beginner">Beginner</option>
-                <option value="intermediate">Intermediate</option>
-                <option value="advanced">Advanced</option>
-              </select>
-            </div>
+
 
             {/* Date */}
             <div>
@@ -382,7 +375,7 @@ const ClassesPage = () => {
             <span className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-semibold flex items-center gap-1.5">
               {filter.difficulty}
               <button
-                onClick={() => setFilter({ ...filter, difficulty: "all" })}
+onClick={() => setFilter({ ...filter, difficulty: "all" })}
                 className="hover:bg-primary/20 rounded-full p-0.5"
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -495,8 +488,8 @@ const ClassesPage = () => {
                     }`} />
                   )}
                   
-                  {/* Left: Time & Date Badge - Smaller on mobile */}
-                  <div className={`w-16 xl:w-20 flex flex-col items-center justify-center p-2 xl:p-3 shrink-0 ${
+                  {/* Left: Time & Date Badge - More compact and mobile-friendly */}
+                  <div className={`w-20 xl:w-24 flex flex-col items-center justify-center p-3 xl:p-4 shrink-0 ${
                     isRecurringOrCourse
                       ? isCourse
                         ? 'bg-gradient-to-br from-purple-500/20 to-purple-400/10 dark:from-purple-500/30 dark:to-purple-400/20'
@@ -572,7 +565,7 @@ const ClassesPage = () => {
                     <div className="flex items-start justify-between mb-1.5 xl:mb-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 xl:gap-2 mb-1 xl:mb-1.5">
-                          <h3 className="text-base xl:text-lg font-bold text-dark dark:text-white line-clamp-1">
+                          <h3 className="text-sm xl:text-lg font-bold text-dark dark:text-white line-clamp-1">
                           {classItem.name}
                         </h3>
                           {/* Show series badge for recurring/course */}
@@ -581,11 +574,12 @@ const ClassesPage = () => {
                               {classItem.recurrence_type === 'course' ? 'Course' : 'Series'}
                             </span>
                           )}
+                          {/* Booking window badge */}
+                          <span className={`px-2 xl:px-2.5 py-0.5 xl:py-1 rounded-lg text-[10px] xl:text-xs font-semibold ml-1 ${bookingWindowOpen ? 'bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300' : 'bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300'}`}>
+                            {bookingWindowOpen ? 'Booking open (09:00–17:00 SGT)' : 'Booking closed (09:00–17:00 SGT)'}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1.5 xl:gap-2 flex-wrap">
-                          <span className={`px-2 xl:px-2.5 py-0.5 xl:py-1 rounded-lg text-[10px] xl:text-xs font-semibold border ${getDifficultyColor(classItem.difficulty_level)}`}>
-                            {classItem.difficulty_level}
-                          </span>
                           <span className={`px-2 xl:px-2.5 py-0.5 xl:py-1 rounded-lg text-[10px] xl:text-xs font-semibold ${spotsInfo.bg} ${spotsInfo.color}`}>
                             {spotsInfo.text}
                           </span>
@@ -600,6 +594,9 @@ const ClassesPage = () => {
                             </span>
                           )}
                         </div>
+                        <p className="text-xs xl:text-sm text-body-color dark:text-gray-400 mb-1 xl:mb-2">
+                          {classItem.instructor_name}
+                        </p>
                       </div>
                     </div>
 
@@ -616,14 +613,15 @@ const ClassesPage = () => {
                           }]).slice(0, 3).map((instructor: any, idx: number) => (
                             <div
                               key={instructor.id || idx}
-                              className="relative h-6 w-6 xl:h-7 xl:w-7 rounded-full border-2 border-white dark:border-dark flex items-center justify-center text-[10px] xl:text-xs font-semibold text-white bg-gradient-to-br from-primary to-primary/80 dark:from-primary dark:to-primary/80 shrink-0"
+                              className="relative h-6 w-6 xl:h-7 xl:w-7 rounded-full border-2 border-white dark:border-dark flex items-center justify-center text-[10px] xl:text-xs font-semibold text-white bg-gradient-to-br from-primary to-primary/80 dark:from-primary dark:to-primary/80 shrink-0 overflow-hidden"
                               title={instructor.name}
                             >
                               {instructor.avatar ? (
-                                <img 
-                                  src={instructor.avatar} 
+                                <img
+                                  src={instructor.avatar}
                                   alt={instructor.name}
-                                  className="h-full w-full rounded-full object-cover"
+                                  className="h-full w-full object-cover"
+                                  loading="lazy"
                                 />
                               ) : (
                                 <span>{instructor.initials}</span>
@@ -642,7 +640,7 @@ const ClassesPage = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                        <span className="truncate">{classItem.room_name || classItem.location || "TBA"}</span>
+                        <span className="truncate">{classItem.room_name || classItem.location || "Studio"}</span>
                       </div>
                       {/* Show view sessions button only for courses (recurring classes are now individual sessions) */}
                       {isCourse && classItem._isParent && classItem._totalSessions && classItem._totalSessions > 0 && (
@@ -661,39 +659,71 @@ const ClassesPage = () => {
 
                     {/* Bottom: Tokens & Book Button - Compact on mobile */}
                     <div className="flex items-center justify-between pt-2 xl:pt-3 border-t border-gray-100 dark:border-gray-800">
-                      <div className="flex items-center gap-1.5 xl:gap-2">
-                        <svg className={`w-4 h-4 xl:w-5 xl:h-5 ${
-                          isRecurringOrCourse
-                            ? isCourse
-                              ? 'text-purple-600 dark:text-purple-400'
-                              : 'text-blue-600 dark:text-blue-400'
-                            : 'text-primary'
-                        }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                        </svg>
-                        <span className={`font-bold text-sm xl:text-base ${
-                          isRecurringOrCourse
-                            ? isCourse
-                              ? 'text-purple-600 dark:text-purple-400'
-                              : 'text-blue-600 dark:text-blue-400'
-                            : 'text-primary'
-                        }`}>
-                          {classItem.tokens_required}
-                        </span>
-                        <span className={`text-[10px] xl:text-xs ${
-                          isRecurringOrCourse
-                            ? isCourse
-                              ? 'text-purple-600 dark:text-purple-400'
-                              : 'text-blue-600 dark:text-blue-400'
-                            : 'text-body-color dark:text-gray-400'
-                        }`}>
-                          token{classItem.tokens_required > 1 ? "s" : ""}
-                          {/* Show "total" for courses */}
-                          {classItem._isParent && classItem._totalSessions && classItem.recurrence_type === 'course' && (
-                            <span className="ml-1">total</span>
+                        <div className="flex items-center gap-3 xl:gap-4">
+                          <div className="flex items-center gap-1.5 xl:gap-2">
+                            <svg className={`w-4 h-4 xl:w-5 xl:h-5 ${
+                              isRecurringOrCourse
+                                ? isCourse
+                                  ? 'text-purple-600 dark:text-purple-400'
+                                  : 'text-blue-600 dark:text-blue-400'
+                                : 'text-primary'
+                            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                            </svg>
+                            <span className={`font-bold text-sm xl:text-base ${
+                              isRecurringOrCourse
+                                ? isCourse
+                                  ? 'text-purple-600 dark:text-purple-400'
+                                  : 'text-blue-600 dark:text-blue-400'
+                                : 'text-primary'
+                            }`}>
+                              {classItem.tokens_required}
+                            </span>
+                            <span className={`text-[10px] xl:text-xs ${
+                              isRecurringOrCourse
+                                ? isCourse
+                                  ? 'text-purple-600 dark:text-purple-400'
+                                  : 'text-blue-600 dark:text-blue-400'
+                                : 'text-body-color dark:text-gray-400'
+                            }`}>
+                              token{classItem.tokens_required > 1 ? "s" : ""}
+                              {/* Show "total" for courses */}
+                              {classItem._isParent && classItem._totalSessions && classItem.recurrence_type === 'course' && (
+                                <span className="ml-1">total</span>
+                              )}
+                            </span>
+                          </div>
+                          
+                          {/* Show spots for non-parent classes */}
+                          {!classItem._isParent && (
+                            <div className="flex items-center gap-1 xl:gap-1.5">
+                              <svg className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-body-color dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                              </svg>
+                              <span className={`text-xs xl:text-sm font-medium ${
+                                spotsInfo.left <= 5 && spotsInfo.left > 0 
+                                  ? 'text-orange-600 dark:text-orange-400' 
+                                  : spotsInfo.left === 0 
+                                    ? 'text-red-600 dark:text-red-400'
+                                    : 'text-body-color dark:text-gray-400'
+                              }`}>
+                                {spotsInfo.text}
+                              </span>
+                            </div>
                           )}
-                        </span>
-                      </div>
+                          
+                          {/* Show session count for parent classes */}
+                          {classItem._isParent && classItem._totalSessions && (
+                            <div className="flex items-center gap-1 xl:gap-1.5">
+                              <svg className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-body-color dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <span className="text-xs xl:text-sm text-body-color dark:text-gray-400">
+                                {classItem._totalSessions} sessions
+                              </span>
+                            </div>
+                          )}
+                        </div>
 
                       <button
                         onClick={(e) => {
@@ -712,7 +742,8 @@ const ClassesPage = () => {
                             setIsConfirmationModalOpen(true);
                           }
                         }}
-                        disabled={isFull || bookClassMutation.isPending || (classItem._isParent && isRecurring)}
+                        disabled={isFull || bookClassMutation.isPending || (classItem._isParent && isRecurring) || !bookingWindowOpen}
+                        title={!bookingWindowOpen ? 'Bookings are allowed only between 09:00–17:00 SGT' : undefined}
                         className={`px-4 xl:px-5 py-2 xl:py-2.5 rounded-xl text-xs xl:text-sm font-bold transition-all active:scale-95 xl:active:scale-100 shadow-md xl:shadow-md ${
                           isFull || bookClassMutation.isPending
                             ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800"
@@ -745,6 +776,7 @@ const ClassesPage = () => {
         onBookClick={handleBookClick}
         isBooking={bookClassMutation.isPending}
         isFull={selectedClass ? selectedClass.capacity - selectedClass.booked_count <= 0 : false}
+        isBookingWindowOpen={bookingWindowOpen}
       />
 
       {/* Booking Confirmation Modal */}
@@ -758,6 +790,7 @@ const ClassesPage = () => {
         classItem={classToBook}
         isBooking={bookClassMutation.isPending}
         userTokenBalance={userTokenBalance}
+        isBookingWindowOpen={bookingWindowOpen}
       />
 
       {/* Sessions Slider Panel for Recurring/Course Classes */}
@@ -917,7 +950,7 @@ const ClassesPage = () => {
                             <div>
                               <p className="text-xs text-gray-500 dark:text-gray-400">Location</p>
                               <p className="font-medium text-gray-900 dark:text-white">
-                                {session.room_name || session.location || "TBA"}
+                                {session.room_name || session.location || "Studio"}
                               </p>
                             </div>
                             <div>

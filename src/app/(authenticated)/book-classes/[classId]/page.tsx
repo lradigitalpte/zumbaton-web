@@ -3,12 +3,37 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import { useClassDetail } from "@/hooks/useClassDetail";
 import { useBookClass } from "@/hooks/useClasses";
 import { useTokenBalanceStats } from "@/hooks/useTokenTransactions";
 import BookingConfirmationModal from "@/components/BookingConfirmation/BookingConfirmationModal";
 import { formatDate, formatTime } from "@/lib/utils";
+
+const getInitials = (name: string): string => {
+  return name
+    .split(' ')
+    .map(part => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
+
+const getAvatarColor = (name: string): string => {
+  const colors = [
+    'from-blue-400 to-blue-600',
+    'from-purple-400 to-purple-600',
+    'from-pink-400 to-pink-600',
+    'from-red-400 to-red-600',
+    'from-green-400 to-green-600',
+    'from-yellow-400 to-yellow-600',
+    'from-indigo-400 to-indigo-600',
+    'from-cyan-400 to-cyan-600',
+  ];
+  const index = name.charCodeAt(0) % colors.length;
+  return colors[index];
+};
 
 const ClassDetailPage = () => {
   const params = useParams();
@@ -204,11 +229,21 @@ const ClassDetailPage = () => {
             <div className="bg-white dark:bg-dark rounded-xl xl:rounded-xl rounded-2xl shadow-sm xl:shadow-sm shadow-md border border-gray-100 dark:border-gray-800 p-4 xl:p-6">
               <h2 className="text-lg font-bold text-dark dark:text-white mb-4">Your Instructor</h2>
               <div className="flex items-start gap-3 xl:gap-4">
-                <div className="w-12 h-12 xl:w-14 xl:h-14 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <svg className="w-6 h-6 xl:w-7 xl:h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
+                {classDetail.instructor_avatar ? (
+                  <Image
+                    src={classDetail.instructor_avatar}
+                    alt={classDetail.instructor_name}
+                    width={56}
+                    height={56}
+                    className="w-12 h-12 xl:w-14 xl:h-14 rounded-full object-cover shrink-0"
+                  />
+                ) : (
+                  <div className={`w-12 h-12 xl:w-14 xl:h-14 rounded-full bg-gradient-to-br ${getAvatarColor(classDetail.instructor_name)} flex items-center justify-center shrink-0`}>
+                    <span className="text-xl font-bold text-white">
+                      {getInitials(classDetail.instructor_name)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <h3 className="text-base xl:text-lg font-semibold text-dark dark:text-white">
                     {classDetail.instructor_name}
