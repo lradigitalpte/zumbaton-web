@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { apiFetchJson } from '@/lib/api-fetch';
 
 interface OnboardingStep {
   id: string;
@@ -109,11 +111,11 @@ const USER_ONBOARDING_STEPS: OnboardingStep[] = [
   },
 ];
 
-const STORAGE_KEY = 'zumbaton-user-onboarding-completed';
-
 export default function UserOnboardingTour() {
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [isActive, setIsActive] = useState(false);
+  const [hasChecked, setHasChecked] = useState(false);
   const [overlayStyle, setOverlayStyle] = useState<React.CSSProperties>({});
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
   const [highlightStyle, setHighlightStyle] = useState<React.CSSProperties>({});
@@ -125,22 +127,44 @@ export default function UserOnboardingTour() {
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Check if onboarding was already completed
+    // Only check/show onboarding if user is authenticated and we haven't checked yet
     if (typeof window === 'undefined') return;
+    if (isLoading) return; // Wait for auth to load
+    if (!isAuthenticated || !user?.id) return; // Only show for authenticated users
+    if (hasChecked) return; // Only check once
     
-    const completed = localStorage.getItem(STORAGE_KEY);
-    if (!completed) {
-      // Start onboarding after a short delay
-      const timer = setTimeout(() => {
-        setIsActive(true);
-        // Wait a bit more for DOM to be ready
-        setTimeout(() => {
-          updateStepPosition(0);
-        }, 500);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, []);
+    setHasChecked(true);
+    
+    // Check onboarding status from database
+    const checkOnboardingStatus = async () => {
+      try {
+        const response = await apiFetchJson<{ success: boolean; data?: { completed: boolean } }>(
+          '/api/onboarding',
+          { method: 'GET', requireAuth: true }
+        );
+        
+        const completed = response.success && response.data?.completed;
+        
+        if (!completed) {
+          // Start onboarding after a short delay
+          const timer = setTimeout(() => {
+            setIsActive(true);
+            // Wait a bit more for DOM to be ready
+            setTimeout(() => {
+              updateStepPosition(0);
+            }, 500);
+          }, 1000);
+          return () => clearTimeout(timer);
+        }
+      } catch (error) {
+        console.error('[Onboarding] Error checking status:', error);
+        // On error, don't show onboarding (fail silently)
+      }
+    };
+    
+    checkOnboardingStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user?.id, isLoading, hasChecked]);
 
   const updateStepPosition = useCallback((stepIndex: number) => {
     const step = USER_ONBOARDING_STEPS[stepIndex];
@@ -498,10 +522,20 @@ export default function UserOnboardingTour() {
     handleComplete();
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     setIsActive(false);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, 'true');
+    if (!user?.id) return;
+    
+    // Mark onboarding as completed in database
+    try {
+      await apiFetchJson('/api/onboarding', {
+        method: 'PUT',
+        body: JSON.stringify({ completed: true }),
+        requireAuth: true,
+      });
+    } catch (error) {
+      console.error('[Onboarding] Error marking as completed:', error);
+      // Continue even if API call fails
     }
   };
 
@@ -694,19 +728,50 @@ export default function UserOnboardingTour() {
 }
 
 export function useUserOnboarding() {
-  const handleRestart = () => {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem(STORAGE_KEY);
-    window.location.reload();
-  };
-
-  const isCompleted = () => {
-    if (typeof window === 'undefined') return true;
-    return localStorage.getItem(STORAGE_KEY) === 'true';
+  const { user } = useAuth();
+  const [isCompleted, setIsCompleted] = useState<boolean>(true);
+  
+  useEffect(() => {
+    if (!user?.id) {
+      setIsCompleted(true);
+      return;
+    }
+    
+    // Check onboarding status from database
+    const checkStatus = async () => {
+      try {
+        const response = await apiFetchJson<{ success: boolean; data?: { completed: boolean } }>(
+          '/api/onboarding',
+          { method: 'GET', requireAuth: true }
+        );
+        setIsCompleted(response.success && response.data?.completed || false);
+      } catch (error) {
+        console.error('[useUserOnboarding] Error checking status:', error);
+        setIsCompleted(true); // Default to completed on error
+      }
+    };
+    
+    checkStatus();
+  }, [user?.id]);
+  
+  const handleRestart = async () => {
+    if (!user?.id) return;
+    
+    try {
+      // Reset onboarding status in database
+      await apiFetchJson('/api/onboarding', {
+        method: 'PUT',
+        body: JSON.stringify({ completed: false }),
+        requireAuth: true,
+      });
+      window.location.reload();
+    } catch (error) {
+      console.error('[useUserOnboarding] Error restarting:', error);
+    }
   };
 
   return {
     restart: handleRestart,
-    isCompleted: isCompleted(),
+    isCompleted,
   };
 }

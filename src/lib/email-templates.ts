@@ -661,13 +661,13 @@ export function getAdminCreatedUserEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/signin" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3); margin-bottom: 15px;">
+      <a href="${process.env.NEXT_PUBLIC_ADMIN_APP_URL || process.env.ADMIN_APP_URL || 'https://admin.zumbaton.sg'}/signin" 
+         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3); margin-bottom: 15px;" class="mobile-button">
         Sign In Now
       </a>
       ${data.temporaryPassword ? `
       <div style="margin-top: 20px;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/forgot-password" 
+        <a href="${process.env.NEXT_PUBLIC_ADMIN_APP_URL || process.env.ADMIN_APP_URL || 'https://admin.zumbaton.sg'}/forgot-password" 
            style="color: #16a34a; text-decoration: none; font-size: 14px; font-weight: 500;">
           Change your password
         </a>
@@ -696,8 +696,8 @@ Get Started:
 - ${data.temporaryPassword ? 'Change your temporary password' : 'Set up your profile'}
 - Browse classes and book your first session
 
-Sign in: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/signin
-${data.temporaryPassword ? `Change password: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/forgot-password` : ''}
+Sign in: ${process.env.NEXT_PUBLIC_ADMIN_APP_URL || process.env.ADMIN_APP_URL || 'https://admin.zumbaton.sg'}/signin
+${data.temporaryPassword ? `Change password: ${process.env.NEXT_PUBLIC_ADMIN_APP_URL || process.env.ADMIN_APP_URL || 'https://admin.zumbaton.sg'}/forgot-password` : ''}
 
 If you have any questions, feel free to reach out to us at hello@zumbaton.sg
 
@@ -1102,15 +1102,6 @@ export function getForgotPasswordOTPEmailTemplate(data: {
       </p>
     </div>
     
-    ${data.verifyUrl ? `
-    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${data.verifyUrl}" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
-        Verify Code
-      </a>
-    </div>
-    ` : ''}
-    
     <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 30px 0;">
        <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
         <strong>Security Note:</strong> If you didn't request this password reset, please ignore this email or contact us if you have concerns.
@@ -1133,7 +1124,7 @@ ${data.otpCode}
 
 This code will expire ${data.expiresIn || 'in 15 minutes'}.
 
-${data.verifyUrl ? `Visit this page to enter your code: ${data.verifyUrl}` : ''}
+Please copy this code and enter it on the password reset page.
 
 Security Note: If you didn't request this password reset, please ignore this email.
 
@@ -1178,7 +1169,7 @@ export function getPasswordResetEmailTemplate(data: {
     ` : ''}
     
     <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/signin" 
+      <a href="${process.env.NEXT_PUBLIC_ADMIN_APP_URL || process.env.ADMIN_APP_URL || 'https://admin.zumbaton.sg'}/signin" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         Sign In Now
       </a>
@@ -1202,7 +1193,7 @@ Please change this password after your first login for security.
 
 ${data.resetBy ? `Password reset by: ${data.resetBy}` : ''}
 
-Sign in: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/signin
+Sign in: ${process.env.NEXT_PUBLIC_ADMIN_APP_URL || process.env.ADMIN_APP_URL || 'https://admin.zumbaton.sg'}/signin
 
 If you didn't request this password reset, please contact us immediately at hello@zumbaton.sg
 
