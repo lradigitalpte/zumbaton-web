@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabase";
 import Sidebar from "@/components/Dashboard/Sidebar";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
 import CheckInButton from "@/components/CheckInButton";
+import UserOnboardingTour from "@/components/onboarding/UserOnboardingTour";
+import UserOnboardingHelpButton from "@/components/onboarding/UserOnboardingHelpButton";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -110,6 +112,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       
       {/* Check-In Button - Only on authenticated pages */}
       <CheckInButton />
+      
+      {/* User Onboarding Tour */}
+      <UserOnboardingTour />
+      
+      {/* Floating Help Button */}
+      <UserOnboardingHelpButton />
     </div>
   );
 };

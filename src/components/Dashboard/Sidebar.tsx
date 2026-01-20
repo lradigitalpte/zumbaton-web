@@ -282,6 +282,7 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
                   <button
                     key={item.name}
                     onClick={item.onClick}
+                    data-onboarding={`user-${item.name.toLowerCase().replace(/\s+/g, '-')}-menu`}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-gray-300 hover:bg-gray-800 hover:text-lime-400 ${
                       isCollapsed ? "justify-center" : ""
                     }`}
@@ -297,6 +298,7 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
                 <Link
                   key={item.name}
                   href={item.href}
+                  data-onboarding={`user-${item.name.toLowerCase().replace(/\s+/g, '-')}-menu`}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                     isActive
                       ? "bg-lime-500 text-gray-900 font-semibold"
@@ -322,6 +324,7 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
                 <Link
                   key={item.name}
                   href={item.href}
+                  data-onboarding={`user-${item.name.toLowerCase().replace(/\s+/g, '-')}-menu`}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                     isActive
                       ? "bg-lime-500 text-gray-900 font-semibold"

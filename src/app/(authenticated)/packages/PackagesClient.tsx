@@ -378,7 +378,7 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
               Late cancellations & no-shows
             </h3>
             <p className="text-xs xl:text-sm text-body-color dark:text-gray-400 leading-relaxed">
-              Cancelling less than 4 hours before class or not attending will result in token forfeiture. No exceptions or refunds apply.
+              Same-day cancellations or not attending will result in token forfeiture. No exceptions or refunds apply.
             </p>
           </div>
           <div className="bg-white dark:bg-dark rounded-xl xl:rounded-xl rounded-2xl shadow-sm xl:shadow-sm shadow-md border border-gray-100 dark:border-gray-800 p-4 xl:p-5">
