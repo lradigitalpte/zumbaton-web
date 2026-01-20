@@ -9,7 +9,7 @@ export interface EmailTemplateData {
 }
 
 /**
- * Base email template with consistent styling
+ * Base email template with consistent styling and mobile responsiveness
  */
 function getBaseTemplate(content: string, preheader?: string): string {
   return `
@@ -21,17 +21,124 @@ function getBaseTemplate(content: string, preheader?: string): string {
   <meta name="color-scheme" content="light dark">
   <meta name="supported-color-schemes" content="light dark">
   <title>Zumbaton</title>
-  ${preheader ? `<style>#preheader { display: none !important; visibility: hidden; opacity: 0; color: transparent; height: 0; width: 0; }</style>` : ''}
+  <style type="text/css">
+    ${preheader ? `#preheader { display: none !important; visibility: hidden; opacity: 0; color: transparent; height: 0; width: 0; }` : ''}
+    
+    /* Mobile Responsive Styles */
+    @media only screen and (max-width: 600px) {
+      .email-container {
+        width: 100% !important;
+        padding: 10px !important;
+      }
+      
+      .email-content {
+        padding: 20px 15px !important;
+      }
+      
+      .email-header {
+        padding: 30px 20px !important;
+      }
+      
+      .email-header h1 {
+        font-size: 24px !important;
+      }
+      
+      .email-header p {
+        font-size: 13px !important;
+      }
+      
+      .email-footer {
+        padding: 20px 15px !important;
+      }
+      
+      .email-footer p {
+        font-size: 13px !important;
+      }
+      
+      .email-footer a {
+        display: block !important;
+        margin: 5px 0 !important;
+      }
+      
+      .mobile-button {
+        display: block !important;
+        width: 100% !important;
+        padding: 14px 20px !important;
+        font-size: 16px !important;
+        text-align: center !important;
+      }
+      
+      .mobile-table {
+        width: 100% !important;
+        display: block !important;
+      }
+      
+      .mobile-table td {
+        display: block !important;
+        width: 100% !important;
+        padding: 8px 0 !important;
+        text-align: left !important;
+      }
+      
+      .mobile-table td:first-child {
+        font-weight: 600 !important;
+        color: #374151 !important;
+        margin-bottom: 4px !important;
+      }
+      
+      .mobile-spacing {
+        margin: 20px 0 !important;
+      }
+      
+      .mobile-text {
+        font-size: 14px !important;
+        line-height: 1.5 !important;
+      }
+      
+      .mobile-title {
+        font-size: 20px !important;
+      }
+      
+      .mobile-subtitle {
+        font-size: 15px !important;
+      }
+      
+      .mobile-box {
+        padding: 15px !important;
+        margin: 20px 0 !important;
+      }
+      
+      .mobile-otp {
+        font-size: 28px !important;
+        padding: 15px 30px !important;
+        letter-spacing: 4px !important;
+      }
+      
+      .mobile-link-break {
+        display: block !important;
+      }
+    }
+    
+    /* Prevent auto-linking on iOS */
+    a[x-apple-data-detectors] {
+      color: inherit !important;
+      text-decoration: none !important;
+      font-size: inherit !important;
+      font-family: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+    }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
   ${preheader ? `<div id="preheader" style="display: none !important; visibility: hidden; opacity: 0; color: transparent; height: 0; width: 0;">${preheader}</div>` : ''}
-  <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f3f4f6; padding: 20px;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f3f4f6; padding: 20px;" class="email-container">
     <tr>
       <td align="center" style="padding: 20px 0;">
         <table role="presentation" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 40px 30px; text-align: center;">
+            <td style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 40px 30px; text-align: center;" class="email-header">
               <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Zumbaton</h1>
               <p style="margin: 8px 0 0 0; color: #d1fae5; font-size: 14px; font-weight: 500;">Dance Your Way to Fitness</p>
             </td>
@@ -39,18 +146,18 @@ function getBaseTemplate(content: string, preheader?: string): string {
           
           <!-- Content -->
           <tr>
-            <td style="padding: 40px 30px;">
+            <td style="padding: 40px 30px;" class="email-content">
               ${content}
             </td>
           </tr>
           
           <!-- Footer -->
           <tr>
-            <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+            <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;" class="email-footer">
               <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
                 <strong style="color: #374151;">Zumbaton Fitness Studio</strong><br>
                 Singapore<br>
-                <a href="mailto:hello@zumbaton.sg" style="color: #16a34a; text-decoration: none;">hello@zumbaton.sg</a> | 
+                <a href="mailto:hello@zumbaton.sg" style="color: #16a34a; text-decoration: none;">hello@zumbaton.sg</a><span class="mobile-link-break" style="display: inline;"> | </span>
                 <a href="tel:+6584927347" style="color: #16a34a; text-decoration: none;">+65 8492 7347</a>
               </p>
               <p style="margin: 20px 0 0 0; color: #9ca3af; font-size: 12px;">
@@ -73,28 +180,28 @@ function getBaseTemplate(content: string, preheader?: string): string {
  */
 export function getWelcomeEmailTemplate(data: { userName: string }): { html: string; text: string } {
   const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;">Welcome to Zumbaton, ${escapeHtml(data.userName)}!</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;">We're thrilled to have you join our dance fitness community!</p>
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Welcome to Zumbaton, ${escapeHtml(data.userName)}!</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">We're thrilled to have you join our dance fitness community!</p>
     </div>
     
-    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 30px 0;">
-      <h3 style="margin: 0 0 15px 0; color: #15803d; font-size: 18px; font-weight: 600;">Get Started</h3>
-      <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 15px; line-height: 1.8;">
+    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
+      <h3 style="margin: 0 0 15px 0; color: #15803d; font-size: 18px; font-weight: 600;" class="mobile-subtitle">Get Started</h3>
+      <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 15px; line-height: 1.8;" class="mobile-text">
         <li style="margin-bottom: 8px;">Browse our exciting dance classes</li>
         <li style="margin-bottom: 8px;">Purchase token packages to book classes</li>
         <li style="margin-bottom: 8px;">Book your first session and start dancing!</li>
       </ul>
     </div>
     
-    <div style="text-align: center; margin: 40px 0;">
+    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
       <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/packages" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         Browse Packages
       </a>
     </div>
     
-    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;">
+    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
       If you have any questions, feel free to reach out to us at 
       <a href="mailto:hello@zumbaton.sg" style="color: #16a34a; text-decoration: none;">hello@zumbaton.sg</a>
     </p>
@@ -146,13 +253,13 @@ export function getTokenPurchaseEmailTemplate(data: {
   })
 
   const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;">Payment Successful!</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;">Your token package has been added to your account</p>
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Payment Successful!</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Your token package has been added to your account</p>
     </div>
     
-    <div style="background-color: #f9fafb; border-radius: 8px; padding: 25px; margin: 30px 0;">
-      <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <div style="background-color: #f9fafb; border-radius: 8px; padding: 25px; margin: 30px 0;" class="mobile-box">
+      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
         <tr>
           <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Package:</td>
           <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.packageName)}</td>
@@ -172,14 +279,14 @@ export function getTokenPurchaseEmailTemplate(data: {
       </table>
     </div>
     
-    <div style="text-align: center; margin: 40px 0;">
+    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
       <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-packages" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         View My Packages
       </a>
     </div>
     
-    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;">
+    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
       Ready to book a class? <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes" style="color: #16a34a; text-decoration: none; font-weight: 600;">Browse Classes</a>
     </p>
   `, `Payment successful! ${data.tokenCount} tokens added to your account.`)
@@ -224,14 +331,14 @@ export function getTokenExpiryWarningEmailTemplate(data: {
   const daysUntilExpiry = Math.ceil((expiresDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
 
   const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;">Your Tokens Are Expiring Soon</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;">Don't let your tokens go to waste!</p>
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Your Tokens Are Expiring Soon</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Don't let your tokens go to waste!</p>
     </div>
     
-    <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 30px 0;">
+    <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
       <h3 style="margin: 0 0 15px 0; color: #d97706; font-size: 18px; font-weight: 600;">Package Details</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;">
+      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
         <tr>
           <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Tokens Remaining:</td>
           <td style="padding: 10px 0; color: #111827; font-weight: 700; font-size: 18px;">${data.tokensRemaining} tokens</td>
@@ -248,14 +355,14 @@ export function getTokenExpiryWarningEmailTemplate(data: {
     </div>
     
     <div style="background-color: #f0fdf4; border-radius: 8px; padding: 20px; margin: 30px 0;">
-      <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;">
+       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
         <strong>Important:</strong> Book a class now to use your tokens before they expire! Unused tokens will be lost after the expiry date.
       </p>
     </div>
     
-    <div style="text-align: center; margin: 40px 0;">
+    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
       <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         Book a Class Now
       </a>
     </div>
@@ -294,14 +401,14 @@ export function getClassReminderEmailTemplate(data: {
   instructorName?: string
 }): { html: string; text: string } {
   const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;">Class Reminder</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;">Your class starts in 3 hours!</p>
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Class Reminder</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Your class starts in 3 hours!</p>
     </div>
     
-    <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 25px; border-radius: 8px; margin: 30px 0;">
-      <h3 style="margin: 0 0 20px 0; color: #1e40af; font-size: 20px; font-weight: 600;">${escapeHtml(data.className)}</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 25px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
+      <h3 style="margin: 0 0 20px 0; color: #1e40af; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
+      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
         <tr>
           <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
           <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
@@ -324,14 +431,14 @@ export function getClassReminderEmailTemplate(data: {
     </div>
     
     <div style="background-color: #f0fdf4; border-radius: 8px; padding: 20px; margin: 30px 0;">
-      <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;">
+       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
         <strong>Reminder:</strong> Please arrive 10 minutes early. Bring water and wear comfortable workout clothes. We can't wait to see you!
       </p>
     </div>
     
-    <div style="text-align: center; margin: 40px 0;">
+    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
       <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-bookings" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         View My Bookings
       </a>
     </div>
@@ -373,14 +480,14 @@ export function getBookingConfirmationEmailTemplate(data: {
   instructorName?: string
 }): { html: string; text: string } {
   const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;">Booking Confirmed!</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;">You're all set for your class</p>
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Booking Confirmed!</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">You're all set for your class</p>
     </div>
     
     <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 25px; border-radius: 8px; margin: 30px 0;">
-      <h3 style="margin: 0 0 20px 0; color: #15803d; font-size: 20px; font-weight: 600;">${escapeHtml(data.className)}</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;">
+      <h3 style="margin: 0 0 20px 0; color: #15803d; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
+      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
         <tr>
           <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
           <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
@@ -407,15 +514,15 @@ export function getBookingConfirmationEmailTemplate(data: {
     </div>
     
     <div style="background-color: #eff6ff; border-radius: 8px; padding: 20px; margin: 30px 0;">
-      <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;">
+       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
         <strong>What's Next?</strong><br>
         You'll receive a reminder 3 hours before your class. Please arrive 10 minutes early and bring water!
       </p>
     </div>
     
-    <div style="text-align: center; margin: 40px 0;">
+    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
       <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-bookings" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         View My Bookings
       </a>
     </div>
@@ -461,13 +568,13 @@ export function getTokenAdjustmentEmailTemplate(data: {
   const actionColor = isPositive ? '#16a34a' : '#dc2626'
 
   const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;">Token Balance ${isPositive ? 'Updated' : 'Adjusted'}</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;">Your token balance has been ${action} by an administrator</p>
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Token Balance ${isPositive ? 'Updated' : 'Adjusted'}</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Your token balance has been ${action} by an administrator</p>
     </div>
     
-    <div style="background-color: #f9fafb; border-radius: 8px; padding: 25px; margin: 30px 0;">
-      <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <div style="background-color: #f9fafb; border-radius: 8px; padding: 25px; margin: 30px 0;" class="mobile-box">
+      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
         <tr>
           <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Tokens ${isPositive ? 'Added' : 'Removed'}:</td>
           <td style="padding: 10px 0; color: ${actionColor}; font-weight: 700; font-size: 18px;">${isPositive ? '+' : ''}${data.tokensChange} tokens</td>
@@ -489,9 +596,9 @@ export function getTokenAdjustmentEmailTemplate(data: {
       </table>
     </div>
     
-    <div style="text-align: center; margin: 40px 0;">
+    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
       <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-packages" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         View My Packages
       </a>
     </div>
@@ -527,33 +634,33 @@ export function getAdminCreatedUserEmailTemplate(data: {
   createdBy?: string
 }): { html: string; text: string } {
   const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;">Welcome to Zumbaton, ${escapeHtml(data.userName)}!</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;">Your account has been created by our team</p>
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Welcome to Zumbaton, ${escapeHtml(data.userName)}!</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Your account has been created by our team</p>
     </div>
     
     ${data.temporaryPassword ? `
-    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 30px 0;">
-      <h3 style="margin: 0 0 10px 0; color: #d97706; font-size: 18px; font-weight: 600;">Temporary Password</h3>
-      <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;">
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
+      <h3 style="margin: 0 0 10px 0; color: #d97706; font-size: 18px; font-weight: 600;" class="mobile-subtitle">Temporary Password</h3>
+       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
         Your temporary password: <strong style="font-family: monospace; background: white; padding: 4px 8px; border-radius: 4px;">${escapeHtml(data.temporaryPassword)}</strong>
       </p>
-      <p style="margin: 15px 0 0 0; color: #6b7280; font-size: 14px;">
+      <p style="margin: 15px 0 0 0; color: #6b7280; font-size: 14px;" class="mobile-text">
         Please change this password after your first login for security.
       </p>
     </div>
     ` : ''}
     
-    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 30px 0;">
-      <h3 style="margin: 0 0 15px 0; color: #15803d; font-size: 18px; font-weight: 600;">Get Started</h3>
-      <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 15px; line-height: 1.8;">
+    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
+      <h3 style="margin: 0 0 15px 0; color: #15803d; font-size: 18px; font-weight: 600;" class="mobile-subtitle">Get Started</h3>
+      <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 15px; line-height: 1.8;" class="mobile-text">
         <li style="margin-bottom: 8px;">Sign in to your account</li>
         <li style="margin-bottom: 8px;">${data.temporaryPassword ? 'Change your temporary password' : 'Set up your profile'}</li>
         <li style="margin-bottom: 8px;">Browse classes and book your first session</li>
       </ul>
     </div>
     
-    <div style="text-align: center; margin: 40px 0;">
+    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
       <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/signin" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3); margin-bottom: 15px;">
         Sign In Now
@@ -568,7 +675,7 @@ export function getAdminCreatedUserEmailTemplate(data: {
       ` : ''}
     </div>
     
-    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;">
+    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
       If you have any questions, feel free to reach out to us at 
       <a href="mailto:hello@zumbaton.sg" style="color: #16a34a; text-decoration: none;">hello@zumbaton.sg</a>
     </p>
@@ -613,14 +720,14 @@ export function getBookingCancellationEmailTemplate(data: {
   reason?: string
 }): { html: string; text: string } {
   const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;">Booking Cancelled</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;">Your class booking has been cancelled</p>
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Booking Cancelled</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Your class booking has been cancelled</p>
     </div>
     
-    <div style="background-color: #f9fafb; border-radius: 8px; padding: 25px; margin: 30px 0;">
+    <div style="background-color: #f9fafb; border-radius: 8px; padding: 25px; margin: 30px 0;" class="mobile-box">
       <h3 style="margin: 0 0 20px 0; color: #111827; font-size: 20px; font-weight: 600;">${escapeHtml(data.className)}</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;">
+      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
         <tr>
           <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
           <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
@@ -645,15 +752,15 @@ export function getBookingCancellationEmailTemplate(data: {
     
     ${data.reason ? `
     <div style="background-color: #f0fdf4; border-radius: 8px; padding: 20px; margin: 30px 0;">
-      <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;">
+       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
         <strong>Reason:</strong> ${escapeHtml(data.reason)}
       </p>
     </div>
     ` : ''}
     
-    <div style="text-align: center; margin: 40px 0;">
+    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
       <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         Book Another Class
       </a>
     </div>
@@ -691,14 +798,14 @@ export function getWaitlistPromotionEmailTemplate(data: {
   expiresIn?: string
 }): { html: string; text: string } {
   const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;">Spot Available!</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;">A spot has opened up in the class you were waiting for</p>
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Spot Available!</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">A spot has opened up in the class you were waiting for</p>
     </div>
     
     <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 25px; border-radius: 8px; margin: 30px 0;">
-      <h3 style="margin: 0 0 20px 0; color: #d97706; font-size: 20px; font-weight: 600;">${escapeHtml(data.className)}</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;">
+      <h3 style="margin: 0 0 20px 0; color: #d97706; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
+      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
         <tr>
           <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
           <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
@@ -713,14 +820,14 @@ export function getWaitlistPromotionEmailTemplate(data: {
     </div>
     
     <div style="background-color: #f0fdf4; border-radius: 8px; padding: 20px; margin: 30px 0;">
-      <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;">
+       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
         <strong>Important:</strong> This spot is reserved for you, but you need to confirm your booking soon. If you don't confirm within the time limit, the spot will be offered to the next person on the waitlist.
       </p>
     </div>
     
-    <div style="text-align: center; margin: 40px 0;">
+    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
       <a href="${data.confirmUrl}" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         Confirm Booking Now
       </a>
     </div>
@@ -758,14 +865,14 @@ export function getClassCancellationEmailTemplate(data: {
   tokensRefunded: number
 }): { html: string; text: string } {
   const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;">Class Cancelled</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;">We're sorry, but this class has been cancelled</p>
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Class Cancelled</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">We're sorry, but this class has been cancelled</p>
     </div>
     
-    <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 25px; border-radius: 8px; margin: 30px 0;">
-      <h3 style="margin: 0 0 20px 0; color: #991b1b; font-size: 20px; font-weight: 600;">${escapeHtml(data.className)}</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 25px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
+      <h3 style="margin: 0 0 20px 0; color: #991b1b; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
+      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
         <tr>
           <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
           <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
@@ -782,15 +889,15 @@ export function getClassCancellationEmailTemplate(data: {
     </div>
     
     <div style="background-color: #eff6ff; border-radius: 8px; padding: 20px; margin: 30px 0;">
-      <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;">
+       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
         <strong>What Happened?</strong><br>
         This class has been cancelled by our team. Your tokens have been automatically refunded to your account. We apologize for any inconvenience.
       </p>
     </div>
     
-    <div style="text-align: center; margin: 40px 0;">
+    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
       <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         Browse Other Classes
       </a>
     </div>
@@ -832,14 +939,14 @@ export function getNoShowWarningEmailTemplate(data: {
   isFlagged?: boolean
 }): { html: string; text: string } {
   const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;">No-Show Recorded</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;">You missed your scheduled class</p>
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">No-Show Recorded</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">You missed your scheduled class</p>
     </div>
     
-    <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 25px; border-radius: 8px; margin: 30px 0;">
-      <h3 style="margin: 0 0 20px 0; color: #991b1b; font-size: 20px; font-weight: 600;">${escapeHtml(data.className)}</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 25px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
+      <h3 style="margin: 0 0 20px 0; color: #991b1b; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
+      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
         <tr>
           <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
           <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
@@ -868,14 +975,14 @@ export function getNoShowWarningEmailTemplate(data: {
     ` : ''}
     
     <div style="background-color: #eff6ff; border-radius: 8px; padding: 20px; margin: 30px 0;">
-      <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;">
+       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
         <strong>Reminder:</strong> If you can't make it to a class, please cancel at least 24 hours in advance to avoid losing tokens. You can cancel bookings from your "My Bookings" page.
       </p>
     </div>
     
-    <div style="text-align: center; margin: 40px 0;">
+    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
       <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-bookings" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         View My Bookings
       </a>
     </div>
@@ -915,26 +1022,26 @@ export function getForgotPasswordEmailTemplate(data: {
   expiresIn?: string
 }): { html: string; text: string } {
   const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;">Reset Your Password</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;">Click the button below to reset your password</p>
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Reset Your Password</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Click the button below to reset your password</p>
     </div>
     
     <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 30px 0;">
-      <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;">
+       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
         <strong>Security Note:</strong> This link will expire ${data.expiresIn || 'in 1 hour'}. If you didn't request this password reset, please ignore this email or contact us if you have concerns.
       </p>
     </div>
     
-    <div style="text-align: center; margin: 40px 0;">
+    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
       <a href="${data.resetLink}" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         Reset Password
       </a>
     </div>
     
     <div style="background-color: #f9fafb; border-radius: 8px; padding: 20px; margin: 30px 0;">
-      <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
+      <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;" class="mobile-text">
         <strong>Having trouble?</strong> If the button doesn't work, copy and paste this link into your browser:
       </p>
       <p style="margin: 10px 0 0 0; color: #3b82f6; font-size: 13px; word-break: break-all; font-family: monospace;">
@@ -942,7 +1049,7 @@ export function getForgotPasswordEmailTemplate(data: {
       </p>
     </div>
     
-    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;">
+    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
       If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
     </p>
   `, `Reset your password: Click the link to reset your password`)
@@ -976,17 +1083,17 @@ export function getForgotPasswordOTPEmailTemplate(data: {
   expiresIn?: string
 }): { html: string; text: string } {
   const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;">Reset Your Password</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;">Enter the verification code below to reset your password</p>
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Reset Your Password</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Enter the verification code below to reset your password</p>
     </div>
     
-    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 30px 0;">
+    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
       <p style="margin: 0 0 15px 0; color: #374151; font-size: 15px; line-height: 1.6; text-align: center;">
         <strong>Your verification code:</strong>
       </p>
       <div style="text-align: center; margin: 20px 0;">
-        <div style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; padding: 20px 40px; border-radius: 12px; font-size: 36px; font-weight: 700; letter-spacing: 8px; font-family: monospace; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+         <div style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; padding: 20px 40px; border-radius: 12px; font-size: 36px; font-weight: 700; letter-spacing: 8px; font-family: monospace; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-otp">
           ${escapeHtml(data.otpCode)}
         </div>
       </div>
@@ -996,21 +1103,21 @@ export function getForgotPasswordOTPEmailTemplate(data: {
     </div>
     
     ${data.verifyUrl ? `
-    <div style="text-align: center; margin: 40px 0;">
+    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
       <a href="${data.verifyUrl}" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         Verify Code
       </a>
     </div>
     ` : ''}
     
     <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 30px 0;">
-      <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;">
+       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
         <strong>Security Note:</strong> If you didn't request this password reset, please ignore this email or contact us if you have concerns.
       </p>
     </div>
     
-    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;">
+    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
       If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
     </p>
   `, `Reset your password: Enter verification code ${data.otpCode}`)
@@ -1047,37 +1154,37 @@ export function getPasswordResetEmailTemplate(data: {
   resetBy?: string
 }): { html: string; text: string } {
   const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;">Password Reset</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;">Your password has been reset by an administrator</p>
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Password Reset</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Your password has been reset by an administrator</p>
     </div>
     
-    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 30px 0;">
-      <h3 style="margin: 0 0 10px 0; color: #d97706; font-size: 18px; font-weight: 600;">New Password</h3>
-      <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;">
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
+      <h3 style="margin: 0 0 10px 0; color: #d97706; font-size: 18px; font-weight: 600;" class="mobile-subtitle">New Password</h3>
+       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
         Your new password: <strong style="font-family: monospace; background: white; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 8px;">${escapeHtml(data.newPassword)}</strong>
       </p>
-      <p style="margin: 15px 0 0 0; color: #6b7280; font-size: 14px;">
+      <p style="margin: 15px 0 0 0; color: #6b7280; font-size: 14px;" class="mobile-text">
         Please change this password after your first login for security.
       </p>
     </div>
     
     ${data.resetBy ? `
     <div style="background-color: #f9fafb; border-radius: 8px; padding: 15px; margin: 30px 0;">
-      <p style="margin: 0; color: #6b7280; font-size: 14px;">
+      <p style="margin: 0; color: #6b7280; font-size: 14px;" class="mobile-text">
         Password reset by: <strong>${escapeHtml(data.resetBy)}</strong>
       </p>
     </div>
     ` : ''}
     
-    <div style="text-align: center; margin: 40px 0;">
+    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
       <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/signin" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);">
+         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         Sign In Now
       </a>
     </div>
     
-    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;">
+    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
       If you didn't request this password reset, please contact us immediately at 
       <a href="mailto:hello@zumbaton.sg" style="color: #16a34a; text-decoration: none;">hello@zumbaton.sg</a>
     </p>

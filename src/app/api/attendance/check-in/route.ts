@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseClient, getSupabaseAdminClient, TABLES } from '@/lib/supabase'
 import { z } from 'zod'
 
+export const dynamic = 'force-dynamic'
+
 const CheckInRequestSchema = z.object({
   bookingId: z.string().uuid('Invalid booking ID').optional(),
   classId: z.string().uuid('Invalid class ID').optional(),
@@ -277,6 +279,7 @@ export async function POST(request: NextRequest) {
 
     // Parse and validate request body
     const body = await request.json()
+    console.log('[Check-In API] Received request:', { userId, qrData: body.qrData ? { classId: body.qrData.classId, token: body.qrData.token?.substring(0, 8) + '...' } : null });
     const parseResult = CheckInRequestSchema.safeParse(body)
 
     if (!parseResult.success) {
@@ -300,8 +303,10 @@ export async function POST(request: NextRequest) {
 
     // If QR code data is provided, handle QR check-in directly (no API hopping)
     if (qrData) {
+      console.log('[Check-In API] Processing QR code check-in for class:', qrData.classId);
       // 1. Validate QR token expiration (if provided)
       if (qrData.expiresAt && qrData.expiresAt < Date.now()) {
+        console.warn('[Check-In API] QR code expired:', { expiresAt: qrData.expiresAt, now: Date.now() });
         return NextResponse.json({
           success: false,
           error: {
@@ -402,10 +407,13 @@ export async function POST(request: NextRequest) {
         .in('status', ['confirmed', 'waitlist'])
         .single()
 
+      console.log('[Check-In API] Booking lookup result:', { bookingFound: !!booking, status: booking?.status, bookingError: bookingError?.message });
+
       // 7. Handle different scenarios
       
       // Scenario A: User has a confirmed booking
       if (booking && booking.status === 'confirmed') {
+        console.log('[Check-In API] Confirmed booking found, checking attendance:', booking.id);
         // Check if already checked in
         const { data: existingAttendance } = await adminClient
           .from(TABLES.ATTENDANCES)
