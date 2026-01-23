@@ -76,7 +76,7 @@ const Header = () => {
             <div className="w-32 sm:w-40 md:w-60 max-w-full flex-shrink-0">
               <Link
                 href="/"
-                className={`header-logo block w-full ${
+                className={`flex items-center ${
                   needsBackground ? "py-2 sm:py-3 lg:py-2" : "py-3 sm:py-4 md:py-8"
                 }`}
               >

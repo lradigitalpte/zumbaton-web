@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useMyPackages, MyPackage } from "@/hooks/useMyPackages";
+import { useMyPackages, MyPackage, useDeletePackage } from "@/hooks/useMyPackages";
 
 type StatusFilter = "all" | "active" | "expired" | "depleted";
 
 const MyPackagesPage = () => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [packageToDelete, setPackageToDelete] = useState<MyPackage | null>(null);
   const { data, isLoading, error } = useMyPackages(statusFilter === "all" ? undefined : statusFilter);
+  const deletePackage = useDeletePackage();
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -301,6 +303,21 @@ const MyPackagesPage = () => {
                       </p>
                     </div>
                   )}
+
+                  {/* Delete Button - Only for expired and depleted packages */}
+                  {(pkg.isExpired || pkg.status === "expired" || pkg.status === "depleted") && (
+                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                      <button
+                        onClick={() => setPackageToDelete(pkg)}
+                        className="w-full px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                      >
+                        <svg className="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete Package
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -322,6 +339,42 @@ const MyPackagesPage = () => {
             </div>
           )}
         </>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {packageToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-dark rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-dark dark:text-white mb-2">Delete Package</h3>
+            <p className="text-sm text-body-color dark:text-gray-400 mb-4">
+              Are you sure you want to delete "{packageToDelete.packageName}"? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setPackageToDelete(null)}
+                disabled={deletePackage.isPending}
+                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await deletePackage.mutateAsync(packageToDelete.id)
+                    setPackageToDelete(null)
+                  } catch (error) {
+                    console.error('Failed to delete package:', error)
+                    alert(error instanceof Error ? error.message : 'Failed to delete package')
+                  }
+                }}
+                disabled={deletePackage.isPending}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {deletePackage.isPending ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

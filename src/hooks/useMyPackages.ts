@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/context/AuthContext'
 import { apiFetchJson } from '@/lib/api-fetch'
 
@@ -83,6 +83,38 @@ export function useMyPackages(status?: 'active' | 'expired' | 'depleted' | 'froz
     enabled: !!user?.id,
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
+  })
+}
+
+export function useDeletePackage() {
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+
+  return useMutation({
+    mutationFn: async (packageId: string) => {
+      if (!user?.id) {
+        throw new Error('User not authenticated')
+      }
+
+      const response = await apiFetchJson<{ success: boolean; data: { message: string } }>(
+        `/api/my-packages?packageId=${packageId}`,
+        {
+          method: 'DELETE',
+          requireAuth: true,
+        }
+      )
+
+      if (!response.success) {
+        const errorMessage = (response as any).error?.message || (response as any).error || 'Failed to delete package'
+        throw new Error(errorMessage)
+      }
+
+      return response.data
+    },
+    onSuccess: () => {
+      // Invalidate packages queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: myPackagesKeys.all })
+    },
   })
 }
 

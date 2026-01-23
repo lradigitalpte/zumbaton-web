@@ -40,7 +40,7 @@ const ClassesHero = ({
         <div 
           className="absolute inset-0 w-full h-[120%] bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: "url('/images/images/vecteezy_group-fitness-class-energetic-workout-session-in-modern_70423231.jpg')",
+            backgroundImage: "url('/images/landing2.png')",
           }}
         />
         <div className="absolute inset-0 bg-black/60"></div>

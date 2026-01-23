@@ -81,7 +81,7 @@ const AboutSectionOne = () => {
               >
                 <div className="relative w-full aspect-square">
                   <Image
-                    src="/images/images/image1.jpg"
+                    src="/images/landing3.jpg"
                     alt="Zumba class"
                     fill
                     className="object-cover w-full"

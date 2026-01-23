@@ -56,7 +56,8 @@ const ClassesPage = () => {
   const isBookingWindowOpen = () => {
     const nowSG = getSingaporeNow()
     const hour = nowSG.getHours()
-    return hour >= 9 && hour < 17
+    // Allow booking from 08:00 (inclusive) to 22:00 (exclusive) - 8am to 10pm
+    return hour >= 8 && hour < 22
   }
   const bookingWindowOpen = isBookingWindowOpen()
 
@@ -271,6 +272,30 @@ const ClassesPage = () => {
         <p className="text-sm sm:text-base text-body-color dark:text-gray-400">
           Find the perfect class for you
         </p>
+      </div>
+
+      {/* Booking Window Status Banner */}
+      <div className="mb-4 sm:mb-6">
+        <div className={`rounded-xl p-3 sm:p-4 border ${
+          bookingWindowOpen 
+            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+            : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+        }`}>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className={`w-2 h-2 rounded-full ${
+              bookingWindowOpen ? 'bg-green-500' : 'bg-red-500'
+            }`}></div>
+            <p className={`text-sm sm:text-base font-medium ${
+              bookingWindowOpen 
+                ? 'text-green-700 dark:text-green-300' 
+                : 'text-red-700 dark:text-red-300'
+            }`}>
+              {bookingWindowOpen 
+                ? 'Booking is open (08:00–22:00 SGT)' 
+                : 'Booking is closed (08:00–22:00 SGT)'}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Filters - Mobile Bottom Sheet / Desktop Inline */}
@@ -574,10 +599,6 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
                               {classItem.recurrence_type === 'course' ? 'Course' : 'Series'}
                             </span>
                           )}
-                          {/* Booking window badge */}
-                          <span className={`px-2 xl:px-2.5 py-0.5 xl:py-1 rounded-lg text-[10px] xl:text-xs font-semibold ml-1 ${bookingWindowOpen ? 'bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300' : 'bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300'}`}>
-                            {bookingWindowOpen ? 'Booking open (09:00–17:00 SGT)' : 'Booking closed (09:00–17:00 SGT)'}
-                          </span>
                         </div>
                         <div className="flex items-center gap-1.5 xl:gap-2 flex-wrap">
                           <span className={`px-2 xl:px-2.5 py-0.5 xl:py-1 rounded-lg text-[10px] xl:text-xs font-semibold ${spotsInfo.bg} ${spotsInfo.color}`}>
@@ -610,10 +631,20 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
                             name: classItem.instructor_name || 'Unassigned',
                             avatar: null,
                             initials: classItem.instructor_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || '??',
-                          }]).slice(0, 3).map((instructor: any, idx: number) => (
+                          }]).slice(0, 3).map((instructor: any, idx: number) => {
+                            // Debug logging
+                            if (idx === 0) {
+                              console.log(`[Class Card] Instructor data for "${classItem.name}":`, {
+                                instructor,
+                                hasAvatar: !!instructor.avatar,
+                                avatarUrl: instructor.avatar,
+                                instructorsArray: classItem.instructors,
+                              })
+                            }
+                            return (
                             <div
                               key={instructor.id || idx}
-                              className="relative h-6 w-6 xl:h-7 xl:w-7 rounded-full border-2 border-white dark:border-dark flex items-center justify-center text-[10px] xl:text-xs font-semibold text-white bg-gradient-to-br from-primary to-primary/80 dark:from-primary dark:to-primary/80 shrink-0 overflow-hidden"
+                              className="relative h-8 w-8 xl:h-10 xl:w-10 rounded-full border-2 border-white dark:border-dark flex items-center justify-center text-xs xl:text-sm font-semibold text-white bg-gradient-to-br from-primary to-primary/80 dark:from-primary dark:to-primary/80 shrink-0 overflow-hidden"
                               title={instructor.name}
                             >
                               {instructor.avatar ? (
@@ -622,12 +653,24 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
                                   alt={instructor.name}
                                   className="h-full w-full object-cover"
                                   loading="lazy"
+                                  onError={(e) => {
+                                    // Fallback to initials if image fails to load
+                                    const target = e.target as HTMLImageElement
+                                    target.style.display = 'none'
+                                    const parent = target.parentElement
+                                    if (parent && !parent.querySelector('span')) {
+                                      const span = document.createElement('span')
+                                      span.textContent = instructor.initials
+                                      parent.appendChild(span)
+                                    }
+                                  }}
                                 />
                               ) : (
                                 <span>{instructor.initials}</span>
                               )}
                             </div>
-                          ))}
+                            )
+                          })}
                         </div>
                         <span className="truncate">
                           {classItem.instructors && classItem.instructors.length > 0
@@ -743,7 +786,7 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
                           }
                         }}
                         disabled={isFull || bookClassMutation.isPending || (classItem._isParent && isRecurring) || !bookingWindowOpen}
-                        title={!bookingWindowOpen ? 'Bookings are allowed only between 09:00–17:00 SGT' : undefined}
+                        title={!bookingWindowOpen ? 'Bookings are allowed only between 08:00–22:00 SGT' : undefined}
                         className={`px-4 xl:px-5 py-2 xl:py-2.5 rounded-xl text-xs xl:text-sm font-bold transition-all active:scale-95 xl:active:scale-100 shadow-md xl:shadow-md ${
                           isFull || bookClassMutation.isPending
                             ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800"

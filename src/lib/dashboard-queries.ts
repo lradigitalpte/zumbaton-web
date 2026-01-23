@@ -192,9 +192,21 @@ export async function getUpcomingBookings(userId: string): Promise<UpcomingBooki
     })
     .map((booking: any) => {
       const classData = Array.isArray(booking.classes) ? booking.classes[0] : booking.classes
+      // Determine class name - check if class was deleted or data is missing
+      let className = 'Unknown Class'
+      if (classData) {
+        if (classData.title) {
+          className = classData.title
+        } else if (classData.class_type) {
+          className = `${classData.class_type.charAt(0).toUpperCase() + classData.class_type.slice(1)} Class`
+        }
+      } else {
+        className = 'Class No Longer Available'
+      }
+
       return {
         id: booking.id,
-        class_name: classData?.title || 'Unknown Class',
+        class_name: className,
         instructor_name: classData?.instructor_name || 'TBA',
         scheduled_at: classData?.scheduled_at || '',
         location: classData?.location || 'Studio',

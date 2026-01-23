@@ -14,6 +14,7 @@ import { getSupabaseClient } from './supabase'
 export interface ApiFetchOptions extends RequestInit {
   requireAuth?: boolean // Default: true
   retryOn401?: boolean // Default: true
+  signal?: AbortSignal // For request cancellation
 }
 
 /**
@@ -81,6 +82,7 @@ export async function apiFetch(
   let response = await fetch(url, {
     ...fetchOptions,
     headers: requestHeaders,
+    signal: options.signal, // Support abort signal
   })
 
   // Handle 401 with retry logic
@@ -139,6 +141,7 @@ export async function apiFetch(
         response = await fetch(url, {
           ...fetchOptions,
           headers: retryHeaders,
+          signal: options.signal, // Preserve abort signal on retry
         })
       } else {
         // No refreshed session - return original 401
@@ -166,17 +169,45 @@ export async function apiFetchJson<T = any>(
   const response = await apiFetch(url, options)
   
   // Parse JSON regardless of status code
-  const data = await response.json()
+  let data: any
+  try {
+    data = await response.json()
+  } catch (parseError) {
+    // If JSON parsing fails, return a structured error
+    console.error('[API Fetch] Failed to parse JSON response:', parseError)
+    return {
+      success: false,
+      error: {
+        code: 'PARSE_ERROR',
+        message: `Failed to parse server response. Status: ${response.status}`,
+        details: parseError instanceof Error ? parseError.message : String(parseError),
+      },
+    } as T
+  }
   
   // If response is not ok, the data should contain error information
   // Return it anyway so the caller can check response.success or handle errors
   if (!response.ok) {
+    // Extract error information from various possible response formats
+    const errorMessage = 
+      data?.error?.message || 
+      data?.message || 
+      data?.error || 
+      `Request failed with status ${response.status}`
+    
+    const errorCode = 
+      data?.error?.code || 
+      data?.code || 
+      `HTTP_${response.status}` ||
+      'API_ERROR'
+    
     // Return error response in expected format
     return {
       success: false,
       error: {
-        message: data.message || data.error?.message || `Request failed with status ${response.status}`,
-        code: data.error?.code || 'API_ERROR',
+        message: typeof errorMessage === 'string' ? errorMessage : 'An error occurred',
+        code: typeof errorCode === 'string' ? errorCode : 'API_ERROR',
+        details: data?.error?.details || data?.details,
       },
       ...data,
     } as T

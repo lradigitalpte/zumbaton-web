@@ -78,7 +78,7 @@ const Footer = () => {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
             <div>
               <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1 sm:mb-2">
-                Ready to <span className="text-green-500">Dance</span>?
+                Ready to Dance?
               </h3>
               <p className="text-xs sm:text-sm md:text-base text-gray-400">
                 Join thousands of members transforming their lives through Zumba.
@@ -104,7 +104,7 @@ const Footer = () => {
             <Link href="/" className="inline-block mb-4 sm:mb-6">
               <span className="text-2xl sm:text-3xl font-bold">
                 <span className="text-green-500">Zumba</span>
-                <span className="text-yellow-500">ton</span>
+                <span className="text-lime-500">ton</span>
               </span>
             </Link>
             <p className="text-xs sm:text-sm md:text-base text-gray-400 mb-2 sm:mb-3 max-w-sm leading-relaxed">

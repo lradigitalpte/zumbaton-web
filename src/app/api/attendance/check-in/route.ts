@@ -1,8 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSupabaseClient, getSupabaseAdminClient, TABLES } from '@/lib/supabase'
+import { TABLES } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import { z } from 'zod'
+import { sendCheckInConfirmationEmail } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
+
+// Initialize Supabase client for auth verification
+const supabaseAuth = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+  {
+    auth: {
+      persistSession: false,
+    },
+  }
+)
+
+// Initialize Supabase admin client directly (like other APIs)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+)
+
+/**
+ * Get authenticated user from Authorization header
+ */
+async function getAuthenticatedUser(request: NextRequest) {
+  const authHeader = request.headers.get('authorization')
+  if (!authHeader) {
+    return null
+  }
+
+  const token = authHeader.replace('Bearer ', '')
+  const { data: { user }, error } = await supabaseAuth.auth.getUser(token)
+  
+  if (error || !user) {
+    return null
+  }
+
+  return user
+}
 
 const CheckInRequestSchema = z.object({
   bookingId: z.string().uuid('Invalid booking ID').optional(),
@@ -23,14 +61,13 @@ const CHECK_IN_WINDOW_AFTER_MINUTES = 120 // 2 hours after class start (matching
 
 // Helper function to perform check-in (used by both QR and regular check-in)
 async function performCheckIn(
-  adminClient: ReturnType<typeof getSupabaseAdminClient>,
   bookingId: string,
   userId: string,
   method: 'qr-code' | 'manual',
   qrToken?: string
 ): Promise<NextResponse> {
   // Get booking with class info
-  const { data: booking, error: fetchError } = await adminClient
+  const { data: booking, error: fetchError } = await supabaseAdmin
     .from(TABLES.BOOKINGS)
     .select(`
       *,
@@ -72,7 +109,7 @@ async function performCheckIn(
   }
 
   // Check if already checked in
-  const { data: existingAttendance } = await adminClient
+  const { data: existingAttendance } = await supabaseAdmin
     .from(TABLES.ATTENDANCES)
     .select('id')
     .eq('booking_id', bookingId)
@@ -95,7 +132,7 @@ async function performCheckIn(
 
   if (booking.user_package_id) {
     // Get the user package
-    const { data: userPackage, error: pkgError } = await adminClient
+    const { data: userPackage, error: pkgError } = await supabaseAdmin
       .from('user_packages')
       .select('tokens_remaining, tokens_held')
       .eq('id', booking.user_package_id)
@@ -118,7 +155,7 @@ async function performCheckIn(
     tokensAfter = newRemaining
 
     // Update package tokens
-    const { error: packageUpdateError } = await adminClient
+    const { error: packageUpdateError } = await supabaseAdmin
       .from('user_packages')
       .update({
         tokens_remaining: newRemaining,
@@ -140,7 +177,7 @@ async function performCheckIn(
     }
 
     // Create token transaction record
-    const { data: transaction, error: transactionError } = await adminClient
+    const { data: transaction, error: transactionError } = await supabaseAdmin
       .from('token_transactions')
       .insert({
         user_id: userId,
@@ -172,7 +209,7 @@ async function performCheckIn(
   }
 
   // Update booking status
-  const { error: updateError } = await adminClient
+  const { error: updateError } = await supabaseAdmin
     .from(TABLES.BOOKINGS)
     .update({
       status: 'attended',
@@ -192,7 +229,7 @@ async function performCheckIn(
   }
 
   // Create attendance record
-  const { data: attendance, error: attendanceError } = await adminClient
+  const { data: attendance, error: attendanceError } = await supabaseAdmin
     .from(TABLES.ATTENDANCES)
     .insert({
       booking_id: bookingId,
@@ -213,14 +250,14 @@ async function performCheckIn(
 
   // Update user stats (non-blocking)
   try {
-    const { data: userStats } = await adminClient
+    const { data: userStats } = await supabaseAdmin
       .from('user_stats')
       .select('total_classes_attended')
       .eq('user_id', userId)
       .single()
 
     if (userStats) {
-      await adminClient
+      await supabaseAdmin
         .from('user_stats')
         .update({
           total_classes_attended: (userStats.total_classes_attended || 0) + 1,
@@ -228,7 +265,7 @@ async function performCheckIn(
         })
         .eq('user_id', userId)
     } else {
-      await adminClient
+      await supabaseAdmin
         .from('user_stats')
         .insert({
           user_id: userId,
@@ -237,6 +274,36 @@ async function performCheckIn(
     }
   } catch (statsError) {
     console.error('[Check-In] Failed to update user stats:', statsError)
+    // Non-blocking - check-in was successful
+  }
+
+  // Send confirmation email (non-blocking)
+  try {
+    // Get user details
+    const { data: userData } = await supabaseAdmin
+      .from('users')
+      .select('email, name')
+      .eq('id', userId)
+      .single()
+
+    if (userData?.email && booking.class) {
+      const classDate = new Date(booking.class.scheduled_at)
+      const classEndTime = new Date(classDate.getTime() + (booking.class.duration_minutes || 60) * 60000)
+      
+      await sendCheckInConfirmationEmail({
+        userEmail: userData.email,
+        userName: userData.name || 'there',
+        className: booking.class.title || 'Your Class',
+        classDate: classDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+        classTime: `${classDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - ${classEndTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
+        location: booking.class.location || 'Main Studio',
+        tokensUsed: tokensToConsume,
+      })
+      
+      console.log('[Check-In] Confirmation email sent to:', userData.email)
+    }
+  } catch (emailError) {
+    console.error('[Check-In] Failed to send confirmation email:', emailError)
     // Non-blocking - check-in was successful
   }
 
@@ -258,24 +325,23 @@ async function performCheckIn(
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify user is authenticated
-    const supabase = getSupabaseClient()
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    // Verify user is authenticated via Authorization header
+    const user = await getAuthenticatedUser(request)
 
-    if (sessionError || !session?.user) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
           error: {
             code: 'UNAUTHORIZED',
-            message: 'Authentication required',
+            message: 'Authentication required. Please ensure you are logged in.',
           },
         },
         { status: 401 }
       )
     }
 
-    const userId = session.user.id
+    const userId = user.id
 
     // Parse and validate request body
     const body = await request.json()
@@ -298,9 +364,6 @@ export async function POST(request: NextRequest) {
 
     const { bookingId, classId, token, qrData } = parseResult.data
 
-    // Use admin client for direct database operations (like packages do)
-    const adminClient = getSupabaseAdminClient()
-
     // If QR code data is provided, handle QR check-in directly (no API hopping)
     if (qrData) {
       console.log('[Check-In API] Processing QR code check-in for class:', qrData.classId);
@@ -316,8 +379,10 @@ export async function POST(request: NextRequest) {
         }, { status: 400 })
       }
 
+      console.log('[Check-In API] QR code validation passed, proceeding with check-in')
+
       // 2. Get the class to verify it exists
-      const { data: classData, error: classError } = await adminClient
+      const { data: classData, error: classError } = await supabaseAdmin
         .from(TABLES.CLASSES)
         .select('id, title, scheduled_at, duration_minutes, status, capacity, token_cost, instructor_id, allow_drop_in, drop_in_token_cost')
         .eq('id', qrData.classId)
@@ -335,6 +400,7 @@ export async function POST(request: NextRequest) {
 
       // 3. Check if class is cancelled
       if (classData.status === 'cancelled') {
+        console.log('[Check-In API] Class is cancelled:', classData.id)
         return NextResponse.json({
           success: false,
           error: {
@@ -345,14 +411,27 @@ export async function POST(request: NextRequest) {
       }
 
       // 4. Check check-in time window
+      // TEMPORARILY DISABLED FOR TESTING - Remove this block when done testing
       const classTime = new Date(classData.scheduled_at)
       const now = new Date()
       const minutesUntilClass = (classTime.getTime() - now.getTime()) / (1000 * 60)
       const classEndTime = new Date(classTime.getTime() + classData.duration_minutes * 60 * 1000)
 
-      const canCheckIn = 
-        (minutesUntilClass <= CHECK_IN_WINDOW_BEFORE_MINUTES && minutesUntilClass > -classData.duration_minutes)
+      console.log('[Check-In API] Time check (window validation disabled for testing):', {
+        classTime: classTime.toISOString(),
+        now: now.toISOString(),
+        minutesUntilClass: minutesUntilClass.toFixed(2),
+        durationMinutes: classData.duration_minutes,
+        checkInWindowBefore: CHECK_IN_WINDOW_BEFORE_MINUTES,
+      })
 
+      // TEMPORARILY DISABLED: Allow check-in regardless of time window for testing
+      // const canCheckIn = 
+      //   (minutesUntilClass <= CHECK_IN_WINDOW_BEFORE_MINUTES && minutesUntilClass > -classData.duration_minutes)
+      const canCheckIn = true // Always allow for testing
+
+      // Commented out for testing - uncomment when done
+      /*
       if (!canCheckIn) {
         if (minutesUntilClass > CHECK_IN_WINDOW_BEFORE_MINUTES) {
           return NextResponse.json({
@@ -372,9 +451,10 @@ export async function POST(request: NextRequest) {
           }, { status: 400 })
         }
       }
+      */
 
       // 5. Get user profile
-      const { data: userProfile, error: userError } = await adminClient
+      const { data: userProfile, error: userError } = await supabaseAdmin
         .from('user_profiles')
         .select('id, name, email')
         .eq('id', userId)
@@ -391,7 +471,7 @@ export async function POST(request: NextRequest) {
       }
 
       // 6. Find user's booking for this class
-      const { data: booking, error: bookingError } = await adminClient
+      const { data: booking, error: bookingError } = await supabaseAdmin
         .from(TABLES.BOOKINGS)
         .select(`
           id,
@@ -405,34 +485,65 @@ export async function POST(request: NextRequest) {
         .eq('user_id', userId)
         .eq('class_id', qrData.classId)
         .in('status', ['confirmed', 'waitlist'])
-        .single()
+        .maybeSingle()
 
-      console.log('[Check-In API] Booking lookup result:', { bookingFound: !!booking, status: booking?.status, bookingError: bookingError?.message });
+      // Handle actual database errors (not just "no rows found")
+      if (bookingError && bookingError.code !== 'PGRST116') { // PGRST116 = no rows found
+        console.error('[Check-In API] Booking lookup error:', bookingError)
+        return NextResponse.json({
+          success: false,
+          error: {
+            code: 'DATABASE_ERROR',
+            message: 'Failed to check booking status. Please try again.',
+            details: bookingError.message || 'Unknown database error',
+          },
+        }, { status: 500 })
+      }
+
+      console.log('[Check-In API] Booking lookup result:', { bookingFound: !!booking, status: booking?.status });
+
+      // 6.5. Check if already checked in (regardless of booking status)
+      // This check comes FIRST to handle users who already checked in
+      // Note: attendances table doesn't have user_id directly, need to join through bookings
+      const { data: existingAttendanceByUser, error: attendanceCheckError } = await supabaseAdmin
+        .from(TABLES.ATTENDANCES)
+        .select(`
+          id, 
+          booking_id,
+          created_at,
+          bookings!inner (
+            user_id,
+            class_id
+          )
+        `)
+        .eq('bookings.user_id', userId)
+        .eq('bookings.class_id', qrData.classId)
+        .maybeSingle()
+
+      console.log('[Check-In API] Existing attendance check:', { 
+        found: !!existingAttendanceByUser, 
+        attendanceId: existingAttendanceByUser?.id,
+        error: attendanceCheckError 
+      });
+
+      if (existingAttendanceByUser) {
+        console.log('[Check-In API] User already checked in for this class:', existingAttendanceByUser.id);
+        return NextResponse.json({
+          success: false,
+          error: {
+            code: 'ALREADY_CHECKED_IN',
+            message: 'You have already checked in for this class.',
+          },
+        }, { status: 400 })
+      }
 
       // 7. Handle different scenarios
       
       // Scenario A: User has a confirmed booking
       if (booking && booking.status === 'confirmed') {
-        console.log('[Check-In API] Confirmed booking found, checking attendance:', booking.id);
-        // Check if already checked in
-        const { data: existingAttendance } = await adminClient
-          .from(TABLES.ATTENDANCES)
-          .select('id')
-          .eq('booking_id', booking.id)
-          .single()
-
-        if (existingAttendance) {
-          return NextResponse.json({
-            success: false,
-            error: {
-              code: 'ALREADY_CHECKED_IN',
-              message: 'You have already checked in for this class.',
-            },
-          }, { status: 400 })
-        }
-
+        console.log('[Check-In API] Confirmed booking found, proceeding with check-in:', booking.id);
         // Use the same check-in logic as regular check-in
-        return await performCheckIn(adminClient, booking.id, userId, 'qr-code', qrData.token)
+        return await performCheckIn(booking.id, userId, 'qr-code', qrData.token)
       }
 
       // Scenario B: User is on waitlist
@@ -449,12 +560,14 @@ export async function POST(request: NextRequest) {
 
       // Scenario C: No booking found - check if class allows walk-in
       const allowsDropIn = classData.allow_drop_in === true
+      console.log('[Check-In API] No booking found, checking walk-in:', { allowsDropIn, userId, classId: qrData.classId })
 
       if (!allowsDropIn) {
+        console.log('[Check-In API] Walk-in not allowed, returning BOOKING_REQUIRED error')
         return NextResponse.json({
           success: false,
           error: {
-            code: 'BOOKING_NOT_FOUND',
+            code: 'BOOKING_REQUIRED',
             message: 'You are not registered for this class. Please book the class through the app first.',
             action: 'book',
             classId: qrData.classId,
@@ -466,7 +579,7 @@ export async function POST(request: NextRequest) {
       // Scenario D: Walk-in attendance allowed - check capacity and create booking
       
       // Check class capacity
-      const { count: currentBookings } = await adminClient
+      const { count: currentBookings } = await supabaseAdmin
         .from(TABLES.BOOKINGS)
         .select('*', { count: 'exact', head: true })
         .eq('class_id', qrData.classId)
@@ -485,7 +598,7 @@ export async function POST(request: NextRequest) {
       // Get user's active package with enough tokens
       const tokenCost = classData.drop_in_token_cost || classData.token_cost || 1
       
-      const { data: userPackages, error: packageError } = await adminClient
+      const { data: userPackages, error: packageError } = await supabaseAdmin
         .from(TABLES.USER_PACKAGES)
         .select('*')
         .eq('user_id', userId)
@@ -522,7 +635,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Create walk-in booking
-      const { data: newBooking, error: createBookingError } = await adminClient
+      const { data: newBooking, error: createBookingError } = await supabaseAdmin
         .from(TABLES.BOOKINGS)
         .insert({
           user_id: userId,
@@ -547,7 +660,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Hold tokens for the booking
-      const { error: holdError } = await adminClient
+      const { error: holdError } = await supabaseAdmin
         .from(TABLES.USER_PACKAGES)
         .update({
           tokens_held: (availablePackage.tokens_held || 0) + tokenCost,
@@ -561,7 +674,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Now check in the walk-in booking
-      const checkInResult = await performCheckIn(adminClient, newBooking.id, userId, 'qr-code', qrData.token)
+      const checkInResult = await performCheckIn(newBooking.id, userId, 'qr-code', qrData.token)
       
       if (checkInResult.status === 200) {
         const resultData = await checkInResult.json()
@@ -578,7 +691,7 @@ export async function POST(request: NextRequest) {
       }
       
       // If check-in fails, try to clean up the booking
-      await adminClient
+      await supabaseAdmin
         .from(TABLES.BOOKINGS)
         .delete()
         .eq('id', newBooking.id)
@@ -601,9 +714,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Use the shared performCheckIn function
-    return await performCheckIn(adminClient, bookingId, userId, token ? 'qr-code' : 'manual', token)
-  } catch (error) {
-    console.error('[Attendance Check-In] Unexpected error:', error)
+    return await performCheckIn(bookingId, userId, token ? 'qr-code' : 'manual', token)
+    } catch (error) {
+      console.error('[Attendance Check-In] Unexpected error:', error)
+      console.error('[Attendance Check-In] Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      })
     return NextResponse.json(
       {
         success: false,

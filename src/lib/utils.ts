@@ -14,18 +14,22 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
+  // Always display in Singapore timezone (SGT) regardless of user's location
   return date.toLocaleDateString("en-US", {
     weekday: "short",
     month: "short",
     day: "numeric",
+    timeZone: "Asia/Singapore",
   });
 }
 
 export function formatTime(dateString: string): string {
   const date = new Date(dateString);
+  // Always display in Singapore timezone (SGT) regardless of user's location
   return date.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Singapore",
   });
 }
 

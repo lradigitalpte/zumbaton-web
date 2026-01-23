@@ -661,15 +661,18 @@ export function getAdminCreatedUserEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_ADMIN_APP_URL || process.env.ADMIN_APP_URL || 'https://admin.zumbaton.sg'}/signin" 
+      <a href="https://zumbaton.sg/signin" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3); margin-bottom: 15px;" class="mobile-button">
         Sign In Now
       </a>
       ${data.temporaryPassword ? `
       <div style="margin-top: 20px;">
-        <a href="${process.env.NEXT_PUBLIC_ADMIN_APP_URL || process.env.ADMIN_APP_URL || 'https://admin.zumbaton.sg'}/forgot-password" 
-           style="color: #16a34a; text-decoration: none; font-size: 14px; font-weight: 500;">
-          Change your password
+        <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px;" class="mobile-text">
+          Want to change your password?
+        </p>
+        <a href="https://zumbaton.sg/forgot-password" 
+           style="display: inline-block; color: #16a34a; text-decoration: none; font-size: 14px; font-weight: 500; border-bottom: 1px solid #16a34a;">
+          Go to Forgot Password →
         </a>
       </div>
       ` : ''}
@@ -696,8 +699,11 @@ Get Started:
 - ${data.temporaryPassword ? 'Change your temporary password' : 'Set up your profile'}
 - Browse classes and book your first session
 
-Sign in: ${process.env.NEXT_PUBLIC_ADMIN_APP_URL || process.env.ADMIN_APP_URL || 'https://admin.zumbaton.sg'}/signin
-${data.temporaryPassword ? `Change password: ${process.env.NEXT_PUBLIC_ADMIN_APP_URL || process.env.ADMIN_APP_URL || 'https://admin.zumbaton.sg'}/forgot-password` : ''}
+Sign in: https://zumbaton.sg/signin
+${data.temporaryPassword ? `
+Change your password: https://zumbaton.sg/forgot-password
+You can change your password anytime by visiting the forgot password page.
+` : ''}
 
 If you have any questions, feel free to reach out to us at hello@zumbaton.sg
 
@@ -1196,6 +1202,71 @@ ${data.resetBy ? `Password reset by: ${data.resetBy}` : ''}
 Sign in: ${process.env.NEXT_PUBLIC_ADMIN_APP_URL || process.env.ADMIN_APP_URL || 'https://admin.zumbaton.sg'}/signin
 
 If you didn't request this password reset, please contact us immediately at hello@zumbaton.sg
+
+© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+  `.trim()
+
+  return { html, text }
+}
+
+/**
+ * Birthday Email Template
+ */
+export function getBirthdayEmailTemplate(data: {
+  userName: string
+  age?: number
+}): { html: string; text: string } {
+  const ageText = data.age ? ` turning ${data.age}` : ''
+  
+  const html = getBaseTemplate(`
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <div style="font-size: 48px; margin-bottom: 20px;">🎉🎂🎈</div>
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 28px; font-weight: 700;" class="mobile-title">Happy Birthday${ageText}, ${escapeHtml(data.userName)}!</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">We hope your special day is filled with joy and celebration!</p>
+    </div>
+    
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 25px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
+      <p style="margin: 0; color: #374151; font-size: 16px; line-height: 1.8; text-align: center;" class="mobile-text">
+        <strong>Thank you for being part of the Zumbaton family!</strong><br>
+        We're so grateful to have you in our dance fitness community. On this special day, we want to celebrate you and wish you a year filled with health, happiness, and amazing dance sessions!
+      </p>
+    </div>
+    
+    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
+      <h3 style="margin: 0 0 15px 0; color: #15803d; font-size: 18px; font-weight: 600;" class="mobile-subtitle">Ready to Dance?</h3>
+      <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
+        What better way to celebrate than with a fun dance session? Book a class and let's make your birthday even more special!
+      </p>
+    </div>
+    
+    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes" 
+         style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3);" class="mobile-button">
+        Book a Class Today
+      </a>
+    </div>
+    
+    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
+      Once again, happy birthday! We hope you have an absolutely wonderful day! 🎊
+    </p>
+  `, `Happy Birthday${ageText}, ${data.userName}! 🎉`)
+
+  const text = `
+Happy Birthday${ageText}, ${data.userName}!
+
+🎉🎂🎈
+
+We hope your special day is filled with joy and celebration!
+
+Thank you for being part of the Zumbaton family!
+We're so grateful to have you in our dance fitness community. On this special day, we want to celebrate you and wish you a year filled with health, happiness, and amazing dance sessions!
+
+Ready to Dance?
+What better way to celebrate than with a fun dance session? Book a class and let's make your birthday even more special!
+
+Book a class: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes
+
+Once again, happy birthday! We hope you have an absolutely wonderful day!
 
 © ${new Date().getFullYear()} Zumbaton. All rights reserved.
   `.trim()
