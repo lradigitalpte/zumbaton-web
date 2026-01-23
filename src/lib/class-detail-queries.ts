@@ -98,30 +98,35 @@ export async function getClassDetail(classId: string): Promise<ClassDetail | nul
 
   const bookedCount = bookings?.length || 0
 
-  // Fetch instructor avatar if instructor exists
+  // Fetch instructor avatar if instructor exists using API endpoint (bypasses RLS)
   let instructorAvatar: string | null = null
   if (classData.instructor_id) {
     try {
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error('Query timeout after 15s'))
-        }, QUERY_TIMEOUT)
-      })
-
-      const instructorResult = await Promise.race([
-        supabase
-          .from('user_profiles')
-          .select('avatar_url')
-          .eq('id', classData.instructor_id)
-          .maybeSingle(),
-        timeoutPromise,
-      ]) as { data: any; error: any }
+      // Use API endpoint to bypass RLS
+      const baseUrl = typeof window !== 'undefined' 
+        ? window.location.origin 
+        : process.env.NEXT_PUBLIC_WEB_APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
       
-      if (!instructorResult.error && instructorResult.data?.avatar_url) {
-        instructorAvatar = instructorResult.data.avatar_url
+      const response = await fetch(
+        `${baseUrl}/api/instructors/profiles?ids=${classData.instructor_id}`
+      )
+      
+      if (response.ok) {
+        const result = await response.json()
+        const profiles = result.data || result // Handle both { data: [...] } and [...] formats
+        
+        if (Array.isArray(profiles) && profiles.length > 0 && profiles[0]?.avatar_url) {
+          instructorAvatar = profiles[0].avatar_url
+          console.log('[Class Detail] Fetched instructor avatar via API:', {
+            instructorId: classData.instructor_id,
+            avatarUrl: instructorAvatar,
+          })
+        }
+      } else {
+        console.warn('[Class Detail] Failed to fetch instructor avatar via API:', response.status)
       }
-    } catch (timeoutError: any) {
-      console.warn('[Class Detail] Timeout fetching instructor avatar:', timeoutError?.message)
+    } catch (error) {
+      console.error('[Class Detail] Error fetching instructor avatar via API:', error)
       // Non-critical, continue without avatar
     }
   }

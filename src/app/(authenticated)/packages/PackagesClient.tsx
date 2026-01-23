@@ -25,6 +25,9 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [promo, setPromo] = useState(initialPromo || null);
+  const [hasPurchasedTrial, setHasPurchasedTrial] = useState(false);
+  const [trialPackageId, setTrialPackageId] = useState<string | null>(null);
+  const [isCheckingTrial, setIsCheckingTrial] = useState(true);
 
   // Debug logging
   console.log('[PackagesClient] Initial promo data:', JSON.stringify(initialPromo, null, 2));
@@ -54,6 +57,36 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
     }
   }, [user, promo]);
 
+  // Check if user has purchased trial package
+  useEffect(() => {
+    if (user?.id) {
+      setIsCheckingTrial(true);
+      fetch(`/api/packages/trial-check?userId=${user.id}`)
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`)
+          }
+          return res.json()
+        })
+        .then(data => {
+          if (data.success && data.data) {
+            setHasPurchasedTrial(data.data.hasPurchasedTrial);
+            setTrialPackageId(data.data.trialPackageId);
+          }
+        })
+        .catch(err => {
+          console.warn('[PackagesClient] Trial check failed:', err);
+          // On error, allow trial to show (fail open)
+          setHasPurchasedTrial(false);
+        })
+        .finally(() => {
+          setIsCheckingTrial(false);
+        });
+    } else {
+      setIsCheckingTrial(false);
+    }
+  }, [user]);
+
   const handlePurchase = (pkg: Package) => {
     setSelectedPackage(pkg);
     setIsPaymentModalOpen(true);
@@ -64,21 +97,36 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
     setSelectedPackage(null);
   };
 
+  // Filter out trial package if user has already purchased it
+  const filteredAdultPackages = useMemo(() => {
+    if (!hasPurchasedTrial || !trialPackageId) {
+      return adultPackages;
+    }
+    return adultPackages.filter(pkg => pkg.id !== trialPackageId);
+  }, [adultPackages, hasPurchasedTrial, trialPackageId]);
+
+  const filteredKidsPackages = useMemo(() => {
+    if (!hasPurchasedTrial || !trialPackageId) {
+      return kidsPackages;
+    }
+    return kidsPackages.filter(pkg => pkg.id !== trialPackageId);
+  }, [kidsPackages, hasPurchasedTrial, trialPackageId]);
+
   // Decide which single package should display the early-bird badge (one badge only)
   const preferredBadgePackageId = useMemo(() => {
     if (!promo?.hasEarlyBirdDiscount) return null;
-    if (adultPackages && adultPackages.length > 0) {
-      const popularIndex = Math.floor(adultPackages.length / 2);
-      const candidate = adultPackages[popularIndex] ?? adultPackages.reduce((a, b) => (a.token_count >= b.token_count ? a : b));
+    if (filteredAdultPackages && filteredAdultPackages.length > 0) {
+      const popularIndex = Math.floor(filteredAdultPackages.length / 2);
+      const candidate = filteredAdultPackages[popularIndex] ?? filteredAdultPackages.reduce((a, b) => (a.token_count >= b.token_count ? a : b));
       return candidate?.id ?? null;
     }
-    if (kidsPackages && kidsPackages.length > 0) {
-      const popularIndex = Math.floor(kidsPackages.length / 2);
-      const candidate = kidsPackages[popularIndex] ?? kidsPackages.reduce((a, b) => (a.token_count >= b.token_count ? a : b));
+    if (filteredKidsPackages && filteredKidsPackages.length > 0) {
+      const popularIndex = Math.floor(filteredKidsPackages.length / 2);
+      const candidate = filteredKidsPackages[popularIndex] ?? filteredKidsPackages.reduce((a, b) => (a.token_count >= b.token_count ? a : b));
       return candidate?.id ?? null;
     }
     return null;
-  }, [promo, adultPackages, kidsPackages]);
+  }, [promo, filteredAdultPackages, filteredKidsPackages]);
 
   const formatPrice = (priceCents: number, currency: string) => {
     return new Intl.NumberFormat("en-SG", {
@@ -151,15 +199,15 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
           </div>
-        ) : adultPackages.length === 0 ? (
+        ) : filteredAdultPackages.length === 0 ? (
           <div className="bg-white dark:bg-dark rounded-xl xl:rounded-xl rounded-2xl shadow-sm xl:shadow-sm shadow-md border border-gray-100 dark:border-gray-800 p-8 xl:p-12 text-center">
             <p className="text-body-color dark:text-gray-400 text-base xl:text-lg">No adult packages available at the moment</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 xl:gap-6 max-w-5xl mx-auto">
-            {adultPackages.map((pkg, index) => {
-              const isPopular = index === Math.floor(adultPackages.length / 2) || 
-                               pkg.token_count === Math.max(...adultPackages.map(p => p.token_count));
+            {filteredAdultPackages.map((pkg, index) => {
+              const isPopular = index === Math.floor(filteredAdultPackages.length / 2) || 
+                               pkg.token_count === Math.max(...filteredAdultPackages.map(p => p.token_count));
 
               return (
                 <div
@@ -237,7 +285,7 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
         )}
       </div>
 
-      {kidsPackages.length > 0 && (
+      {filteredKidsPackages.length > 0 && (
         <div className="mb-12 xl:mb-16">
           <div className="text-center mb-6 xl:mb-8">
             <h2 className="text-xl xl:text-2xl font-bold text-dark dark:text-white mb-2">
@@ -248,9 +296,9 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
             </p>
           </div>
           <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 xl:gap-6 max-w-5xl mx-auto">
-            {kidsPackages.map((pkg, index) => {
-              const isPopular = index === Math.floor(kidsPackages.length / 2) || 
-                               pkg.token_count === Math.max(...kidsPackages.map(p => p.token_count));
+            {filteredKidsPackages.map((pkg, index) => {
+              const isPopular = index === Math.floor(filteredKidsPackages.length / 2) || 
+                               pkg.token_count === Math.max(...filteredKidsPackages.map(p => p.token_count));
 
               return (
                 <div

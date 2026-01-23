@@ -214,6 +214,7 @@ import {
   getPasswordResetEmailTemplate,
   getForgotPasswordEmailTemplate,
   getForgotPasswordOTPEmailTemplate,
+  getBirthdayEmailTemplate,
 } from './email-templates'
 
 /**
@@ -583,5 +584,184 @@ export async function sendPasswordResetEmail(data: {
     html: template.html,
     text: template.text,
   })
+}
+
+/**
+ * Send birthday email
+ */
+export async function sendBirthdayEmail(data: {
+  userEmail: string
+  userName: string
+  age?: number
+}): Promise<EmailResult> {
+  const template = getBirthdayEmailTemplate({
+    userName: data.userName,
+    age: data.age,
+  })
+  
+  return sendEmail({
+    to: data.userEmail,
+    subject: `Happy Birthday${data.age ? ` ${data.age}` : ''}, ${data.userName}! 🎉`,
+    html: template.html,
+    text: template.text,
+  })
+}
+
+/**
+ * Send check-in confirmation email
+ */
+export async function sendCheckInConfirmationEmail(data: {
+  userEmail: string
+  userName: string
+  className: string
+  classDate: string
+  classTime: string
+  location?: string
+  tokensUsed?: number
+}): Promise<EmailResult> {
+  const template = getCheckInConfirmationTemplate(data)
+  
+  return sendEmail({
+    to: data.userEmail,
+    subject: `Check-in Confirmed - ${data.className}`,
+    html: template.html,
+    text: template.text,
+  })
+}
+
+function getCheckInConfirmationTemplate(data: {
+  userName: string
+  className: string
+  classDate: string
+  classTime: string
+  location?: string
+  tokensUsed?: number
+}) {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Check-in Confirmed</title>
+    </head>
+    <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
+      <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 40px 0;">
+            <table role="presentation" style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+              <!-- Header -->
+              <tr>
+                <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%); border-radius: 8px 8px 0 0;">
+                  <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">✓ Check-in Confirmed!</h1>
+                </td>
+              </tr>
+              
+              <!-- Content -->
+              <tr>
+                <td style="padding: 40px;">
+                  <p style="margin: 0 0 20px; color: #1f2937; font-size: 16px; line-height: 1.5;">
+                    Hi <strong>${data.userName}</strong>,
+                  </p>
+                  
+                  <p style="margin: 0 0 30px; color: #4b5563; font-size: 16px; line-height: 1.5;">
+                    Great news! You've successfully checked in to your class. We're excited to see you!
+                  </p>
+                  
+                  <!-- Class Details Card -->
+                  <table role="presentation" style="width: 100%; border: 2px solid #10b981; border-radius: 8px; margin-bottom: 30px;">
+                    <tr>
+                      <td style="padding: 20px; background-color: #f0fdf4;">
+                        <h2 style="margin: 0 0 15px; color: #059669; font-size: 18px; font-weight: bold;">Class Details</h2>
+                        
+                        <table role="presentation" style="width: 100%;">
+                          <tr>
+                            <td style="padding: 8px 0; color: #6b7280; font-size: 14px; width: 100px;">Class:</td>
+                            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 600;">${data.className}</td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Date:</td>
+                            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 600;">${data.classDate}</td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Time:</td>
+                            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 600;">${data.classTime}</td>
+                          </tr>
+                          ${data.location ? `
+                          <tr>
+                            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Location:</td>
+                            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 600;">${data.location}</td>
+                          </tr>
+                          ` : ''}
+                          ${data.tokensUsed ? `
+                          <tr>
+                            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Tokens:</td>
+                            <td style="padding: 8px 0; color: #ea580c; font-size: 14px; font-weight: 600;">${data.tokensUsed} token${data.tokensUsed > 1 ? 's' : ''} used</td>
+                          </tr>
+                          ` : ''}
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                  
+                  <p style="margin: 0 0 20px; color: #4b5563; font-size: 14px; line-height: 1.5;">
+                    <strong>What to bring:</strong><br>
+                    • Water bottle<br>
+                    • Towel<br>
+                    • Positive energy!
+                  </p>
+                  
+                  <p style="margin: 0; color: #4b5563; font-size: 14px; line-height: 1.5;">
+                    See you in class! 💃🕺
+                  </p>
+                </td>
+              </tr>
+              
+              <!-- Footer -->
+              <tr>
+                <td style="padding: 30px 40px; background-color: #f9fafb; border-radius: 0 0 8px 8px; text-align: center;">
+                  <p style="margin: 0 0 10px; color: #6b7280; font-size: 14px;">
+                    Questions? Contact us at <a href="mailto:support@zumbaton.com" style="color: #f59e0b; text-decoration: none;">support@zumbaton.com</a>
+                  </p>
+                  <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                    © ${new Date().getFullYear()} Zumbaton. All rights reserved.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `
+
+  const text = `
+Check-in Confirmed!
+
+Hi ${data.userName},
+
+Great news! You've successfully checked in to your class. We're excited to see you!
+
+Class Details:
+- Class: ${data.className}
+- Date: ${data.classDate}
+- Time: ${data.classTime}
+${data.location ? `- Location: ${data.location}` : ''}
+${data.tokensUsed ? `- Tokens: ${data.tokensUsed} token${data.tokensUsed > 1 ? 's' : ''} used` : ''}
+
+What to bring:
+• Water bottle
+• Towel
+• Positive energy!
+
+See you in class! 💃🕺
+
+Questions? Contact us at support@zumbaton.com
+
+© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+  `
+
+  return { html, text }
 }
 

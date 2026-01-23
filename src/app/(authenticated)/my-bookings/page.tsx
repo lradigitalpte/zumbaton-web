@@ -290,21 +290,30 @@ const MyBookingsPage = () => {
 
                     {/* Class Info - Very compact on mobile */}
                     <div className="space-y-0.5 xl:space-y-2 mb-2 xl:mb-4">
-                      <div className="flex items-center gap-1 xl:gap-2 text-[11px] xl:text-sm text-body-color dark:text-gray-400">
-                        {booking.instructor_avatar ? (
-                          <Image
-                            src={booking.instructor_avatar}
-                            alt={booking.instructor_name}
-                            width={16}
-                            height={16}
-                            className="w-4 h-4 rounded-full object-cover shrink-0"
-                          />
-                        ) : (
-                          <div className={`w-4 h-4 rounded-full bg-gradient-to-br ${getAvatarColor(booking.instructor_name)} flex items-center justify-center text-[7px] font-bold text-white shrink-0`}>
-                            {getInitials(booking.instructor_name)}
-                          </div>
-                        )}
-                        <span className="truncate">{booking.instructor_name}</span>
+                      <div className="flex items-center gap-2 xl:gap-3 text-[11px] xl:text-sm text-body-color dark:text-gray-400">
+                        {/* Instructor Avatar - Larger */}
+                        <div className="relative h-10 w-10 xl:h-12 xl:w-12 rounded-full border-2 border-white dark:border-dark flex items-center justify-center text-xs xl:text-sm font-semibold text-white bg-gradient-to-br from-primary to-primary/80 dark:from-primary dark:to-primary/80 shrink-0 overflow-hidden">
+                          {booking.instructor_avatar ? (
+                            <img
+                              src={booking.instructor_avatar}
+                              alt={booking.instructor_name}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                              onError={(e) => {
+                                // Fallback to initials if image fails to load
+                                const target = e.target as HTMLImageElement
+                                target.style.display = 'none'
+                                const parent = target.parentElement
+                                if (parent) {
+                                  parent.innerHTML = `<span>${getInitials(booking.instructor_name)}</span>`
+                                }
+                              }}
+                            />
+                          ) : (
+                            <span>{getInitials(booking.instructor_name)}</span>
+                          )}
+                        </div>
+                        <span className="truncate font-medium">{booking.instructor_name}</span>
                       </div>
                       <div className="flex items-center gap-1 xl:gap-2 text-[11px] xl:text-sm text-body-color dark:text-gray-400">
                         <svg className="w-3 h-3 xl:w-4 xl:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

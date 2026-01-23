@@ -39,22 +39,8 @@ export default function CheckInPage() {
     setIsScannerOpen(false);
     setCheckInSuccess(true);
     
-    // Navigate to check-in page with QR data
-    try {
-      const qrData = {
-        bookingId: data.bookingId,
-        classId: data.classId,
-        token: data.token,
-        className: data.className,
-        date: data.date,
-      };
-      
-      const encoded = btoa(JSON.stringify(qrData));
-      window.location.href = `/check-in/${encoded}`;
-    } catch (error) {
-      console.error("[CheckInPage] Error encoding QR data:", error);
-      setCheckInSuccess(true); // Still show success even if navigation fails
-    }
+    // No need to navigate - QRScanner component already handled the check-in via API
+    // Just show success message here
   };
 
   return (

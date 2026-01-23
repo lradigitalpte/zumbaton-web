@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
     {
       id: 1,
       type: "image",
-      image: "/images/images/hero1z.jpg",
+      image: "/images/landing2.png",
       headline: "Fun into Fitness with",
       highlight: "Zumbaton",
       description:

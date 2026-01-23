@@ -40,9 +40,17 @@ export default function CheckInPage() {
 
   useEffect(() => {
     // Decode QR data from token parameter
-    const token = params.token as string;
+    let token = params.token as string;
     if (token) {
       try {
+        // Handle full URL from mobile camera (extract path if needed)
+        // Mobile cameras often capture the full URL like: https://zumbaton.sg/check-in/TOKEN
+        if (token.includes('/check-in/')) {
+          token = token.split('/check-in/')[1] || token;
+        }
+        // Remove any query parameters or fragments
+        token = token.split('?')[0].split('#')[0];
+        
         let decoded: QRData;
         
         // Try URL-safe base64 first (new format: - instead of +, _ instead of /, no = padding)
@@ -56,13 +64,19 @@ export default function CheckInPage() {
         } catch (urlSafeError) {
           // Fallback: Try regular base64 (old format for backward compatibility)
           try {
-            decoded = JSON.parse(atob(token));
+            // Add padding if needed for regular base64
+            let base64Token = token;
+            while (base64Token.length % 4) {
+              base64Token += '=';
+            }
+            decoded = JSON.parse(atob(base64Token));
           } catch (regularError) {
             // Last resort: Try direct JSON parse (very old format)
             try {
               decoded = JSON.parse(token);
             } catch (jsonError) {
               console.error("[Check-In] All decode attempts failed:", {
+                token: token.substring(0, 50) + '...',
                 urlSafe: urlSafeError,
                 regular: regularError,
                 json: jsonError
@@ -76,6 +90,11 @@ export default function CheckInPage() {
         
         // Validate QR code - must have classId and token
         if (!decoded.classId || !decoded.token) {
+          console.error("[Check-In] Missing required fields:", {
+            hasClassId: !!decoded.classId,
+            hasToken: !!decoded.token,
+            decoded
+          });
           setErrorMessage("Invalid QR code. The QR code is missing required information.");
           setCheckInStatus("error");
           return;
@@ -84,6 +103,7 @@ export default function CheckInPage() {
         // Validate classId format (should be UUID)
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         if (!uuidRegex.test(decoded.classId)) {
+          console.error("[Check-In] Invalid classId format:", decoded.classId);
           setErrorMessage("Invalid QR code. The class ID format is incorrect.");
           setCheckInStatus("error");
           return;
@@ -152,6 +172,20 @@ export default function CheckInPage() {
 
       if (!result.success) {
         const errData = (result.error || {}) as { code?: string; message?: string; action?: string; classId?: string; classTitle?: string };
+        
+        // If already checked in, treat as success instead of error
+        if (errData.code === 'ALREADY_CHECKED_IN') {
+          setCheckInStatus("success");
+          setWasWalkIn(false);
+          setTokensUsed(null);
+          
+          // Redirect to dashboard after 2 seconds
+          setTimeout(() => {
+            router.push("/dashboard");
+          }, 2000);
+          return;
+        }
+        
         throw {
           code: errData.code || "CHECK_IN_ERROR",
           message: errData.message || "Failed to check in",
@@ -343,7 +377,7 @@ export default function CheckInPage() {
               {/* Action-specific buttons */}
               {errorDetails?.action === "book" && errorDetails.classId && (
                 <Link
-                  href={`/classes/${errorDetails.classId}`}
+                  href={isAuthenticated ? `/book-classes/${errorDetails.classId}` : `/signin?redirect=/book-classes/${errorDetails.classId}`}
                   className="w-full px-4 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium"
                 >
                   Book This Class
@@ -352,7 +386,7 @@ export default function CheckInPage() {
               
               {errorDetails?.action === "purchase" && (
                 <Link
-                  href="/packages"
+                  href={isAuthenticated ? "/packages" : "/signin?redirect=/packages"}
                   className="w-full px-4 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium"
                 >
                   Buy Tokens
@@ -360,12 +394,21 @@ export default function CheckInPage() {
               )}
 
               <div className="flex gap-3">
-                <button
-                  onClick={() => router.push("/dashboard")}
-                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-                >
-                  Go to Dashboard
-                </button>
+                {isAuthenticated ? (
+                  <button
+                    onClick={() => router.push("/dashboard")}
+                    className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                  >
+                    Go to Dashboard
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => router.push("/signin")}
+                    className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                  >
+                    Sign In
+                  </button>
+                )}
                 <button
                   onClick={() => window.location.reload()}
                   className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"

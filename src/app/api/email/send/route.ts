@@ -22,6 +22,7 @@ import {
   sendPasswordResetEmail,
   sendForgotPasswordEmail,
   sendForgotPasswordOTPEmail,
+  sendBirthdayEmail,
 } from '@/lib/email'
 
 // Secret key to protect this endpoint (should match in admin app)
@@ -44,6 +45,7 @@ const EmailRequestSchema = z.object({
     'password-reset',
     'forgot-password',
     'forgot-password-otp',
+    'birthday',
   ]),
   secret: z.string(),
   data: z.record(z.unknown()),
@@ -230,6 +232,14 @@ export async function POST(request: NextRequest) {
           otpCode: data.otpCode as string,
           verifyUrl: data.verifyUrl as string | undefined,
           expiresIn: data.expiresIn as string | undefined,
+        })
+        break
+
+      case 'birthday':
+        result = await sendBirthdayEmail({
+          userEmail: data.userEmail as string,
+          userName: data.userName as string,
+          age: data.age as number | undefined,
         })
         break
 

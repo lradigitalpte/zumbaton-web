@@ -38,8 +38,8 @@ function getSingaporeNow() {
 function isBookingWindowOpen() {
   const nowSG = getSingaporeNow()
   const hour = nowSG.getHours()
-  // Allow booking from 09:00 (inclusive) to 17:00 (exclusive)
-  return hour >= 9 && hour < 17
+  // Allow booking from 08:00 (inclusive) to 22:00 (exclusive) - 8am to 10pm
+  return hour >= 8 && hour < 22
 }
 
 /**
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       // Enforce booking window for batch bookings as well
       if (!isBookingWindowOpen()) {
         return NextResponse.json(
-          { success: false, error: { message: 'Bookings are only allowed between 09:00 and 17:00 SGT' } },
+          { success: false, error: { message: 'Bookings are only allowed between 08:00 and 22:00 SGT' } },
           { status: 400 }
         )
       }
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
       // Enforce booking window for single bookings
       if (!isBookingWindowOpen()) {
         return NextResponse.json(
-          { success: false, error: { message: 'Bookings are only allowed between 09:00 and 17:00 SGT' } },
+          { success: false, error: { message: 'Bookings are only allowed between 08:00 and 22:00 SGT' } },
           { status: 400 }
         )
       }

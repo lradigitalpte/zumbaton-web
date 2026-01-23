@@ -123,7 +123,7 @@ const BookingConfirmationModal = ({
                 </p>
               )}
               {!isBookingWindowOpen && (
-                <p className="text-sm text-red-600 dark:text-red-400 mt-2">Bookings are allowed only between 09:00 and 17:00 SGT</p>
+                <p className="text-sm text-red-600 dark:text-red-400 mt-2">Bookings are allowed only between 08:00 and 22:00 SGT</p>
               )}
             </div>
           </div>

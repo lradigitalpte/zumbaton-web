@@ -1,5 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdminClient, TABLES } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+
+// Initialize Supabase client for auth
+const supabaseAuth = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+  {
+    auth: {
+      persistSession: false,
+    },
+  }
+)
+
+/**
+ * Get authenticated user from Authorization header
+ */
+async function getAuthenticatedUser(request: NextRequest) {
+  const authHeader = request.headers.get('authorization')
+  if (!authHeader) {
+    return null
+  }
+
+  const token = authHeader.replace('Bearer ', '')
+  const { data: { user }, error } = await supabaseAuth.auth.getUser(token)
+  
+  if (error || !user) {
+    return null
+  }
+
+  return user
+}
 
 /**
  * GET /api/my-packages
@@ -140,6 +171,111 @@ export async function GET(request: NextRequest) {
       data: {
         packages,
         stats,
+      },
+    })
+  } catch (error) {
+    console.error('[API My Packages] Unexpected error:', error)
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    )
+  }
+}
+
+/**
+ * DELETE /api/my-packages
+ * Delete a user package (only expired or depleted packages)
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    // Get authenticated user
+    const user = await getAuthenticatedUser(request)
+    if (!user) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Authentication required' 
+        },
+        { status: 401 }
+      )
+    }
+
+    const { searchParams } = new URL(request.url)
+    const packageId = searchParams.get('packageId')
+
+    if (!packageId) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'packageId is required' 
+        },
+        { status: 400 }
+      )
+    }
+
+    const supabase = getSupabaseAdminClient()
+    const now = new Date().toISOString()
+
+    // First, verify the package exists and belongs to the user
+    const { data: userPackage, error: fetchError } = await supabase
+      .from(TABLES.USER_PACKAGES)
+      .select('id, user_id, status, expires_at')
+      .eq('id', packageId)
+      .eq('user_id', user.id)
+      .single()
+
+    if (fetchError || !userPackage) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Package not found or access denied' 
+        },
+        { status: 404 }
+      )
+    }
+
+    // Check if package is expired or depleted
+    const isExpired = new Date(userPackage.expires_at) < new Date(now)
+    const isDepleted = userPackage.status === 'depleted'
+    const isExpiredStatus = userPackage.status === 'expired'
+
+    if (!isExpired && !isDepleted && !isExpiredStatus) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Only expired or depleted packages can be deleted' 
+        },
+        { status: 400 }
+      )
+    }
+
+    // Delete the package
+    const { error: deleteError } = await supabase
+      .from(TABLES.USER_PACKAGES)
+      .delete()
+      .eq('id', packageId)
+      .eq('user_id', user.id)
+
+    if (deleteError) {
+      console.error('[API My Packages] Error deleting package:', deleteError)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Failed to delete package',
+          details: deleteError.message 
+        },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        message: 'Package deleted successfully',
       },
     })
   } catch (error) {

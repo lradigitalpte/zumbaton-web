@@ -15,28 +15,9 @@ export default function CheckInButton() {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleScanSuccess = (data: AttendanceData) => {
-    // Close scanner
+    // Just close scanner - QRScanner component already handled the check-in
+    // and shows success/error feedback. No need to navigate anywhere.
     setIsOpen(false);
-    
-    // Encode QR data as base64 and navigate to check-in page
-    try {
-      const qrData = {
-        bookingId: data.bookingId,
-        classId: data.classId,
-        token: data.token,
-        className: data.className,
-        date: data.date,
-      };
-      
-      // Encode as base64 for URL safety
-      const encoded = btoa(JSON.stringify(qrData));
-      
-      // Navigate to check-in page
-      window.location.href = `/check-in/${encoded}`;
-    } catch (error) {
-      console.error("[CheckInButton] Error encoding QR data:", error);
-      alert("Failed to process QR code. Please try again.");
-    }
   };
 
   return (

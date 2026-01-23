@@ -41,6 +41,9 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isMountedRef = useRef(true);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isCheckingInRef = useRef(false);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -102,7 +105,27 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
       setErrorDetails(null);
       setCheckInMessage("");
       setWasWalkIn(false);
+      // Clear any existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      // Abort any ongoing request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+      isCheckingInRef.current = false;
     }
+    // Cleanup on unmount
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [isOpen]);
 
   const startScanning = async () => {
@@ -128,28 +151,26 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
         return;
       }
 
-      // Improved mobile camera settings
+      // Optimized camera settings for better QR detection
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      const cameraConfig = isMobile 
-        ? { facingMode: "environment" } // Use back camera on mobile
-        : { facingMode: "environment" };
       
+      // Prefer back camera but fallback gracefully
+      const cameraConfig = { 
+        facingMode: "environment"
+      };
+      
+      // Larger scanning area for easier detection
       const qrBoxConfig = isMobile
-        ? { width: 300, height: 300 } // Larger box for mobile
+        ? { width: 280, height: 280 } // Balanced size for mobile
         : { width: 250, height: 250 };
 
       await scannerRef.current.start(
         cameraConfig,
         {
-          fps: isMobile ? 15 : 10, // Higher FPS on mobile for better scanning
+          fps: 10, // Balanced FPS for reliability
           qrbox: qrBoxConfig,
           aspectRatio: 1.0,
-          disableFlip: false, // Allow rotation
-          videoConstraints: {
-            facingMode: "environment",
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
+          disableFlip: false,
         },
         async (decodedText) => {
           // Successfully scanned
@@ -264,6 +285,25 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
     setErrorDetails(null);
     setCheckInMessage("Processing check-in...");
 
+    // Create abort controller for request cancellation
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    // Set timeout (30 seconds)
+    const CHECK_IN_TIMEOUT = 30000; // 30 seconds
+    timeoutRef.current = setTimeout(() => {
+      // Timeout occurred - abort the request
+      abortController.abort();
+      safeSetState(setCheckInStatus, "error");
+      safeSetState(setError, "Check-in request timed out. Please try again.");
+      safeSetState(setCheckInMessage, "");
+      safeSetState(setErrorDetails, {
+        code: "TIMEOUT_ERROR",
+        message: "The check-in request took too long. Please check your connection and try again.",
+      });
+      timeoutRef.current = null;
+    }, CHECK_IN_TIMEOUT);
+
     try {
       // Normalize date field - handle both "date" and "sessionDate" formats
       const sessionDate = data.sessionDate || (data as { date?: string }).date;
@@ -290,10 +330,14 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
         method: "POST",
         body: JSON.stringify(requestBody),
         requireAuth: true,
-      });
+        signal: abortController.signal, // Add abort signal
+      } as RequestInit);
+
+      console.log('[QRScanner] Received response from API:', result);
 
       if (!result.success) {
         const errorData = (result.error || {}) as { code?: string; message?: string; action?: string; classId?: string; classTitle?: string };
+        console.error('[QRScanner] Check-in failed:', errorData);
         throw {
           code: errorData.code || "CHECK_IN_ERROR",
           message: errorData.message || "Failed to check in",
@@ -303,7 +347,19 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
         };
       }
 
+      // Clear timeout on success
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      abortControllerRef.current = null;
+      isCheckingInRef.current = false;
+
+      // Stop scanning to ensure overlay shows
+      await stopScanning();
+
       // Success!
+      console.log('[QRScanner] Check-in successful, setting success state');
       setCheckInStatus("success");
       setWasWalkIn(result.data?.wasWalkIn || false);
       setCheckInMessage(
@@ -338,22 +394,76 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
       // Call onScanSuccess callback for backward compatibility
       onScanSuccess(data);
 
-      // Auto-close after 3 seconds
-      setTimeout(() => {
-        handleClose();
-      }, 3000);
+      // Don't auto-close - let user see the success message and manually close
     } catch (err) {
+      // Clear timeout on error
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      abortControllerRef.current = null;
+      isCheckingInRef.current = false;
+
       console.error("[QRScanner] Check-in error:", err);
       setCheckInStatus("error");
       
-      const checkInErr = err as CheckInError;
+      // Extract error message properly
+      let errorMessage = "Failed to check in. Please try again.";
+      let errorCode = "CHECK_IN_ERROR";
+      
+      // Check if it's an abort error (timeout or manual cancellation)
+      if (err instanceof Error && err.name === 'AbortError') {
+        errorMessage = "Check-in was cancelled or timed out. Please try again.";
+        errorCode = "TIMEOUT_ERROR";
+      } else if (err && typeof err === 'object') {
+        const errorObj = err as any;
+        if (errorObj.message) {
+          errorMessage = errorObj.message;
+        } else if (errorObj.error?.message) {
+          errorMessage = errorObj.error.message;
+        } else if (typeof errorObj === 'string') {
+          errorMessage = errorObj;
+        }
+        
+        if (errorObj.code) {
+          errorCode = errorObj.code;
+        } else if (errorObj.error?.code) {
+          errorCode = errorObj.error.code;
+        }
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err instanceof Error) {
+        errorMessage = err.message || errorMessage;
+        if (err.name === 'AbortError') {
+          errorCode = "TIMEOUT_ERROR";
+        }
+      }
+      
+      const checkInErr: CheckInError = {
+        code: errorCode,
+        message: errorMessage,
+        action: (err as any)?.action,
+        classId: (err as any)?.classId,
+        classTitle: (err as any)?.classTitle,
+      };
+      
       setErrorDetails(checkInErr);
-      setError(checkInErr.message || "Failed to check in. Please try again.");
+      setError(errorMessage);
       setCheckInMessage("");
     }
   };
 
   const handleClose = async () => {
+    // Cancel any ongoing check-in request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    // Clear timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
     await stopScanning();
     setCheckInStatus("idle");
     setError(null);
@@ -361,6 +471,22 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
     setCheckInMessage("");
     setWasWalkIn(false);
     onClose();
+  };
+
+  const handleCancelCheckIn = () => {
+    // Cancel the ongoing check-in
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setCheckInStatus("idle");
+    setError(null);
+    setErrorDetails(null);
+    setCheckInMessage("");
   };
 
   const handleRetry = () => {
@@ -380,7 +506,7 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
       case "book":
         return (
           <a
-            href={`/classes/${errorDetails.classId}`}
+            href={`/book-classes/${errorDetails.classId}`}
             className="mt-4 inline-block px-4 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors"
             onClick={handleClose}
           >
@@ -462,17 +588,23 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
                   </>
                 ) : checkInStatus === "success" ? (
                   <>
-                    <div className="mb-4 rounded-full bg-emerald-100 p-4 dark:bg-emerald-900/30">
-                      <svg className="h-8 w-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    <div className="mb-6 rounded-full bg-emerald-500 p-6 shadow-lg shadow-emerald-500/50 animate-bounce">
+                      <svg className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <p className="mb-2 text-center text-sm font-semibold text-white">
-                      {wasWalkIn ? "Walk-in Check-in Successful!" : "Check-in Successful!"}
+                    <p className="mb-3 text-center text-xl font-bold text-white px-4">
+                      {wasWalkIn ? "Walk-in Check-in Successful!" : "✓ Check-in Successful!"}
                     </p>
-                    <p className="mb-4 px-4 text-center text-xs text-gray-300">
+                    <p className="mb-6 px-6 text-center text-sm text-emerald-300 font-medium">
                       {checkInMessage || "Your attendance has been marked"}
                     </p>
+                    <button
+                      onClick={handleClose}
+                      className="px-8 py-3 bg-white text-emerald-600 rounded-xl font-semibold hover:bg-emerald-50 transition-colors shadow-lg"
+                    >
+                      Done
+                    </button>
                   </>
                 ) : checkInStatus === "error" ? (
                   <>
@@ -566,12 +698,20 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
               Close
             </button>
           ) : checkInStatus === "checking" ? (
-            <button
-              disabled
-              className="w-full rounded-xl bg-gray-300 px-6 py-3 text-base font-semibold text-gray-500 cursor-not-allowed"
-            >
-              Processing...
-            </button>
+            <div className="space-y-3">
+              <button
+                disabled
+                className="w-full rounded-xl bg-blue-500 px-6 py-3 text-base font-semibold text-white cursor-not-allowed opacity-75"
+              >
+                Processing check-in...
+              </button>
+              <button
+                onClick={handleCancelCheckIn}
+                className="w-full rounded-xl border-2 border-gray-300 bg-white px-6 py-3 text-base font-semibold text-gray-700 transition-all hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
           ) : checkInStatus === "error" ? (
             <div className="flex gap-3">
               <button

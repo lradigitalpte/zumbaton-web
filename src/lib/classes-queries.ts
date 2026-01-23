@@ -71,28 +71,81 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
     }
   })
 
+  console.log('[Classes] Collecting instructor data:', {
+    instructorIds: Array.from(instructorIds),
+    instructorNames: Array.from(instructorNames),
+    totalClasses: classes.length
+  })
+
   // Fetch instructor profiles for avatars
   const instructorProfiles: Record<string, { id: string; name: string; avatar_url: string | null }> = {}
   const instructorProfilesByName: Record<string, { id: string; name: string; avatar_url: string | null }> = {}
   
-  if (instructorIds.size > 0) {
-    const { data: profiles } = await supabase
-      .from('user_profiles')
-      .select('id, name, avatar_url')
-      .in('id', Array.from(instructorIds))
-    
-    profiles?.forEach((profile: any) => {
-      instructorProfiles[profile.id] = {
-        id: profile.id,
-        name: profile.name,
-        avatar_url: profile.avatar_url,
+  // Fetch instructor profiles via API endpoint (bypasses RLS)
+  // Only use API endpoint in browser (client-side), use admin client directly on server
+  if (instructorIds.size > 0 || instructorNames.size > 0) {
+    if (typeof window !== 'undefined') {
+      // Client-side: use API endpoint
+      try {
+        const params = new URLSearchParams()
+        if (instructorIds.size > 0) {
+          params.append('ids', Array.from(instructorIds).join(','))
+        }
+        if (instructorNames.size > 0) {
+          params.append('names', Array.from(instructorNames).join(','))
+        }
+
+        const apiUrl = `/api/instructors/profiles?${params.toString()}`
+        const response = await fetch(apiUrl)
+        if (response.ok) {
+          const result = await response.json()
+          if (result.success && result.data) {
+            result.data.forEach((profile: any) => {
+              instructorProfiles[profile.id] = {
+                id: profile.id,
+                name: profile.name,
+                avatar_url: profile.avatar_url,
+              }
+              instructorProfilesByName[profile.name] = {
+                id: profile.id,
+                name: profile.name,
+                avatar_url: profile.avatar_url,
+              }
+            })
+            console.log('[Classes] Fetched', result.data.length, 'instructor profiles via API')
+            result.data.forEach((profile: any) => {
+              console.log(`[Classes] Instructor profile: ${profile.name} (${profile.id}) - avatar: ${profile.avatar_url || 'none'}`)
+            })
+          }
+        }
+      } catch (apiError) {
+        console.error('[Classes] Error fetching instructor profiles via API:', apiError)
       }
-      instructorProfilesByName[profile.name] = {
-        id: profile.id,
-        name: profile.name,
-        avatar_url: profile.avatar_url,
+    } else {
+      // Server-side: use admin client directly
+      const { getSupabaseAdminClient } = await import('./supabase')
+      const adminClient = getSupabaseAdminClient()
+      
+      if (instructorIds.size > 0) {
+        const { data: profiles } = await adminClient
+          .from('user_profiles')
+          .select('id, name, avatar_url')
+          .in('id', Array.from(instructorIds))
+        
+        profiles?.forEach((profile: any) => {
+          instructorProfiles[profile.id] = {
+            id: profile.id,
+            name: profile.name,
+            avatar_url: profile.avatar_url,
+          }
+          instructorProfilesByName[profile.name] = {
+            id: profile.id,
+            name: profile.name,
+            avatar_url: profile.avatar_url,
+          }
+        })
       }
-    })
+    }
   }
   
   // Also fetch by name for multiple instructors (in case IDs aren't available)
@@ -220,12 +273,14 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
           profile = instructorProfiles[classItem.instructor_id]
         }
         
-        instructors.push({
+        const instructorData = {
           id: profile?.id || classItem.instructor_id || '',
           name: name,
           avatar: profile?.avatar_url || null,
           initials: getInitials(name),
-        })
+        }
+        console.log(`[Classes] Instructor data for "${name}":`, instructorData)
+        instructors.push(instructorData)
       })
     } else if (classItem.instructor_id && instructorProfiles[classItem.instructor_id]) {
       const profile = instructorProfiles[classItem.instructor_id]
@@ -237,12 +292,29 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
       })
     }
     
-    return instructors.length > 0 ? instructors : [{
-      id: classItem.instructor_id || '',
-      name: classItem.instructor_name || 'Unassigned',
-      avatar: null,
-      initials: getInitials(classItem.instructor_name),
-    }]
+    // If no instructors found, create fallback but try to get avatar if we have instructor_id
+    if (instructors.length === 0) {
+      const fallbackInstructor = {
+        id: classItem.instructor_id || '',
+        name: classItem.instructor_name || 'Unassigned',
+        avatar: null as string | null,
+        initials: getInitials(classItem.instructor_name),
+      }
+      
+      // Try to get avatar from instructor profiles if we have an instructor_id
+      if (classItem.instructor_id && instructorProfiles[classItem.instructor_id]) {
+        fallbackInstructor.avatar = instructorProfiles[classItem.instructor_id].avatar_url
+        console.log(`[Classes] Found avatar for instructor_id ${classItem.instructor_id}:`, fallbackInstructor.avatar)
+      } else {
+        console.log(`[Classes] No avatar found for instructor_id ${classItem.instructor_id}, instructor_name: "${classItem.instructor_name}"`)
+        console.log(`[Classes] Available instructor profiles:`, Object.keys(instructorProfiles))
+        console.log(`[Classes] Available instructor profiles by name:`, Object.keys(instructorProfilesByName))
+      }
+      
+      return [fallbackInstructor]
+    }
+    
+    return instructors
   }
 
   // Separate parent classes and child instances
@@ -299,7 +371,14 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
       .eq('status', 'confirmed')
     
     if (bookingError) {
-      console.error('Error fetching booking counts:', bookingError)
+      console.error('Error fetching booking counts:', {
+        error: bookingError,
+        errorCode: bookingError?.code,
+        errorMessage: bookingError?.message,
+        errorDetails: bookingError?.details,
+        errorHint: bookingError?.hint,
+        errorString: JSON.stringify(bookingError, null, 2),
+      })
     } else {
       // Count bookings per class
       bookings?.forEach((booking: any) => {

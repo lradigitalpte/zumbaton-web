@@ -143,9 +143,6 @@ const ClassDetailPage = () => {
                   <h1 className="text-xl xl:text-2xl font-bold text-dark dark:text-white mb-2">
                     {classDetail.name}
                   </h1>
-                  <span className={`inline-block px-3 py-1 rounded-full xl:rounded-full rounded-xl text-xs xl:text-sm font-medium ${getDifficultyColor(classDetail.difficulty_level)}`}>
-                    {classDetail.difficulty_level}
-                  </span>
                 </div>
                 <div className="text-right shrink-0 ml-3">
                   <span className="text-xl xl:text-2xl font-bold text-primary">
@@ -229,21 +226,28 @@ const ClassDetailPage = () => {
             <div className="bg-white dark:bg-dark rounded-xl xl:rounded-xl rounded-2xl shadow-sm xl:shadow-sm shadow-md border border-gray-100 dark:border-gray-800 p-4 xl:p-6">
               <h2 className="text-lg font-bold text-dark dark:text-white mb-4">Your Instructor</h2>
               <div className="flex items-start gap-3 xl:gap-4">
-                {classDetail.instructor_avatar ? (
-                  <Image
-                    src={classDetail.instructor_avatar}
-                    alt={classDetail.instructor_name}
-                    width={56}
-                    height={56}
-                    className="w-12 h-12 xl:w-14 xl:h-14 rounded-full object-cover shrink-0"
-                  />
-                ) : (
-                  <div className={`w-12 h-12 xl:w-14 xl:h-14 rounded-full bg-gradient-to-br ${getAvatarColor(classDetail.instructor_name)} flex items-center justify-center shrink-0`}>
-                    <span className="text-xl font-bold text-white">
-                      {getInitials(classDetail.instructor_name)}
-                    </span>
-                  </div>
-                )}
+                {/* Instructor Avatar - Larger */}
+                <div className="relative h-16 w-16 xl:h-20 xl:w-20 rounded-full border-2 border-white dark:border-dark flex items-center justify-center text-base xl:text-lg font-semibold text-white bg-gradient-to-br from-primary to-primary/80 dark:from-primary dark:to-primary/80 shrink-0 overflow-hidden">
+                  {classDetail.instructor_avatar ? (
+                    <img
+                      src={classDetail.instructor_avatar}
+                      alt={classDetail.instructor_name}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        // Fallback to initials if image fails to load
+                        const target = e.target as HTMLImageElement
+                        target.style.display = 'none'
+                        const parent = target.parentElement
+                        if (parent) {
+                          parent.innerHTML = `<span>${getInitials(classDetail.instructor_name)}</span>`
+                        }
+                      }}
+                    />
+                  ) : (
+                    <span>{getInitials(classDetail.instructor_name)}</span>
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-base xl:text-lg font-semibold text-dark dark:text-white">
                     {classDetail.instructor_name}
