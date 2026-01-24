@@ -291,11 +291,6 @@ export default function PaymentModal({
             </>
           )}
         </button>
-
-        {/* Info Note */}
-        <p className="text-xs text-gray-500 text-center mt-4">
-          🔒 You'll be redirected to HitPay's secure checkout
-        </p>
       </div>
     </div>
   );
