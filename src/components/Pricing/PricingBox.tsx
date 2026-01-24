@@ -1,4 +1,6 @@
-import Link from "next/link";
+"use client";
+
+import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
 
 const PricingBox = (props: {
   price: string;
@@ -7,6 +9,7 @@ const PricingBox = (props: {
   subtitle: string;
   children: React.ReactNode;
 }) => {
+  const { openWhatsAppModal } = useWhatsAppModal();
   const { price, duration, packageName, subtitle, children } = props;
 
   return (
@@ -28,15 +31,16 @@ const PricingBox = (props: {
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 md:p-8 text-center z-10 bg-white dark:bg-gray-800/50">
-          <Link
-            href="/signup"
+          <button
+            type="button"
+            onClick={openWhatsAppModal}
             className="inline-flex items-center justify-center gap-2 rounded px-5 sm:px-8 py-2 sm:py-3 text-xs sm:text-base font-bold text-white bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-all duration-300 hover:scale-105 shadow-lg w-full"
-              >
+          >
             <span>Choose Plan</span>
             <svg className="h-4 sm:h-5 w-4 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
-          </Link>
+            </svg>
+          </button>
         </div>
       </div>
     </div>

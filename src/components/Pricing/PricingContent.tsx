@@ -3,8 +3,10 @@
 import { useAvailablePackages } from "@/hooks/usePackages";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
 
 const PricingContent = () => {
+  const { openWhatsAppModal } = useWhatsAppModal();
   const { data: adultPackages = [], isLoading: isLoadingAdults, error: errorAdults } = useAvailablePackages('adults');
   const { data: kidsPackages = [], isLoading: isLoadingKids, error: errorKids } = useAvailablePackages('kids');
   const isLoading = isLoadingAdults || isLoadingKids;
@@ -134,8 +136,9 @@ const PricingContent = () => {
                         </li>
                       </ul>
 
-                      <Link
-                        href="/signup"
+                      <button
+                        type="button"
+                        onClick={openWhatsAppModal}
                         className={`block w-full text-center py-3 px-6 rounded-lg font-bold transition-all ${
                           isPopular
                             ? "bg-green-600 hover:bg-green-700 text-white"
@@ -143,7 +146,7 @@ const PricingContent = () => {
                         }`}
                       >
                         Get Started
-                      </Link>
+                      </button>
                     </div>
                   </motion.div>
                 );
@@ -241,8 +244,9 @@ const PricingContent = () => {
                         </li>
                       </ul>
 
-                      <Link
-                        href="/signup"
+                      <button
+                        type="button"
+                        onClick={openWhatsAppModal}
                         className={`block w-full text-center py-3 px-6 rounded-lg font-bold transition-all ${
                           isPopular
                             ? "bg-orange-500 hover:bg-orange-600 text-white"
@@ -250,7 +254,7 @@ const PricingContent = () => {
                         }`}
                       >
                         Get Started
-                      </Link>
+                      </button>
                     </div>
                   </motion.div>
                 );
@@ -272,12 +276,13 @@ const PricingContent = () => {
             Join our community and find your Zumba class. One beat. One step. One happy you.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/signup"
+            <button
+              type="button"
+              onClick={openWhatsAppModal}
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-green-600 font-bold rounded-lg hover:bg-gray-100 transition-all"
             >
               Sign Up Now
-            </Link>
+            </button>
             <Link
               href="/schedule"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-lg border-2 border-white/30 transition-all"

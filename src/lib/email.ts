@@ -12,6 +12,11 @@ export interface SendEmailOptions {
   text?: string
   replyTo?: string
   from?: string
+  attachments?: Array<{
+    filename: string
+    content: Buffer | string
+    contentType?: string
+  }>
 }
 
 export interface EmailResult {
@@ -67,6 +72,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<EmailResult>
       html: options.html,
       text: options.text || options.html.replace(/<[^>]*>/g, ''), // Strip HTML for text version
       replyTo: options.replyTo || fromEmail,
+      attachments: options.attachments || [],
     }
 
     const info = await transporter.sendMail(mailOptions)
@@ -765,3 +771,175 @@ Questions? Contact us at support@zumbaton.com
   return { html, text }
 }
 
+/**
+ * Send registration form email
+ */
+export async function sendRegistrationFormEmail(data: {
+  userEmail: string
+  userName: string
+  formUrl: string
+}): Promise<EmailResult> {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">Zumbaton</h1>
+          <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Complete Your Registration</p>
+        </div>
+        
+        <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+          <p style="font-size: 16px; margin-bottom: 20px;">Hi <strong>${data.userName}</strong>,</p>
+          
+          <p style="margin-bottom: 20px;">
+            Please complete your registration by filling out the membership terms and conditions form. 
+            This is required to finalize your membership with Zumbaton.
+          </p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${data.formUrl}" 
+               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                      color: white; 
+                      padding: 15px 40px; 
+                      text-decoration: none; 
+                      border-radius: 25px; 
+                      font-weight: bold; 
+                      display: inline-block;
+                      font-size: 16px;">
+              Complete Registration Form
+            </a>
+          </div>
+          
+          <p style="margin-top: 30px; font-size: 14px; color: #666;">
+            This link will expire in 7 days. If you need a new link, please contact us.
+          </p>
+          
+          <p style="margin-top: 20px; font-size: 14px; color: #666;">
+            If the button above doesn't work, copy and paste this link into your browser:<br>
+            <a href="${data.formUrl}" style="color: #667eea; word-break: break-all;">${data.formUrl}</a>
+          </p>
+        </div>
+        
+        <div style="text-align: center; padding: 20px; font-size: 12px; color: #999;">
+          <p>© ${new Date().getFullYear()} Zumbaton. All rights reserved.</p>
+          <p>If you didn't request this, please ignore this email.</p>
+        </div>
+      </body>
+    </html>
+  `
+
+  const text = `
+Complete Your Registration
+
+Hi ${data.userName},
+
+Please complete your registration by filling out the membership terms and conditions form.
+This is required to finalize your membership with Zumbaton.
+
+Form Link: ${data.formUrl}
+
+This link will expire in 7 days. If you need a new link, please contact us.
+
+© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+  `
+
+  return await sendEmail({
+    to: data.userEmail,
+    subject: 'Zumbaton Registration Form - Action Required',
+    html,
+    text,
+  })
+}
+
+/**
+ * Send registration form completion email with PDF attachment
+ */
+export async function sendRegistrationFormCompletedEmail(data: {
+  userEmail: string
+  userName: string
+  pdfBuffer: Buffer
+  fileName: string
+}): Promise<EmailResult> {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>✅ Registration Complete!</h1>
+          </div>
+          <div class="content">
+            <p>Hi ${data.userName},</p>
+            
+            <p>Thank you for completing your Zumbaton membership registration!</p>
+            
+            <p>Your registration form has been submitted and is attached to this email as a PDF. Please save this for your records.</p>
+            
+            <p><strong>What happens next:</strong></p>
+            <ul>
+              <li>Our staff will review and countersign your form</li>
+              <li>You'll receive a final copy with all signatures</li>
+              <li>Your membership will be fully activated</li>
+            </ul>
+            
+            <p>If you have any questions, please don't hesitate to contact us.</p>
+            
+            <p>Welcome to the Zumbaton family! 💃🕺</p>
+          </div>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Zumbaton. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `
+
+  const text = `
+Registration Complete!
+
+Hi ${data.userName},
+
+Thank you for completing your Zumbaton membership registration!
+
+Your registration form has been submitted and is attached to this email as a PDF. 
+Please save this for your records.
+
+What happens next:
+- Our staff will review and countersign your form
+- You'll receive a final copy with all signatures
+- Your membership will be fully activated
+
+If you have any questions, please don't hesitate to contact us.
+
+Welcome to the Zumbaton family!
+
+© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+  `
+
+  return await sendEmail({
+    to: data.userEmail,
+    subject: '✅ Your Zumbaton Registration Form',
+    html,
+    text,
+    attachments: [
+      {
+        filename: data.fileName,
+        content: data.pdfBuffer,
+        contentType: 'application/pdf',
+      },
+    ],
+  })
+}

@@ -8,7 +8,7 @@ import AboutCTA from "@/components/About/AboutCTA";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "About Us | Zumbaton",
+  title: "About | Zumbaton",
   description: "Learn more about Zumbaton and our mission to bring fitness and joy to your life.",
 };
 

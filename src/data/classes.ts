@@ -24,13 +24,13 @@ export interface ZumbaClass {
 export const zumbaClasses: ZumbaClass[] = [
   {
     id: "1",
-    slug: "choreographed-dance-with-steppers",
-    name: "Choreographed Dance with Steppers",
+    slug: "groove-stepper",
+    name: "Groove Stepper",
     shortDescription: "Structured dance routines performed using steppers to enhance movement, coordination, and strength. Perfect for those who enjoy learning choreography while improving endurance.",
     fullDescription: "This class focuses on structured dance routines performed using steppers to enhance movement, coordination, and strength. Each session combines rhythm, precision, and cardio, making it perfect for those who enjoy learning choreography while improving endurance and lower-body strength.",
     image: "/images/images/image1.jpg",
     featured: true,
-    duration: "60 min",
+    duration: "40 min",
     intensity: "All Levels",
     calories: "400-600",
     instructor: "Coach Lavs",
@@ -49,7 +49,7 @@ export const zumbaClasses: ZumbaClass[] = [
       },
       {
         title: "Great for Dance-Based Workouts",
-        description: "Perfect for those who love combining dance with fitness in a structured, choreographed format."
+        description: "Perfect for those who love combining dance with fitness in a structured, groove-based format."
       },
       {
         title: "Vibrant Music Mix",
@@ -70,7 +70,7 @@ export const zumbaClasses: ZumbaClass[] = [
     fullDescription: "A high-energy Zumba Step workout elevated for added intensity and calorie burn. This class blends fun, easy-to-follow Zumba choreography with step movements, delivering a full-body workout that feels more like a party than exercise.",
     image: "/images/images/image2z.jpg",
     featured: true,
-    duration: "60 min",
+    duration: "40 min",
     intensity: "All Levels",
     calories: "500-700",
     instructor: "Coach Lavs",

@@ -38,7 +38,7 @@ const faqCategories = [
       },
       {
         q: "What should I wear or bring?",
-        a: "Comfortable workout clothing, supportive sneakers, a towel, and water."
+        a: "Covered shoes (no boots) are required for all sessions. We recommend comfortable activewear, supportive sneakers, a towel, and bottled water for hydration."
       }
     ]
   },
@@ -48,15 +48,15 @@ const faqCategories = [
     questions: [
       {
         q: "How do I sign up for classes?",
-        a: "You can sign up via our website or social media platforms. Class schedules and booking information are available on our website."
+        a: "Click “Join Now” in the navigation or on our homepage, pricing, or schedule pages to get started via WhatsApp. You can also browse class schedules and booking info on our website."
       },
       {
         q: "Are there packages available?",
-        a: "We offer single-class passes and multi-class packages to suit different lifestyles. You can refer to our packages tab on our website or our Instagram story highlights for more information."
+        a: "Yes. We offer single-class passes and multi-class token packages. Check our Pricing page or Instagram for details. Use “Join Now” to get started via WhatsApp."
       },
       {
         q: "Can I cancel or reschedule a class?",
-        a: "Yes, cancellations and rescheduling are allowed within the stated policy timeframe (details provided during booking)."
+        a: "Yes. Cancel at least 24 hours before the class to have your token returned to your account. Late cancellations and no-shows result in the token being forfeited. See our Terms of Service and Refund Policy for full details."
       }
     ]
   },

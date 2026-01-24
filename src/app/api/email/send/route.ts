@@ -23,6 +23,7 @@ import {
   sendForgotPasswordEmail,
   sendForgotPasswordOTPEmail,
   sendBirthdayEmail,
+  sendRegistrationFormEmail,
 } from '@/lib/email'
 
 // Secret key to protect this endpoint (should match in admin app)
@@ -46,6 +47,7 @@ const EmailRequestSchema = z.object({
     'forgot-password',
     'forgot-password-otp',
     'birthday',
+    'registration-form',
   ]),
   secret: z.string(),
   data: z.record(z.unknown()),
@@ -240,6 +242,14 @@ export async function POST(request: NextRequest) {
           userEmail: data.userEmail as string,
           userName: data.userName as string,
           age: data.age as number | undefined,
+        })
+        break
+
+      case 'registration-form':
+        result = await sendRegistrationFormEmail({
+          userEmail: data.userEmail as string,
+          userName: data.userName as string,
+          formUrl: data.formUrl as string,
         })
         break
 

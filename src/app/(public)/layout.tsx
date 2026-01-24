@@ -3,6 +3,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
+import { WhatsAppModalProvider } from "@/context/WhatsAppModalContext";
 import { usePathname } from "next/navigation";
 
 export default function PublicLayout({
@@ -14,11 +15,11 @@ export default function PublicLayout({
   const isAuthPage = pathname?.startsWith('/signin') || pathname?.startsWith('/signup');
   
   return (
-    <>
+    <WhatsAppModalProvider>
       <Header />
       {children}
       {!isAuthPage && <Footer />}
       <ScrollToTop />
-    </>
+    </WhatsAppModalProvider>
   );
 }

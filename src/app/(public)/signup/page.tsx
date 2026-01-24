@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/Toast";
 
@@ -20,6 +21,8 @@ const SignupForm = () => {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Check for referral code in URL
   useEffect(() => {
@@ -198,24 +201,35 @@ const SignupForm = () => {
                     >
                       Password
                     </label>
-                    <input
-                      type="password"
-                      name="password"
-                      id="password"
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        if (confirmPassword && e.target.value !== confirmPassword) {
-                          setPasswordError("Passwords do not match");
-                        } else {
-                          setPasswordError("");
-                        }
-                      }}
-                      placeholder="Enter your password"
-                      required
-                      minLength={8}
-                      className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-green-500 dark:focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all duration-300"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        id="password"
+                        value={password}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          if (confirmPassword && e.target.value !== confirmPassword) {
+                            setPasswordError("Passwords do not match");
+                          } else {
+                            setPasswordError("");
+                          }
+                        }}
+                        placeholder="Enter your password"
+                        required
+                        minLength={8}
+                        className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pl-4 pr-12 py-3 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-green-500 dark:focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all duration-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" strokeWidth={2} /> : <Eye className="w-5 h-5" strokeWidth={2} />}
+                      </button>
+                    </div>
                   </div>
                   <div className="mb-6">
                     <label
@@ -224,28 +238,39 @@ const SignupForm = () => {
                     >
                       Confirm Password
                     </label>
-                    <input
-                      type="password"
-                      name="confirmPassword"
-                      id="confirmPassword"
-                      value={confirmPassword}
-                      onChange={(e) => {
-                        setConfirmPassword(e.target.value);
-                        if (password && e.target.value !== password) {
-                          setPasswordError("Passwords do not match");
-                        } else {
-                          setPasswordError("");
-                        }
-                      }}
-                      placeholder="Confirm your password"
-                      required
-                      minLength={8}
-                      className={`w-full rounded-xl border-2 bg-white dark:bg-gray-800 px-4 py-3 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all duration-300 ${
-                        passwordError 
-                          ? "border-red-500 dark:border-red-500" 
-                          : "border-gray-200 dark:border-gray-700 focus:border-green-500 dark:focus:border-green-500"
-                      }`}
-                    />
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        name="confirmPassword"
+                        id="confirmPassword"
+                        value={confirmPassword}
+                        onChange={(e) => {
+                          setConfirmPassword(e.target.value);
+                          if (password && e.target.value !== password) {
+                            setPasswordError("Passwords do not match");
+                          } else {
+                            setPasswordError("");
+                          }
+                        }}
+                        placeholder="Confirm your password"
+                        required
+                        minLength={8}
+                        className={`w-full rounded-xl border-2 bg-white dark:bg-gray-800 pl-4 pr-12 py-3 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all duration-300 ${
+                          passwordError 
+                            ? "border-red-500 dark:border-red-500" 
+                            : "border-gray-200 dark:border-gray-700 focus:border-green-500 dark:focus:border-green-500"
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword((prev) => !prev)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                        tabIndex={-1}
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-5 h-5" strokeWidth={2} /> : <Eye className="w-5 h-5" strokeWidth={2} />}
+                      </button>
+                    </div>
                     {passwordError && (
                       <p className="mt-2 text-sm text-red-500 dark:text-red-400">
                         {passwordError}

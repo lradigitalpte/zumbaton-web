@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
 
   const slides = [
     {
@@ -35,6 +36,7 @@ import { motion } from "framer-motion";
   ];
 
 const Hero = () => {
+  const { openWhatsAppModal } = useWhatsAppModal();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -148,12 +150,13 @@ const Hero = () => {
                 Step it up!
               </p>
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 lg:gap-6 justify-center items-center w-full max-w-md sm:max-w-none">
-                <Link
-                  href="/signup"
+                <button
+                  type="button"
+                  onClick={openWhatsAppModal}
                   className="btn-hero-primary px-5 py-2 xs:px-6 xs:py-2.5 sm:px-8 sm:py-3 md:px-10 md:py-3.5 text-xs xs:text-sm sm:text-base md:text-lg font-bold text-white uppercase bg-green-600 hover:bg-green-700 transition-colors rounded-none shadow-lg relative overflow-hidden inline-block w-full sm:w-auto text-center"
                 >
                   <span className="relative z-10">Start Now</span>
-                </Link>
+                </button>
                 <Link
                   href="/about"
                   className="btn-hero-secondary px-5 py-2 xs:px-6 xs:py-2.5 sm:px-8 sm:py-3 md:px-10 md:py-3.5 text-xs xs:text-sm sm:text-base md:text-lg font-bold text-white uppercase border-2 border-white/40 hover:border-white/60 hover:bg-white/10 transition-colors rounded-none shadow-lg relative overflow-hidden inline-block w-full sm:w-auto text-center"

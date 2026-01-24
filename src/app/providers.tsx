@@ -7,7 +7,7 @@ import { ToastProvider } from "@/components/Toast";
 import { useState } from "react";
 
 // Create a client with timeout protection
-export const QUERY_TIMEOUT = 30000 // 30 seconds max for any query
+export const QUERY_TIMEOUT = 10000 // 10 seconds max for any query
 
 // Wrapper to add timeout to query functions
 export function withQueryTimeout<T>(
@@ -49,7 +49,7 @@ function isNonRetryableError(error: any): boolean {
 const queryClientOptions = {
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes - balanced default for user-facing data
+      staleTime: 30 * 60 * 1000, // 30 minutes - data stays fresh longer
       gcTime: 30 * 60 * 1000, // 30 minutes - keep cache in memory longer
       refetchOnWindowFocus: false, // Don't refetch on window focus
       refetchOnMount: 'always' as const, // Always refetch on mount for fresh data (auto-refresh on page visit)

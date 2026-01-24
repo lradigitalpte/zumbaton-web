@@ -81,7 +81,7 @@ const BookingConfirmationModal = ({
             )}
           </div>
           <p className="text-sm text-body-color dark:text-gray-400">
-            {classItem.class_type} • {classItem.difficulty_level}
+            {classItem.class_type}
           </p>
           {/* Show booking type info */}
           {isCourse && (

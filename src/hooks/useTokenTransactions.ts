@@ -26,7 +26,7 @@ export function useTokenTransactions(
     queryKey: tokenTransactionKeys.list(userId || '', filter),
     queryFn: () => getTokenTransactions(userId!, filter),
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000, // 5 minutes - transaction history can update when booking/purchasing
+    staleTime: 30 * 60 * 1000, // 30 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes - keep transaction history cached longer
     // Uses global retry logic from providers.tsx (max 2 retries, circuit breaker)
   })

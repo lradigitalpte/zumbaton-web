@@ -7,8 +7,10 @@ import PricingBox from "./PricingBox";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useMemo } from "react";
 import { useAvailablePackages } from "@/hooks/usePackages";
+import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
 
 const Pricing = () => {
+  const { openWhatsAppModal } = useWhatsAppModal();
   const sectionRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -123,9 +125,13 @@ const Pricing = () => {
               View all packages
             </Link>{" "}
             or{" "}
-            <Link href="/signup" className="text-green-600 dark:text-green-400 hover:underline font-semibold">
+            <button
+              type="button"
+              onClick={openWhatsAppModal}
+              className="text-green-600 dark:text-green-400 hover:underline font-semibold bg-transparent border-none cursor-pointer p-0"
+            >
               sign up now
-            </Link>
+            </button>
             .
           </p>
       </div>

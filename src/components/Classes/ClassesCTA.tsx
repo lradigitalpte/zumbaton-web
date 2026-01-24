@@ -1,10 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
 
 const ClassesCTA = () => {
+  const { openWhatsAppModal } = useWhatsAppModal();
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-50px" });
 
@@ -43,8 +44,9 @@ const ClassesCTA = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex-shrink-0"
           >
-            <Link
-              href="/signup"
+            <button
+              type="button"
+              onClick={openWhatsAppModal}
               className="inline-flex items-center gap-3 px-10 py-5 text-lg font-bold text-green-600 bg-white hover:bg-gray-50 transition-all duration-300 rounded-xl shadow-2xl hover:shadow-3xl hover:scale-105 group"
             >
               <span>Join Now</span>
@@ -56,7 +58,7 @@ const ClassesCTA = () => {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
-            </Link>
+            </button>
           </motion.div>
         </div>
       </div>

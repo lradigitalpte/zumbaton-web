@@ -25,19 +25,6 @@ const ClassDetailsSlidePanel = ({
 }: ClassDetailsSlidePanelProps) => {
   if (!classItem) return null;
 
-  const getDifficultyColor = (level: string) => {
-    switch (level.toLowerCase()) {
-      case "beginner":
-        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-      case "intermediate":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-      case "advanced":
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
-    }
-  };
-
   const spotsLeft = classItem.capacity - classItem.booked_count;
   const spotsInfo = spotsLeft <= 0 
     ? { text: "Full", color: "text-red-500" }
@@ -97,9 +84,6 @@ const ClassDetailsSlidePanel = ({
             <h3 className="text-2xl font-bold text-dark dark:text-white">
               {classItem.name}
             </h3>
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getDifficultyColor(classItem.difficulty_level)}`}>
-              {classItem.difficulty_level}
-            </span>
           </div>
 
           {classItem.description && (

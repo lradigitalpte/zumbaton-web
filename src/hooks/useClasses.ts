@@ -34,7 +34,7 @@ export function useUpcomingClasses(filters?: {
   return useQuery({
     queryKey: classKeys.list(filters),
     queryFn: () => getUpcomingClasses(filters),
-    staleTime: 2 * 60 * 1000, // 2 minutes - class availability changes frequently
+    staleTime: 30 * 60 * 1000, // 30 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes - keep classes cached longer
     // Uses global retry logic from providers.tsx (max 2 retries, circuit breaker)
   })
