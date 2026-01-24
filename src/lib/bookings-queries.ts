@@ -1,8 +1,9 @@
 /**
- * Direct Supabase queries for user bookings
+ * User bookings: Next.js API only in browser (no Supabase); Supabase fallback only on server.
  */
 
 import { getSupabaseClient, TABLES } from './supabase'
+import { fetchApiData } from './client-api-utils'
 import { formatDate, formatTime } from './utils'
 
 export interface UserBooking {
@@ -22,42 +23,47 @@ export interface UserBooking {
 }
 
 /**
- * Get user's bookings with optional filter
- * Includes timeout protection to prevent infinite loading
+ * Get user's bookings with optional filter.
+ * Uses Next.js API only when in browser (no Supabase from client); fallback to Supabase only on server.
  */
 export async function getUserBookings(
   userId: string,
   filter?: 'upcoming' | 'past' | 'all'
 ): Promise<UserBooking[]> {
+  const params: Record<string, string> = { userId }
+  if (filter && filter !== 'all') params.filter = filter
+  const apiData = await fetchApiData<UserBooking[]>(
+    '/api/bookings',
+    params,
+    'Bookings'
+  )
+  if (apiData != null && Array.isArray(apiData)) return apiData
+
+  /* In browser we use only Next.js API (fetchApiData). No Supabase fallback. */
+  if (typeof window !== 'undefined') {
+    console.warn('[Bookings] API returned no data; returning empty array (no Supabase fallback in browser).')
+    return []
+  }
+
   const supabase = getSupabaseClient()
   const now = new Date().toISOString()
 
-  // Check session - Supabase handles token refresh automatically
-  // No need to manually check expiry or refresh tokens
   try {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-    
     if (sessionError || !session?.user) {
       console.warn('[Bookings] No valid session, returning empty array')
       return []
     }
-
-    // Verify session is for the correct user
     if (session.user.id !== userId) {
       console.warn('[Bookings] Session user ID mismatch, returning empty array')
       return []
     }
-
-    // Supabase handles token refresh automatically - no need to check expiry
-    // If session exists, proceed with query (Supabase will auto-refresh if needed)
   } catch (sessionCheckError: any) {
     console.error('[Bookings] Error checking session (timeout or error):', sessionCheckError?.message || sessionCheckError)
     return []
   }
 
-  // Reduced timeout - 8 seconds to fail fast
   const QUERY_TIMEOUT = 8000
-  
   let query = supabase
     .from(TABLES.BOOKINGS)
     .select(`
@@ -141,9 +147,14 @@ export async function getUserBookings(
   if (instructorIds.size > 0) {
     try {
       // Use API endpoint to bypass RLS
-      const baseUrl = typeof window !== 'undefined' 
-        ? window.location.origin 
-        : process.env.NEXT_PUBLIC_WEB_APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      let baseUrl = process.env.NEXT_PUBLIC_WEB_APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      try {
+        if (typeof window !== 'undefined') {
+          baseUrl = (window as any).location.origin
+        }
+      } catch {
+        // Fallback to env or default if window is not accessible
+      }
       
       const response = await fetch(
         `${baseUrl}/api/instructors/profiles?ids=${Array.from(instructorIds).join(',')}`

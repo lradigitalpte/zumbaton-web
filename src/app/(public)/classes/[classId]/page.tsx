@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { zumbaClasses, getClassBySlug, ZumbaClass } from "@/data/classes";
 import { ClassesHero } from "@/components/Classes";
+import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
 
 export default function ClassDetailPage() {
   const params = useParams();
@@ -229,6 +230,7 @@ const HighlightCard = ({ highlight, index }: HighlightCardProps) => {
 };
 
 const ClassDetailCTA = () => {
+  const { openWhatsAppModal } = useWhatsAppModal();
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-50px" });
 
@@ -259,8 +261,9 @@ const ClassDetailCTA = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex flex-col sm:flex-row gap-4"
           >
-            <Link
-              href="/signup"
+            <button
+              type="button"
+              onClick={openWhatsAppModal}
               className="inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-bold text-green-600 bg-white hover:bg-gray-100 transition-all duration-300 rounded-lg shadow-lg hover:shadow-xl group"
             >
               <span>Join Now</span>
@@ -272,7 +275,7 @@ const ClassDetailCTA = () => {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
-            </Link>
+            </button>
             <Link
               href="/classes"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-bold text-white border-2 border-white hover:bg-white hover:text-green-600 transition-all duration-300 rounded-lg"

@@ -8,50 +8,50 @@ const scheduleData = [
   {
     day: "Sunday",
     classes: [
-      { time: "09:00 - 10:00", name: "ZUMBATON", instructor: "Coach Lavs" },
-      { time: "17:00 - 18:00", name: "Choreographed Dance with Steppers", instructor: "Coach Lavs" },
+      { time: "09:00 - 09:40", name: "ZUMBATON", instructor: "Coach Lavs" },
+      { time: "17:00 - 17:40", name: "Groove Stepper", instructor: "Coach Lavs" },
     ],
   },
   {
     day: "Monday",
     classes: [
-      { time: "10:00 - 11:00", name: "Choreographed Dance with Steppers", instructor: "Coach Lavs" },
-      { time: "18:00 - 19:00", name: "ZUMBATON", instructor: "Coach Lavs" },
+      { time: "10:00 - 10:40", name: "Groove Stepper", instructor: "Coach Lavs" },
+      { time: "18:00 - 18:40", name: "ZUMBATON", instructor: "Coach Lavs" },
     ],
   },
   {
     day: "Tuesday",
     classes: [
-      { time: "09:00 - 10:00", name: "ZUMBATON", instructor: "Coach Lavs" },
-      { time: "17:30 - 18:30", name: "Choreographed Dance with Steppers", instructor: "Coach Lavs" },
+      { time: "09:00 - 09:40", name: "ZUMBATON", instructor: "Coach Lavs" },
+      { time: "17:30 - 18:10", name: "Groove Stepper", instructor: "Coach Lavs" },
     ],
   },
   {
     day: "Wednesday",
     classes: [
-      { time: "10:00 - 11:00", name: "Choreographed Dance with Steppers", instructor: "Coach Lavs" },
-      { time: "18:00 - 19:00", name: "ZUMBATON", instructor: "Coach Lavs" },
+      { time: "10:00 - 10:40", name: "Groove Stepper", instructor: "Coach Lavs" },
+      { time: "18:00 - 18:40", name: "ZUMBATON", instructor: "Coach Lavs" },
     ],
   },
   {
     day: "Thursday",
     classes: [
-      { time: "09:00 - 10:00", name: "ZUMBATON", instructor: "Coach Lavs" },
-      { time: "17:00 - 18:00", name: "Choreographed Dance with Steppers", instructor: "Coach Lavs" },
+      { time: "09:00 - 09:40", name: "ZUMBATON", instructor: "Coach Lavs" },
+      { time: "17:00 - 17:40", name: "Groove Stepper", instructor: "Coach Lavs" },
     ],
   },
   {
     day: "Friday",
     classes: [
-      { time: "10:00 - 11:00", name: "Choreographed Dance with Steppers", instructor: "Coach Lavs" },
-      { time: "18:00 - 19:00", name: "ZUMBATON", instructor: "Coach Lavs" },
+      { time: "10:00 - 10:40", name: "Groove Stepper", instructor: "Coach Lavs" },
+      { time: "18:00 - 18:40", name: "ZUMBATON", instructor: "Coach Lavs" },
     ],
   },
   {
     day: "Saturday",
     classes: [
-      { time: "09:00 - 10:00", name: "ZUMBATON", instructor: "Coach Lavs" },
-      { time: "11:30 - 12:30", name: "Choreographed Dance with Steppers", instructor: "Coach Lavs" },
+      { time: "09:00 - 09:40", name: "ZUMBATON", instructor: "Coach Lavs" },
+      { time: "11:30 - 12:10", name: "Groove Stepper", instructor: "Coach Lavs" },
     ],
   },
 ];

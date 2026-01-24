@@ -7,7 +7,7 @@ import { getSupabaseClient } from './supabase'
 
 export interface BookingSettings {
   maxBookingsPerUser: number
-  cancellationWindow: number // hours before class for free cancellation
+  cancellationWindow: number // legacy hours-before-class window (see refund policy for actual rules)
   noShowPenalty: boolean
   noShowPenaltyTokens: number
   waitlistEnabled: boolean
@@ -17,7 +17,7 @@ export interface BookingSettings {
 
 const DEFAULT_SETTINGS: BookingSettings = {
   maxBookingsPerUser: 5,
-  cancellationWindow: 4, // 4 hours default
+  cancellationWindow: 24, // default approx. 24 hours
   noShowPenalty: true,
   noShowPenaltyTokens: 1,
   waitlistEnabled: true,

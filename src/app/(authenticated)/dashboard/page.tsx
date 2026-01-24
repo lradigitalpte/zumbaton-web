@@ -92,7 +92,7 @@ const DashboardPage = () => {
           Welcome back, {user?.name?.split(" ")[0] || "there"}! 👋
         </h1>
         <p className="text-sm sm:text-base text-body-color dark:text-gray-400">
-          Here&apos;s what&apos;s happening with your Zumbathon account.
+          Here&apos;s what&apos;s happening with your Zumbaton account.
         </p>
       </div>
 

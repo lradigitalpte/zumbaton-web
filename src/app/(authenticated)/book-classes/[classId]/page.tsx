@@ -332,7 +332,7 @@ const ClassDetailPage = () => {
             )}
 
             <p className="text-xs xl:text-sm text-body-color dark:text-gray-400 text-center mt-4">
-              Free cancellation up to 4 hours before class
+              Cancel at least 24 hours before class to have your token returned.
             </p>
           </div>
         </div>

@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import ThemeToggler from "./ThemeToggler";
 import menuData from "./menuData";
-import WhatsAppLeadModal from "@/components/WhatsApp/WhatsAppLeadModal";
+import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
 
 const Header = () => {
+  const { openWhatsAppModal } = useWhatsAppModal();
   // Navbar toggle
   const [navbarOpen, setNavbarOpen] = useState(false);
   const navbarToggleHandler = () => {
@@ -50,9 +51,6 @@ const Header = () => {
     }
   };
 
-  // WhatsApp Lead Modal
-  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
-
   const usePathName = usePathname();
   
   // Pages with light backgrounds that need dark text on header
@@ -76,19 +74,21 @@ const Header = () => {
             <div className="w-32 sm:w-40 md:w-60 max-w-full flex-shrink-0">
               <Link
                 href="/"
-                className={`flex items-center ${
+                className={`flex items-center gap-2 sm:gap-3 ${
                   needsBackground ? "py-2 sm:py-3 lg:py-2" : "py-3 sm:py-4 md:py-8"
                 }`}
               >
-                {/* Zumbaton Logo */}
-                <Image
-                  src="/logo/zumbaton logo (transparent).png"
-                  alt="Zumbaton Logo"
-                  width={80}
-                  height={80}
-                  className="h-10 sm:h-12 md:h-16 w-auto object-contain"
-                  priority
-                />
+                {/* Logo on soft dark patch – rounded, subtle shadow, no hard edges */}
+                <span className="inline-flex items-center justify-center rounded-xl bg-gray-800/90 dark:bg-gray-950/90 backdrop-blur-sm px-3 py-2 sm:px-4 sm:py-2.5 shadow-lg shadow-black/15 ring-1 ring-white/5">
+                  <Image
+                    src="/logo/zumbaton logo (transparent).png"
+                    alt="Zumbaton Logo"
+                    width={80}
+                    height={80}
+                    className="h-10 sm:h-12 md:h-16 w-auto object-contain"
+                    priority
+                  />
+                </span>
               </Link>
             </div>
             <div className="flex-1 flex items-center justify-center">
@@ -242,7 +242,7 @@ const Header = () => {
                 </Link>
                 <button
                   onClick={() => {
-                    setShowWhatsAppModal(true);
+                    openWhatsAppModal();
                     setNavbarOpen(false);
                   }}
                   className={`rounded-lg px-5 sm:px-6 md:px-7 py-2 sm:py-2.5 text-xs sm:text-sm md:text-base font-semibold text-white shadow-md transition-colors ${
@@ -270,7 +270,7 @@ const Header = () => {
                 </Link>
                 <button
                   onClick={() => {
-                    setShowWhatsAppModal(true);
+                    openWhatsAppModal();
                     setNavbarOpen(false);
                   }}
                   className={`rounded-lg px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white shadow-md transition-colors ${
@@ -288,12 +288,6 @@ const Header = () => {
           </div>
         </div>
       </header>
-
-      {/* WhatsApp Lead Modal */}
-      <WhatsAppLeadModal
-        isOpen={showWhatsAppModal}
-        onClose={() => setShowWhatsAppModal(false)}
-      />
     </>
   );
 };

@@ -40,31 +40,20 @@ export async function apiFetch(
       
       if (error) {
         console.warn('[API Fetch] Error getting session:', error)
+        // Don't block - let the request proceed without token
+        // Server will return 401 and retry logic will refresh token
       } else if (session?.access_token) {
         accessToken = session.access_token
-      } else if (requireAuth) {
-        // No session but auth required - return 401 immediately
-        return new Response(
-          JSON.stringify({ error: 'Unauthorized', message: 'No valid session' }),
-          {
-            status: 401,
-            statusText: 'Unauthorized',
-            headers: { 'Content-Type': 'application/json' },
-          }
-        )
+      } else {
+        // No session found - this can happen if session is stale
+        // Don't return fake 401 - let the actual request go through
+        // Server will return real 401 which triggers refresh logic
+        console.warn('[API Fetch] No session found, request will proceed without auth')
       }
     } catch (error) {
       console.error('[API Fetch] Error getting session:', error)
-      if (requireAuth) {
-        return new Response(
-          JSON.stringify({ error: 'Unauthorized', message: 'Failed to get session' }),
-          {
-            status: 401,
-            statusText: 'Unauthorized',
-            headers: { 'Content-Type': 'application/json' },
-          }
-        )
-      }
+      // Don't block - let the request proceed
+      // If auth is truly required, server will return 401
     }
   }
 

@@ -48,7 +48,7 @@ const AboutHero = () => {
           transition={{ duration: 0.8, delay: 0.2 }}
         >
           <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-white mb-6">
-            About Us
+            About
           </h1>
           
           {/* Breadcrumb */}

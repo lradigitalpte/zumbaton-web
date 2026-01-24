@@ -35,7 +35,7 @@ const FAQMap = () => {
         >
           <div className="w-full h-96 sm:h-[500px] bg-gray-200 dark:bg-gray-800 relative">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.8152087374577!2d103.8198!3d1.3521!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31da190a7da0d701%3A0x1234567890!2sSingapore!5e0!3m2!1sen!2ssg!4v1234567890"
+              src="https://www.google.com/maps?q=2+Jalan+Klapa+Singapore+199314&output=embed&zoom=17"
               width="100%"
               height="100%"
               style={{ border: 0 }}
@@ -65,7 +65,7 @@ const FAQMap = () => {
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">Location</h3>
             </div>
             <p className="text-gray-600 dark:text-white/70 mb-4">
-              Coming Soon - More details will be shared
+              2 JALAN KLAPA, #2-A, SINGAPORE 199314
             </p>
             <p className="text-sm text-gray-500 dark:text-white/60">
               Singapore

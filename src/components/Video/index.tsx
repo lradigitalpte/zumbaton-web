@@ -32,6 +32,7 @@ export default function Video() {
                   alt="Zumba dance session"
                   className="object-cover"
                   fill
+                  sizes="(max-width: 770px) 100vw, 770px"
                   priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/25 to-transparent" />

@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/Toast";
+import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
 import { supabase } from "@/lib/supabase";
 
 function SigninPageContent() {
+  const { openWhatsAppModal } = useWhatsAppModal();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { signIn, signInWithGoogle, isLoading: authLoading, isAuthenticated } = useAuth();
@@ -15,6 +18,7 @@ function SigninPageContent() {
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState(false);
@@ -227,16 +231,31 @@ function SigninPageContent() {
                       >
                         Password
                       </label>
-                      <input
-                        type="password"
-                        name="password"
-                        id="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Enter your password"
-                        required
-                        className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-green-500 dark:focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all duration-300"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          name="password"
+                          id="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="Enter your password"
+                          required
+                          className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pl-4 pr-12 py-3 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-green-500 dark:focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all duration-300"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          aria-label={showPassword ? "Hide password" : "Show password"}
+                          tabIndex={-1}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="w-5 h-5" strokeWidth={2} />
+                          ) : (
+                            <Eye className="w-5 h-5" strokeWidth={2} />
+                          )}
+                        </button>
+                      </div>
                     </div>
                     <div className="mb-6 flex flex-col justify-between sm:flex-row sm:items-center">
                       <div className="mb-4 sm:mb-0">
@@ -304,12 +323,13 @@ function SigninPageContent() {
                     <p className="text-white/90 text-base sm:text-lg mb-8 max-w-md">
                       Welcome back! We are so happy to have you here. It's great to see you again. We hope you had a safe and enjoyable time away.
                     </p>
-                    <Link
-                      href="/signup"
+                    <button
+                      type="button"
+                      onClick={openWhatsAppModal}
                       className="inline-block bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:scale-105 border border-white/30"
                     >
                       No account yet? Signup.
-                    </Link>
+                    </button>
                   </div>
                 </div>
               </div>

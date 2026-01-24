@@ -44,7 +44,7 @@ const MyBookingsPage = () => {
   const [loadingTimeout, setLoadingTimeout] = useState(false);
 
   // React Query hooks
-  const { data: bookings = [], isLoading, isError, error } = useUserBookings(user?.id, filter);
+  const { data: bookings = [], isLoading, isError, error, refetch } = useUserBookings(user?.id, filter);
   const cancelBookingMutation = useCancelBooking();
 
   // Add timeout protection for loading state
@@ -208,8 +208,7 @@ const MyBookingsPage = () => {
           <button
             onClick={() => {
               setLoadingTimeout(false);
-              // Force refetch by invalidating query
-              window.location.reload();
+              refetch();
             }}
             className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors active:scale-95 shadow-md"
           >

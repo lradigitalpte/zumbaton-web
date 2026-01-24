@@ -22,7 +22,7 @@ export function useDashboardTokenBalance(userId: string | undefined) {
     queryKey: dashboardKeys.tokenBalance(userId || ''),
     queryFn: () => getTokenBalance(userId!),
     enabled: !!userId,
-    staleTime: 3 * 60 * 1000, // 3 minutes - token balance changes when booking/canceling
+    staleTime: 30 * 60 * 1000, // 30 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes - keep balance cached longer
     // Uses global retry logic from providers.tsx (max 2 retries, circuit breaker)
   })
@@ -36,7 +36,7 @@ export function useDashboardUpcomingBookings(userId: string | undefined) {
     queryKey: dashboardKeys.upcomingBookings(userId || ''),
     queryFn: () => getUpcomingBookings(userId!),
     enabled: !!userId,
-    staleTime: 3 * 60 * 1000, // 3 minutes - bookings can change when user books/cancels
+    staleTime: 30 * 60 * 1000, // 30 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes - keep bookings cached longer
     // Uses global retry logic from providers.tsx
   })

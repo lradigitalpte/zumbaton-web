@@ -1,11 +1,20 @@
 /**
  * Bookings API Route
+ * GET /api/bookings?userId=...&filter=... - List user bookings (bypasses RLS)
  * POST /api/bookings - Create a booking (single or batch)
  * Uses server-side Supabase admin client to avoid client-side query lag
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdminClient, TABLES } from '@/lib/supabase'
+import {
+  requireQueryParam,
+  getQueryParam,
+  successJson,
+  errorJson,
+  withApiHandler,
+} from '@/lib/api-route-utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -708,4 +717,129 @@ async function handleCourseBooking(userId: string, parentClassId: string, parent
     )
   }
 }
+
+/** UserBooking shape returned by GET /api/bookings */
+interface UserBookingDto {
+  id: string
+  class_id: string
+  class_name: string
+  instructor_name: string
+  instructor_avatar?: string
+  scheduled_at: string
+  duration_minutes: number
+  location: string
+  status: string
+  tokens_used: number
+  booked_at: string
+  cancelled_at?: string
+  cancellation_reason?: string
+}
+
+/**
+ * GET /api/bookings?userId=...&filter=...
+ * List user bookings (bypasses RLS). Used by My Bookings and API-first flow.
+ */
+async function getBookingsHandler(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const r = requireQueryParam(searchParams, 'userId')
+  if (r.ok === false) return r.response
+  const userId = r.value
+  const filter = getQueryParam(searchParams, 'filter', 'all') as 'upcoming' | 'past' | 'all'
+  const now = new Date().toISOString()
+
+  const supabase = getSupabaseAdminClient()
+
+  const { data: rawBookings, error: fetchError } = await supabase
+    .from(TABLES.BOOKINGS)
+    .select(`
+      id,
+      class_id,
+      status,
+      tokens_used,
+      booked_at,
+      cancelled_at,
+      cancellation_reason,
+      classes (
+        id,
+        title,
+        instructor_id,
+        instructor_name,
+        scheduled_at,
+        duration_minutes,
+        location,
+        class_type
+      )
+    `)
+    .eq('user_id', userId)
+    .order('booked_at', { ascending: false })
+    .limit(200)
+
+  if (fetchError) {
+    console.error('[API Bookings] GET error:', fetchError)
+    return errorJson(fetchError.message, 500)
+  }
+
+  const instructorIds = new Set<string>()
+  for (const b of rawBookings || []) {
+    const c = Array.isArray(b.classes) ? b.classes[0] : b.classes
+    if (c?.instructor_id) instructorIds.add(c.instructor_id)
+  }
+
+  let instructorProfiles: Record<string, { avatar_url?: string }> = {}
+  if (instructorIds.size > 0) {
+    const { data: profiles } = await supabase
+      .from(TABLES.USER_PROFILES)
+      .select('id, avatar_url')
+      .in('id', Array.from(instructorIds))
+    if (profiles) {
+      profiles.forEach((p: { id: string; avatar_url?: string }) => {
+        instructorProfiles[p.id] = { avatar_url: p.avatar_url }
+      })
+    }
+  }
+
+  const mapBooking = (booking: any): UserBookingDto => {
+    const c = Array.isArray(booking.classes) ? booking.classes[0] : booking.classes
+    const instructorProfile = c?.instructor_id ? instructorProfiles[c.instructor_id] : null
+    let class_name = 'Unknown Class'
+    if (c) {
+      if (c.title) class_name = c.title
+      else if (c.class_type) class_name = `${String(c.class_type).charAt(0).toUpperCase()}${String(c.class_type).slice(1)} Class`
+    } else class_name = 'Class No Longer Available'
+
+    return {
+      id: booking.id,
+      class_id: booking.class_id,
+      class_name,
+      instructor_name: c?.instructor_name || 'TBA',
+      instructor_avatar: instructorProfile?.avatar_url,
+      scheduled_at: c?.scheduled_at || booking.booked_at,
+      duration_minutes: c?.duration_minutes ?? 60,
+      location: c?.location || 'Studio',
+      status: booking.status,
+      tokens_used: booking.tokens_used ?? 0,
+      booked_at: booking.booked_at,
+      cancelled_at: booking.cancelled_at,
+      cancellation_reason: booking.cancellation_reason,
+    }
+  }
+
+  let bookings: UserBookingDto[] = (rawBookings || []).map(mapBooking)
+
+  if (filter === 'upcoming') {
+    bookings = bookings.filter(
+      (b) => new Date(b.scheduled_at) > new Date(now) && b.status === 'confirmed'
+    )
+  } else if (filter === 'past') {
+    bookings = bookings.filter(
+      (b) =>
+        new Date(b.scheduled_at) <= new Date(now) ||
+        ['attended', 'no_show', 'cancelled', 'cancelled-late'].includes(b.status)
+    )
+  }
+
+  return successJson(bookings)
+}
+
+export const GET = withApiHandler(getBookingsHandler, 'API Bookings')
 

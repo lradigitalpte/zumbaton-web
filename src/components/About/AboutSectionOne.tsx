@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import WhatsAppLeadModal from "@/components/WhatsApp/WhatsAppLeadModal";
-
+import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
 
 const AboutSectionOne = () => {
+  const { openWhatsAppModal } = useWhatsAppModal();
   const experienceRef = useRef(null);
   const image1Ref = useRef(null);
   const image2Ref = useRef(null);
@@ -14,7 +14,6 @@ const AboutSectionOne = () => {
   const headingRef = useRef(null);
   const textRef = useRef(null);
   const buttonRef = useRef(null);
-  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
 
   const experienceInView = useInView(experienceRef, { once: true, margin: "-50px" });
   const image1InView = useInView(image1Ref, { once: true, margin: "-50px" });
@@ -147,7 +146,7 @@ const AboutSectionOne = () => {
               transition={{ duration: 0.6, delay: 0.4 }}
             >
               <button
-                onClick={() => setShowWhatsAppModal(true)}
+                onClick={openWhatsAppModal}
                 className="inline-block px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-white uppercase bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-all duration-300 rounded-none"
               >
                 <span>Join Now</span>
@@ -200,12 +199,6 @@ const AboutSectionOne = () => {
           />
         </div>
       </div>
-
-      {/* WhatsApp Lead Modal */}
-      <WhatsAppLeadModal
-        isOpen={showWhatsAppModal}
-        onClose={() => setShowWhatsAppModal(false)}
-      />
     </section>
   );
 };
