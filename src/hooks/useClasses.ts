@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getUpcomingClasses, bookClass, cancelBooking, leaveWaitlist, type ClassWithAvailability } from '@/lib/classes-queries'
 import { useToast } from '@/components/Toast'
 import { handleApiResponse, handleBatchResponse, handleMutationError } from '@/lib/toast-helper'
+import { getAdminApiUrl } from '@/lib/admin-api-url'
 
 // Re-export type for convenience
 export type { ClassWithAvailability }
@@ -193,7 +194,7 @@ export function useBookBatchClasses() {
         return result.data
       } catch (error) {
         // Fallback to admin API if local API fails
-        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+        const adminApiUrl = getAdminApiUrl()
         try {
           const result = await apiFetchJson<{
             success: boolean;

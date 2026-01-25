@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { apiFetchJson } from '@/lib/api-fetch'
+import { getAdminApiUrl } from '@/lib/admin-api-url'
 
 interface FormData {
   fullNameNric: string
@@ -62,7 +63,7 @@ export default function RegistrationFormPage() {
   const fetchFormData = async () => {
     try {
       setLoading(true)
-      const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3001'
+      const adminApiUrl = getAdminApiUrl()
       
       const response = await fetch(`${adminApiUrl}/api/registration-form/${token}`)
       const result = await response.json()
@@ -225,7 +226,7 @@ export default function RegistrationFormPage() {
       setSubmitting(true)
       setError('')
 
-      const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3001'
+      const adminApiUrl = getAdminApiUrl()
       
       const response = await fetch(`${adminApiUrl}/api/registration-form/${token}`, {
         method: 'POST',

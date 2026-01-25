@@ -6,6 +6,7 @@ import type { UserResponse, SignInResponse, SignUpResponse, SignInRequest, SignU
 import { ApiResponse } from '@/lib/api-error'
 import type { User } from '@supabase/supabase-js'
 import { isSessionValid } from '@/lib/session'
+import { getAdminApiUrl } from '@/lib/admin-api-url'
 
 const AUTH_TIMEOUT = 15000 // 15 seconds max for auth check (increased for production)
 const SIGN_IN_TIMEOUT = 15000 // 15 seconds max for sign-in operation
@@ -624,7 +625,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           // Send welcome notification via admin API (in-app notification)
           try {
-            const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+            const adminApiUrl = getAdminApiUrl()
             const notificationUrl = adminApiUrl.endsWith('/api') 
               ? `${adminApiUrl}/notifications/welcome`
               : `${adminApiUrl}/api/notifications/welcome`
