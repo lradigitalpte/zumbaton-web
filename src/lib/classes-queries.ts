@@ -6,6 +6,7 @@
 import { getSupabaseClient, TABLES } from './supabase'
 import { getTokenBalance } from './dashboard-queries'
 import { getBookingSettings, type BookingSettings } from './booking-settings'
+import { getAdminApiUrl } from './admin-api-url'
 
 export interface InstructorInfo {
   id: string
@@ -948,9 +949,7 @@ export async function cancelBooking(
   penalty?: boolean
 }> {
   // Use admin API for cancellations to ensure notifications are triggered
-  const adminApiUrlRaw = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-  // Normalize admin API base URL to avoid double '/api' when environment already includes it
-  const adminApiUrl = adminApiUrlRaw.replace(/\/api\/?$/, '').replace(/\/$/, '')
+  const adminApiUrl = getAdminApiUrl().replace(/\/api\/?$/, '').replace(/\/$/, '')
   try {
     // Use centralized API fetch with automatic token refresh
     const { apiFetchJson } = await import('@/lib/api-fetch')

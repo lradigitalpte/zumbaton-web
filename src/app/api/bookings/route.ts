@@ -15,6 +15,7 @@ import {
   errorJson,
   withApiHandler,
 } from '@/lib/api-route-utils'
+import { getAdminApiUrl } from '@/lib/admin-api-url'
 
 export const dynamic = 'force-dynamic'
 
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest) {
         )
       }
       // Batch booking - delegate to admin API for now (complex logic)
-      const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+      const adminApiUrl = getAdminApiUrl()
       
       try {
         const response = await fetch(`${adminApiUrl}/api/bookings`, {
