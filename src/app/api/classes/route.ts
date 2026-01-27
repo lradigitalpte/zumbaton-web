@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
         description,
         class_type,
         level,
+        age_group,
         instructor_id,
         instructor_name,
         scheduled_at,
@@ -93,6 +94,10 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('[API Classes] Error fetching classes:', error)
+      // If error mentions age_group column doesn't exist, migration hasn't been run
+      if (error.message?.includes('age_group') || error.message?.includes('column')) {
+        console.warn('[API Classes] age_group column may not exist. Please run migration: 20260127_add_age_group_to_classes.sql')
+      }
       return NextResponse.json(
         { 
           success: false, 

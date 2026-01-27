@@ -4,6 +4,8 @@ import { useState, useMemo, useEffect } from "react";
 import { useAvailablePackages } from "@/hooks/usePackages";
 import PaymentModal from "@/components/Payment/PaymentModal";
 import { useAuth } from "@/context/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
+import { getUserType } from "@/lib/user-age-utils";
 
 interface Package {
   id: string;
@@ -21,7 +23,32 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
   const { data: adultPackages = [], isLoading: isLoadingAdults } = useAvailablePackages('adults');
   const { data: kidsPackages = [], isLoading: isLoadingKids } = useAvailablePackages('kids');
   const { user } = useAuth();
+  const { data: profile } = useProfile();
   const isLoading = isLoadingAdults || isLoadingKids;
+  
+  // Determine user type based on age
+  const userType = useMemo(() => {
+    if (!profile?.dateOfBirth) {
+      return null // Cannot determine - show all packages
+    }
+    return getUserType(profile.dateOfBirth)
+  }, [profile?.dateOfBirth]);
+  
+  // Filter packages based on user type
+  // Adults can only see adult packages, kids can only see kid packages
+  const displayAdultPackages = useMemo(() => {
+    if (userType === null) {
+      return adultPackages // Show all if age cannot be determined
+    }
+    return userType === 'adult' ? adultPackages : []
+  }, [adultPackages, userType]);
+  
+  const displayKidsPackages = useMemo(() => {
+    if (userType === null) {
+      return kidsPackages // Show all if age cannot be determined
+    }
+    return userType === 'kid' ? kidsPackages : []
+  }, [kidsPackages, userType]);
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [promo, setPromo] = useState(initialPromo || null);
@@ -99,18 +126,20 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
 
   // Filter out trial package if user has already purchased it
   const filteredAdultPackages = useMemo(() => {
-    if (!hasPurchasedTrial || !trialPackageId) {
-      return adultPackages;
+    let packages = displayAdultPackages;
+    if (hasPurchasedTrial && trialPackageId) {
+      packages = packages.filter(pkg => pkg.id !== trialPackageId);
     }
-    return adultPackages.filter(pkg => pkg.id !== trialPackageId);
-  }, [adultPackages, hasPurchasedTrial, trialPackageId]);
+    return packages;
+  }, [displayAdultPackages, hasPurchasedTrial, trialPackageId]);
 
   const filteredKidsPackages = useMemo(() => {
-    if (!hasPurchasedTrial || !trialPackageId) {
-      return kidsPackages;
+    let packages = displayKidsPackages;
+    if (hasPurchasedTrial && trialPackageId) {
+      packages = packages.filter(pkg => pkg.id !== trialPackageId);
     }
-    return kidsPackages.filter(pkg => pkg.id !== trialPackageId);
-  }, [kidsPackages, hasPurchasedTrial, trialPackageId]);
+    return packages;
+  }, [displayKidsPackages, hasPurchasedTrial, trialPackageId]);
 
   // Decide which single package should display the early-bird badge (one badge only)
   const preferredBadgePackageId = useMemo(() => {

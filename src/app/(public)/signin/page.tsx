@@ -13,7 +13,7 @@ function SigninPageContent() {
   const { openWhatsAppModal } = useWhatsAppModal();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { signIn, signInWithGoogle, isLoading: authLoading, isAuthenticated } = useAuth();
+  const { signIn, signInWithGoogle, isLoading: authLoading, isAuthenticated, user } = useAuth();
   const toast = useToast();
   
   const [email, setEmail] = useState("");
@@ -53,6 +53,26 @@ function SigninPageContent() {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (!error && session?.user) {
+          // Check if user is active before redirecting
+          try {
+            const { data: profile } = await supabase
+              .from('user_profiles')
+              .select('is_active')
+              .eq('id', session.user.id)
+              .single();
+
+            // If user is deactivated, sign them out and don't redirect
+            if (profile && profile.is_active === false) {
+              console.warn('[Signin] User account is deactivated, signing out...');
+              await supabase.auth.signOut();
+              setIsCheckingSession(false);
+              return;
+            }
+          } catch (profileError) {
+            // If profile check fails, allow redirect (fail open)
+            console.warn('[Signin] Failed to check user active status:', profileError);
+          }
+
           console.log('[Signin] Existing session found, redirecting to dashboard');
           handleRedirect();
           setIsCheckingSession(false);
@@ -69,13 +89,27 @@ function SigninPageContent() {
 
     // Case 2: User just authenticated (pendingRedirect flag)
     if (pendingRedirect && isAuthenticated) {
-      handleRedirect();
+      // Check if user is active before redirecting
+      if (user && user.id) {
+        // User is authenticated and active (auth context already checked isActive)
+        handleRedirect();
+      } else if (user === null) {
+        // User is null (deactivated) - don't redirect, sign out will be handled by auth context
+        console.warn('[Signin] User is deactivated, not redirecting');
+      }
       return;
     }
 
     // Case 3: User is already authenticated (e.g., navigating back to signin)
     if (!authLoading && !isCheckingSession && isAuthenticated) {
-      handleRedirect();
+      // Check if user is active before redirecting
+      if (user && user.id) {
+        // User is authenticated and active (auth context already checked isActive)
+        handleRedirect();
+      } else if (user === null) {
+        // User is null (deactivated) - don't redirect, sign out will be handled by auth context
+        console.warn('[Signin] User is deactivated, not redirecting');
+      }
       return;
     }
 
@@ -83,7 +117,7 @@ function SigninPageContent() {
     if (isCheckingSession) {
       checkExistingSession();
     }
-  }, [router, pendingRedirect, isAuthenticated, authLoading, isCheckingSession]);
+  }, [router, pendingRedirect, isAuthenticated, authLoading, isCheckingSession, user]);
 
   const handleGoogleSignIn = async () => {
     try {

@@ -34,6 +34,7 @@ export interface ClassWithAvailability {
   token_cost: number
   class_type: string
   level: string
+  age_group?: 'adult' | 'kid' | 'all' // Target audience: adult (13+), kid (<13), or all (both)
   booked_count: number
   tokens_required: number
   difficulty_level: string
@@ -72,12 +73,7 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
     }
   })
 
-  console.log('[Classes] Collecting instructor data:', {
-    instructorIds: Array.from(instructorIds),
-    instructorNames: Array.from(instructorNames),
-    totalClasses: classes.length
-  })
-
+  // Collect instructor data
   // Fetch instructor profiles for avatars
   const instructorProfiles: Record<string, { id: string; name: string; avatar_url: string | null }> = {}
   const instructorProfilesByName: Record<string, { id: string; name: string; avatar_url: string | null }> = {}
@@ -112,10 +108,6 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
                 name: profile.name,
                 avatar_url: profile.avatar_url,
               }
-            })
-            console.log('[Classes] Fetched', result.data.length, 'instructor profiles via API')
-            result.data.forEach((profile: any) => {
-              console.log(`[Classes] Instructor profile: ${profile.name} (${profile.id}) - avatar: ${profile.avatar_url || 'none'}`)
             })
           }
         }
@@ -280,7 +272,6 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
           avatar: profile?.avatar_url || null,
           initials: getInitials(name),
         }
-        console.log(`[Classes] Instructor data for "${name}":`, instructorData)
         instructors.push(instructorData)
       })
     } else if (classItem.instructor_id && instructorProfiles[classItem.instructor_id]) {
@@ -369,7 +360,7 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
       .from(TABLES.BOOKINGS)
       .select('class_id, status')
       .in('class_id', allClassIds)
-      .eq('status', 'confirmed')
+      .in('status', ['confirmed', 'attended']) // Count both confirmed and attended bookings
     
     if (bookingError) {
       console.error('Error fetching booking counts:', {
@@ -381,7 +372,7 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
         errorString: JSON.stringify(bookingError, null, 2),
       })
     } else {
-      // Count bookings per class
+      // Count bookings per class (both confirmed and attended count as booked spots)
       bookings?.forEach((booking: any) => {
         bookingCounts[booking.class_id] = (bookingCounts[booking.class_id] || 0) + 1
       })
@@ -401,6 +392,7 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
       booked_count: bookedCount,
       tokens_required: classItem.token_cost,
       difficulty_level: classItem.level === 'all_levels' ? 'Beginner' : (classItem.level || 'all_levels').charAt(0).toUpperCase() + (classItem.level || 'all_levels').slice(1),
+      age_group: classItem.age_group || 'all', // Default to 'all' if not set
       room_id: classItem.room_id || null,
       room_name: room?.name || classItem.location || null,
       category_id: classItem.category_id || null,
@@ -421,6 +413,7 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
       booked_count: bookedCount,
       tokens_required: classItem.token_cost,
       difficulty_level: classItem.level === 'all_levels' ? 'Beginner' : (classItem.level || 'all_levels').charAt(0).toUpperCase() + (classItem.level || 'all_levels').slice(1),
+      age_group: classItem.age_group || 'all', // Default to 'all' if not set
       room_id: classItem.room_id || null,
       room_name: room?.name || classItem.location || null,
       category_id: classItem.category_id || null,
@@ -433,14 +426,11 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
   try {
     const grouped = groupRecurringClasses(transformedParents, transformedChildren, bookingCounts)
     if (grouped.length === 0 && transformedParents.length > 0) {
-      console.log('Grouping returned empty, returning', transformedParents.length, 'transformed parents')
       return transformedParents
     }
-    console.log('Grouping returned', grouped.length, 'classes')
     return grouped
   } catch (error) {
     console.error('Error grouping classes:', error)
-    console.log('Fallback: returning', transformedParents.length, 'transformed parents')
     return transformedParents
   }
 }
@@ -480,7 +470,6 @@ export async function getUpcomingClasses(filters?: {
       if (response.ok) {
         const result = await response.json()
         if (result.success && result.data && Array.isArray(result.data)) {
-          console.log(`📚 Fetched ${result.data.length} classes via API (bypassing RLS for faster queries)`)
           // API returns classes data, but we still need to process it through the same grouping logic
           // as the direct query path to ensure recurring/course classes are grouped correctly
           const classes = result.data as any[]
@@ -512,6 +501,7 @@ export async function getUpcomingClasses(filters?: {
       description,
       class_type,
       level,
+      age_group,
         instructor_id,
       instructor_name,
       scheduled_at,
@@ -598,11 +588,8 @@ export async function getUpcomingClasses(filters?: {
   }
 
     if (!classes || classes.length === 0) {
-      console.log('No classes found in database')
       return []
     }
-
-    console.log(`Fetched ${classes.length} classes from database`)
 
     // Process and group classes using the shared helper function
     return await processAndGroupClasses(classes)
@@ -665,6 +652,7 @@ function groupRecurringClasses(
       token_cost: parent.token_cost,
       class_type: parent.class_type,
       level: parent.level,
+      age_group: parent.age_group || 'all', // Include age_group
       booked_count: bookedCount,
       tokens_required: parent.token_cost,
       difficulty_level: parent.level === 'all_levels' ? 'Beginner' : parent.level.charAt(0).toUpperCase() + parent.level.slice(1),
@@ -773,6 +761,7 @@ function groupRecurringClasses(
         description: firstInstance.description,
         instructor_id: firstInstance.instructor_id,
         instructor_name: firstInstance.instructor_name,
+        age_group: firstInstance.age_group || 'all', // Include age_group
         instructors: firstInstance.instructors || [],
         scheduled_at: nextUpcoming.scheduled_at,
         duration_minutes: firstInstance.duration_minutes,
@@ -827,9 +816,6 @@ export async function bookClass(userId: string, classId: string): Promise<{
   try {
     const { apiFetchJson } = await import('@/lib/api-fetch')
     
-    const startTime = Date.now()
-    console.log('[BookClass] Calling API endpoint: /api/bookings', { userId, classId })
-    
     const result = await apiFetchJson<{
       success: boolean;
       data?: any;
@@ -842,9 +828,6 @@ export async function bookClass(userId: string, classId: string): Promise<{
       }),
       requireAuth: true,
     })
-    
-    const duration = Date.now() - startTime
-    console.log(`[BookClass] API response received in ${duration}ms:`, result)
 
     if (!result.success) {
       return {
@@ -984,8 +967,6 @@ export async function cancelBooking(
     }
   } catch (error) {
     console.error('Error cancelling booking via admin API:', error)
-    // Fall back to local cancellation if admin API fails
-    console.log('Falling back to local cancellation...')
   }
 
   // FALLBACK: Local cancellation (if admin API is unavailable)

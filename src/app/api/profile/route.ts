@@ -5,47 +5,15 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getAuthenticatedUser } from '@/lib/auth-utils'
 
 export const dynamic = 'force-dynamic'
-
-// Initialize Supabase client for auth
-const supabaseAuth = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-  {
-    auth: {
-      persistSession: false,
-    },
-  }
-)
 
 // Initialize Supabase admin client
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 )
-
-/**
- * Get authenticated user from Authorization header
- */
-async function getAuthenticatedUser(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader) {
-    return null
-  }
-
-  const token = authHeader.replace('Bearer ', '')
-  const { data: { user }, error } = await supabaseAuth.auth.getUser(token)
-  
-  if (error || !user) {
-    return null
-  }
-
-  return {
-    id: user.id,
-    email: user.email || '',
-  }
-}
 
 /**
  * GET /api/profile - Get current user's profile

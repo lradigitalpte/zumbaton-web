@@ -7,6 +7,7 @@ import { ApiResponse } from '@/lib/api-error'
 import type { User } from '@supabase/supabase-js'
 import { isSessionValid } from '@/lib/session'
 import { getAdminApiUrl } from '@/lib/admin-api-url'
+import { useQueryClient } from '@tanstack/react-query'
 
 const AUTH_TIMEOUT = 15000 // 15 seconds max for auth check (increased for production)
 const SIGN_IN_TIMEOUT = 15000 // 15 seconds max for sign-in operation
@@ -49,7 +50,7 @@ async function mapSupabaseUserToUserResponse(supabaseUser: User | null): Promise
     // Fetch user profile from database
     const { data: profile, error } = await getSupabaseClient()
       .from('user_profiles')
-      .select('id, email, name, role, created_at, updated_at')
+      .select('id, email, name, role, is_active, created_at, updated_at')
       .eq('id', supabaseUser.id)
       .single()
 
@@ -63,6 +64,12 @@ async function mapSupabaseUserToUserResponse(supabaseUser: User | null): Promise
         createdAt: supabaseUser.created_at,
         updatedAt: supabaseUser.updated_at || supabaseUser.created_at,
       }
+    }
+
+    // Check if user is active - deactivated users cannot log in
+    if (profile.is_active === false) {
+      console.warn('[Auth] User account is deactivated:', profile.email)
+      return null // Return null to prevent login
     }
 
     return {
@@ -94,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loadingTooLong, setLoadingTooLong] = useState(false)
   const hasInitializedRef = useRef(false)
   const isInitializingRef = useRef(false)
+  const queryClient = useQueryClient()
 
   useEffect(() => {
     // Prevent multiple initializations
@@ -270,6 +278,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ).then((profileUser) => {
           if (profileUser) {
             setUser(profileUser)
+          } else {
+            // If profileUser is null, user might be deactivated - sign them out
+            console.warn('[Auth] User profile returned null, signing out...')
+            supabase.auth.signOut()
+            setUser(null)
+            setIsAuthenticated(false)
           }
         }).catch((err) => {
           console.warn('[Auth] Background profile fetch failed:', err)
@@ -434,12 +448,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         })
 
+        // Check if user is deactivated - if mapping returned null, user is inactive
         if (!userResponse) {
+          // Sign out immediately
+          await supabase.auth.signOut()
           return {
             success: false as const,
             error: {
-              code: 'AUTHENTICATION_ERROR' as const,
-              message: 'Failed to load user profile',
+              code: 'AUTHORIZATION_ERROR' as const,
+              message: 'Your account has been deactivated. Please contact support for assistance.',
               timestamp: new Date().toISOString(),
             },
             timestamp: new Date().toISOString(),
@@ -750,6 +767,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clear local state immediately (don't wait for API)
     clearAuth()
     
+    // Clear React Query cache to remove all cached data
+    try {
+      queryClient.clear()
+      console.log('[Auth] Cleared React Query cache on sign out')
+    } catch (queryError) {
+      // Ignore query client errors - not critical
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[Auth] Failed to clear React Query cache:', queryError)
+      }
+    }
+    
     try {
       // Try to call logout API endpoint with timeout protection
       if (typeof window !== 'undefined') {
@@ -817,11 +845,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
     
-    // Redirect to signin page after a short delay to ensure state is cleared
+    // Redirect to signin page immediately to prevent showing cached data
     if (typeof window !== 'undefined') {
-      setTimeout(() => {
-        window.location.href = '/signin'
-      }, 100)
+      window.location.href = '/signin'
     }
   }
 

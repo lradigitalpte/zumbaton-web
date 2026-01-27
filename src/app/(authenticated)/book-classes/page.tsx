@@ -586,6 +586,16 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
                               {classItem.recurrence_type === 'course' ? 'Course' : 'Series'}
                             </span>
                           )}
+                          {/* Show age group badge */}
+                          {classItem.age_group && classItem.age_group !== 'all' && (
+                            <span className={`px-2 xl:px-2.5 py-0.5 xl:py-1 rounded-lg text-[10px] xl:text-xs font-semibold ${
+                              classItem.age_group === 'adult'
+                                ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800'
+                                : 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400 border border-pink-200 dark:border-pink-800'
+                            }`}>
+                              {classItem.age_group === 'adult' ? 'Adults' : 'Kids'}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-1.5 xl:gap-2 flex-wrap">
                           <span className={`px-2 xl:px-2.5 py-0.5 xl:py-1 rounded-lg text-[10px] xl:text-xs font-semibold ${spotsInfo.bg} ${spotsInfo.color}`}>
@@ -602,7 +612,7 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs xl:text-sm text-body-color dark:text-gray-400 mb-1 xl:mb-2">
+                        <p className="text-xs xl:text-sm text-body-color dark:text-gray-400 mb-1 xl:mb-2 truncate" title={classItem.instructor_name}>
                           {classItem.instructor_name}
                         </p>
                       </div>
@@ -619,15 +629,6 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
                             avatar: null,
                             initials: classItem.instructor_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || '??',
                           }]).slice(0, 3).map((instructor: any, idx: number) => {
-                            // Debug logging
-                            if (idx === 0) {
-                              console.log(`[Class Card] Instructor data for "${classItem.name}":`, {
-                                instructor,
-                                hasAvatar: !!instructor.avatar,
-                                avatarUrl: instructor.avatar,
-                                instructorsArray: classItem.instructors,
-                              })
-                            }
                             return (
                             <div
                               key={instructor.id || idx}

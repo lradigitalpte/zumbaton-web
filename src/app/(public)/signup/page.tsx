@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Sparkles, Gift } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/Toast";
 
@@ -23,6 +23,7 @@ const SignupForm = () => {
   const [passwordError, setPasswordError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [earlyBirdData, setEarlyBirdData] = useState<{ remaining: number; isAvailable: boolean; discountPercent: number; validMonths: number } | null>(null);
 
   // Check for referral code in URL
   useEffect(() => {
@@ -31,6 +32,27 @@ const SignupForm = () => {
       setReferralCode(refCode.toUpperCase());
     }
   }, [searchParams]);
+
+  // Fetch early bird availability
+  useEffect(() => {
+    const fetchEarlyBirdAvailability = async () => {
+      try {
+        const response = await fetch('/api/promos/availability');
+        const result = await response.json();
+        if (result.success) {
+          setEarlyBirdData({
+            remaining: result.data.remaining,
+            isAvailable: result.data.isAvailable,
+            discountPercent: result.data.discountPercent,
+            validMonths: result.data.validMonths
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch early bird availability:', error);
+      }
+    };
+    fetchEarlyBirdAvailability();
+  }, []);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -106,6 +128,21 @@ const SignupForm = () => {
               <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col lg:flex-row">
                 {/* Left Side - Sign Up Form */}
                 <div className="w-full lg:w-1/2 p-8 sm:p-10 lg:p-12">
+                  {/* Early Bird Banner */}
+                  {earlyBirdData?.isAvailable && (
+                    <div className="mb-4 p-2.5 sm:p-3 bg-gradient-to-r from-green-600 via-green-500 to-green-600 rounded-lg shadow-md border border-green-400">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <Gift className="w-4 h-4 sm:w-5 sm:h-5 text-white flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] xs:text-xs sm:text-sm font-semibold text-white leading-tight break-words">
+                            🎉 Early Bird: <span className="font-bold">{earlyBirdData.remaining}</span> spots left
+                            <span className="hidden sm:inline"> - Get <span className="font-bold">{earlyBirdData.discountPercent}% off</span> for {earlyBirdData.validMonths} months!</span>
+                            <span className="sm:hidden"> - <span className="font-bold">{earlyBirdData.discountPercent}% off</span>!</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <h3 className="mb-6 text-3xl font-bold text-gray-900 sm:text-4xl dark:text-white">
                     Signup
                   </h3>
@@ -296,6 +333,12 @@ const SignupForm = () => {
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       Get 8% off your first package purchase when you use a referral code
                     </p>
+                    {earlyBirdData?.isAvailable && (
+                      <p className="mt-2 text-xs font-semibold text-green-600 dark:text-green-500 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        Early Bird: {earlyBirdData.discountPercent}% off ({earlyBirdData.remaining} spots left)
+                      </p>
+                    )}
                   </div>
                   <div className="mb-6 flex">
                     <label
@@ -365,9 +408,20 @@ const SignupForm = () => {
                     <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
                       Start Your Journey!
                     </h2>
-                    <p className="text-white/90 text-base sm:text-lg mb-8 max-w-md">
+                    <p className="text-white/90 text-base sm:text-lg mb-6 max-w-md">
                       Join our vibrant community and experience the power of dance fitness. Transform your body and mind with Zumbaton.
                     </p>
+                    {earlyBirdData?.isAvailable && (
+                      <div className="mb-4 p-3 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Sparkles className="w-4 h-4 text-green-300" />
+                          <h3 className="font-bold text-sm sm:text-base">Early Bird Special</h3>
+                        </div>
+                        <p className="text-xs sm:text-sm text-white/90">
+                          {earlyBirdData.remaining} spots left - {earlyBirdData.discountPercent}% off for {earlyBirdData.validMonths} months
+                        </p>
+                      </div>
+                    )}
                     <Link
                       href="/signin"
                       className="inline-block bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:scale-105 border border-white/30"

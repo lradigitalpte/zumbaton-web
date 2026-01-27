@@ -81,9 +81,23 @@ const ClassDetailsSlidePanel = ({
         {/* Class Info */}
         <div>
           <div className="flex items-start justify-between mb-3">
-            <h3 className="text-2xl font-bold text-dark dark:text-white">
-              {classItem.name}
-            </h3>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="text-2xl font-bold text-dark dark:text-white">
+                  {classItem.name}
+                </h3>
+                {/* Show age group badge */}
+                {classItem.age_group && classItem.age_group !== 'all' && (
+                  <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+                    classItem.age_group === 'adult'
+                      ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800'
+                      : 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400 border border-pink-200 dark:border-pink-800'
+                  }`}>
+                    {classItem.age_group === 'adult' ? 'Adults Only' : 'Kids Only'}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
 
           {classItem.description && (
