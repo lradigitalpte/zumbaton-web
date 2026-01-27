@@ -14,6 +14,7 @@ export interface RegistrationFormData {
   dateOfBirth: string
   email: string
   phone: string
+  gender: string
   bloodGroup: string
   emergencyContact: string
   emergencyContactPhone: string
@@ -108,6 +109,7 @@ export async function generateRegistrationFormPDF(formData: RegistrationFormData
       y = addField(doc, y, 'Date of Birth:', new Date(formData.dateOfBirth).toLocaleDateString('en-SG'))
       y = addField(doc, y, 'Email Address:', formData.email)
       y = addField(doc, y, 'Handphone Number:', formData.phone)
+      y = addField(doc, y, 'Gender:', formData.gender)
       y = addField(doc, y, 'Blood Group:', formData.bloodGroup)
       y += 8
 

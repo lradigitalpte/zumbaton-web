@@ -16,6 +16,7 @@ import {
   withApiHandler,
 } from '@/lib/api-route-utils'
 import { getAdminApiUrl } from '@/lib/admin-api-url'
+import { getUserType, isClassTypeCompatible, isPackageCompatibleWithClass } from '@/lib/user-age-utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -54,6 +55,7 @@ function isBookingWindowOpen() {
 
 /**
  * Get authenticated user from Authorization header
+ * Also checks if user is active - deactivated users cannot access APIs
  */
 async function getAuthenticatedUser(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -66,6 +68,23 @@ async function getAuthenticatedUser(request: NextRequest) {
   
   if (error || !user) {
     return null
+  }
+
+  // Check if user is active - deactivated users cannot access APIs
+  try {
+    const { data: profile } = await supabaseAdmin
+      .from('user_profiles')
+      .select('is_active')
+      .eq('id', user.id)
+      .single()
+
+    if (profile && profile.is_active === false) {
+      console.warn('[API Bookings] User account is deactivated:', user.email)
+      return null // Return null to reject the request
+    }
+  } catch (profileError) {
+    // If profile check fails, allow the request (fail open for backwards compatibility)
+    console.warn('[API Bookings] Failed to check user active status:', profileError)
   }
 
   return user
@@ -197,6 +216,37 @@ async function handleSingleBooking(userId: string, classId: string) {
       )
     }
 
+    // 1.25. Validate class type matches user type (adult/kid restriction)
+    try {
+      // Get user profile to check date of birth
+      const { data: userProfile } = await supabaseAdmin
+        .from('user_profiles')
+        .select('date_of_birth')
+        .eq('id', userId)
+        .single()
+
+      const userType = getUserType(userProfile?.date_of_birth)
+      const classAgeGroup = classData.age_group || 'all' // Use age_group field, default to 'all'
+
+      if (!isClassTypeCompatible(classAgeGroup, userType)) {
+        const userTypeLabel = userType === 'adult' ? 'adults' : 'children'
+        const classTypeLabel = classAgeGroup === 'adult' ? 'adult' : classAgeGroup === 'kid' ? 'kids' : 'all'
+        
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: { 
+              message: `This class is for ${classTypeLabel} only. ${userTypeLabel === 'adults' ? 'Adults' : 'Children'} cannot book ${classTypeLabel} classes.` 
+            } 
+          },
+          { status: 400 }
+        )
+      }
+    } catch (validationError) {
+      console.error('[Bookings] Error validating class type:', validationError)
+      // Continue with booking if validation fails (fail open for backwards compatibility)
+    }
+
     // 1.5. Check if this is a course parent - courses book ALL sessions at once
     // Recurring classes book individual sessions, courses book all sessions
     const isCourseParent = classData.recurrence_type === 'course' && !classData.parent_class_id
@@ -287,10 +337,10 @@ async function handleSingleBooking(userId: string, classId: string) {
       }
     }
 
-    // 5. Get user's available tokens
+    // 5. Get user's available tokens with package type for age group validation
     const { data: userPackages } = await supabaseAdmin
       .from('user_packages')
-      .select('id, tokens_remaining, tokens_held')
+      .select('id, tokens_remaining, tokens_held, package:packages(package_type)')
       .eq('user_id', userId)
       .eq('status', 'active')
       .gt('expires_at', new Date().toISOString())
@@ -338,15 +388,52 @@ async function handleSingleBooking(userId: string, classId: string) {
       )
     }
 
-    // 6. Find package with enough available tokens
-    const selectedPackage = userPackages?.find(pkg => {
+    // 6. Find package with enough available tokens AND compatible package type
+    // Validate that package type matches class age group
+    const classAgeGroup = classData.age_group || 'all'
+    
+    let selectedPackage = userPackages?.find(pkg => {
       const remaining = pkg.tokens_remaining || 0
       const held = pkg.tokens_held || 0
       const available = Math.max(0, remaining - held)
-      return available >= tokenCost
+      
+      // Check if package has enough tokens
+      if (available < tokenCost) {
+        return false
+      }
+
+      // Check if package type is compatible with class age group
+      try {
+        const packageType = (pkg.package as any)?.package_type || 'adult'
+        return isPackageCompatibleWithClass(packageType, classAgeGroup)
+      } catch (validationError) {
+        console.error('[Bookings] Error validating package compatibility:', validationError)
+        // If validation fails, allow the package (fail open)
+        return true
+      }
     })
 
     if (!selectedPackage) {
+      // Check if user has tokens but wrong package type
+      const hasTokens = userPackages?.some(pkg => {
+        const remaining = pkg.tokens_remaining || 0
+        const held = pkg.tokens_held || 0
+        return Math.max(0, remaining - held) >= tokenCost
+      })
+
+      if (hasTokens) {
+        const classTypeLabel = classAgeGroup === 'adult' ? 'adult' : classAgeGroup === 'kid' ? 'kids' : 'all'
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: { 
+              message: `You have tokens, but they are not valid for ${classTypeLabel} classes. Please purchase the correct package type.` 
+            } 
+          },
+          { status: 400 }
+        )
+      }
+
       return NextResponse.json(
         { success: false, error: { message: 'No package has enough available tokens' } },
         { status: 400 }
@@ -486,6 +573,37 @@ async function handleCourseBooking(userId: string, parentClassId: string, parent
   try {
     const now = new Date()
 
+    // Validate class type matches user type (adult/kid restriction)
+    try {
+      // Get user profile to check date of birth
+      const { data: userProfile } = await supabaseAdmin
+        .from('user_profiles')
+        .select('date_of_birth')
+        .eq('id', userId)
+        .single()
+
+      const userType = getUserType(userProfile?.date_of_birth)
+      const classAgeGroup = parentClassData.age_group || 'all' // Use age_group field, default to 'all'
+
+      if (!isClassTypeCompatible(classAgeGroup, userType)) {
+        const userTypeLabel = userType === 'adult' ? 'adults' : 'children'
+        const classTypeLabel = classAgeGroup === 'adult' ? 'adult' : classAgeGroup === 'kid' ? 'kids' : 'all'
+        
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: { 
+              message: `This course is for ${classTypeLabel} only. ${userTypeLabel === 'adults' ? 'Adults' : 'Children'} cannot book ${classTypeLabel} courses.` 
+            } 
+          },
+          { status: 400 }
+        )
+      }
+    } catch (validationError) {
+      console.error('[Bookings] Error validating course class type:', validationError)
+      // Continue with booking if validation fails (fail open for backwards compatibility)
+    }
+
     // Enforce booking window for course bookings as well
     if (!isBookingWindowOpen()) {
       return NextResponse.json(
@@ -571,7 +689,7 @@ async function handleCourseBooking(userId: string, parentClassId: string, parent
     // 6. Get user's available tokens
     const { data: userPackages } = await supabaseAdmin
       .from('user_packages')
-      .select('id, tokens_remaining, tokens_held')
+      .select('id, tokens_remaining, tokens_held, package:packages(package_type)')
       .eq('user_id', userId)
       .eq('status', 'active')
       .gt('expires_at', new Date().toISOString())

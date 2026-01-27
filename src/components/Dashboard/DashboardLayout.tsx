@@ -17,11 +17,13 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user, signOut } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
+  const [isActiveChecked, setIsActiveChecked] = useState(false);
   const hasRedirectedRef = useRef(false);
+  const hasCheckedActiveRef = useRef(false);
 
   // Check if sidebar is collapsed from Sidebar component (via localStorage or state)
   useEffect(() => {
@@ -36,6 +38,68 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
+
+  // Check if user is active - deactivated users cannot access protected routes
+  useEffect(() => {
+    const checkUserActive = async () => {
+      // Skip if already checked
+      if (hasCheckedActiveRef.current) {
+        return;
+      }
+
+      // Wait for auth to load
+      if (isLoading) {
+        return;
+      }
+
+      // If not authenticated, skip active check (session check will handle redirect)
+      if (!isAuthenticated) {
+        return;
+      }
+
+      // If user is null (deactivated), sign out and redirect
+      if (!user) {
+        console.warn('[Dashboard] User is null (likely deactivated), signing out...');
+        hasCheckedActiveRef.current = true;
+        await signOut();
+        return;
+      }
+
+      // Check user active status from database
+      try {
+        const { data: profile, error } = await supabase
+          .from('user_profiles')
+          .select('is_active')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('[Dashboard] Error checking user active status:', error);
+          // On error, allow access (fail open for backwards compatibility)
+          setIsActiveChecked(true);
+          return;
+        }
+
+        // If user is deactivated, sign out and redirect
+        if (profile && profile.is_active === false) {
+          console.warn('[Dashboard] User account is deactivated, signing out...');
+          hasCheckedActiveRef.current = true;
+          await signOut();
+          return;
+        }
+
+        // User is active
+        setIsActiveChecked(true);
+        hasCheckedActiveRef.current = true;
+      } catch (error) {
+        console.error('[Dashboard] Error checking user active status:', error);
+        // On error, allow access (fail open for backwards compatibility)
+        setIsActiveChecked(true);
+      }
+    };
+
+    checkUserActive();
+  }, [isLoading, isAuthenticated, user, signOut]);
 
   // Check session directly as a fallback to avoid race conditions
   useEffect(() => {
@@ -75,8 +139,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     return () => clearTimeout(timeoutId);
   }, [isLoading, isAuthenticated, router, pathname]);
 
-  // Show loading while checking auth
-  if (isLoading || (!isAuthenticated && !sessionChecked)) {
+  // Show loading while checking auth or user active status
+  if (isLoading || (!isAuthenticated && !sessionChecked) || (isAuthenticated && !isActiveChecked)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-dark">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>

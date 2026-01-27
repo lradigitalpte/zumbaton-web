@@ -65,7 +65,7 @@ const Header = () => {
       <header
         className={`header top-0 left-0 z-40 w-full flex items-center transition-all duration-300 ${
           needsBackground
-            ? "dark:bg-gray-dark dark:shadow-sticky-dark shadow-sticky fixed z-9999 bg-white/95 backdrop-blur-sm"
+            ? "dark:bg-gray-dark dark:shadow-sticky-dark shadow-sticky fixed z-[9999] bg-white/95 backdrop-blur-sm"
             : "absolute bg-transparent pb-2 sm:pb-4"
         }`}
       >
@@ -136,25 +136,30 @@ const Header = () => {
                 {/* Mobile Menu Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 lg:hidden">
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Menu</h2>
-                  <button
-                    onClick={navbarToggleHandler}
-                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    aria-label="Close Menu"
-                  >
-                    <svg
-                      className="w-6 h-6 text-gray-600 dark:text-gray-300"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  <div className="flex items-center gap-2">
+                    <div className="lg:hidden">
+                      <ThemeToggler />
+                    </div>
+                    <button
+                      onClick={navbarToggleHandler}
+                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      aria-label="Close Menu"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
+                      <svg
+                        className="w-6 h-6 text-gray-600 dark:text-gray-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Menu Items */}
@@ -257,7 +262,7 @@ const Header = () => {
                   <ThemeToggler />
                 </div>
             </div>
-            <div className="flex lg:hidden items-center gap-2 sm:gap-3 flex-shrink-0">
+            <div className={`flex lg:hidden items-center gap-2 sm:gap-3 flex-shrink-0 transition-opacity duration-300 ${navbarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                 <Link
                   href="/signin"
                   className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-colors rounded-lg ${

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import SectionTitle from "../Common/SectionTitle";
 
 export default function Video() {
@@ -27,13 +26,10 @@ export default function Video() {
           <div className="w-full px-4">
             <div className="mx-auto max-w-[770px] overflow-hidden rounded-2xl shadow-2xl border border-white/30 bg-white/60 backdrop-blur">
               <div className="relative aspect-[16/9] items-center justify-center">
-                <Image
+                <img
                   src="/images/landing1.jfif"
                   alt="Zumba dance session"
-                  className="object-cover"
-                  fill
-                  sizes="(max-width: 770px) 100vw, 770px"
-                  priority
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/25 to-transparent" />
                 <div className="absolute top-0 right-0 flex h-full w-full items-center justify-center">

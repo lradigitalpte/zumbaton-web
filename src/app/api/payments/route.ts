@@ -124,6 +124,37 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
+    // Validate package type matches user type (adult/kid restriction)
+    try {
+      const { getUserType, isPackageTypeCompatible } = await import('@/lib/user-age-utils')
+      
+      // Get user profile to check date of birth
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('date_of_birth')
+        .eq('id', user.id)
+        .single()
+
+      const userType = getUserType(userProfile?.date_of_birth)
+      const packageType = pkg.package_type || 'adult'
+
+      if (!isPackageTypeCompatible(packageType, userType)) {
+        const userTypeLabel = userType === 'adult' ? 'adults' : 'children'
+        const packageTypeLabel = packageType === 'adult' ? 'adult' : packageType === 'kid' ? 'kids' : 'all'
+        
+        return NextResponse.json(
+          { 
+            error: 'Invalid Package', 
+            message: `This package is for ${packageTypeLabel} only. ${userTypeLabel === 'adults' ? 'Adults' : 'Children'} cannot purchase ${packageTypeLabel} packages.` 
+          },
+          { status: 400 }
+        )
+      }
+    } catch (validationError) {
+      console.error('[Payment] Error validating package type:', validationError)
+      // Continue with purchase if validation fails (fail open for backwards compatibility)
+    }
+
     // Check for available promotions and apply discount
     let finalAmountCents = pkg.price_cents
     let discountPercent = 0
