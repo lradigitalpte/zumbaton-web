@@ -289,9 +289,19 @@ export default function TrialBookingPage() {
           {/* Class Selection */}
           <div className="lg:col-span-2">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Available Classes
-              </h2>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Available Classes
+                </h2>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                  Trial class:{" "}
+                  <span className="font-semibold text-green-600 dark:text-green-400">
+                    ${classes.length > 0
+                      ? ((classes[0].trial_price_cents && classes[0].trial_price_cents > 0 ? classes[0].trial_price_cents : 100) / 100).toFixed(2)
+                      : "1.00"}
+                  </span>
+                </p>
+              </div>
               <div className="flex items-center gap-2">
                 <label htmlFor="dateFilter" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Filter by Date:
@@ -332,12 +342,6 @@ export default function TrialBookingPage() {
                   const availableSpots =
                     classItem.capacity - (classItem.booked_count || 0);
                   const isSelected = selectedClass?.id === classItem.id;
-                  // Calculate price: use trial_price_cents if available, otherwise calculate from token_cost
-                  // Default: $23 per token if no trial price set
-                  const DEFAULT_PRICE_PER_TOKEN = 23;
-                  const price = classItem.trial_price_cents
-                    ? (classItem.trial_price_cents / 100).toFixed(2)
-                    : ((classItem.token_cost || 1) * DEFAULT_PRICE_PER_TOKEN).toFixed(2);
 
                   // Get instructor avatar
                   const instructorProfile = classItem.instructor_id 
@@ -404,16 +408,12 @@ export default function TrialBookingPage() {
                             </p>
                           )}
                         </div>
-                        <div className="text-right">
-                          <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-2">
-                            ${price}
+                        {isSelected && (
+                          <div className="flex items-center gap-2 text-green-600 dark:text-green-400 font-semibold text-sm shrink-0">
+                            <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                            Selected
                           </div>
-                          {isSelected && (
-                            <div className="mt-2 text-green-600 dark:text-green-400 font-semibold text-sm">
-                              Selected
-                            </div>
-                          )}
-                        </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -508,9 +508,9 @@ export default function TrialBookingPage() {
                   </p>
                   <p className="text-lg font-bold text-green-600 dark:text-green-400 mt-2">
                     $
-                    {selectedClass.trial_price_cents
-                      ? (selectedClass.trial_price_cents / 100).toFixed(2)
-                      : ((selectedClass.token_cost || 1) * 23).toFixed(2)}
+                    {(((selectedClass.trial_price_cents && selectedClass.trial_price_cents > 0)
+                      ? selectedClass.trial_price_cents
+                      : 100) / 100).toFixed(2)}
                   </p>
                 </div>
               ) : (
@@ -711,11 +711,12 @@ function MobileBookingSheet({
     setCurrentY(0);
   };
 
-  // Calculate price
-  const DEFAULT_PRICE_PER_TOKEN = 23;
-  const price = selectedClass.trial_price_cents
-    ? (selectedClass.trial_price_cents / 100).toFixed(2)
-    : ((selectedClass.token_cost || 1) * DEFAULT_PRICE_PER_TOKEN).toFixed(2);
+  // Default $1 for now; use class trial_price_cents from DB if set
+  const defaultCents = 100;
+  const priceCents = selectedClass.trial_price_cents && selectedClass.trial_price_cents > 0
+    ? selectedClass.trial_price_cents
+    : defaultCents;
+  const price = (priceCents / 100).toFixed(2);
 
   return (
     <div className="lg:hidden fixed inset-0 z-[9999]">
@@ -743,7 +744,7 @@ function MobileBookingSheet({
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                Book Your Class
+                Book Your Trial Class
               </h2>
               <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">

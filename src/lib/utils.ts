@@ -23,6 +23,18 @@ export function formatDate(dateString: string): string {
   });
 }
 
+/** Full date e.g. "Monday, Feb 2, 2025" in SGT */
+export function formatDateFull(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "Asia/Singapore",
+  });
+}
+
 export function formatTime(dateString: string): string {
   const date = new Date(dateString);
   // Always display in Singapore timezone (SGT) regardless of user's location

@@ -1,13 +1,31 @@
 "use client";
 
 import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { zumbaClasses } from "@/data/classes";
-import { Clock, Flame, ArrowRight } from "lucide-react";
+import { Clock, Flame, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+
+const CLASSES_PER_PAGE = 6;
 
 const ClassesGrid = () => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(zumbaClasses.length / CLASSES_PER_PAGE);
+  const paginatedClasses = useMemo(
+    () =>
+      zumbaClasses.slice(
+        (currentPage - 1) * CLASSES_PER_PAGE,
+        currentPage * CLASSES_PER_PAGE
+      ),
+    [currentPage]
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <section className="py-16 md:py-20 lg:py-28 bg-gradient-to-b from-white to-gray-50 dark:from-gray-dark dark:to-gray-900">
       <div className="container px-4 sm:px-6 lg:px-8">
@@ -33,10 +51,62 @@ const ClassesGrid = () => {
 
         {/* Classes Grid - Modern Design */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 max-w-7xl mx-auto">
-          {zumbaClasses.map((classItem, index) => (
+          {paginatedClasses.map((classItem, index) => (
             <ClassCard key={classItem.id} classItem={classItem} index={index} />
           ))}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-7xl mx-auto"
+          >
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Showing {(currentPage - 1) * CLASSES_PER_PAGE + 1} to{" "}
+              {Math.min(currentPage * CLASSES_PER_PAGE, zumbaClasses.length)} of{" "}
+              {zumbaClasses.length} classes
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="w-5 h-5" />
+                <span className="hidden sm:inline">Previous</span>
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`min-w-[2.5rem] h-10 rounded-lg font-medium transition-colors ${
+                      currentPage === page
+                        ? "bg-green-600 text-white"
+                        : "border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    }`}
+                    aria-label={`Page ${page}`}
+                    aria-current={currentPage === page ? "page" : undefined}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                aria-label="Next page"
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </motion.div>
+        )}
       </div>
     </section>
   );

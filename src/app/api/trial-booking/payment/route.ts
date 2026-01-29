@@ -107,12 +107,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    // Calculate price: use trial_price_cents if available, otherwise calculate from token_cost
-    // Default: $23 per token if no trial price set
-    const DEFAULT_PRICE_PER_TOKEN = 23
+    // Calculate price: use trial_price_cents from DB if set, otherwise default $1 for now (change to 23 for $23 later)
+    const DEFAULT_TRIAL_CENTS = 100 // $1 for now; set to 2300 for $23
     const amountCents = classData.trial_price_cents && classData.trial_price_cents > 0
       ? classData.trial_price_cents
-      : (classData.token_cost || 1) * DEFAULT_PRICE_PER_TOKEN * 100
+      : DEFAULT_TRIAL_CENTS
 
     // Check capacity
     const { data: existingBookings, error: bookingsError } = await supabaseAdmin
