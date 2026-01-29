@@ -104,15 +104,21 @@ const BookingConfirmationModal = ({
             </div>
           </div>
           <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-            <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
-              <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
+            <div className="flex -space-x-2 shrink-0">
+              {(classItem.instructors?.length ? classItem.instructors : [{ name: classItem.instructor_name || "TBA", avatar: null, initials: (classItem.instructor_name || "??").split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) }]).slice(0, 2).map((instructor: any, idx: number) => (
+                <div key={instructor.id || idx} className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold text-white bg-primary overflow-hidden border-2 border-white dark:border-gray-800 shadow-sm" title={instructor.name}>
+                  {instructor.avatar ? (
+                    <img src={instructor.avatar} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  ) : (
+                    <span>{instructor.initials || "??"}</span>
+                  )}
+                </div>
+              ))}
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-wide text-body-color dark:text-gray-400">Instructor</p>
+              <p className="text-[10px] uppercase tracking-wide text-body-color dark:text-gray-400">Instructor{classItem.instructors?.length > 1 ? "s" : ""}</p>
               <p className="font-semibold text-dark dark:text-white text-sm truncate">
-                {classItem.instructors?.length ? classItem.instructors.map((i: any) => i.name).join(', ') : classItem.instructor_name || "TBA"}
+                {classItem.instructors?.length ? classItem.instructors.map((i: any) => i.name).join(", ") : classItem.instructor_name || "TBA"}
               </p>
             </div>
           </div>

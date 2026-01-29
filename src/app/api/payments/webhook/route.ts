@@ -118,7 +118,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    if (status === 'completed') {
+    const isPaymentCompleted = status === 'completed' || status === 'succeeded'
+    if (isPaymentCompleted) {
       // Get the payment record
       const { data: payment, error: fetchError } = await supabase
         .from('payments')
@@ -127,7 +128,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         .single()
 
       if (fetchError || !payment) {
-        console.error('[Webhook] Payment not found:', payment_request_id, fetchError)
+        console.error('[Webhook] Payment not found:', {
+          payment_request_id,
+          fetchError: fetchError?.message,
+          hint: 'Ensure payments.hitpay_payment_request_id matches HitPay payment_request_id from webhook',
+        })
         return NextResponse.json({ received: true })
       }
 
@@ -190,14 +195,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           return NextResponse.json({ received: true, error: 'Failed to update payment' })
         }
 
-        // Check if draft booking exists (linked via payment_id or metadata)
-        const draftBookingId = metadata.draft_booking_id
+        // Check if draft booking exists: metadata.draft_booking_id or booking linked by payment_id
+        let draftBookingId = metadata?.draft_booking_id
+        if (!draftBookingId) {
+          const { data: byPayment } = await supabase
+            .from('bookings')
+            .select('id')
+            .eq('payment_id', payment.id)
+            .eq('status', 'draft')
+            .eq('is_trial_booking', true)
+            .maybeSingle()
+          if (byPayment?.id) draftBookingId = byPayment.id
+        }
 
         let booking
         let bookingError
 
         if (draftBookingId) {
-          // Update existing draft booking to confirmed
           const { data: updatedBooking, error: updateError } = await supabase
             .from('bookings')
             .update({

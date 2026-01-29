@@ -85,22 +85,29 @@ export default function TrialBookingPage() {
             params.append('names', Array.from(instructorNames).join(','));
           }
 
-          const response = await fetch(`/api/instructors/profiles?${params.toString()}`);
+          const response = await fetch(`/api/instructors/profiles?${params.toString()}`, { cache: "no-store", headers: { "Cache-Control": "no-cache" } });
           const result = await response.json();
 
           if (result.success && result.data) {
             const profiles: Record<string, InstructorProfile> = {};
+            const requestedNames = Array.from(instructorNames);
             result.data.forEach((profile: any) => {
-              profiles[profile.id] = {
+              const profileData = {
                 id: profile.id,
                 name: profile.name,
-                avatar_url: profile.avatar_url,
+                avatar_url: profile.avatar_url ?? null,
               };
-              profiles[profile.name] = {
-                id: profile.id,
-                name: profile.name,
-                avatar_url: profile.avatar_url,
-              };
+              profiles[profile.id] = profileData;
+              profiles[profile.name] = profileData;
+              // Store under each requested name that matches (so "Robert" finds profile "Robert Smith")
+              const profileNameNorm = (profile.name || "").toLowerCase().trim().replace(/\s+/g, " ");
+              requestedNames.forEach((name: string) => {
+                const nameNorm = name.toLowerCase().trim().replace(/\s+/g, " ");
+                if (!nameNorm) return;
+                if (profileNameNorm === nameNorm || profileNameNorm.startsWith(nameNorm + " ") || nameNorm.startsWith(profileNameNorm + " ")) {
+                  profiles[name] = profileData;
+                }
+              });
             });
             setInstructorProfiles(profiles);
           }
@@ -297,8 +304,8 @@ export default function TrialBookingPage() {
                   Trial class:{" "}
                   <span className="font-semibold text-green-600 dark:text-green-400">
                     ${classes.length > 0
-                      ? ((classes[0].trial_price_cents && classes[0].trial_price_cents > 0 ? classes[0].trial_price_cents : 100) / 100).toFixed(2)
-                      : "1.00"}
+                      ? ((classes[0].trial_price_cents && classes[0].trial_price_cents > 0 ? classes[0].trial_price_cents : 2300) / 100).toFixed(2)
+                      : "23.00"}
                   </span>
                 </p>
               </div>
@@ -343,13 +350,12 @@ export default function TrialBookingPage() {
                     classItem.capacity - (classItem.booked_count || 0);
                   const isSelected = selectedClass?.id === classItem.id;
 
-                  // Get instructor avatar
-                  const instructorProfile = classItem.instructor_id 
-                    ? instructorProfiles[classItem.instructor_id]
-                    : classItem.instructor_name 
-                    ? instructorProfiles[classItem.instructor_name]
-                    : null;
-                  const instructorAvatar = instructorProfile?.avatar_url || classItem.instructor_avatar || null;
+                  // Get instructor avatar (try ID first, then name; name lookup works for "Robert" -> "Robert Smith")
+                  const instructorProfile =
+                    (classItem.instructor_id && instructorProfiles[classItem.instructor_id]) ||
+                    (classItem.instructor_name && instructorProfiles[classItem.instructor_name]) ||
+                    null;
+                  const instructorAvatar = instructorProfile?.avatar_url ?? classItem.instructor_avatar ?? null;
                   const instructorInitials = getInitials(classItem.instructor_name);
 
                   return (
@@ -373,6 +379,7 @@ export default function TrialBookingPage() {
                             <span>{classItem.duration_minutes} minutes</span>
                             {classItem.instructor_name && (
                               <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide shrink-0">Instructor</span>
                                 <div className="relative h-8 w-8 rounded-full border-2 border-white dark:border-gray-700 flex items-center justify-center text-xs font-semibold text-white bg-gradient-to-br from-green-600 to-green-700 shrink-0 overflow-hidden">
                                   {instructorAvatar ? (
                                     <img
@@ -510,7 +517,7 @@ export default function TrialBookingPage() {
                     $
                     {(((selectedClass.trial_price_cents && selectedClass.trial_price_cents > 0)
                       ? selectedClass.trial_price_cents
-                      : 100) / 100).toFixed(2)}
+                      : 2300) / 100).toFixed(2)}
                   </p>
                 </div>
               ) : (
@@ -711,8 +718,8 @@ function MobileBookingSheet({
     setCurrentY(0);
   };
 
-  // Default $1 for now; use class trial_price_cents from DB if set
-  const defaultCents = 100;
+  // Fallback $23 when class has no trial_price_cents; use class trial_price_cents from DB if set
+  const defaultCents = 2300;
   const priceCents = selectedClass.trial_price_cents && selectedClass.trial_price_cents > 0
     ? selectedClass.trial_price_cents
     : defaultCents;
