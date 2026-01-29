@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
         duration_minutes,
         capacity,
         token_cost,
+        trial_price_cents,
         location,
         room_id,
         category_id,

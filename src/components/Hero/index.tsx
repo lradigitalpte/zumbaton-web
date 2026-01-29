@@ -194,10 +194,10 @@ const Hero = () => {
               )}
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 lg:gap-6 justify-center items-center w-full max-w-md sm:max-w-none px-2">
                 <Link
-                  href="/signup"
+                  href="/trial-booking"
                   className="btn-hero-primary px-4 py-2 xs:px-5 xs:py-2.5 sm:px-6 sm:py-2.5 md:px-8 md:py-3 lg:px-10 lg:py-3.5 text-xs xs:text-sm sm:text-base md:text-lg font-bold text-white uppercase bg-green-600 hover:bg-green-700 transition-colors rounded-none shadow-lg relative overflow-hidden inline-block w-full sm:w-auto text-center"
                 >
-                  <span className="relative z-10">Sign Up Now</span>
+                  <span className="relative z-10">Start Trial</span>
                 </Link>
                 <button
                   type="button"

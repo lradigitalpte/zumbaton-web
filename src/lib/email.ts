@@ -943,3 +943,79 @@ Welcome to the Zumbaton family!
     ],
   })
 }
+
+/**
+ * Send trial booking confirmation email to guest
+ */
+export async function sendTrialBookingConfirmationEmail(data: {
+  guestEmail: string
+  guestName: string
+  className: string
+  classDate: string
+  classTime: string
+  classLocation: string
+  instructorName?: string
+  amount: number
+  currency: string
+}): Promise<EmailResult> {
+  const { getTrialBookingConfirmationEmailTemplate } = await import('./email-templates')
+  const template = getTrialBookingConfirmationEmailTemplate({
+    guestName: data.guestName,
+    className: data.className,
+    classDate: data.classDate,
+    classTime: data.classTime,
+    classLocation: data.classLocation,
+    instructorName: data.instructorName,
+    amount: data.amount,
+    currency: data.currency,
+  })
+  
+  return sendEmail({
+    to: data.guestEmail,
+    subject: `Trial Class Booked: ${data.className}`,
+    html: template.html,
+    text: template.text,
+  })
+}
+
+/**
+ * Send trial booking admin notification email
+ */
+export async function sendTrialBookingAdminNotificationEmail(data: {
+  adminEmails: string[]
+  guestName: string
+  guestEmail: string
+  guestPhone: string
+  guestDateOfBirth?: string
+  className: string
+  classDate: string
+  classTime: string
+  classLocation: string
+  instructorName?: string
+  amount: number
+  currency: string
+  bookingId: string
+}): Promise<EmailResult> {
+  const { getTrialBookingAdminNotificationEmailTemplate } = await import('./email-templates')
+  const template = getTrialBookingAdminNotificationEmailTemplate({
+    guestName: data.guestName,
+    guestEmail: data.guestEmail,
+    guestPhone: data.guestPhone,
+    guestDateOfBirth: data.guestDateOfBirth,
+    className: data.className,
+    classDate: data.classDate,
+    classTime: data.classTime,
+    classLocation: data.classLocation,
+    instructorName: data.instructorName,
+    amount: data.amount,
+    currency: data.currency,
+    bookingId: data.bookingId,
+  })
+  
+  return sendEmail({
+    to: data.adminEmails,
+    subject: `New Trial Booking: ${data.guestName} - ${data.className}`,
+    html: template.html,
+    text: template.text,
+  })
+}

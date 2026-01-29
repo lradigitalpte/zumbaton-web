@@ -1277,6 +1277,210 @@ Once again, happy birthday! We hope you have an absolutely wonderful day!
 /**
  * Escape HTML to prevent XSS
  */
+/**
+ * Trial Booking Confirmation Email Template (Guest)
+ */
+export function getTrialBookingConfirmationEmailTemplate(data: {
+  guestName: string
+  className: string
+  classDate: string
+  classTime: string
+  classLocation: string
+  instructorName?: string
+  amount: number
+  currency: string
+}): { html: string; text: string } {
+  const html = getBaseTemplate(`
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Trial Class Booked!</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">We're excited to have you join us</p>
+    </div>
+    
+    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 25px; border-radius: 8px; margin: 30px 0;">
+      <h3 style="margin: 0 0 20px 0; color: #15803d; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
+      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Time:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classTime)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Location:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classLocation)}</td>
+        </tr>
+        ${data.instructorName ? `
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Instructor:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.instructorName)}</td>
+        </tr>
+        ` : ''}
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Amount Paid:</td>
+          <td style="padding: 10px 0; color: #16a34a; font-weight: 700; font-size: 15px;">${data.currency} ${data.amount.toFixed(2)}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <div style="background-color: #eff6ff; border-radius: 8px; padding: 20px; margin: 30px 0;">
+       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
+        <strong>What to Expect:</strong><br>
+        Please arrive 10 minutes early for check-in. Bring water and wear comfortable workout clothes. Our team will be there to welcome you!
+      </p>
+    </div>
+    
+    <div style="background-color: #fef3c7; border-radius: 8px; padding: 20px; margin: 30px 0;">
+       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
+        <strong>Want to become a member?</strong><br>
+        If you enjoy the class, our team can help you set up a membership account. Just ask at the front desk!
+      </p>
+    </div>
+  `, `Trial class booked! ${data.className} on ${data.classDate}`)
+
+  const text = `
+Trial Class Booked!
+
+Hi ${data.guestName},
+
+Your trial class booking has been confirmed!
+
+Class: ${data.className}
+Date: ${data.classDate}
+Time: ${data.classTime}
+Location: ${data.classLocation}
+${data.instructorName ? `Instructor: ${data.instructorName}` : ''}
+Amount Paid: ${data.currency} ${data.amount.toFixed(2)}
+
+What to Expect:
+Please arrive 10 minutes early for check-in. Bring water and wear comfortable workout clothes. Our team will be there to welcome you!
+
+Want to become a member?
+If you enjoy the class, our team can help you set up a membership account. Just ask at the front desk!
+
+© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+  `.trim()
+
+  return { html, text }
+}
+
+/**
+ * Trial Booking Admin Notification Email Template
+ */
+export function getTrialBookingAdminNotificationEmailTemplate(data: {
+  guestName: string
+  guestEmail: string
+  guestPhone: string
+  guestDateOfBirth?: string
+  className: string
+  classDate: string
+  classTime: string
+  classLocation: string
+  instructorName?: string
+  amount: number
+  currency: string
+  bookingId: string
+}): { html: string; text: string } {
+  const html = getBaseTemplate(`
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">New Trial Class Booking</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">A guest has booked a trial class</p>
+    </div>
+    
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 25px; border-radius: 8px; margin: 30px 0;">
+      <h3 style="margin: 0 0 20px 0; color: #92400e; font-size: 20px; font-weight: 600;" class="mobile-subtitle">Guest Information</h3>
+      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Name:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.guestName)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Email:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.guestEmail)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Phone:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.guestPhone)}</td>
+        </tr>
+        ${data.guestDateOfBirth ? `
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Date of Birth:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(new Date(data.guestDateOfBirth).toLocaleDateString('en-SG', { year: 'numeric', month: 'long', day: 'numeric' }))}</td>
+        </tr>
+        ` : ''}
+      </table>
+    </div>
+    
+    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 25px; border-radius: 8px; margin: 30px 0;">
+      <h3 style="margin: 0 0 20px 0; color: #15803d; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
+      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Time:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classTime)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Location:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classLocation)}</td>
+        </tr>
+        ${data.instructorName ? `
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Instructor:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.instructorName)}</td>
+        </tr>
+        ` : ''}
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Amount Paid:</td>
+          <td style="padding: 10px 0; color: #16a34a; font-weight: 700; font-size: 15px;">${data.currency} ${data.amount.toFixed(2)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Booking ID:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.bookingId)}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <div style="background-color: #eff6ff; border-radius: 8px; padding: 20px; margin: 30px 0;">
+       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
+        <strong>Action Required:</strong><br>
+        Please create a user account for this guest if they want to become a member. The guest information is provided above.
+      </p>
+    </div>
+  `, `New trial booking: ${data.guestName} - ${data.className}`)
+
+  const text = `
+New Trial Class Booking
+
+A guest has booked a trial class:
+
+Guest Information:
+Name: ${data.guestName}
+Email: ${data.guestEmail}
+Phone: ${data.guestPhone}
+${data.guestDateOfBirth ? `Date of Birth: ${new Date(data.guestDateOfBirth).toLocaleDateString('en-SG', { year: 'numeric', month: 'long', day: 'numeric' })}` : ''}
+
+Class Details:
+Class: ${data.className}
+Date: ${data.classDate}
+Time: ${data.classTime}
+Location: ${data.classLocation}
+${data.instructorName ? `Instructor: ${data.instructorName}` : ''}
+Amount Paid: ${data.currency} ${data.amount.toFixed(2)}
+Booking ID: ${data.bookingId}
+
+Action Required:
+Please create a user account for this guest if they want to become a member. The guest information is provided above.
+
+© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+  `.trim()
+
+  return { html, text }
+}
+
 function escapeHtml(text: string): string {
   const map: Record<string, string> = {
     '&': '&amp;',

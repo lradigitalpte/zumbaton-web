@@ -87,10 +87,10 @@ const Footer = () => {
             </div>
             <div className="flex gap-3 sm:gap-4 w-full sm:w-auto">
               <Link
-                href="/schedule"
+                href="/trial-booking"
                 className="flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-3 bg-green-600 hover:bg-green-500 text-white text-sm sm:text-base font-semibold rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/25 text-center"
               >
-                View Schedule
+                Start Trial
               </Link>
             </div>
           </div>

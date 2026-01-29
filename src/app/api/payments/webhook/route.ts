@@ -119,10 +119,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     )
 
     if (status === 'completed') {
-      // Get the payment record with package details
+      // Get the payment record
       const { data: payment, error: fetchError } = await supabase
         .from('payments')
-        .select('*, packages(*)')
+        .select('*, packages(*), classes(*)')
         .eq('hitpay_payment_request_id', payment_request_id)
         .single()
 
@@ -137,6 +137,282 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         return NextResponse.json({ received: true, message: 'Already processed' })
       }
 
+      // Handle trial booking vs package purchase
+      if (payment.is_trial_booking && payment.class_id) {
+        // TRIAL BOOKING FLOW
+        console.log('[Webhook] Processing trial booking payment:', payment.id)
+        
+        // Get class details
+        let classData = payment.classes
+        if (!classData && payment.class_id) {
+          const { data: classDataResult, error: classError } = await supabase
+            .from('classes')
+            .select('*')
+            .eq('id', payment.class_id)
+            .single()
+          
+          if (classError) {
+            console.error('[Webhook] Failed to fetch class:', classError)
+            return NextResponse.json({ received: true, error: 'Class not found' })
+          }
+          classData = classDataResult
+        }
+
+        if (!classData) {
+          console.error('[Webhook] Class not found for trial booking:', payment.id)
+          return NextResponse.json({ received: true, error: 'Class not found' })
+        }
+
+        // Extract guest info from metadata
+        const metadata = payment.metadata as any || {}
+        const guestName = metadata.guest_name || 'Guest'
+        const guestEmail = metadata.guest_email
+        const guestPhone = metadata.guest_phone || ''
+        const guestDateOfBirth = metadata.guest_date_of_birth || null
+
+        if (!guestEmail) {
+          console.error('[Webhook] Guest email missing for trial booking:', payment.id)
+          return NextResponse.json({ received: true, error: 'Guest email missing' })
+        }
+
+        // Update payment status
+        const { error: updateError } = await supabase
+          .from('payments')
+          .update({
+            status: 'succeeded',
+            hitpay_payment_id: payment_id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', payment.id)
+
+        if (updateError) {
+          console.error('[Webhook] Failed to update payment status:', updateError)
+          return NextResponse.json({ received: true, error: 'Failed to update payment' })
+        }
+
+        // Check if draft booking exists (linked via payment_id or metadata)
+        const draftBookingId = metadata.draft_booking_id
+
+        let booking
+        let bookingError
+
+        if (draftBookingId) {
+          // Update existing draft booking to confirmed
+          const { data: updatedBooking, error: updateError } = await supabase
+            .from('bookings')
+            .update({
+              status: 'confirmed',
+              payment_id: payment.id,
+              booked_at: new Date().toISOString(),
+            })
+            .eq('id', draftBookingId)
+            .select()
+            .single()
+
+          booking = updatedBooking
+          bookingError = updateError
+
+          if (bookingError) {
+            console.error('[Webhook] Failed to update draft booking:', bookingError)
+          } else {
+            console.log('[Webhook] Updated draft booking to confirmed:', booking.id)
+          }
+        }
+
+        // If no draft booking or update failed, check for existing confirmed booking
+        if (!booking) {
+          const { data: existingBooking } = await supabase
+            .from('bookings')
+            .select('id, status')
+            .eq('class_id', payment.class_id)
+            .eq('guest_email', guestEmail)
+            .in('status', ['confirmed', 'attended', 'draft'])
+
+          if (existingBooking && existingBooking.length > 0) {
+            const existing = existingBooking[0]
+            if (existing.status === 'confirmed' || existing.status === 'attended') {
+              console.log('[Webhook] Booking already confirmed for trial:', payment.id)
+              return NextResponse.json({ received: true, message: 'Booking already confirmed' })
+            } else if (existing.status === 'draft') {
+              // Update draft to confirmed
+              const { data: updatedBooking, error: updateError } = await supabase
+                .from('bookings')
+                .update({
+                  status: 'confirmed',
+                  payment_id: payment.id,
+                  booked_at: new Date().toISOString(),
+                })
+                .eq('id', existing.id)
+                .select()
+                .single()
+
+              booking = updatedBooking
+              bookingError = updateError
+
+              if (bookingError) {
+                console.error('[Webhook] Failed to update draft booking:', bookingError)
+              } else {
+                console.log('[Webhook] Updated draft booking to confirmed:', booking.id)
+              }
+            }
+          }
+        }
+
+        // If still no booking, create new one (backward compatibility)
+        if (!booking) {
+          const { data: newBooking, error: createError } = await supabase
+            .from('bookings')
+            .insert({
+              class_id: payment.class_id,
+              guest_name: guestName,
+              guest_email: guestEmail,
+              guest_phone: guestPhone,
+              guest_date_of_birth: guestDateOfBirth,
+              is_trial_booking: true,
+              payment_id: payment.id,
+              status: 'confirmed',
+              booked_at: new Date().toISOString(),
+              tokens_used: 0, // Trial bookings don't use tokens
+            })
+            .select()
+            .single()
+
+          booking = newBooking
+          bookingError = createError
+
+          if (bookingError) {
+            console.error('[Webhook] Failed to create trial booking:', bookingError)
+            return NextResponse.json({ 
+              received: true, 
+              error: 'Failed to create booking',
+              details: bookingError.message 
+            })
+          }
+
+          console.log('[Webhook] Created new trial booking:', booking.id)
+        }
+
+        if (!booking) {
+          console.error('[Webhook] No booking found or created')
+          return NextResponse.json({ 
+            received: true, 
+            error: 'Failed to process booking' 
+          })
+        }
+
+        // Send confirmation email to guest
+        try {
+          const { sendTrialBookingConfirmationEmail } = await import('@/lib/email')
+          await sendTrialBookingConfirmationEmail({
+            guestEmail,
+            guestName,
+            className: classData.title,
+            classDate: new Date(classData.scheduled_at).toLocaleDateString('en-SG', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            }),
+            classTime: new Date(classData.scheduled_at).toLocaleTimeString('en-SG', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            }),
+            classLocation: classData.location || 'TBA',
+            instructorName: classData.instructor_name || undefined,
+            amount: payment.amount_cents / 100,
+            currency: payment.currency,
+          })
+          console.log('[Webhook] Trial booking confirmation email sent to:', guestEmail)
+        } catch (emailError) {
+          console.error('[Webhook] Failed to send trial booking email:', emailError)
+        }
+
+        // Send notification email to admins
+        try {
+          const { data: adminUsers } = await supabase
+            .from('user_profiles')
+            .select('id, email, name')
+            .in('role', ['admin', 'super_admin'])
+            .eq('is_active', true)
+
+          if (adminUsers && adminUsers.length > 0) {
+            const { sendTrialBookingAdminNotificationEmail } = await import('@/lib/email')
+            const adminEmails = adminUsers.map(u => u.email).filter(Boolean) as string[]
+            
+            if (adminEmails.length > 0) {
+              await sendTrialBookingAdminNotificationEmail({
+                adminEmails,
+                guestName,
+                guestEmail,
+                guestPhone,
+                guestDateOfBirth: guestDateOfBirth || undefined,
+                className: classData.title,
+                classDate: new Date(classData.scheduled_at).toLocaleDateString('en-SG', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                }),
+                classTime: new Date(classData.scheduled_at).toLocaleTimeString('en-SG', { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                }),
+                classLocation: classData.location || 'TBA',
+                instructorName: classData.instructor_name || undefined,
+                amount: payment.amount_cents / 100,
+                currency: payment.currency,
+                bookingId: booking.id,
+              })
+              console.log('[Webhook] Trial booking admin notification sent to:', adminEmails.length, 'admins')
+            }
+          }
+        } catch (adminEmailError) {
+          console.error('[Webhook] Failed to send admin notification:', adminEmailError)
+        }
+
+        // Create in-app notifications for admins
+        try {
+          const { data: adminUsers } = await supabase
+            .from('user_profiles')
+            .select('id')
+            .in('role', ['admin', 'super_admin'])
+            .eq('is_active', true)
+
+          if (adminUsers && adminUsers.length > 0) {
+            const notifications = adminUsers.map(admin => ({
+              user_id: admin.id,
+              type: 'trial_booking',
+              channel: 'in_app',
+              subject: 'New Trial Class Booking',
+              body: `${guestName} (${guestEmail}) booked trial class: ${classData.title}`,
+              status: 'sent',
+              sent_at: new Date().toISOString(),
+              data: {
+                booking_id: booking.id,
+                class_id: payment.class_id,
+                guest_name: guestName,
+                guest_email: guestEmail,
+                guest_phone: guestPhone,
+                class_title: classData.title,
+                amount: payment.amount_cents / 100,
+              },
+            }))
+
+            await supabase
+              .from('notifications')
+              .insert(notifications)
+
+            console.log('[Webhook] Created admin notifications for trial booking')
+          }
+        } catch (notifError) {
+          console.error('[Webhook] Failed to create admin notifications:', notifError)
+        }
+
+        console.log('[Webhook] Trial booking completed successfully:', payment.id)
+        return NextResponse.json({ received: true, message: 'Trial booking processed' })
+      }
+
+      // PACKAGE PURCHASE FLOW (existing logic)
       // Get package details separately if not included in join
       let pkg = payment.packages
       if (!pkg && payment.package_id) {
