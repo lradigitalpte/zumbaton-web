@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/Toast";
 import { useUpcomingClasses, useBookClass, useBookBatchClasses, type ClassWithAvailability } from "@/hooks/useClasses";
 import { getTokenBalance } from "@/lib/dashboard-queries";
 import ClassDetailsSlidePanel from "@/components/ClassDetails/ClassDetailsSlidePanel";
 import BookingConfirmationModal from "@/components/BookingConfirmation/BookingConfirmationModal";
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatDate, formatDateFull, formatTime } from "@/lib/utils";
 import { handleMutationError } from "@/lib/toast-helper";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+const CLASSES_PER_PAGE = 12;
 
 const ClassesPage = () => {
   const { user, isAuthenticated } = useAuth();
@@ -41,10 +44,17 @@ const ClassesPage = () => {
   // Selected sessions for multi-booking (recurring classes)
   const [selectedSessions, setSelectedSessions] = useState<Set<string>>(new Set());
   
-  // Booking confirmation modal
-  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
-  const [classToBook, setClassToBook] = useState<ClassWithAvailability | null>(null);
+  // Booking confirmation modal (single state so modal always has class when open)
+  const [confirmationModal, setConfirmationModal] = useState<{
+    open: boolean;
+    class: ClassWithAvailability | null;
+  }>({ open: false, class: null });
+  const isConfirmationModalOpen = confirmationModal.open;
+  const classToBook = confirmationModal.class;
   const [userTokenBalance, setUserTokenBalance] = useState(0);
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Booking window (Singapore time)
   const getSingaporeNow = () => {
@@ -80,7 +90,7 @@ const ClassesPage = () => {
   });
 
   // Apply search filter
-  const classes = allClasses.filter((classItem) => {
+  const classes = useMemo(() => allClasses.filter((classItem) => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -91,7 +101,34 @@ const ClassesPage = () => {
       classItem.location?.toLowerCase().includes(query) ||
       classItem.room_name?.toLowerCase().includes(query)
     );
-  });
+  }), [allClasses, searchQuery]);
+
+  // Pagination: reset to page 1 when filters/classes change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter.type, filter.date, filter.recurrenceType, filter.categoryId, searchQuery]);
+
+  const totalPages = Math.ceil(classes.length / CLASSES_PER_PAGE);
+  const paginatedClasses = useMemo(
+    () => classes.slice((currentPage - 1) * CLASSES_PER_PAGE, currentPage * CLASSES_PER_PAGE),
+    [classes, currentPage]
+  );
+
+  // Group current page classes by date for section headers and break lines
+  const classesByDate = useMemo(() => {
+    const map = new Map<string, ClassWithAvailability[]>();
+    paginatedClasses.forEach((c) => {
+      const key = new Date(c.scheduled_at).toDateString();
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(c);
+    });
+    return Array.from(map.entries());
+  }, [paginatedClasses]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const bookClassMutation = useBookClass();
   const bookBatchMutation = useBookBatchClasses();
@@ -188,8 +225,7 @@ const ClassesPage = () => {
   // Handle book button click in slide panel - open confirmation modal
   const handleBookClick = () => {
     if (selectedClass) {
-      setClassToBook(selectedClass);
-      setIsConfirmationModalOpen(true);
+      setConfirmationModal({ open: true, class: selectedClass });
       setIsSlidePanelOpen(false);
     }
   };
@@ -208,8 +244,7 @@ const ClassesPage = () => {
           const newBalance = await getTokenBalance(user.id);
           setUserTokenBalance(newBalance.available);
           
-          setIsConfirmationModalOpen(false);
-          setClassToBook(null);
+          setConfirmationModal({ open: false, class: null });
           setSelectedClass(null);
         },
       }
@@ -464,336 +499,229 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
           </button>
         </div>
       ) : (
-        <div className="space-y-2 xl:space-y-4">
-          {classes.map((classItem) => {
-            const spotsInfo = getSpotsLeft(classItem.capacity, classItem.booked_count);
-            const isFull = classItem.capacity - classItem.booked_count <= 0;
-            const classDate = new Date(classItem.scheduled_at);
-            const isToday = classDate.toDateString() === new Date().toDateString();
-            const isTomorrow = classDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
-
-            // Check if it's a recurring or course type (can be parent or individual session)
-            const isRecurringOrCourse = classItem.recurrence_type === 'recurring' || classItem.recurrence_type === 'course'
-            const isCourse = classItem.recurrence_type === 'course'
-            const isRecurring = classItem.recurrence_type === 'recurring'
-            // For recurring, check if it's a parent card (courses) or individual session
-            const isRecurringParent = isRecurring && classItem._isParent
-
+        <>
+        {/* Classes grouped by date with section headers and break lines */}
+        <div className="space-y-8">
+          {classesByDate.map(([dateKey, classesOnDate]) => {
+            const firstScheduled = classesOnDate[0].scheduled_at;
+            const fullDateLabel = formatDateFull(firstScheduled);
             return (
-              <div
-                key={classItem.id}
-                onClick={() => handleClassClick(classItem)}
-                className={`bg-white dark:bg-dark rounded-xl xl:rounded-xl rounded-2xl shadow-sm xl:shadow-sm shadow-md overflow-hidden active:scale-[0.98] transition-transform cursor-pointer hover:shadow-lg xl:hover:shadow-lg ${
-                  isRecurringOrCourse
-                    ? isCourse
-                      ? 'border-2 border-purple-300 dark:border-purple-700 bg-gradient-to-br from-purple-50/50 to-white dark:from-purple-950/30 dark:to-dark'
-                      : 'border-2 border-blue-300 dark:border-blue-700 bg-gradient-to-br from-blue-50/50 to-white dark:from-blue-950/30 dark:to-dark'
-                    : 'border border-gray-100 dark:border-gray-800'
-                }`}
-              >
-                {/* Mobile App Style Card Layout */}
-                <div className="flex relative">
-                  {/* Decorative accent for recurring/course */}
-                  {isRecurringOrCourse && (
-                    <div className={`absolute top-0 left-0 w-1 h-full ${
-                      isCourse ? 'bg-gradient-to-b from-purple-500 to-purple-400' : 'bg-gradient-to-b from-blue-500 to-blue-400'
-                    }`} />
-                  )}
-                  
-                  {/* Left: Time & Date Badge - More compact and mobile-friendly */}
-                  <div className={`w-20 xl:w-24 flex flex-col items-center justify-center p-3 xl:p-4 shrink-0 ${
-                    isRecurringOrCourse
-                      ? isCourse
-                        ? 'bg-gradient-to-br from-purple-500/20 to-purple-400/10 dark:from-purple-500/30 dark:to-purple-400/20'
-                        : 'bg-gradient-to-br from-blue-500/20 to-blue-400/10 dark:from-blue-500/30 dark:to-blue-400/20'
-                      : 'bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10'
-                  }`}>
-                    <div className="text-center">
-                      {/* Icon for recurring/course */}
-                      {isRecurringOrCourse && (
-                        <div className={`mb-1 xl:mb-1.5 ${
-                          isCourse ? 'text-purple-600 dark:text-purple-400' : 'text-blue-600 dark:text-blue-400'
-                        }`}>
-                          {isCourse ? (
-                            <svg className="w-4 h-4 xl:w-5 xl:h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                            </svg>
-                          ) : (
-                            <svg className="w-4 h-4 xl:w-5 xl:h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                          )}
-                        </div>
-                      )}
-                      <p className={`text-xl xl:text-2xl font-bold mb-0.5 ${
-                        isRecurringOrCourse
-                          ? isCourse
-                            ? 'text-purple-600 dark:text-purple-400'
-                            : 'text-blue-600 dark:text-blue-400'
-                          : 'text-primary'
-                      }`}>
-                        {formatTime(classItem.scheduled_at).split(":")[0]}
-                      </p>
-                      <p className={`text-[10px] xl:text-xs font-medium ${
-                        isRecurringOrCourse
-                          ? isCourse
-                            ? 'text-purple-500/70 dark:text-purple-400/70'
-                            : 'text-blue-500/70 dark:text-blue-400/70'
-                          : 'text-primary/70'
-                      }`}>
-                        {formatTime(classItem.scheduled_at).split(":")[1]}
-                      </p>
-                      <div className={`mt-1.5 xl:mt-2 pt-1.5 xl:pt-2 border-t ${
-                        isRecurringOrCourse
-                          ? isCourse
-                            ? 'border-purple-300/30 dark:border-purple-600/30'
-                            : 'border-blue-300/30 dark:border-blue-600/30'
-                          : 'border-primary/20'
-                      }`}>
-                        <p className={`text-[10px] xl:text-xs font-semibold uppercase ${
-                          isRecurringOrCourse
-                            ? isCourse
-                              ? 'text-purple-600/80 dark:text-purple-400/80'
-                              : 'text-blue-600/80 dark:text-blue-400/80'
-                            : 'text-primary/80'
-                        }`}>
-                          {isToday ? "Today" : isTomorrow ? "Tomorrow" : formatDate(classItem.scheduled_at).split(",")[0]}
-                        </p>
-                        <p className={`text-[9px] xl:text-xs mt-0.5 ${
-                          isRecurringOrCourse
-                            ? isCourse
-                              ? 'text-purple-500/60 dark:text-purple-400/60'
-                              : 'text-blue-500/60 dark:text-blue-400/60'
-                            : 'text-primary/60'
-                        }`}>
-                          {formatDate(classItem.scheduled_at).split(",")[1]?.trim()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+              <section key={dateKey}>
+                <h2 className="text-lg font-bold text-dark dark:text-white mb-1">
+                  {fullDateLabel}
+                </h2>
+                <hr className="border-gray-200 dark:border-gray-700 mb-4" aria-hidden="true" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {classesOnDate.map((classItem) => {
+                    const spotsInfo = getSpotsLeft(classItem.capacity, classItem.booked_count);
+                    const isFull = classItem.capacity - classItem.booked_count <= 0;
+                    const classDate = new Date(classItem.scheduled_at);
+                    const isToday = classDate.toDateString() === new Date().toDateString();
+                    const isTomorrow = classDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
 
-                  {/* Right: Class Details - Compact on mobile */}
-                  <div className="flex-1 p-3 xl:p-4">
-                    <div className="flex items-start justify-between mb-1.5 xl:mb-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 xl:gap-2 mb-1 xl:mb-1.5">
-                          <h3 className="text-sm xl:text-lg font-bold text-dark dark:text-white line-clamp-1">
-                          {classItem.name}
-                        </h3>
-                          {/* Show series badge for recurring/course */}
+                    const isRecurringOrCourse = classItem.recurrence_type === 'recurring' || classItem.recurrence_type === 'course';
+                    const isCourse = classItem.recurrence_type === 'course';
+                    const isRecurring = classItem.recurrence_type === 'recurring';
+
+                    return (
+                      <div
+                        key={classItem.id}
+                        onClick={() => handleClassClick(classItem)}
+                        className={`bg-white dark:bg-dark rounded-xl shadow-md overflow-hidden active:scale-[0.98] transition-all cursor-pointer hover:shadow-lg flex flex-col ${
+                          isRecurringOrCourse
+                            ? isCourse
+                              ? 'border-2 border-purple-300 dark:border-purple-700 bg-gradient-to-b from-purple-50/50 to-white dark:from-purple-950/30 dark:to-dark'
+                              : 'border-2 border-blue-300 dark:border-blue-700 bg-gradient-to-b from-blue-50/50 to-white dark:from-blue-950/30 dark:to-dark'
+                            : 'border border-gray-100 dark:border-gray-800'
+                        }`}
+                      >
+                        {/* Top: time on first line, full date on second line */}
+                        <div className={`flex items-center justify-between px-4 py-2.5 ${
+                          isRecurringOrCourse
+                            ? isCourse
+                              ? 'bg-purple-500/10 dark:bg-purple-500/20'
+                              : 'bg-blue-500/10 dark:bg-blue-500/20'
+                            : 'bg-primary/10 dark:bg-primary/20'
+                        }`}>
+                          <div className="flex flex-col gap-0.5">
+                            <span className={`text-lg font-bold ${
+                              isRecurringOrCourse
+                                ? isCourse ? 'text-purple-600 dark:text-purple-400' : 'text-blue-600 dark:text-blue-400'
+                                : 'text-primary'
+                            }`}>
+                              {formatTime(classItem.scheduled_at)}
+                            </span>
+                            <span className="text-xs font-medium text-body-color dark:text-gray-400 leading-tight">
+                              {isToday ? "Today" : isTomorrow ? "Tomorrow" : formatDateFull(classItem.scheduled_at)}
+                            </span>
+                          </div>
                           {(classItem.recurrence_type === 'recurring' || classItem.recurrence_type === 'course') && (
-                            <span className="px-2 xl:px-2.5 py-0.5 xl:py-1 rounded-lg text-[10px] xl:text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold shrink-0 ${
+                              isCourse ? 'bg-purple-200 text-purple-800 dark:bg-purple-800/40 dark:text-purple-300' : 'bg-blue-200 text-blue-800 dark:bg-blue-800/40 dark:text-blue-300'
+                            }`}>
                               {classItem.recurrence_type === 'course' ? 'Course' : 'Series'}
                             </span>
                           )}
-                          {/* Show age group badge */}
-                          {classItem.age_group && classItem.age_group !== 'all' && (
-                            <span className={`px-2 xl:px-2.5 py-0.5 xl:py-1 rounded-lg text-[10px] xl:text-xs font-semibold ${
-                              classItem.age_group === 'adult'
-                                ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800'
-                                : 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400 border border-pink-200 dark:border-pink-800'
-                            }`}>
-                              {classItem.age_group === 'adult' ? 'Adults' : 'Kids'}
-                            </span>
-                          )}
                         </div>
-                        <div className="flex items-center gap-1.5 xl:gap-2 flex-wrap">
-                          <span className={`px-2 xl:px-2.5 py-0.5 xl:py-1 rounded-lg text-[10px] xl:text-xs font-semibold ${spotsInfo.bg} ${spotsInfo.color}`}>
-                            {spotsInfo.text}
-                          </span>
-                          {/* Show session count for recurring/course */}
-                          {classItem._isParent && classItem._totalSessions && (
-                            <span className={`px-2 xl:px-2.5 py-0.5 xl:py-1 rounded-lg text-[10px] xl:text-xs font-semibold ${
-                              isCourse
-                                ? 'bg-purple-200 text-purple-800 dark:bg-purple-800/40 dark:text-purple-300'
-                                : 'bg-blue-200 text-blue-800 dark:bg-blue-800/40 dark:text-blue-300'
-                            }`}>
-                              {classItem._totalSessions} sessions
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs xl:text-sm text-body-color dark:text-gray-400 mb-1 xl:mb-2 truncate" title={classItem.instructor_name}>
-                          {classItem.instructor_name}
-                        </p>
-                      </div>
-                    </div>
 
-                    {/* Class Info Icons - Compact on mobile */}
-                    <div className="space-y-1 xl:space-y-2 mb-3 xl:mb-4">
-                      {/* Instructors with Avatars */}
-                      <div className="flex items-center gap-1.5 xl:gap-2 text-xs xl:text-sm text-body-color dark:text-gray-400">
-                        <div className="flex items-center gap-1.5 -space-x-2">
-                          {(classItem.instructors && classItem.instructors.length > 0 ? classItem.instructors : [{
-                            id: classItem.instructor_id || '',
-                            name: classItem.instructor_name || 'Unassigned',
-                            avatar: null,
-                            initials: classItem.instructor_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || '??',
-                          }]).slice(0, 3).map((instructor: any, idx: number) => {
-                            return (
-                            <div
-                              key={instructor.id || idx}
-                              className="relative h-8 w-8 xl:h-10 xl:w-10 rounded-full border-2 border-white dark:border-dark flex items-center justify-center text-xs xl:text-sm font-semibold text-white bg-gradient-to-br from-primary to-primary/80 dark:from-primary dark:to-primary/80 shrink-0 overflow-hidden"
-                              title={instructor.name}
-                            >
-                              {instructor.avatar ? (
-                                <img
-                                  src={instructor.avatar}
-                                  alt={instructor.name}
-                                  className="h-full w-full object-cover"
-                                  loading="lazy"
-                                  onError={(e) => {
-                                    // Fallback to initials if image fails to load
-                                    const target = e.target as HTMLImageElement
-                                    target.style.display = 'none'
-                                    const parent = target.parentElement
-                                    if (parent && !parent.querySelector('span')) {
-                                      const span = document.createElement('span')
-                                      span.textContent = instructor.initials
-                                      parent.appendChild(span)
-                                    }
-                                  }}
-                                />
-                              ) : (
-                                <span>{instructor.initials}</span>
-                              )}
-                            </div>
-                            )
-                          })}
-                        </div>
-                        <span className="truncate">
-                          {classItem.instructors && classItem.instructors.length > 0
-                            ? classItem.instructors.map((i: any) => i.name).join(', ')
-                            : classItem.instructor_name || 'Unassigned'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 xl:gap-2 text-xs xl:text-sm text-body-color dark:text-gray-400">
-                        <svg className="w-3.5 h-3.5 xl:w-4 xl:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <span className="truncate">{classItem.room_name || classItem.location || "Studio"}</span>
-                      </div>
-                      {/* Show view sessions button only for courses (recurring classes are now individual sessions) */}
-                      {isCourse && classItem._isParent && classItem._totalSessions && classItem._totalSessions > 0 && (
-                        <button
-                          onClick={(e) => handleViewSessions(classItem, e)}
-                          className="flex items-center gap-1.5 xl:gap-2 text-xs xl:text-sm font-medium mt-1 transition-colors text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+                {/* Body: class name, badges, instructor, location */}
+                <div className="flex-1 p-4 flex flex-col min-h-0">
+                  <h3 className="text-base font-bold text-dark dark:text-white line-clamp-2 mb-2">
+                    {classItem.name}
+                  </h3>
+                  <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${spotsInfo.bg} ${spotsInfo.color}`}>
+                      {spotsInfo.text}
+                    </span>
+                    {classItem.age_group && classItem.age_group !== 'all' && (
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
+                        classItem.age_group === 'adult' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' : 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400'
+                      }`}>
+                        {classItem.age_group === 'adult' ? 'Adults' : 'Kids'}
+                      </span>
+                    )}
+                    {classItem._isParent && classItem._totalSessions && (
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
+                        isCourse ? 'bg-purple-200 text-purple-800 dark:bg-purple-800/40 dark:text-purple-300' : 'bg-blue-200 text-blue-800 dark:bg-blue-800/40 dark:text-blue-300'
+                      }`}>
+                        {classItem._totalSessions} sessions
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-body-color dark:text-gray-400 mb-2 min-w-0">
+                    <div className="flex -space-x-1.5 shrink-0">
+                      {(classItem.instructors && classItem.instructors.length > 0 ? classItem.instructors : [{
+                        id: classItem.instructor_id || '',
+                        name: classItem.instructor_name || 'Unassigned',
+                        avatar: null,
+                        initials: classItem.instructor_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || '??',
+                      }]).slice(0, 2).map((instructor: any, idx: number) => (
+                        <div
+                          key={instructor.id || idx}
+                          className="h-6 w-6 rounded-full border-2 border-white dark:border-dark flex items-center justify-center text-[10px] font-semibold text-white bg-primary overflow-hidden"
+                          title={instructor.name}
                         >
-                          <svg className="w-3.5 h-3.5 xl:w-4 xl:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                          <span>View {classItem._totalSessions} sessions</span>
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Bottom: Tokens & Book Button - Compact on mobile */}
-                    <div className="flex items-center justify-between pt-2 xl:pt-3 border-t border-gray-100 dark:border-gray-800">
-                        <div className="flex items-center gap-3 xl:gap-4">
-                          <div className="flex items-center gap-1.5 xl:gap-2">
-                            <svg className={`w-4 h-4 xl:w-5 xl:h-5 ${
-                              isRecurringOrCourse
-                                ? isCourse
-                                  ? 'text-purple-600 dark:text-purple-400'
-                                  : 'text-blue-600 dark:text-blue-400'
-                                : 'text-primary'
-                            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                            </svg>
-                            <span className={`font-bold text-sm xl:text-base ${
-                              isRecurringOrCourse
-                                ? isCourse
-                                  ? 'text-purple-600 dark:text-purple-400'
-                                  : 'text-blue-600 dark:text-blue-400'
-                                : 'text-primary'
-                            }`}>
-                              {classItem.tokens_required}
-                            </span>
-                            <span className={`text-[10px] xl:text-xs ${
-                              isRecurringOrCourse
-                                ? isCourse
-                                  ? 'text-purple-600 dark:text-purple-400'
-                                  : 'text-blue-600 dark:text-blue-400'
-                                : 'text-body-color dark:text-gray-400'
-                            }`}>
-                              token{classItem.tokens_required > 1 ? "s" : ""}
-                              {/* Show "total" for courses */}
-                              {classItem._isParent && classItem._totalSessions && classItem.recurrence_type === 'course' && (
-                                <span className="ml-1">total</span>
-                              )}
-                            </span>
-                          </div>
-                          
-                          {/* Show spots for non-parent classes */}
-                          {!classItem._isParent && (
-                            <div className="flex items-center gap-1 xl:gap-1.5">
-                              <svg className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-body-color dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                              </svg>
-                              <span className={`text-xs xl:text-sm font-medium ${
-                                spotsInfo.left <= 5 && spotsInfo.left > 0 
-                                  ? 'text-orange-600 dark:text-orange-400' 
-                                  : spotsInfo.left === 0 
-                                    ? 'text-red-600 dark:text-red-400'
-                                    : 'text-body-color dark:text-gray-400'
-                              }`}>
-                                {spotsInfo.text}
-                              </span>
-                            </div>
-                          )}
-                          
-                          {/* Show session count for parent classes */}
-                          {classItem._isParent && classItem._totalSessions && (
-                            <div className="flex items-center gap-1 xl:gap-1.5">
-                              <svg className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-body-color dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                              <span className="text-xs xl:text-sm text-body-color dark:text-gray-400">
-                                {classItem._totalSessions} sessions
-                              </span>
-                            </div>
+                          {instructor.avatar ? (
+                            <img src={instructor.avatar} alt="" className="h-full w-full object-cover" loading="lazy" />
+                          ) : (
+                            <span>{instructor.initials}</span>
                           )}
                         </div>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // For recurring parents, open sessions panel (book individual sessions)
-                          // For course parents, allow direct booking (books all sessions at once)
-                          if (isRecurring && classItem._isParent && classItem._childInstances && classItem._childInstances.length > 0) {
-                            handleViewSessions(classItem, e);
-                          } else if (isCourse && classItem._isParent && classItem._childInstances && classItem._childInstances.length > 0) {
-                            // Course parent - book all sessions at once
-                            setClassToBook(classItem);
-                            setIsConfirmationModalOpen(true);
-                          } else if (!isFull) {
-                            // Single class or child session - book directly
-                            setClassToBook(classItem);
-                            setIsConfirmationModalOpen(true);
-                          }
-                        }}
-                        disabled={isFull || bookClassMutation.isPending || (classItem._isParent && isRecurring) || !bookingWindowOpen}
-                        title={!bookingWindowOpen ? 'Bookings are allowed only between 08:00–22:00 SGT' : undefined}
-                        className={`px-4 xl:px-5 py-2 xl:py-2.5 rounded-xl text-xs xl:text-sm font-bold transition-all active:scale-95 xl:active:scale-100 shadow-md xl:shadow-md ${
-                          isFull || bookClassMutation.isPending
-                            ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800"
-                            : isRecurringOrCourse
-                            ? isCourse && classItem._isParent
-                              ? "bg-purple-600 text-white hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 shadow-purple-500/20 xl:shadow-purple-500/20"
-                              : "bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 shadow-blue-500/20 xl:shadow-blue-500/20"
-                            : "bg-primary text-white hover:bg-primary/90 shadow-primary/20 xl:shadow-primary/20"
-                        }`}
-                      >
-                        {bookClassMutation.isPending ? "Booking..." : isFull ? "Full" : isRecurring && classItem._isParent ? "View Sessions" : "Book"}
-                      </button>
+                      ))}
                     </div>
+                    <span className="truncate">{classItem.instructor_name || 'Unassigned'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-body-color dark:text-gray-400 mb-3">
+                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    </svg>
+                    <span className="truncate">{classItem.room_name || classItem.location || "Studio"}</span>
+                  </div>
+                  {isCourse && classItem._isParent && classItem._totalSessions && classItem._totalSessions > 0 && (
+                    <button
+                      onClick={(e) => handleViewSessions(classItem, e)}
+                      className="text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 mb-2 self-start"
+                    >
+                      View {classItem._totalSessions} sessions
+                    </button>
+                  )}
+
+                  {/* Bottom: tokens + Book */}
+                  <div className="flex items-center justify-between pt-3 mt-auto border-t border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`font-bold text-sm ${
+                        isRecurringOrCourse ? (isCourse ? 'text-purple-600 dark:text-purple-400' : 'text-blue-600 dark:text-blue-400') : 'text-primary'
+                      }`}>
+                        {classItem.tokens_required}
+                      </span>
+                      <span className="text-[10px] text-body-color dark:text-gray-400">
+                        token{classItem.tokens_required !== 1 ? "s" : ""}
+                        {classItem._isParent && classItem.recurrence_type === 'course' && " total"}
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isRecurring && classItem._isParent && classItem._childInstances?.length) {
+                          handleViewSessions(classItem, e);
+                        } else if (isCourse && classItem._isParent && classItem._childInstances?.length) {
+                          setConfirmationModal({ open: true, class: classItem });
+                        } else if (!isFull) {
+                          setConfirmationModal({ open: true, class: classItem });
+                        }
+                      }}
+                      disabled={isFull || bookClassMutation.isPending || (classItem._isParent && isRecurring)}
+                      title={!bookingWindowOpen ? 'Bookings 08:00–22:00 SGT' : undefined}
+                      className={`px-4 py-2 rounded-lg text-xs font-bold transition-all active:scale-95 ${
+                        isFull || bookClassMutation.isPending
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800"
+                          : isRecurringOrCourse
+                            ? isCourse && classItem._isParent
+                              ? "bg-purple-600 text-white hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600"
+                              : "bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                            : "bg-primary text-white hover:bg-primary/90"
+                      }`}
+                    >
+                      {bookClassMutation.isPending ? "..." : isFull ? "Full" : isRecurring && classItem._isParent ? "Sessions" : "Book"}
+                    </button>
                   </div>
                 </div>
               </div>
+                    );
+                  })}
+                </div>
+              </section>
             );
           })}
         </div>
+
+        {/* Pagination - centered, with bottom padding so it sits above floating Check In button */}
+        {totalPages > 1 && (
+          <div className="mt-6 pb-24 sm:pb-28 flex flex-col items-center justify-center gap-4">
+            <p className="text-sm text-body-color dark:text-gray-400 text-center">
+              Showing {(currentPage - 1) * CLASSES_PER_PAGE + 1} to{" "}
+              {Math.min(currentPage * CLASSES_PER_PAGE, classes.length)} of {classes.length} classes
+            </p>
+            <div className="flex items-center justify-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1 px-4 py-2 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-dark text-body-color dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm"
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="w-5 h-5" />
+                <span className="hidden sm:inline">Previous</span>
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`min-w-[2.5rem] h-10 rounded-xl font-semibold text-sm transition-colors ${
+                      currentPage === page
+                        ? "bg-primary text-white"
+                        : "border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-dark text-body-color dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    }`}
+                    aria-label={`Page ${page}`}
+                    aria-current={currentPage === page ? "page" : undefined}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1 px-4 py-2 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-dark text-body-color dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm"
+                aria-label="Next page"
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
+        </>
       )}
 
       {/* Class Details Slide Panel */}
@@ -813,10 +741,7 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
       {/* Booking Confirmation Modal */}
       <BookingConfirmationModal
         isOpen={isConfirmationModalOpen}
-        onClose={() => {
-          setIsConfirmationModalOpen(false);
-          setClassToBook(null);
-        }}
+        onClose={() => setConfirmationModal({ open: false, class: null })}
         onConfirm={handleConfirmBooking}
         classItem={classToBook}
         isBooking={bookClassMutation.isPending}
@@ -995,8 +920,7 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
                             onClick={(e) => {
                               e.stopPropagation();
                               if (!sessionIsFull) {
-                                setClassToBook(session);
-                                setIsConfirmationModalOpen(true);
+                                setConfirmationModal({ open: true, class: session });
                                 setSessionsPanel({ isOpen: false, parentClass: null, sessions: [] });
                                 setSelectedSessions(new Set());
                               }

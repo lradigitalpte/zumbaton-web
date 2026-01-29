@@ -8,7 +8,6 @@ import Sidebar from "@/components/Dashboard/Sidebar";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
 import CheckInButton from "@/components/CheckInButton";
 import UserOnboardingTour from "@/components/onboarding/UserOnboardingTour";
-import UserOnboardingHelpButton from "@/components/onboarding/UserOnboardingHelpButton";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -179,9 +178,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       
       {/* User Onboarding Tour */}
       <UserOnboardingTour />
-      
-      {/* Floating Help Button */}
-      <UserOnboardingHelpButton />
     </div>
   );
 };

@@ -46,7 +46,7 @@ const TrialBookingHero = () => {
           transition={{ duration: 0.8, delay: 0.2 }}
         >
           <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-white mb-4 md:mb-6">
-            Book a Class
+            Book a Trial Class
           </h1>
           <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-6 max-w-3xl mx-auto px-4">
             Select a class, enter your details, and pay securely. No account required.
@@ -58,7 +58,7 @@ const TrialBookingHero = () => {
               Home
             </Link>
             <span className="text-green-500">/</span>
-            <span className="text-green-400">Book a Class</span>
+            <span className="text-green-400">Book a Trial Class</span>
           </nav>
         </motion.div>
       </motion.div>
