@@ -64,15 +64,14 @@ export async function GET(request: NextRequest) {
             const lowerInstructorName = instructorName.toLowerCase().trim()
             const normalizedInstructorName = lowerInstructorName.replace(/_/g, ' ').replace(/\s+/g, ' ')
             
-            if (
-              (normalizedProfileName === normalizedInstructorName || 
-               lowerProfileName === lowerInstructorName) &&
-              !profiles[profile.id]
-            ) {
+            const exactMatch = normalizedProfileName === normalizedInstructorName || lowerProfileName === lowerInstructorName
+            const firstNameMatch = normalizedProfileName.startsWith(normalizedInstructorName + ' ') || normalizedInstructorName.startsWith(normalizedProfileName + ' ')
+            
+            if ((exactMatch || firstNameMatch) && !profiles[profile.id]) {
               profiles[profile.id] = {
                 id: profile.id,
                 name: profile.name,
-                avatar_url: profile.avatar_url,
+                avatar_url: profile.avatar_url ?? null,
               }
             }
           })

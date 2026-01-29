@@ -107,8 +107,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    // Calculate price: use trial_price_cents from DB if set, otherwise default $1 for now (change to 23 for $23 later)
-    const DEFAULT_TRIAL_CENTS = 100 // $1 for now; set to 2300 for $23
+    // Calculate price: use trial_price_cents from DB if set, otherwise fallback $23
+    const DEFAULT_TRIAL_CENTS = 2300 // $23 fallback when class has no price
     const amountCents = classData.trial_price_cents && classData.trial_price_cents > 0
       ? classData.trial_price_cents
       : DEFAULT_TRIAL_CENTS

@@ -109,16 +109,32 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Note: Booking counts will be fetched by processAndGroupClasses on the client side
-    // This keeps the API endpoint simple and ensures consistency
+    const classList = classes || []
+    const classIds = classList.map((c: { id: string }) => c.id).filter(Boolean)
 
-    // Return raw classes data - the client-side processAndGroupClasses function will handle
-    // transformation, instructor profiles, grouping, etc.
-    // This ensures consistency between API and direct query paths
+    // Fetch booking counts from DB (confirmed + attended) so user side shows real spots left
+    let bookingCounts: Record<string, number> = {}
+    if (classIds.length > 0) {
+      const { data: bookings } = await supabase
+        .from('bookings')
+        .select('class_id, status')
+        .in('class_id', classIds)
+        .in('status', ['confirmed', 'attended'])
+      bookings?.forEach((b: { class_id: string }) => {
+        bookingCounts[b.class_id] = (bookingCounts[b.class_id] || 0) + 1
+      })
+    }
+
+    // Attach booked_count so UI can show "X spots" / "Full" (spots left = capacity - booked_count)
+    const classesWithCounts = classList.map((c: { id: string }) => {
+      const booked = bookingCounts[c.id] ?? 0
+      return { ...c, booked_count: booked }
+    })
+
     return NextResponse.json({
       success: true,
-      data: classes || [],
-      count: (classes || []).length,
+      data: classesWithCounts,
+      count: classesWithCounts.length,
     })
   } catch (error) {
     console.error('[API Classes] Unexpected error:', error)

@@ -22,6 +22,8 @@ const ClassesPage = () => {
     date: "",
     recurrenceType: "all" as "single" | "recurring" | "course" | "all",
     categoryId: "",
+    instructorId: "all",
+    ageGroup: "all" as "all" | "adult" | "kid",
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -89,24 +91,52 @@ const ClassesPage = () => {
     categoryId: filter.categoryId || undefined,
   });
 
-  // Apply search filter
+  // Unique instructors from current data (for filter dropdown)
+  const uniqueInstructors = useMemo(() => {
+    const seen = new Set<string>();
+    const list: { id: string; name: string }[] = [];
+    allClasses.forEach((c) => {
+      const id = c.instructor_id || "";
+      const name = (c.instructor_name || "TBA").trim();
+      const key = id || `name:${name}`;
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        list.push({ id: key.startsWith("name:") ? key : id, name });
+      }
+    });
+    return list.sort((a, b) => a.name.localeCompare(b.name));
+  }, [allClasses]);
+
+  // Apply search + instructor + age group filters
   const classes = useMemo(() => allClasses.filter((classItem) => {
-    if (!searchQuery.trim()) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      classItem.name?.toLowerCase().includes(query) ||
-      classItem.instructor_name?.toLowerCase().includes(query) ||
-      classItem.description?.toLowerCase().includes(query) ||
-      classItem.class_type?.toLowerCase().includes(query) ||
-      classItem.location?.toLowerCase().includes(query) ||
-      classItem.room_name?.toLowerCase().includes(query)
-    );
-  }), [allClasses, searchQuery]);
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch =
+        classItem.name?.toLowerCase().includes(query) ||
+        classItem.instructor_name?.toLowerCase().includes(query) ||
+        classItem.description?.toLowerCase().includes(query) ||
+        classItem.class_type?.toLowerCase().includes(query) ||
+        classItem.location?.toLowerCase().includes(query) ||
+        classItem.room_name?.toLowerCase().includes(query);
+      if (!matchesSearch) return false;
+    }
+    if (filter.instructorId !== "all") {
+      const matchInstructor = filter.instructorId.startsWith("name:")
+        ? (classItem.instructor_name && classItem.instructor_name.split(",").map((n: string) => n.trim()).some((n: string) => n === filter.instructorId.replace(/^name:/, "")))
+        : classItem.instructor_id === filter.instructorId;
+      if (!matchInstructor) return false;
+    }
+    if (filter.ageGroup !== "all") {
+      const ag = classItem.age_group || "all";
+      if (ag !== filter.ageGroup) return false;
+    }
+    return true;
+  }), [allClasses, searchQuery, filter.instructorId, filter.ageGroup]);
 
   // Pagination: reset to page 1 when filters/classes change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filter.type, filter.date, filter.recurrenceType, filter.categoryId, searchQuery]);
+  }, [filter.type, filter.date, filter.recurrenceType, filter.categoryId, filter.instructorId, filter.ageGroup, searchQuery]);
 
   const totalPages = Math.ceil(classes.length / CLASSES_PER_PAGE);
   const paginatedClasses = useMemo(
@@ -251,8 +281,8 @@ const ClassesPage = () => {
     );
   };
 
-  const getSpotsLeft = (capacity: number, booked: number) => {
-    const spots = capacity - booked;
+  const getSpotsLeft = (capacity: number, booked: number | undefined) => {
+    const spots = capacity - (Number(booked) || 0);
     if (spots <= 0) return { text: "Full", color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/20", left: 0 };
     if (spots <= 3) return { text: `${spots} left`, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/20", left: spots };
     return { text: `${spots} spots`, color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/20", left: spots };
@@ -264,6 +294,8 @@ const ClassesPage = () => {
     filter.date !== "", 
     filter.recurrenceType !== "all",
     filter.categoryId !== "",
+    filter.instructorId !== "all",
+    filter.ageGroup !== "all",
     searchQuery.trim() !== ""
   ].filter(Boolean).length;
 
@@ -336,8 +368,8 @@ const ClassesPage = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-            {/* Class Type - Mobile App Style */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4">
+            {/* Class Type */}
             <div>
               <label className="text-dark mb-2 block text-sm font-semibold dark:text-white">
                 Class Type
@@ -353,7 +385,7 @@ const ClassesPage = () => {
               </select>
             </div>
 
-            {/* Recurrence Type */}
+            {/* Schedule Type */}
             <div>
               <label className="text-dark mb-2 block text-sm font-semibold dark:text-white">
                 Schedule Type
@@ -370,7 +402,40 @@ const ClassesPage = () => {
               </select>
             </div>
 
+            {/* Instructor / Tutor */}
+            <div>
+              <label className="text-dark mb-2 block text-sm font-semibold dark:text-white">
+                Instructor
+              </label>
+              <select
+                value={filter.instructorId}
+                onChange={(e) => setFilter({ ...filter, instructorId: e.target.value })}
+                className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3 text-dark dark:text-white outline-none focus:border-primary transition-colors text-sm font-medium"
+              >
+                <option value="all">All Instructors</option>
+                {uniqueInstructors.map((inst) => (
+                  <option key={inst.id} value={inst.id}>
+                    {inst.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
+            {/* Age group: All / Adults / Kids */}
+            <div>
+              <label className="text-dark mb-2 block text-sm font-semibold dark:text-white">
+                Age Group
+              </label>
+              <select
+                value={filter.ageGroup}
+                onChange={(e) => setFilter({ ...filter, ageGroup: e.target.value as "all" | "adult" | "kid" })}
+                className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3 text-dark dark:text-white outline-none focus:border-primary transition-colors text-sm font-medium"
+              >
+                <option value="all">All Ages</option>
+                <option value="adult">Adults</option>
+                <option value="kid">Kids</option>
+              </select>
+            </div>
 
             {/* Date */}
             <div>
@@ -389,7 +454,7 @@ const ClassesPage = () => {
             <div className="flex items-end">
               <button
                 onClick={() => {
-                  setFilter({ type: "all", difficulty: "all", date: "", recurrenceType: "all", categoryId: "" });
+                  setFilter({ type: "all", difficulty: "all", date: "", recurrenceType: "all", categoryId: "", instructorId: "all", ageGroup: "all" });
                   setSearchQuery("");
                   setShowFilters(false);
                 }}
@@ -457,6 +522,32 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
               </button>
             </span>
           )}
+          {filter.instructorId !== "all" && (
+            <span className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-semibold flex items-center gap-1.5">
+              {uniqueInstructors.find((i) => i.id === filter.instructorId)?.name ?? "Instructor"}
+              <button
+                onClick={() => setFilter({ ...filter, instructorId: "all" })}
+                className="hover:bg-primary/20 rounded-full p-0.5"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </span>
+          )}
+          {filter.ageGroup !== "all" && (
+            <span className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-semibold flex items-center gap-1.5">
+              {filter.ageGroup === "adult" ? "Adults" : "Kids"}
+              <button
+                onClick={() => setFilter({ ...filter, ageGroup: "all" })}
+                className="hover:bg-primary/20 rounded-full p-0.5"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </span>
+          )}
           {searchQuery && (
             <span className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-semibold flex items-center gap-1.5">
               Search: {searchQuery.substring(0, 20)}{searchQuery.length > 20 ? "..." : ""}
@@ -489,7 +580,7 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
           <p className="text-sm text-body-color dark:text-gray-400 mb-6">Try adjusting your filters</p>
           <button
             onClick={() => {
-              setFilter({ type: "all", difficulty: "all", date: "", recurrenceType: "all", categoryId: "" });
+              setFilter({ type: "all", difficulty: "all", date: "", recurrenceType: "all", categoryId: "", instructorId: "all", ageGroup: "all" });
               setSearchQuery("");
               setShowFilters(false);
             }}
@@ -513,8 +604,9 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
                 <hr className="border-gray-200 dark:border-gray-700 mb-4" aria-hidden="true" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                   {classesOnDate.map((classItem) => {
-                    const spotsInfo = getSpotsLeft(classItem.capacity, classItem.booked_count);
-                    const isFull = classItem.capacity - classItem.booked_count <= 0;
+                    const booked = classItem.booked_count ?? 0;
+                    const spotsInfo = getSpotsLeft(classItem.capacity, booked);
+                    const isFull = classItem.capacity - booked <= 0;
                     const classDate = new Date(classItem.scheduled_at);
                     const isToday = classDate.toDateString() === new Date().toDateString();
                     const isTomorrow = classDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
@@ -589,7 +681,7 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
                     )}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-body-color dark:text-gray-400 mb-2 min-w-0">
-                    <div className="flex -space-x-1.5 shrink-0">
+                    <div className="flex -space-x-2 shrink-0">
                       {(classItem.instructors && classItem.instructors.length > 0 ? classItem.instructors : [{
                         id: classItem.instructor_id || '',
                         name: classItem.instructor_name || 'Unassigned',
@@ -598,7 +690,7 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
                       }]).slice(0, 2).map((instructor: any, idx: number) => (
                         <div
                           key={instructor.id || idx}
-                          className="h-6 w-6 rounded-full border-2 border-white dark:border-dark flex items-center justify-center text-[10px] font-semibold text-white bg-primary overflow-hidden"
+                          className="h-9 w-9 rounded-full border-2 border-white dark:border-dark flex items-center justify-center text-xs font-semibold text-white bg-primary overflow-hidden shadow-sm"
                           title={instructor.name}
                         >
                           {instructor.avatar ? (
@@ -734,7 +826,7 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
         classItem={selectedClass}
         onBookClick={handleBookClick}
         isBooking={bookClassMutation.isPending}
-        isFull={selectedClass ? selectedClass.capacity - selectedClass.booked_count <= 0 : false}
+        isFull={selectedClass ? selectedClass.capacity - (selectedClass.booked_count ?? 0) <= 0 : false}
         isBookingWindowOpen={bookingWindowOpen}
       />
 
@@ -803,7 +895,7 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => {
-                        const availableSessions = sessionsPanel.sessions.filter(s => s.capacity - s.booked_count > 0);
+                        const availableSessions = sessionsPanel.sessions.filter(s => s.capacity - (s.booked_count ?? 0) > 0);
                         if (selectedSessions.size === availableSessions.length) {
                           // Deselect all
                           setSelectedSessions(new Set());
@@ -854,7 +946,7 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
                     return sessionDate > new Date()
                   })
                   .map((session) => {
-                  const sessionSpots = session.capacity - session.booked_count;
+                  const sessionSpots = session.capacity - (session.booked_count ?? 0);
                   const sessionIsFull = sessionSpots <= 0;
                   const sessionDate = new Date(session.scheduled_at);
                   const isRecurring = sessionsPanel.parentClass?.recurrence_type === 'recurring';
