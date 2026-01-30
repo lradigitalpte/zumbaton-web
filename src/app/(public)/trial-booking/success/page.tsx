@@ -132,10 +132,10 @@ function TrialBookingSuccessContent() {
                 />
               </svg>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
               Booking Confirmed!
             </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400">
+            <p className="text-base md:text-lg text-gray-600 dark:text-gray-400">
               Your trial class has been successfully booked
             </p>
           </div>
@@ -162,7 +162,7 @@ function TrialBookingSuccessContent() {
                     {bookingData.classDate} at {bookingData.classTime}
                   </p>
                 </div>
-                {bookingData.classLocation && (
+                {bookingData.classLocation && bookingData.classLocation !== 'TBA' && bookingData.classLocation.trim() !== '' && (
                   <div>
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       Location:

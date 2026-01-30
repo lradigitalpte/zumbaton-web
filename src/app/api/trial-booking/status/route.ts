@@ -134,12 +134,15 @@ export async function GET(request: NextRequest) {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
+              timeZone: 'Asia/Singapore',
             })
           : 'TBA',
         classTime: classData?.scheduled_at
           ? new Date(classData.scheduled_at).toLocaleTimeString('en-SG', {
               hour: '2-digit',
               minute: '2-digit',
+              hour12: true,
+              timeZone: 'Asia/Singapore',
             })
           : 'TBA',
         classLocation: classData?.location || 'TBA',

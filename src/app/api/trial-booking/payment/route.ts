@@ -36,8 +36,8 @@ const supabaseAdmin = createClient(
 const TrialBookingPaymentSchema = z.object({
   classId: z.string().uuid('Invalid class ID'),
   guestName: z.string().min(1, 'Name is required').max(200),
-  guestEmail: z.string().email('Invalid email address'),
-  guestPhone: z.string().min(1, 'Phone number is required').max(50),
+  guestEmail: z.string().email('Invalid email address'), // Always required (from guest or guardian)
+  guestPhone: z.string().min(1, 'Phone number is required').max(50), // Always required (from guest or guardian)
   dateOfBirth: z.string().min(1, 'Date of birth is required').refine(
     (date) => {
       const dob = new Date(date)
@@ -45,6 +45,11 @@ const TrialBookingPaymentSchema = z.object({
     },
     { message: 'Invalid date of birth' }
   ),
+  // Guardian fields (required for kids classes)
+  guardianName: z.string().min(1, 'Guardian name is required').max(200).optional(),
+  guardianEmail: z.string().email('Invalid guardian email address').optional(),
+  guardianPhone: z.string().min(1, 'Guardian phone number is required').max(50).optional(),
+  guardianOnPremises: z.boolean().optional(),
 })
 
 /**
@@ -72,7 +77,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    const { classId, guestName, guestEmail, guestPhone, dateOfBirth } = validationResult.data
+    const { classId, guestName, guestEmail, guestPhone, dateOfBirth, guardianName, guardianEmail, guardianPhone, guardianOnPremises } = validationResult.data
 
     // 1. Get class details and validate availability
     const { data: classData, error: classError } = await supabaseAdmin
@@ -107,8 +112,31 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    // Calculate price: use trial_price_cents from DB if set, otherwise fallback $23
-    const DEFAULT_TRIAL_CENTS = 2300 // $23 fallback when class has no price
+    // Validate guardian information for kids classes
+    if (classAgeGroup === 'kid') {
+      if (!guardianName || !guardianEmail || !guardianPhone) {
+        return NextResponse.json(
+          { 
+            error: 'Guardian Information Required', 
+            message: 'Guardian/parent information is required for kids classes' 
+          },
+          { status: 400 }
+        )
+      }
+      if (guardianOnPremises !== true) {
+        return NextResponse.json(
+          { 
+            error: 'Guardian Confirmation Required', 
+            message: 'You must confirm that a parent/guardian will be on premises during the class' 
+          },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Calculate price: use trial_price_cents from DB if set, otherwise fallback based on age group
+    // Kids: $17 (1700 cents), Adults: $23 (2300 cents)
+    const DEFAULT_TRIAL_CENTS = classAgeGroup === 'kid' ? 1700 : 2300
     const amountCents = classData.trial_price_cents && classData.trial_price_cents > 0
       ? classData.trial_price_cents
       : DEFAULT_TRIAL_CENTS
@@ -152,19 +180,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // 2. Create draft booking first (lead capture)
+    // Prepare booking data
+    const bookingData: any = {
+      class_id: classId,
+      guest_name: guestName,
+      guest_email: guestEmail,
+      guest_phone: guestPhone,
+      guest_date_of_birth: dateOfBirth,
+      is_trial_booking: true,
+      status: 'draft', // Draft status for incomplete bookings
+      tokens_used: 0,
+      booked_at: new Date().toISOString(),
+    }
+
+    // Add guardian information for kids classes
+    if (classAgeGroup === 'kid' && guardianName && guardianEmail && guardianPhone) {
+      bookingData.guardian_name = guardianName
+      bookingData.guardian_email = guardianEmail
+      bookingData.guardian_phone = guardianPhone
+      bookingData.guardian_on_premises = guardianOnPremises === true
+    }
+
     const { data: draftBooking, error: draftBookingError } = await supabaseAdmin
       .from('bookings')
-      .insert({
-        class_id: classId,
-        guest_name: guestName,
-        guest_email: guestEmail,
-        guest_phone: guestPhone,
-        guest_date_of_birth: dateOfBirth,
-        is_trial_booking: true,
-        status: 'draft', // Draft status for incomplete bookings
-        tokens_used: 0,
-        booked_at: new Date().toISOString(),
-      })
+      .insert(bookingData)
       .select()
       .single()
 

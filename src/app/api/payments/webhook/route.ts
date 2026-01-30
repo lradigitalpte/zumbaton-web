@@ -325,11 +325,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               weekday: 'long', 
               year: 'numeric', 
               month: 'long', 
-              day: 'numeric' 
+              day: 'numeric',
+              timeZone: 'Asia/Singapore',
             }),
             classTime: new Date(classData.scheduled_at).toLocaleTimeString('en-SG', { 
               hour: '2-digit', 
-              minute: '2-digit' 
+              minute: '2-digit',
+              hour12: true,
+              timeZone: 'Asia/Singapore',
             }),
             classLocation: classData.location || 'TBA',
             instructorName: classData.instructor_name || undefined,
@@ -365,11 +368,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                   weekday: 'long', 
                   year: 'numeric', 
                   month: 'long', 
-                  day: 'numeric' 
+                  day: 'numeric',
+                  timeZone: 'Asia/Singapore',
                 }),
                 classTime: new Date(classData.scheduled_at).toLocaleTimeString('en-SG', { 
                   hour: '2-digit', 
-                  minute: '2-digit' 
+                  minute: '2-digit',
+                  hour12: true,
+                  timeZone: 'Asia/Singapore',
                 }),
                 classLocation: classData.location || 'TBA',
                 instructorName: classData.instructor_name || undefined,

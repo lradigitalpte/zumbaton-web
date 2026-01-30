@@ -22,6 +22,7 @@ interface Class {
   trial_price_cents: number | null;
   booked_count?: number;
   instructor_avatar?: string | null;
+  age_group?: 'adult' | 'kid' | 'all' | null;
 }
 
 interface InstructorProfile {
@@ -32,6 +33,14 @@ interface InstructorProfile {
 
 const CLASSES_PER_PAGE = 10;
 
+// Helper function to get default trial price based on age group
+function getDefaultTrialPrice(ageGroup: 'adult' | 'kid' | 'all' | null | undefined): number {
+  if (ageGroup === 'kid') {
+    return 1700; // $17 for kids
+  }
+  return 2300; // $23 for adults and 'all'
+}
+
 export default function TrialBookingPage() {
   const router = useRouter();
   const toast = useToast();
@@ -39,6 +48,7 @@ export default function TrialBookingPage() {
   const [loading, setLoading] = useState(true);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [dateFilter, setDateFilter] = useState<string>("");
+  const [ageGroupFilter, setAgeGroupFilter] = useState<'all' | 'adult' | 'kid'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [instructorProfiles, setInstructorProfiles] = useState<Record<string, InstructorProfile>>({});
   const [formData, setFormData] = useState({
@@ -46,6 +56,12 @@ export default function TrialBookingPage() {
     guestEmail: "",
     guestPhone: "",
     dateOfBirth: "",
+  });
+  const [guardianData, setGuardianData] = useState({
+    guardianName: "",
+    guardianEmail: "",
+    guardianPhone: "",
+    guardianOnPremises: false,
   });
   const [processing, setProcessing] = useState(false);
 
@@ -159,13 +175,26 @@ export default function TrialBookingPage() {
     };
 
     fetchClasses();
-    // Reset to page 1 when date filter changes
+    // Reset to page 1 when date filter or age group filter changes
     setCurrentPage(1);
-  }, [toast, dateFilter]);
+  }, [toast, dateFilter, ageGroupFilter]);
+
+  // Filter classes by age group
+  const filteredClasses = classes.filter((cls) => {
+    if (ageGroupFilter === 'all') return true;
+    const ageGroup = cls.age_group || 'all';
+    if (ageGroupFilter === 'adult') {
+      return ageGroup === 'adult' || ageGroup === 'all';
+    }
+    if (ageGroupFilter === 'kid') {
+      return ageGroup === 'kid' || ageGroup === 'all';
+    }
+    return true;
+  });
 
   // Pagination logic
-  const totalPages = Math.ceil(classes.length / CLASSES_PER_PAGE);
-  const paginatedClasses = classes.slice(
+  const totalPages = Math.ceil(filteredClasses.length / CLASSES_PER_PAGE);
+  const paginatedClasses = filteredClasses.slice(
     (currentPage - 1) * CLASSES_PER_PAGE,
     currentPage * CLASSES_PER_PAGE
   );
@@ -179,6 +208,18 @@ export default function TrialBookingPage() {
     }
 
     setSelectedClass(classItem);
+    
+    // Reset guardian data when switching classes
+    const isKidsClass = classItem.age_group === 'kid';
+    if (!isKidsClass) {
+      setGuardianData({
+        guardianName: "",
+        guardianEmail: "",
+        guardianPhone: "",
+        guardianOnPremises: false,
+      });
+    }
+    
     // On mobile, scroll to top to show the form panel
     if (window.innerWidth < 1024) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -195,22 +236,26 @@ export default function TrialBookingPage() {
 
     // Validate form
     if (!formData.guestName.trim()) {
-      toast.error("Please enter your name");
+      toast.error(selectedClass.age_group === 'kid' ? "Please enter kid's name" : "Please enter your name");
       return;
     }
 
-    if (!formData.guestEmail.trim() || !formData.guestEmail.includes("@")) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
+    // Email and phone validation - only required for adult classes
+    const isKidsClass = selectedClass.age_group === 'kid';
+    if (!isKidsClass) {
+      if (!formData.guestEmail.trim() || !formData.guestEmail.includes("@")) {
+        toast.error("Please enter a valid email address");
+        return;
+      }
 
-    if (!formData.guestPhone.trim()) {
-      toast.error("Please enter your phone number");
-      return;
+      if (!formData.guestPhone.trim()) {
+        toast.error("Please enter your phone number");
+        return;
+      }
     }
 
     if (!formData.dateOfBirth.trim()) {
-      toast.error("Please enter your date of birth");
+      toast.error("Please enter date of birth");
       return;
     }
 
@@ -234,21 +279,61 @@ export default function TrialBookingPage() {
       return;
     }
 
+    // For kids classes, validate guardian data
+    if (isKidsClass) {
+      if (!guardianData.guardianName.trim()) {
+        toast.error("Please enter guardian/parent name");
+        setProcessing(false);
+        return;
+      }
+      if (!guardianData.guardianEmail.trim() || !guardianData.guardianEmail.includes("@")) {
+        toast.error("Please enter a valid guardian/parent email address");
+        setProcessing(false);
+        return;
+      }
+      if (!guardianData.guardianPhone.trim()) {
+        toast.error("Please enter guardian/parent phone number");
+        setProcessing(false);
+        return;
+      }
+      if (!guardianData.guardianOnPremises) {
+        toast.error("You must confirm that a parent/guardian will be on premises");
+        setProcessing(false);
+        return;
+      }
+    }
+
     setProcessing(true);
 
     try {
+      const requestBody: any = {
+        classId: selectedClass.id,
+        guestName: formData.guestName.trim(),
+        dateOfBirth: formData.dateOfBirth.trim(),
+      };
+
+      // For kids classes: use guardian email/phone, for adults: use guest email/phone
+      if (isKidsClass) {
+        // Kids classes: use guardian contact info
+        requestBody.guardianName = guardianData.guardianName.trim();
+        requestBody.guardianEmail = guardianData.guardianEmail.trim().toLowerCase();
+        requestBody.guardianPhone = guardianData.guardianPhone.trim();
+        requestBody.guardianOnPremises = guardianData.guardianOnPremises;
+        // Use guardian email/phone as guest email/phone for booking record
+        requestBody.guestEmail = guardianData.guardianEmail.trim().toLowerCase();
+        requestBody.guestPhone = guardianData.guardianPhone.trim();
+      } else {
+        // Adult classes: use guest contact info
+        requestBody.guestEmail = formData.guestEmail.trim().toLowerCase();
+        requestBody.guestPhone = formData.guestPhone.trim();
+      }
+
       const response = await fetch("/api/trial-booking/payment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          classId: selectedClass.id,
-          guestName: formData.guestName.trim(),
-          guestEmail: formData.guestEmail.trim().toLowerCase(),
-          guestPhone: formData.guestPhone.trim(),
-          dateOfBirth: formData.dateOfBirth.trim(),
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const result = await response.json();
@@ -300,14 +385,21 @@ export default function TrialBookingPage() {
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   Available Classes
                 </h2>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                  Trial class:{" "}
-                  <span className="font-semibold text-green-600 dark:text-green-400">
-                    ${classes.length > 0
-                      ? ((classes[0].trial_price_cents && classes[0].trial_price_cents > 0 ? classes[0].trial_price_cents : 2300) / 100).toFixed(2)
-                      : "23.00"}
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-base text-gray-600 dark:text-gray-400">
+                    Trial class:
                   </span>
-                </p>
+                  <span className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    ${ageGroupFilter === 'kid' 
+                      ? (getDefaultTrialPrice('kid') / 100).toFixed(2)
+                      : (getDefaultTrialPrice('adult') / 100).toFixed(2)}
+                  </span>
+                  {ageGroupFilter === 'all' && (
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      (Kids: ${(getDefaultTrialPrice('kid') / 100).toFixed(2)}, Adults: ${(getDefaultTrialPrice('adult') / 100).toFixed(2)})
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <label htmlFor="dateFilter" className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -335,10 +427,57 @@ export default function TrialBookingPage() {
               </div>
             </div>
 
-            {classes.length === 0 ? (
+            {/* Age Group Filter Tabs */}
+            <div className="mb-6">
+              <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => {
+                    setAgeGroupFilter('all');
+                    setCurrentPage(1);
+                  }}
+                  className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
+                    ageGroupFilter === 'all'
+                      ? 'border-green-600 text-green-600 dark:text-green-400'
+                      : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+                  }`}
+                >
+                  All Classes
+                </button>
+                <button
+                  onClick={() => {
+                    setAgeGroupFilter('adult');
+                    setCurrentPage(1);
+                  }}
+                  className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
+                    ageGroupFilter === 'adult'
+                      ? 'border-green-600 text-green-600 dark:text-green-400'
+                      : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+                  }`}
+                >
+                  Adults
+                </button>
+                <button
+                  onClick={() => {
+                    setAgeGroupFilter('kid');
+                    setCurrentPage(1);
+                  }}
+                  className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
+                    ageGroupFilter === 'kid'
+                      ? 'border-green-600 text-green-600 dark:text-green-400'
+                      : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+                  }`}
+                >
+                  Kids
+                </button>
+              </div>
+            </div>
+
+            {filteredClasses.length === 0 ? (
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 text-center">
                 <p className="text-gray-600 dark:text-gray-400">
-                  No classes available at the moment. Please check back later.
+                  {classes.length === 0
+                    ? "No classes available at the moment. Please check back later."
+                    : `No ${ageGroupFilter === 'adult' ? 'adult' : ageGroupFilter === 'kid' ? 'kids' : ''} classes available${dateFilter ? ' for the selected date' : ''}. Please try a different filter.`}
                 </p>
               </div>
             ) : (
@@ -431,7 +570,7 @@ export default function TrialBookingPage() {
                 {totalPages > 1 && (
                   <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Showing {(currentPage - 1) * CLASSES_PER_PAGE + 1} to {Math.min(currentPage * CLASSES_PER_PAGE, classes.length)} of {classes.length} classes
+                      Showing {(currentPage - 1) * CLASSES_PER_PAGE + 1} to {Math.min(currentPage * CLASSES_PER_PAGE, filteredClasses.length)} of {filteredClasses.length} classes
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -517,7 +656,7 @@ export default function TrialBookingPage() {
                     $
                     {(((selectedClass.trial_price_cents && selectedClass.trial_price_cents > 0)
                       ? selectedClass.trial_price_cents
-                      : 2300) / 100).toFixed(2)}
+                      : getDefaultTrialPrice(selectedClass.age_group)) / 100).toFixed(2)}
                   </p>
                 </div>
               ) : (
@@ -534,7 +673,7 @@ export default function TrialBookingPage() {
                     htmlFor="guestName"
                     className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                   >
-                    Full Name *
+                    {selectedClass?.age_group === 'kid' ? "Kid's Name *" : "Full Name *"}
                   </label>
                   <input
                     type="text"
@@ -545,49 +684,76 @@ export default function TrialBookingPage() {
                       setFormData({ ...formData, guestName: e.target.value })
                     }
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                    placeholder="John Doe"
+                    placeholder={selectedClass?.age_group === 'kid' ? "Kid's name" : "John Doe"}
                   />
                 </div>
 
-                <div>
-                  <label
-                    htmlFor="guestEmail"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    id="guestEmail"
-                    required
-                    value={formData.guestEmail}
-                    onChange={(e) =>
-                      setFormData({ ...formData, guestEmail: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                    placeholder="john@example.com"
-                  />
-                </div>
+                {/* Guardian Information Display (for kids classes) */}
+                {selectedClass?.age_group === 'kid' && guardianData.guardianName && (
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 space-y-2">
+                    <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">Guardian/Parent Information:</p>
+                    <p className="text-sm text-blue-800 dark:text-blue-300">
+                      <span className="font-medium">Name:</span> {guardianData.guardianName}
+                    </p>
+                    <p className="text-sm text-blue-800 dark:text-blue-300">
+                      <span className="font-medium">Email:</span> {guardianData.guardianEmail}
+                    </p>
+                    <p className="text-sm text-blue-800 dark:text-blue-300">
+                      <span className="font-medium">Phone:</span> {guardianData.guardianPhone}
+                    </p>
+                    <p className="text-sm text-blue-800 dark:text-blue-300 flex items-center gap-2">
+                      <span className="font-medium">On Premises:</span>
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${guardianData.guardianOnPremises ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
+                        {guardianData.guardianOnPremises ? 'Confirmed' : 'Not Confirmed'}
+                      </span>
+                    </p>
+                  </div>
+                )}
 
-                <div>
-                  <label
-                    htmlFor="guestPhone"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    Phone Number *
-                  </label>
-                  <input
-                    type="tel"
-                    id="guestPhone"
-                    required
-                    value={formData.guestPhone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, guestPhone: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                    placeholder="+65 1234 5678"
-                  />
-                </div>
+                {/* Email and Phone - Only show for adult classes */}
+                {selectedClass?.age_group !== 'kid' && (
+                  <>
+                    <div>
+                      <label
+                        htmlFor="guestEmail"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                      >
+                        Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        id="guestEmail"
+                        required
+                        value={formData.guestEmail}
+                        onChange={(e) =>
+                          setFormData({ ...formData, guestEmail: e.target.value })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        placeholder="john@example.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="guestPhone"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                      >
+                        Phone Number *
+                      </label>
+                      <input
+                        type="tel"
+                        id="guestPhone"
+                        required
+                        value={formData.guestPhone}
+                        onChange={(e) =>
+                          setFormData({ ...formData, guestPhone: e.target.value })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        placeholder="+65 1234 5678"
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div>
                   <label
@@ -613,6 +779,98 @@ export default function TrialBookingPage() {
                   </p>
                 </div>
 
+                {/* Guardian Fields - Only show for kids classes */}
+                {selectedClass?.age_group === 'kid' && (
+                  <>
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        Guardian/Parent Information
+                      </h3>
+                      <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <p className="text-sm text-blue-800 dark:text-blue-200">
+                          For kids classes, we require guardian/parent information and confirmation that a parent or guardian will be on premises during the class.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="guardianName"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                      >
+                        Guardian/Parent Name *
+                      </label>
+                      <input
+                        type="text"
+                        id="guardianName"
+                        required={selectedClass?.age_group === 'kid'}
+                        value={guardianData.guardianName}
+                        onChange={(e) =>
+                          setGuardianData({ ...guardianData, guardianName: e.target.value })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        placeholder="Parent/Guardian name"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="guardianEmail"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                      >
+                        Guardian/Parent Email *
+                      </label>
+                      <input
+                        type="email"
+                        id="guardianEmail"
+                        required={selectedClass?.age_group === 'kid'}
+                        value={guardianData.guardianEmail}
+                        onChange={(e) =>
+                          setGuardianData({ ...guardianData, guardianEmail: e.target.value })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        placeholder="parent@example.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="guardianPhone"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                      >
+                        Guardian/Parent Phone *
+                      </label>
+                      <input
+                        type="tel"
+                        id="guardianPhone"
+                        required={selectedClass?.age_group === 'kid'}
+                        value={guardianData.guardianPhone}
+                        onChange={(e) =>
+                          setGuardianData({ ...guardianData, guardianPhone: e.target.value })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        placeholder="+65 1234 5678"
+                      />
+                    </div>
+
+                    <div className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <input
+                        type="checkbox"
+                        id="guardianOnPremises"
+                        required={selectedClass?.age_group === 'kid'}
+                        checked={guardianData.guardianOnPremises}
+                        onChange={(e) =>
+                          setGuardianData({ ...guardianData, guardianOnPremises: e.target.checked })
+                        }
+                        className="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="guardianOnPremises" className="text-sm text-gray-700 dark:text-gray-300">
+                        I confirm that a parent or guardian will be on premises during the class *
+                      </label>
+                    </div>
+                  </>
+                )}
+
                 <button
                   type="submit"
                   disabled={!selectedClass || processing}
@@ -637,11 +895,14 @@ export default function TrialBookingPage() {
           selectedClass={selectedClass}
           formData={formData}
           setFormData={setFormData}
+          guardianData={guardianData}
+          setGuardianData={setGuardianData}
           onSubmit={handleSubmit}
           processing={processing}
           onClose={() => setSelectedClass(null)}
         />
       )}
+
     </>
   );
 }
@@ -661,6 +922,18 @@ interface MobileBookingSheetProps {
     guestPhone: string;
     dateOfBirth: string;
   }>>;
+  guardianData: {
+    guardianName: string;
+    guardianEmail: string;
+    guardianPhone: string;
+    guardianOnPremises: boolean;
+  };
+  setGuardianData: React.Dispatch<React.SetStateAction<{
+    guardianName: string;
+    guardianEmail: string;
+    guardianPhone: string;
+    guardianOnPremises: boolean;
+  }>>;
   onSubmit: (e: React.FormEvent) => void;
   processing: boolean;
   onClose: () => void;
@@ -670,6 +943,8 @@ function MobileBookingSheet({
   selectedClass,
   formData,
   setFormData,
+  guardianData,
+  setGuardianData,
   onSubmit,
   processing,
   onClose,
@@ -718,8 +993,8 @@ function MobileBookingSheet({
     setCurrentY(0);
   };
 
-  // Fallback $23 when class has no trial_price_cents; use class trial_price_cents from DB if set
-  const defaultCents = 2300;
+  // Get default price based on age group: $17 for kids, $23 for adults
+  const defaultCents = getDefaultTrialPrice(selectedClass.age_group);
   const priceCents = selectedClass.trial_price_cents && selectedClass.trial_price_cents > 0
     ? selectedClass.trial_price_cents
     : defaultCents;
@@ -789,7 +1064,7 @@ function MobileBookingSheet({
                 htmlFor="mobile-guestName"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                Full Name *
+                {selectedClass.age_group === 'kid' ? "Kid's Name *" : "Full Name *"}
               </label>
               <input
                 type="text"
@@ -800,49 +1075,54 @@ function MobileBookingSheet({
                   setFormData({ ...formData, guestName: e.target.value })
                 }
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                placeholder="John Doe"
+                placeholder={selectedClass.age_group === 'kid' ? "Kid's name" : "John Doe"}
               />
             </div>
 
-            <div>
-              <label
-                htmlFor="mobile-guestEmail"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Email Address *
-              </label>
-              <input
-                type="email"
-                id="mobile-guestEmail"
-                required
-                value={formData.guestEmail}
-                onChange={(e) =>
-                  setFormData({ ...formData, guestEmail: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                placeholder="john@example.com"
-              />
-            </div>
+            {/* Email and Phone - Only show for adult classes */}
+            {selectedClass.age_group !== 'kid' && (
+              <>
+                <div>
+                  <label
+                    htmlFor="mobile-guestEmail"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  >
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    id="mobile-guestEmail"
+                    required
+                    value={formData.guestEmail}
+                    onChange={(e) =>
+                      setFormData({ ...formData, guestEmail: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    placeholder="john@example.com"
+                  />
+                </div>
 
-            <div>
-              <label
-                htmlFor="mobile-guestPhone"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Phone Number *
-              </label>
-              <input
-                type="tel"
-                id="mobile-guestPhone"
-                required
-                value={formData.guestPhone}
-                onChange={(e) =>
-                  setFormData({ ...formData, guestPhone: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                placeholder="+65 1234 5678"
-              />
-            </div>
+                <div>
+                  <label
+                    htmlFor="mobile-guestPhone"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  >
+                    Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    id="mobile-guestPhone"
+                    required
+                    value={formData.guestPhone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, guestPhone: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    placeholder="+65 1234 5678"
+                  />
+                </div>
+              </>
+            )}
 
             <div>
               <label
@@ -867,6 +1147,98 @@ function MobileBookingSheet({
                 Required to ensure age-appropriate class selection
               </p>
             </div>
+
+            {/* Guardian Fields - Only show for kids classes */}
+            {selectedClass.age_group === 'kid' && (
+              <>
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    Guardian/Parent Information
+                  </h3>
+                  <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      For kids classes, we require guardian/parent information and confirmation that a parent or guardian will be on premises during the class.
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="mobile-guardianName"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  >
+                    Guardian/Parent Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="mobile-guardianName"
+                    required
+                    value={guardianData.guardianName}
+                    onChange={(e) =>
+                      setGuardianData({ ...guardianData, guardianName: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    placeholder="Parent/Guardian name"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="mobile-guardianEmail"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  >
+                    Guardian/Parent Email *
+                  </label>
+                  <input
+                    type="email"
+                    id="mobile-guardianEmail"
+                    required
+                    value={guardianData.guardianEmail}
+                    onChange={(e) =>
+                      setGuardianData({ ...guardianData, guardianEmail: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    placeholder="parent@example.com"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="mobile-guardianPhone"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  >
+                    Guardian/Parent Phone *
+                  </label>
+                  <input
+                    type="tel"
+                    id="mobile-guardianPhone"
+                    required
+                    value={guardianData.guardianPhone}
+                    onChange={(e) =>
+                      setGuardianData({ ...guardianData, guardianPhone: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    placeholder="+65 1234 5678"
+                  />
+                </div>
+
+                <div className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <input
+                    type="checkbox"
+                    id="mobile-guardianOnPremises"
+                    required
+                    checked={guardianData.guardianOnPremises}
+                    onChange={(e) =>
+                      setGuardianData({ ...guardianData, guardianOnPremises: e.target.checked })
+                    }
+                    className="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="mobile-guardianOnPremises" className="text-sm text-gray-700 dark:text-gray-300">
+                    I confirm that a parent or guardian will be on premises during the class *
+                  </label>
+                </div>
+              </>
+            )}
 
             <button
               type="submit"
