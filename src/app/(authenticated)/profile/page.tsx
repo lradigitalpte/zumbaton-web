@@ -276,9 +276,9 @@ const ProfilePage = () => {
       {/* Profile Card */}
       <div className="bg-white dark:bg-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
         {/* Profile Header */}
-        <div className="bg-linear-to-br from-primary/80 to-primary p-8">
-          <div className="flex items-center gap-6">
-            <div className="relative">
+        <div className="bg-linear-to-br from-primary/80 to-primary p-8 overflow-hidden">
+          <div className="flex items-center gap-6 min-w-0">
+            <div className="relative shrink-0">
               <div 
                 className="w-24 h-24 rounded-full overflow-hidden bg-white/20 flex items-center justify-center text-white text-3xl font-bold border-4 border-white/30 cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={handleAvatarClick}
@@ -323,9 +323,9 @@ const ProfilePage = () => {
                 )}
               </div>
             </div>
-            <div className="text-white">
-              <h2 className="text-2xl font-bold">{profileData.name || "User"}</h2>
-              <p className="opacity-80">{profileData.email}</p>
+            <div className="text-white min-w-0 flex-1">
+              <h2 className="text-2xl font-bold truncate" title={profileData.name || undefined}>{profileData.name || "User"}</h2>
+              <p className="opacity-80 truncate" title={profileData.email || undefined}>{profileData.email}</p>
               <span className="inline-block mt-2 px-3 py-1 bg-white/20 rounded-full text-sm">
                 Member since {formatMemberSince(profileData.createdAt)}
               </span>

@@ -235,7 +235,7 @@ function SigninPageContent() {
                   <div className="mb-6 flex items-center justify-center">
                     <span className="bg-gray-300 dark:bg-gray-600 h-[1px] w-full max-w-[70px]"></span>
                     <p className="text-gray-500 dark:text-gray-400 w-full px-5 text-center text-sm font-medium">
-                      Or continue with email
+                      Or continue with email or username
                     </p>
                     <span className="bg-gray-300 dark:bg-gray-600 h-[1px] w-full max-w-[70px]"></span>
                   </div>
@@ -245,15 +245,16 @@ function SigninPageContent() {
                         htmlFor="email"
                         className="text-gray-700 dark:text-gray-200 mb-2 block text-sm font-medium"
                       >
-                        Email
+                        Email or username
                       </label>
                       <input
-                        type="email"
+                        type="text"
                         name="email"
                         id="email"
+                        autoComplete="username"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Enter your email"
+                        placeholder="Enter your email or username"
                         required
                         className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-green-500 dark:focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all duration-300"
                       />

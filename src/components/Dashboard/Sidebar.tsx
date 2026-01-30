@@ -6,7 +6,6 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Modal from "@/components/Modal/Modal";
-import ReferralShare from "@/components/Promo/ReferralShare";
 import { useProfile } from "@/hooks/useProfile";
 
 interface SidebarProps {
@@ -21,7 +20,6 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
   const { data: profile } = useProfile();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [showReferralModal, setShowReferralModal] = useState(false);
 
   // Sync with localStorage
   useEffect(() => {
@@ -106,16 +104,6 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-      ),
-    },
-    {
-      name: "Refer Friends",
-      href: "#",
-      onClick: () => setShowReferralModal(true),
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
         </svg>
       ),
     },
@@ -275,25 +263,6 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
           <nav className="p-4 space-y-2">
             {menuItems.map((item) => {
               const isActive = pathname === item.href;
-              const isReferral = item.name === "Refer Friends";
-              
-              if (isReferral && item.onClick) {
-                return (
-                  <button
-                    key={item.name}
-                    onClick={item.onClick}
-                    data-onboarding={`user-${item.name.toLowerCase().replace(/\s+/g, '-')}-menu`}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-gray-300 hover:bg-gray-800 hover:text-lime-400 ${
-                      isCollapsed ? "justify-center" : ""
-                    }`}
-                    title={isCollapsed ? item.name : undefined}
-                  >
-                    {item.icon}
-                    {!isCollapsed && <span className="font-medium">{item.name}</span>}
-                  </button>
-                );
-              }
-              
               return (
                 <Link
                   key={item.name}
@@ -385,19 +354,6 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
           <p className="text-body-color dark:text-gray-400">
             You will be signed out of your account and redirected to the sign in page.
           </p>
-        </div>
-      </Modal>
-
-      {/* Referral Share Modal */}
-      <Modal
-        isOpen={showReferralModal}
-        onClose={() => setShowReferralModal(false)}
-        title="Share Your Referral Code"
-        description="Share your code with friends and they'll get 8% off their first package purchase!"
-        size="lg"
-      >
-        <div className="py-4">
-          <ReferralShare />
         </div>
       </Modal>
       </aside>
