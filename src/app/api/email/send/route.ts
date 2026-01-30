@@ -24,6 +24,7 @@ import {
   sendForgotPasswordOTPEmail,
   sendBirthdayEmail,
   sendRegistrationFormEmail,
+  sendReferralVoucherEmail,
 } from '@/lib/email'
 
 // Secret key to protect this endpoint (should match in admin app)
@@ -48,6 +49,7 @@ const EmailRequestSchema = z.object({
     'forgot-password-otp',
     'birthday',
     'registration-form',
+    'referral-voucher',
   ]),
   secret: z.string(),
   data: z.record(z.unknown()),
@@ -250,6 +252,15 @@ export async function POST(request: NextRequest) {
           userEmail: data.userEmail as string,
           userName: data.userName as string,
           formUrl: data.formUrl as string,
+        })
+        break
+
+      case 'referral-voucher':
+        result = await sendReferralVoucherEmail({
+          userEmail: data.userEmail as string,
+          userName: data.userName as string,
+          voucherCode: data.voucherCode as string,
+          discountPercent: data.discountPercent as number,
         })
         break
 

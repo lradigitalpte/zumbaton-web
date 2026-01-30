@@ -52,17 +52,20 @@ async function getAuthenticatedUser(request: NextRequest) {
       return null
     }
 
-    // Get user profile for name
+    // Get user profile for name and guardian_email (child accounts: use for payment receipts)
     const { data: profile } = await supabaseAdmin
       .from('user_profiles')
-      .select('name, email')
+      .select('name, email, guardian_email')
       .eq('id', user.id)
       .single()
 
+    const email = user.email || profile?.email
+    const guardianEmail = profile?.guardian_email as string | null | undefined
     return {
       id: user.id,
-      email: user.email || profile?.email,
+      email,
       name: profile?.name || 'Customer',
+      guardianEmail: guardianEmail && guardianEmail.trim() ? guardianEmail.trim().toLowerCase() : null,
     }
   } catch (err) {
     console.warn('[Payment] Auth check failed:', err)
@@ -95,7 +98,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Parse request body
     const body = await request.json()
-    const { packageId, promoType: requestedPromoType } = body
+    const { packageId, promoType: requestedPromoType, voucherCode: rawVoucherCode } = body
 
     if (!packageId) {
       return NextResponse.json(
@@ -103,6 +106,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { status: 400 }
       )
     }
+
+    const voucherCode = typeof rawVoucherCode === 'string' ? rawVoucherCode.trim().toUpperCase() : null
 
     // Get package details from Supabase
     const supabase = createClient(
@@ -155,59 +160,73 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Continue with purchase if validation fails (fail open for backwards compatibility)
     }
 
-    // Check for available promotions and apply discount
+    // Check for voucher first (admin-issued); if valid, use it and skip referral/early_bird
     let finalAmountCents = pkg.price_cents
     let discountPercent = 0
     let discountAmountCents = 0
     let promoType: 'referral' | 'early_bird' | null = null
     let promoUsageId: string | null = null
+    let referralVoucherId: string | null = null
 
-    // Check for available promotions and apply discount
-    try {
-      const { getPromoEligibility, applyDiscount } = await import('@/lib/promo-utils')
-      
-      const eligibility = await getPromoEligibility(user.id)
-      
-      // Apply specific promo type if requested and eligible
-      if (requestedPromoType && eligibility.maxDiscountPercent > 0) {
-        let canApplyPromo = false
-        
-        if (requestedPromoType === 'early_bird' && eligibility.hasEarlyBirdDiscount) {
-          canApplyPromo = true
-        } else if (requestedPromoType === 'referral' && eligibility.hasReferralDiscount) {
-          canApplyPromo = true
-        }
-        
-        if (canApplyPromo) {
-          const discount = await applyDiscount(user.id, pkg.price_cents, requestedPromoType)
-          
-          finalAmountCents = discount.finalAmountCents
-          discountPercent = discount.discountPercent
-          discountAmountCents = discount.discountAmountCents
-          promoType = discount.promoType
-          
-          console.log(`[Payment] Applied ${requestedPromoType} discount:`, {
-            originalPrice: pkg.price_cents,
-            discountPercent,
-            discountAmount: discountAmountCents,
-            finalPrice: finalAmountCents
-          })
-        }
+    if (voucherCode) {
+      const { data: voucher, error: voucherError } = await supabase
+        .from('referral_vouchers')
+        .select('id, discount_percent')
+        .eq('user_id', user.id)
+        .eq('voucher_code', voucherCode)
+        .is('used_at', null)
+        .maybeSingle()
+
+      if (voucherError || !voucher) {
+        return NextResponse.json(
+          { error: 'Invalid Voucher', message: 'Voucher code is invalid or already used.' },
+          { status: 400 }
+        )
       }
-    } catch (promoError) {
-      console.warn('[Payment] Failed to check promotions, proceeding without discount:', promoError)
-      // Continue without discount if promo service fails
+
+      discountPercent = voucher.discount_percent
+      discountAmountCents = Math.round((pkg.price_cents * discountPercent) / 100)
+      finalAmountCents = pkg.price_cents - discountAmountCents
+      referralVoucherId = voucher.id
+      console.log('[Payment] Applied voucher discount:', { voucherCode, discountPercent, finalAmountCents })
+    }
+
+    // If no voucher, check referral/early_bird promotions
+    if (!referralVoucherId) {
+      try {
+        const { getPromoEligibility, applyDiscount } = await import('@/lib/promo-utils')
+        const eligibility = await getPromoEligibility(user.id)
+
+        if (requestedPromoType && eligibility.maxDiscountPercent > 0) {
+          let canApplyPromo = false
+          if (requestedPromoType === 'early_bird' && eligibility.hasEarlyBirdDiscount) canApplyPromo = true
+          else if (requestedPromoType === 'referral' && eligibility.hasReferralDiscount) canApplyPromo = true
+
+          if (canApplyPromo) {
+            const discount = await applyDiscount(user.id, pkg.price_cents, requestedPromoType)
+            finalAmountCents = discount.finalAmountCents
+            discountPercent = discount.discountPercent
+            discountAmountCents = discount.discountAmountCents
+            promoType = discount.promoType
+            console.log(`[Payment] Applied ${requestedPromoType} discount:`, { discountPercent, finalAmountCents })
+          }
+        }
+      } catch (promoError) {
+        console.warn('[Payment] Failed to check promotions:', promoError)
+      }
     }
 
     // Create HitPay payment request with discounted amount
     const amount = (finalAmountCents / 100).toFixed(2)
     const currency = pkg.currency || 'SGD'
     const referenceNumber = `${user.id}-${packageId}-${Date.now()}`
+    // Use guardian email for child accounts so parent receives HitPay receipt (not the plus-addressed kid email)
+    const emailForPayment = user.guardianEmail || user.email
 
     console.log('[Payment] Creating HitPay request:', {
       amount,
       currency,
-      email: user.email,
+      email: emailForPayment,
       apiKeyLength: HITPAY_API_KEY?.length,
       apiKeyPrefix: HITPAY_API_KEY?.substring(0, 10),
       url: `${HITPAY_API_URL}/payment-requests`,
@@ -222,7 +241,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       body: JSON.stringify({
         amount,
         currency,
-        email: user.email,
+        email: emailForPayment,
         name: user.name,
         purpose: `Purchase: ${pkg.name} (${pkg.token_count} tokens)`,
         reference_number: referenceNumber,
@@ -242,30 +261,34 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    // Save payment record to database (with discount info)
+    // Save payment record to database (with discount info and optional voucher)
+    const insertPayload: Record<string, unknown> = {
+      user_id: user.id,
+      package_id: packageId,
+      amount_cents: finalAmountCents,
+      original_amount_cents: pkg.price_cents,
+      discount_percent: discountPercent,
+      discount_amount_cents: discountAmountCents,
+      promo_type: promoType,
+      currency: currency,
+      status: 'pending',
+      provider: 'hitpay',
+      hitpay_payment_request_id: hitpayData.id,
+      hitpay_payment_url: hitpayData.url,
+      metadata: {
+        package_name: pkg.name,
+        token_count: pkg.token_count,
+        reference_number: referenceNumber,
+        discount_applied: discountPercent > 0,
+        discount_percent: discountPercent,
+      },
+    }
+    if (referralVoucherId) {
+      insertPayload.referral_voucher_id = referralVoucherId
+    }
     const { error: insertError } = await supabase
       .from('payments')
-      .insert({
-        user_id: user.id,
-        package_id: packageId,
-        amount_cents: finalAmountCents, // Discounted amount
-        original_amount_cents: pkg.price_cents, // Original price
-        discount_percent: discountPercent,
-        discount_amount_cents: discountAmountCents,
-        promo_type: promoType,
-        currency: currency,
-        status: 'pending',
-        provider: 'hitpay',
-        hitpay_payment_request_id: hitpayData.id,
-        hitpay_payment_url: hitpayData.url,
-        metadata: {
-          package_name: pkg.name,
-          token_count: pkg.token_count,
-          reference_number: referenceNumber,
-          discount_applied: discountPercent > 0,
-          discount_percent: discountPercent,
-        },
-      })
+      .insert(insertPayload)
 
     if (insertError) {
       console.error('[Payment] Failed to save payment:', insertError)

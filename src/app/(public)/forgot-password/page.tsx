@@ -12,61 +12,72 @@ const ForgotPasswordPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('[ForgotPassword] Form submitted, email:', email);
+    const emailOrUsername = (email || '').trim();
     setError("");
 
-    if (!email) {
-      setError("Please enter your email address");
+    if (!emailOrUsername) {
+      setError("Please enter your email or username");
       return;
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError("Please enter a valid email address");
-      return;
+    let emailToUse = emailOrUsername;
+
+    // If it doesn't look like an email, resolve username to email
+    if (!emailRegex.test(emailOrUsername)) {
+      try {
+        const res = await fetch(
+          `/api/auth/email-by-username?username=${encodeURIComponent(emailOrUsername)}`
+        );
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          const msg = res.status === 404
+            ? 'Username not found.'
+            : (body.error || 'Unable to look up username.');
+          setError(msg);
+          return;
+        }
+        const data = await res.json();
+        const resolved = typeof data?.email === 'string' ? data.email.trim() : '';
+        if (!resolved) {
+          setError('Username not found.');
+          return;
+        }
+        emailToUse = resolved;
+      } catch (err) {
+        console.error('[ForgotPassword] Username lookup failed:', err);
+        setError('Unable to look up username. Please try again.');
+        return;
+      }
     }
 
-    console.log('[ForgotPassword] Starting API call...');
     setIsSubmitting(true);
     setError("");
-    
+
     try {
-      console.log('[ForgotPassword] Making fetch request to /api/auth/forgot-password');
       const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-      console.log('[ForgotPassword] Response received:', response.status, response.statusText);
-
-      // Parse response JSON once
-      const data = await response.json().catch(() => {
-        // If JSON parsing fails, return empty object
-        return {};
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailToUse }),
       });
 
-      // Check if request was successful (200-299 status codes)
+      const data = await response.json().catch(() => ({}));
+
       if (!response.ok || data.success === false) {
-        const errorMessage = data.error || data.message || `Failed to send verification code. Please try again.`;
-        setError(errorMessage);
+        setError(data.error || data.message || 'Failed to send verification code. Please try again.');
         setIsSubmitting(false);
         return;
       }
 
-      // Success - redirect to verify-otp page only if email exists and OTP was sent
       if (response.ok && data.success) {
-        router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
+        router.push(`/verify-otp?email=${encodeURIComponent(emailToUse)}`);
       } else {
         setError(data.error || 'Failed to send verification code. Please try again.');
         setIsSubmitting(false);
       }
     } catch (err) {
       console.error('Error sending password reset:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setIsSubmitting(false);
     }
   };
@@ -82,7 +93,7 @@ const ForgotPasswordPage = () => {
                   Forgot Password?
                 </h3>
                 <p className="text-body-color mb-10 text-center text-base font-normal">
-                  Enter your email address and we&apos;ll send you a 6-digit verification code to reset your password.
+                  Enter your email or username and we&apos;ll send a 6-digit verification code to reset your password. (Child accounts: use your username.)
                 </p>
 
                 <form onSubmit={handleSubmit}>
@@ -98,15 +109,16 @@ const ForgotPasswordPage = () => {
                           htmlFor="email"
                           className="text-dark mb-3 block text-sm dark:text-white"
                         >
-                          Your Email
+                          Email or username
                         </label>
                         <input
-                          type="email"
+                          type="text"
                           name="email"
                           id="email"
+                          autoComplete="username"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          placeholder="Enter your email"
+                          placeholder="Enter your email or username"
                           required
                           className="border-stroke dark:text-body-color-dark dark:shadow-two text-body-color focus:border-primary dark:focus:border-primary w-full rounded-lg border bg-[#f8f8f8] px-6 py-3.5 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:focus:shadow-none"
                         />

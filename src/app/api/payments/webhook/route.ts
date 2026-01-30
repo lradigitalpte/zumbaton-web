@@ -325,11 +325,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               weekday: 'long', 
               year: 'numeric', 
               month: 'long', 
-              day: 'numeric' 
+              day: 'numeric',
+              timeZone: 'Asia/Singapore',
             }),
             classTime: new Date(classData.scheduled_at).toLocaleTimeString('en-SG', { 
               hour: '2-digit', 
-              minute: '2-digit' 
+              minute: '2-digit',
+              hour12: true,
+              timeZone: 'Asia/Singapore',
             }),
             classLocation: classData.location || 'TBA',
             instructorName: classData.instructor_name || undefined,
@@ -365,11 +368,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                   weekday: 'long', 
                   year: 'numeric', 
                   month: 'long', 
-                  day: 'numeric' 
+                  day: 'numeric',
+                  timeZone: 'Asia/Singapore',
                 }),
                 classTime: new Date(classData.scheduled_at).toLocaleTimeString('en-SG', { 
                   hour: '2-digit', 
-                  minute: '2-digit' 
+                  minute: '2-digit',
+                  hour12: true,
+                  timeZone: 'Asia/Singapore',
                 }),
                 classLocation: classData.location || 'TBA',
                 instructorName: classData.instructor_name || undefined,
@@ -461,6 +467,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       if (updateError) {
         console.error('[Webhook] Failed to update payment status:', updateError)
         return NextResponse.json({ received: true, error: 'Failed to update payment' })
+      }
+
+      // Mark admin-issued referral voucher as used (one-time use)
+      const voucherId = (payment as { referral_voucher_id?: string | null }).referral_voucher_id
+      if (voucherId) {
+        const { error: voucherUpdateError } = await supabase
+          .from('referral_vouchers')
+          .update({
+            used_at: new Date().toISOString(),
+            payment_id: payment.id,
+          })
+          .eq('id', voucherId)
+        if (voucherUpdateError) {
+          console.error('[Webhook] Failed to mark voucher as used:', voucherUpdateError)
+        } else {
+          console.log('[Webhook] Marked referral voucher as used:', voucherId)
+        }
       }
 
       // Check if user_package already exists for this payment (avoid duplicates)

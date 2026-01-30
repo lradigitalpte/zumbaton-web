@@ -338,29 +338,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (credentials: SignInRequest): Promise<ApiResponse<SignInResponse>> => {
     // Validate input first
-    if (!credentials.email || !credentials.password) {
+    const emailOrUsername = credentials.email?.trim() ?? ''
+    if (!emailOrUsername || !credentials.password) {
       return {
         success: false as const,
         error: {
           code: 'VALIDATION_ERROR' as const,
-          message: 'Please enter both email and password',
+          message: 'Please enter both email/username and password',
           timestamp: new Date().toISOString(),
         },
         timestamp: new Date().toISOString(),
       }
     }
 
-    // Basic email validation
+    // Resolve to email: if it contains @ treat as email, otherwise resolve username via API
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(credentials.email)) {
-      return {
-        success: false as const,
-        error: {
-          code: 'VALIDATION_ERROR' as const,
-          message: 'Please enter a valid email address',
+    let emailToUse: string
+    if (emailRegex.test(emailOrUsername)) {
+      emailToUse = emailOrUsername
+    } else {
+      try {
+        const res = await fetch(
+          `/api/auth/email-by-username?username=${encodeURIComponent(emailOrUsername)}`
+        )
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          const msg = res.status === 404
+            ? 'Username not found. If this is a child account, ensure it was created with a username in the admin panel.'
+            : (body.error || 'Unable to look up username')
+          return {
+            success: false as const,
+            error: {
+              code: 'VALIDATION_ERROR' as const,
+              message: msg,
+              timestamp: new Date().toISOString(),
+            },
+            timestamp: new Date().toISOString(),
+          }
+        }
+        const data = await res.json()
+        const resolvedEmail = typeof data?.email === 'string' ? data.email.trim() : ''
+        if (!resolvedEmail) {
+          return {
+            success: false as const,
+            error: {
+              code: 'VALIDATION_ERROR' as const,
+              message: 'Username not found',
+              timestamp: new Date().toISOString(),
+            },
+            timestamp: new Date().toISOString(),
+          }
+        }
+        emailToUse = resolvedEmail
+      } catch (lookupError) {
+        console.error('[Auth] Username lookup failed:', lookupError)
+        return {
+          success: false as const,
+          error: {
+            code: 'VALIDATION_ERROR' as const,
+            message: 'Unable to look up username. Please try again.',
+            timestamp: new Date().toISOString(),
+          },
           timestamp: new Date().toISOString(),
-        },
-        timestamp: new Date().toISOString(),
+        }
       }
     }
 
@@ -369,7 +409,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const signInPromise = async () => {
         // Add nested timeout for Supabase call specifically
         const supabaseCall = supabase.auth.signInWithPassword({
-          email: credentials.email.trim(),
+          email: emailToUse,
           password: credentials.password,
         })
 
@@ -398,9 +438,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (error) {
           // Handle specific error codes
+          const usedUsername = !emailRegex.test(emailOrUsername)
           let errorMessage = error.message || 'Invalid email or password'
           if (error.status === 400) {
             errorMessage = 'Invalid email or password. Please check your credentials and try again.'
+            if (usedUsername && (error.message?.includes('Invalid') || error.message?.includes('invalid_credentials'))) {
+              errorMessage = 'Wrong password for this account. Use the temporary password from your welcome email (sent to the parent/guardian for child accounts), or use Forgot password.'
+            }
           } else if (error.status === 429) {
             errorMessage = 'Too many login attempts. Please try again later.'
           } else if (error.message?.includes('Email not confirmed')) {

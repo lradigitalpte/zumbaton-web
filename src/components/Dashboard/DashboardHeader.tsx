@@ -280,10 +280,10 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
 
             {/* User Dropdown */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 sm:w-56 bg-white dark:bg-dark rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2">
-                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                  <p className="font-medium text-dark dark:text-white">{user?.name}</p>
-                  <p className="text-sm text-body-color dark:text-gray-400">{user?.email}</p>
+              <div className="absolute right-0 mt-2 w-48 sm:w-56 min-w-0 bg-white dark:bg-dark rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 min-w-0">
+                  <p className="font-medium text-dark dark:text-white truncate" title={user?.name || undefined}>{user?.name}</p>
+                  <p className="text-sm text-body-color dark:text-gray-400 truncate" title={user?.email || undefined}>{user?.email}</p>
                 </div>
                 <Link
                   href="/profile"

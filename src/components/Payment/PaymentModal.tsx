@@ -45,11 +45,17 @@ export default function PaymentModal({
     hasEarlyBirdDiscount: boolean
     earlyBirdDiscountPercent: number
     earlyBirdDaysLeft?: number | null
-  } | null>(null)
-  
-  // Calculate discounted price if applicable
+  } | null>(null);
+  const [voucherInput, setVoucherInput] = useState("");
+  const [appliedVoucher, setAppliedVoucher] = useState<{ voucherCode: string; discountPercent: number } | null>(null);
+  const [isValidatingVoucher, setIsValidatingVoucher] = useState(false);
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+
+  // Price: voucher takes precedence over early bird
   const originalPrice = selectedPackage?.price_cents || 0
-  const discountPercent = promoData?.hasEarlyBirdDiscount ? 10 : 0
+  const discountPercent = appliedVoucher
+    ? appliedVoucher.discountPercent
+    : promoData?.hasEarlyBirdDiscount ? 10 : 0
   const discountAmount = Math.round((originalPrice * discountPercent) / 100)
   const finalPrice = originalPrice - discountAmount
 
@@ -58,6 +64,9 @@ export default function PaymentModal({
     if (isOpen && selectedPackage) {
       setStatus("idle");
       setError(null);
+      setVoucherInput("");
+      setAppliedVoucher(null);
+      setVoucherError(null);
       // Fetch promo eligibility for current user
       ;(async () => {
         try {
@@ -78,6 +87,33 @@ export default function PaymentModal({
       })()
     }
   }, [isOpen, selectedPackage]);
+
+  const handleApplyVoucher = async () => {
+    const code = voucherInput.trim();
+    if (!code) {
+      setVoucherError("Enter your voucher code");
+      return;
+    }
+    setIsValidatingVoucher(true);
+    setVoucherError(null);
+    try {
+      const { apiFetchJson } = await import('@/lib/api-fetch');
+      const res = await apiFetchJson<{ success: boolean; valid: boolean; discountPercent?: number; voucherId?: string; error?: string }>(
+        "/api/promos/voucher/validate",
+        { method: "POST", body: JSON.stringify({ voucherCode: code }), requireAuth: true }
+      );
+      if (res.valid && res.discountPercent != null) {
+        setAppliedVoucher({ voucherCode: code.toUpperCase(), discountPercent: res.discountPercent });
+        toast.success(`${res.discountPercent}% discount applied`);
+      } else {
+        setVoucherError(res.error || "Invalid or already used voucher code");
+      }
+    } catch {
+      setVoucherError("Could not validate voucher");
+    } finally {
+      setIsValidatingVoucher(false);
+    }
+  };
 
   // Create payment request and redirect to HitPay
   const handlePay = async () => {
@@ -100,7 +136,8 @@ export default function PaymentModal({
         method: "POST",
         body: JSON.stringify({ 
           packageId: selectedPackage.id,
-          promoType: promoData?.hasEarlyBirdDiscount ? 'early_bird' : null
+          promoType: appliedVoucher ? null : (promoData?.hasEarlyBirdDiscount ? 'early_bird' : null),
+          voucherCode: appliedVoucher ? appliedVoucher.voucherCode : undefined,
         }),
         requireAuth: true,
       });
@@ -182,10 +219,10 @@ export default function PaymentModal({
               </span>
             </div>
             <div className="text-right">
-              {promoData?.hasEarlyBirdDiscount ? (
+              {discountPercent > 0 ? (
                 <div className="text-right">
-                  <div className="text-xs text-amber-600 font-medium mb-1">
-                    Early Steppers • 10% off
+                  <div className="text-xs text-amber-600 dark:text-amber-400 font-medium mb-1">
+                    {appliedVoucher ? `Voucher • ${discountPercent}% off` : "Early Steppers • 10% off"}
                   </div>
                   <div className="text-sm text-gray-500 line-through">
                     {formatPrice(originalPrice, selectedPackage.currency)}
@@ -193,7 +230,7 @@ export default function PaymentModal({
                   <div className="text-2xl font-bold text-green-600">
                     {formatPrice(finalPrice, selectedPackage.currency)}
                   </div>
-                  {promoData.earlyBirdDaysLeft !== null && promoData.earlyBirdDaysLeft !== undefined && (
+                  {!appliedVoucher && promoData?.hasEarlyBirdDiscount && promoData.earlyBirdDaysLeft != null && (
                     <div className="text-xs text-amber-600">{promoData.earlyBirdDaysLeft} days left</div>
                   )}
                 </div>
@@ -207,6 +244,46 @@ export default function PaymentModal({
           <p className="text-xs text-gray-500 mt-2">
             Valid for {selectedPackage.validity_days} days
           </p>
+        </div>
+
+        {/* Voucher */}
+        <div className="mb-6">
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Have a voucher?</p>
+          {appliedVoucher ? (
+            <div className="flex items-center justify-between rounded-xl bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 p-3">
+              <span className="text-sm text-lime-800 dark:text-lime-200">
+                Voucher applied: {appliedVoucher.discountPercent}% off
+              </span>
+              <button
+                type="button"
+                onClick={() => { setAppliedVoucher(null); setVoucherError(null); setVoucherInput(""); }}
+                className="text-xs font-medium text-lime-700 dark:text-lime-300 hover:underline"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={voucherInput}
+                onChange={(e) => { setVoucherInput(e.target.value); setVoucherError(null); }}
+                placeholder="Enter voucher code"
+                className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:border-green-500 focus:ring-1 focus:ring-green-500"
+              />
+              <button
+                type="button"
+                onClick={handleApplyVoucher}
+                disabled={isValidatingVoucher || !voucherInput.trim()}
+                className="rounded-lg bg-gray-200 dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isValidatingVoucher ? "..." : "Apply"}
+              </button>
+            </div>
+          )}
+          {voucherError && (
+            <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{voucherError}</p>
+          )}
         </div>
 
         {/* Payment Methods Info */}
