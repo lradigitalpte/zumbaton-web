@@ -36,7 +36,7 @@ const CLASSES_PER_PAGE = 10;
 // Helper function to get default trial price based on age group
 function getDefaultTrialPrice(ageGroup: 'adult' | 'kid' | 'all' | null | undefined): number {
   if (ageGroup === 'kid') {
-    return 1800; // $18 for kids
+    return 1700; // $17 for kids
   }
   return 2300; // $23 for adults and 'all'
 }
