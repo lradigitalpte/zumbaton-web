@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import ThemeToggler from "./ThemeToggler";
 import menuData from "./menuData";
+import TickerStrip from "./TickerStrip";
 import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
 
 const Header = () => {
@@ -63,13 +64,14 @@ const Header = () => {
   return (
     <>
       <header
-        className={`header top-0 left-0 z-40 w-full flex items-center transition-all duration-300 ${
+        className={`header top-0 left-0 z-40 w-full flex flex-col transition-all duration-300 ${
           needsBackground
             ? "dark:bg-gray-dark dark:shadow-sticky-dark shadow-sticky fixed z-[9999] bg-white/95 backdrop-blur-sm"
             : "absolute bg-transparent pb-2 sm:pb-4"
         }`}
       >
-        <div className="w-full px-2 sm:px-4 md:px-6 lg:px-8">
+        {!sticky && <TickerStrip />}
+        <div className="w-full flex items-center px-2 sm:px-4 md:px-6 lg:px-8">
           <div className="relative flex items-center justify-between">
             <div className="w-32 sm:w-40 md:w-60 max-w-full flex-shrink-0">
               <Link
