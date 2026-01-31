@@ -41,6 +41,14 @@ function getDefaultTrialPrice(ageGroup: 'adult' | 'kid' | 'all' | null | undefin
   return 2300; // $23 for adults and 'all'
 }
 
+// Kids price was updated from $17 to $18; treat 1700 from DB as legacy and use 1800
+function getTrialPriceCents(ageGroup: 'adult' | 'kid' | 'all' | null | undefined, trialPriceCents: number | null): number {
+  const fromDb = trialPriceCents && trialPriceCents > 0 ? trialPriceCents : null;
+  if (ageGroup === 'kid' && fromDb === 1700) return 1800; // legacy $17 -> $18
+  if (fromDb != null) return fromDb;
+  return getDefaultTrialPrice(ageGroup);
+}
+
 export default function TrialBookingPage() {
   const router = useRouter();
   const toast = useToast();
@@ -654,9 +662,7 @@ export default function TrialBookingPage() {
                   </p>
                   <p className="text-lg font-bold text-green-600 dark:text-green-400 mt-2">
                     $
-                    {(((selectedClass.trial_price_cents && selectedClass.trial_price_cents > 0)
-                      ? selectedClass.trial_price_cents
-                      : getDefaultTrialPrice(selectedClass.age_group)) / 100).toFixed(2)}
+                    {(getTrialPriceCents(selectedClass.age_group, selectedClass.trial_price_cents) / 100).toFixed(2)}
                   </p>
                 </div>
               ) : (
@@ -993,11 +999,8 @@ function MobileBookingSheet({
     setCurrentY(0);
   };
 
-  // Get default price based on age group: $17 for kids, $23 for adults
-  const defaultCents = getDefaultTrialPrice(selectedClass.age_group);
-  const priceCents = selectedClass.trial_price_cents && selectedClass.trial_price_cents > 0
-    ? selectedClass.trial_price_cents
-    : defaultCents;
+  // Get price: $18 for kids (treat DB 1700 as legacy), $23 for adults
+  const priceCents = getTrialPriceCents(selectedClass.age_group, selectedClass.trial_price_cents);
   const price = (priceCents / 100).toFixed(2);
 
   return (
