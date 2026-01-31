@@ -411,3 +411,20 @@ button, a, input, [role="button"] {
   }
 }
 
+/* Header ticker – scrolling marquee (6 copies so content fills wide viewports) */
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-16.666%);
+  }
+}
+.animate-ticker {
+  display: inline-flex;
+  animation: ticker-scroll 45s linear infinite;
+}
+.animate-ticker:hover {
+  animation-play-state: paused;
+}
+
