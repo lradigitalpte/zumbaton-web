@@ -135,8 +135,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Calculate price: use trial_price_cents from DB if set, otherwise fallback based on age group
-    // Kids: $17 (1700 cents), Adults: $23 (2300 cents)
-    const DEFAULT_TRIAL_CENTS = classAgeGroup === 'kid' ? 1700 : 2300
+    // Kids: $18 (1800 cents), Adults: $23 (2300 cents)
+    const DEFAULT_TRIAL_CENTS = classAgeGroup === 'kid' ? 1800 : 2300
     const amountCents = classData.trial_price_cents && classData.trial_price_cents > 0
       ? classData.trial_price_cents
       : DEFAULT_TRIAL_CENTS
