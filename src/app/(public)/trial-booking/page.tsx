@@ -36,7 +36,7 @@ const CLASSES_PER_PAGE = 10;
 // Helper function to get default trial price based on age group
 function getDefaultTrialPrice(ageGroup: 'adult' | 'kid' | 'all' | null | undefined): number {
   if (ageGroup === 'kid') {
-    return 1700; // $17 for kids
+    return 1800; // $18 for kids
   }
   return 2300; // $23 for adults and 'all'
 }
@@ -993,7 +993,7 @@ function MobileBookingSheet({
     setCurrentY(0);
   };
 
-  // Get default price based on age group: $17 for kids, $23 for adults
+  // Get default price based on age group: $18 for kids, $23 for adults
   const defaultCents = getDefaultTrialPrice(selectedClass.age_group);
   const priceCents = selectedClass.trial_price_cents && selectedClass.trial_price_cents > 0
     ? selectedClass.trial_price_cents
