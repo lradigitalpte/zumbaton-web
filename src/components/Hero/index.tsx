@@ -185,9 +185,7 @@ const Hero = () => {
                   >
                     <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                     <span className="whitespace-nowrap">
-                      <span className="hidden xs:inline">Early Bird: </span>
-                      <span className="font-bold">{earlyBirdData.remaining}</span> spots
-                      <span className="hidden sm:inline"> - 10% off!</span>
+                      Early Bird Special - Limited Time Offer!
                     </span>
                   </Link>
                 </motion.div>
