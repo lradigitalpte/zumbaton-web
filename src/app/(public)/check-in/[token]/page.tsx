@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import MagicLinkForm from "@/components/auth/MagicLinkForm";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -423,10 +422,13 @@ export default function CheckInPage() {
     );
   }
 
-  // Login options state - streamlined for phone camera scanning
+  // Login options state - redirect to normal sign-in
   if (showLoginOptions) {
+    // Redirect to normal sign-in page with the check-in URL as redirect
+    router.push(`/signin?redirect=/check-in/${params.token}`);
+    
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-12">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Image
@@ -434,43 +436,18 @@ export default function CheckInPage() {
               alt="Zumbaton Logo"
               width={200}
               height={67}
-              className="h-16 w-auto mx-auto dark:invert mb-4"
+              className="h-16 w-auto mx-auto dark:invert"
               priority
             />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Sign In to Check In
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mb-2">
-              {qrData?.className ? `Quick sign in to check into ${qrData.className}` : "Please sign in to mark your attendance"}
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Enter your email to receive an instant sign-in link
-            </p>
           </div>
-
-          <div className="space-y-4">
-            <MagicLinkForm
-              redirectTo={typeof window !== 'undefined' ? `${window.location.origin}/check-in/${params.token}` : `/check-in/${params.token}`}
-              onSuccess={handleMagicLinkSuccess}
-            />
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400">
-                  Or
-                </span>
-              </div>
-            </div>
-
-            <Link
-              href={`/signin?redirect=/check-in/${params.token}`}
-              className="block w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-center text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
-            >
-              Sign In with Password
-            </Link>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Please Sign In
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              Redirecting you to sign in...
+            </p>
           </div>
         </div>
       </div>

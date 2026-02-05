@@ -28,9 +28,9 @@ export const zumbaClasses: ZumbaClass[] = [
     name: "Groove Stepper",
     shortDescription: "Structured dance routines performed using steppers to enhance movement, coordination, and strength. Perfect for those who enjoy learning choreography while improving endurance.",
     fullDescription: "This class focuses on structured dance routines performed using steppers to enhance movement, coordination, and strength. Each session combines rhythm, precision, and cardio, making it perfect for those who enjoy learning choreography while improving endurance and lower-body strength.",
-    image: "/images/images/image1.jpg",
+    image: "/images/landing2.png",
     featured: true,
-    duration: "40 min",
+    duration: "60 min",
     intensity: "All Levels",
     calories: "400-600",
     instructor: "Coach Lavs",
@@ -68,9 +68,9 @@ export const zumbaClasses: ZumbaClass[] = [
     name: "ZUMBATON",
     shortDescription: "A high-energy Zumba Step workout elevated for added intensity and calorie burn. Blends fun, easy-to-follow Zumba choreography with step movements for a full-body workout.",
     fullDescription: "A high-energy Zumba Step workout elevated for added intensity and calorie burn. This class blends fun, easy-to-follow Zumba choreography with step movements, delivering a full-body workout that feels more like a party than exercise.",
-    image: "/images/images/image2z.jpg",
+    image: "/images/landing3.jpg",
     featured: true,
-    duration: "40 min",
+    duration: "60 min",
     intensity: "All Levels",
     calories: "500-700",
     instructor: "Coach Lavs",
@@ -104,6 +104,49 @@ export const zumbaClasses: ZumbaClass[] = [
       { day: "Tuesday", time: "9:00 AM" },
       { day: "Thursday", time: "5:30 PM" },
       { day: "Saturday", time: "10:00 AM" }
+    ]
+  },
+  {
+    id: "3",
+    slug: "zumbuddies",
+    name: "ZUMBUDDIES",
+    shortDescription: "Fun and energetic Zumba classes designed especially for kids! Dance, play, and get fit while making new friends in a safe, supportive environment.",
+    fullDescription: "ZUMBUDDIES is our special Zumba program for kids, combining fun dance moves with games and activities designed to keep children active, healthy, and happy. Each class is packed with energy, creativity, and age-appropriate choreography that kids love. It's the perfect way for children to develop coordination, confidence, and a love for movement in a party-like atmosphere!",
+    image: "/images/images/zumbakids.png",
+    featured: true,
+    duration: "60 min",
+    intensity: "Beginner",
+    calories: "200-300",
+    instructor: "Coach Lavs",
+    highlights: [
+      {
+        title: "Kid-Friendly Choreography",
+        description: "Simple, fun dance moves designed specifically for children to follow and enjoy."
+      },
+      {
+        title: "Builds Confidence and Social Skills",
+        description: "Kids make friends, express themselves, and gain confidence through dance and group activities."
+      },
+      {
+        title: "Develops Coordination and Motor Skills",
+        description: "Dancing helps children improve balance, coordination, and overall physical development."
+      },
+      {
+        title: "Promotes Healthy Habits",
+        description: "Introduces kids to fitness in a fun way, establishing healthy habits that last a lifetime."
+      },
+      {
+        title: "Safe and Supportive Environment",
+        description: "Our instructors create a welcoming space where every child feels included and encouraged."
+      },
+      {
+        title: "Energetic Kid-Friendly Music",
+        description: "Fun, upbeat music that kids love, featuring popular songs and catchy rhythms perfect for young dancers."
+      }
+    ],
+    schedule: [
+      { day: "Wednesday", time: "4:00 PM" },
+      { day: "Saturday", time: "9:00 AM" }
     ]
   }
 ];
