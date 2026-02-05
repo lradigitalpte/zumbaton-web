@@ -106,20 +106,8 @@ const ClassDetailContent = ({ classData }: { classData: ZumbaClass }) => {
               {/* Quick Stats Overlay */}
               <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-4">
                 <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20 dark:border-gray-700/50">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Duration</span>
-                  <p className="font-bold text-gray-900 dark:text-white">{classData.duration}</p>
-                </div>
-                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20 dark:border-gray-700/50">
                   <span className="text-sm text-gray-500 dark:text-gray-400">Intensity</span>
                   <p className="font-bold text-gray-900 dark:text-white">{classData.intensity}</p>
-                </div>
-                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20 dark:border-gray-700/50">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Calories</span>
-                  <p className="font-bold text-gray-900 dark:text-white">{classData.calories}</p>
-                </div>
-                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20 dark:border-gray-700/50">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Instructor</span>
-                  <p className="font-bold text-gray-900 dark:text-white">{classData.instructor}</p>
                 </div>
               </div>
             </div>
@@ -152,34 +140,17 @@ const ClassDetailContent = ({ classData }: { classData: ZumbaClass }) => {
                 Class Schedule
               </h2>
               <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {classData.schedule.map((slot, index) => (
-                    <div 
-                      key={index}
-                      className="flex items-center gap-4 p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
-                    >
-                      <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center shrink-0">
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="font-bold text-gray-900 dark:text-white">{slot.day}</p>
-                        <p className="text-green-600 dark:text-green-500">{slot.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-6 text-center">
+                <div className="text-center">
                   <Link
                     href="/schedule"
-                    className="inline-flex items-center gap-2 text-green-600 dark:text-green-500 font-semibold hover:text-green-700 dark:hover:text-green-400 transition-colors"
+                    className="inline-flex items-center gap-2 text-green-600 dark:text-green-500 font-semibold hover:text-green-700 dark:hover:text-green-400 transition-colors text-lg"
                   >
-                    View Full Schedule
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    View Class Schedule
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
                   </Link>
+                  <p className="text-gray-500 dark:text-gray-400 mt-2">Check our schedule page for availability and booking</p>
                 </div>
               </div>
             </div>

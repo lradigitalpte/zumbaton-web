@@ -11,6 +11,7 @@ const Footer = () => {
     classes: [
       { name: "Groove Stepper", href: "/classes/groove-stepper" },
       { name: "ZUMBATON", href: "/classes/zumbaton" },
+      { name: "ZUMBUDDIES", href: "/classes/zumbuddies" },
       { name: "View Schedule", href: "/schedule" },
     ],
     company: [

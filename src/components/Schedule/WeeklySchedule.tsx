@@ -21,26 +21,22 @@ const WeeklySchedule = () => {
   useEffect(() => {
     const fetchClasses = async () => {
       try {
-        // Fetch classes for the next 7 days to build a weekly view
-        const today = new Date();
-        const nextWeek = new Date(today);
-        nextWeek.setDate(today.getDate() + 7);
-        
+        // Fetch all available classes from the same endpoint as trial booking
         const response = await fetch(`/api/classes/public`);
         const result = await response.json();
 
         if (result.success && result.data) {
-          // Filter to only scheduled classes in the next week
-          const now = new Date();
-          const weekFromNow = new Date(now);
-          weekFromNow.setDate(now.getDate() + 7);
+          // Only get scheduled classes
+          const scheduledClasses = result.data.filter((cls: any) => cls.status === 'scheduled');
           
-          const upcomingClasses = result.data.filter((cls: any) => {
-            const scheduledAt = new Date(cls.scheduled_at);
-            return scheduledAt >= now && scheduledAt <= weekFromNow && cls.status === 'scheduled';
-          });
+          // Sort by date and time (same as trial booking page)
+          scheduledClasses.sort(
+            (a: Class, b: Class) =>
+              new Date(a.scheduled_at).getTime() -
+              new Date(b.scheduled_at).getTime()
+          );
 
-          setClasses(upcomingClasses);
+          setClasses(scheduledClasses);
         }
       } catch (error) {
         console.error("Error fetching classes:", error);
@@ -52,37 +48,30 @@ const WeeklySchedule = () => {
     fetchClasses();
   }, []);
 
-  // Group classes by day of week
+  // Group classes by date (not day of week) to show actual schedule
   const scheduleByDay = useMemo(() => {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const schedule: Record<string, Class[]> = {};
+    const grouped: Record<string, { date: Date; classes: Class[] }> = {};
     
-    days.forEach(day => {
-      schedule[day] = [];
-    });
-
     classes.forEach((cls) => {
       const scheduledDate = new Date(cls.scheduled_at);
-      const dayOfWeek = days[scheduledDate.getDay()];
+      // Use date string as key (e.g., "2026-02-06")
+      const dateKey = scheduledDate.toISOString().split('T')[0];
       
-      if (schedule[dayOfWeek]) {
-        schedule[dayOfWeek].push(cls);
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = {
+          date: scheduledDate,
+          classes: [],
+        };
       }
+      
+      grouped[dateKey].classes.push(cls);
     });
 
-    // Sort classes within each day by time
-    days.forEach(day => {
-      schedule[day].sort((a, b) => {
-        const timeA = new Date(a.scheduled_at).getTime();
-        const timeB = new Date(b.scheduled_at).getTime();
-        return timeA - timeB;
-      });
-    });
-
-    return days.map(day => ({
-      day,
-      classes: schedule[day],
-    }));
+    // Sort by date and return as array - show next 7 days
+    return Object.entries(grouped)
+      .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+      .map(([, value]) => value)
+      .slice(0, 7);
   }, [classes]);
 
   const formatTime = (dateString: string, durationMinutes: number) => {
@@ -93,12 +82,14 @@ const WeeklySchedule = () => {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
+      timeZone: 'Asia/Singapore',
     });
     
     const endTime = end.toLocaleTimeString('en-SG', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
+      timeZone: 'Asia/Singapore',
     });
     
     return `${startTime} - ${endTime}`;
@@ -122,7 +113,7 @@ const WeeklySchedule = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <div className="text-green-600 dark:text-green-500 font-semibold text-sm uppercase tracking-wide mb-3">
-            Weekly Timetable
+            Weekly Schedule
           </div>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4">
             We Have Zumba Step Class for Everyone
@@ -136,7 +127,7 @@ const WeeklySchedule = () => {
         {/* Schedule Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
           {scheduleByDay.map((daySchedule, index) => (
-            <DayColumn key={daySchedule.day} daySchedule={daySchedule} index={index} formatTime={formatTime} />
+            <DayColumn key={daySchedule.date.toISOString()} daySchedule={daySchedule} index={index} formatTime={formatTime} />
           ))}
         </div>
 
@@ -153,7 +144,7 @@ const WeeklySchedule = () => {
 };
 
 interface DaySchedule {
-  day: string;
+  date: Date;
   classes: Class[];
 }
 
@@ -169,7 +160,9 @@ const DayColumn = ({
   const columnRef = useRef(null);
   const isInView = useInView(columnRef, { once: true, margin: "-50px" });
 
-  const isWeekend = daySchedule.day === "Saturday" || daySchedule.day === "Sunday";
+  const dayName = daySchedule.date.toLocaleDateString('en-US', { weekday: 'long' });
+  const dateStr = daySchedule.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const isWeekend = daySchedule.date.getDay() === 0 || daySchedule.date.getDay() === 6;
 
   return (
     <motion.div
@@ -185,7 +178,8 @@ const DayColumn = ({
           ? "bg-lime-500 text-white" 
           : "bg-green-600 text-white"
       }`}>
-        <h4 className="font-bold text-lg">{daySchedule.day}</h4>
+        <h4 className="font-bold text-lg">{dayName}</h4>
+        <p className="text-sm opacity-90">{dateStr}</p>
       </div>
 
       {/* Classes */}

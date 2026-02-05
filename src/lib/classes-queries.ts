@@ -93,28 +93,21 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
         }
 
         const apiUrl = `/api/instructors/profiles?${params.toString()}`
-        const response = await fetch(apiUrl, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
+        const response = await fetch(apiUrl)
         if (response.ok) {
           const result = await response.json()
           if (result.success && result.data) {
-            const requestedNames = Array.from(instructorNames)
             result.data.forEach((profile: any) => {
-              const profileData = {
+              instructorProfiles[profile.id] = {
                 id: profile.id,
                 name: profile.name,
-                avatar_url: profile.avatar_url || null,
+                avatar_url: profile.avatar_url,
               }
-              instructorProfiles[profile.id] = profileData
-              instructorProfilesByName[profile.name] = profileData
-              // Also store under each requested name that matches (so "Robert" finds profile "Robert Smith")
-              const profileNameNorm = (profile.name || '').toLowerCase().trim().replace(/\s+/g, ' ')
-              requestedNames.forEach((name: string) => {
-                const nameNorm = name.toLowerCase().trim().replace(/\s+/g, ' ')
-                if (!nameNorm) return
-                if (profileNameNorm === nameNorm || profileNameNorm.startsWith(nameNorm + ' ') || nameNorm.startsWith(profileNameNorm + ' ')) {
-                  instructorProfilesByName[name] = profileData
-                }
-              })
+              instructorProfilesByName[profile.name] = {
+                id: profile.id,
+                name: profile.name,
+                avatar_url: profile.avatar_url,
+              }
             })
           }
         }
@@ -357,22 +350,18 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
     return parent.status === 'scheduled' || parent.status === 'in-progress' || scheduledChildParentIds.has(parent.id)
   })
 
-  // Get booking counts: use from API when present (each class has booked_count), else fetch from DB (direct Supabase path)
+  // Get booking counts for all classes (parents and children)
   const allClassIds = [...filteredParentClasses, ...childInstances].map((c: any) => c.id)
-  const firstClass = filteredParentClasses[0] ?? childInstances[0]
-  const hasCountsFromApi = allClassIds.length > 0 && typeof firstClass?.booked_count === 'number'
 
   let bookingCounts: Record<string, number> = {}
-  if (hasCountsFromApi) {
-    filteredParentClasses.forEach((c: any) => { bookingCounts[c.id] = c.booked_count ?? 0 })
-    childInstances.forEach((c: any) => { bookingCounts[c.id] = c.booked_count ?? 0 })
-  } else if (allClassIds.length > 0) {
+  
+  if (allClassIds.length > 0) {
     const { data: bookings, error: bookingError } = await supabase
       .from(TABLES.BOOKINGS)
       .select('class_id, status')
       .in('class_id', allClassIds)
       .in('status', ['confirmed', 'attended']) // Count both confirmed and attended bookings
-
+    
     if (bookingError) {
       console.error('Error fetching booking counts:', {
         error: bookingError,
@@ -383,6 +372,7 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
         errorString: JSON.stringify(bookingError, null, 2),
       })
     } else {
+      // Count bookings per class (both confirmed and attended count as booked spots)
       bookings?.forEach((booking: any) => {
         bookingCounts[booking.class_id] = (bookingCounts[booking.class_id] || 0) + 1
       })
