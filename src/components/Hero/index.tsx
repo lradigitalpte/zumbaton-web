@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
-import { Sparkles } from "lucide-react";
 
   const slides = [
     {
@@ -41,26 +40,6 @@ const Hero = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const [earlyBirdData, setEarlyBirdData] = useState<{ remaining: number; isAvailable: boolean } | null>(null);
-
-  // Fetch early bird availability for CTA button
-  useEffect(() => {
-    const fetchEarlyBirdAvailability = async () => {
-      try {
-        const response = await fetch('/api/promos/availability');
-        const result = await response.json();
-        if (result.success) {
-          setEarlyBirdData({
-            remaining: result.data.remaining,
-            isAvailable: result.data.isAvailable
-          });
-        }
-      } catch (error) {
-        console.error('Failed to fetch early bird availability:', error);
-      }
-    };
-    fetchEarlyBirdAvailability();
-  }, []);
 
   // Auto-advance slides with pause on hover
   useEffect(() => {
@@ -171,7 +150,7 @@ const Hero = () => {
               <p className="text-xs xs:text-sm sm:text-base md:text-lg font-bold text-green-400 dark:text-green-500 mb-5 sm:mb-7 md:mb-10 lg:mb-12 uppercase tracking-wider">
                 Step it up!
               </p>
-              {/* Early Bird CTA */}
+              {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 lg:gap-6 justify-center items-center w-full max-w-md sm:max-w-none px-2">
                 <Link
                   href="/trial-booking"
