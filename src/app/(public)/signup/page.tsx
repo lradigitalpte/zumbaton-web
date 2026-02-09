@@ -411,6 +411,17 @@ const SignupForm = () => {
                     <p className="text-white/90 text-base sm:text-lg mb-6 max-w-md">
                       Join our vibrant community and experience the power of dance fitness. Transform your body and mind with Zumbaton.
                     </p>
+                    {earlyBirdData?.isAvailable && (
+                      <div className="mb-4 p-3 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Sparkles className="w-4 h-4 text-green-300" />
+                          <h3 className="font-bold text-sm sm:text-base">Early Bird Special</h3>
+                        </div>
+                        <p className="text-xs sm:text-sm text-white/90">
+                          {earlyBirdData.remaining} spots left - {earlyBirdData.discountPercent}% off for {earlyBirdData.validMonths} months
+                        </p>
+                      </div>
+                    )}
                     <Link
                       href="/signin"
                       className="inline-block bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:scale-105 border border-white/30"

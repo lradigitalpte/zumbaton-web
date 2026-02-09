@@ -172,6 +172,24 @@ const Hero = () => {
                 Step it up!
               </p>
               {/* Early Bird CTA */}
+              {earlyBirdData?.isAvailable && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="mb-2 sm:mb-3 md:mb-4 w-full px-2"
+                >
+                  <Link
+                    href="/signup"
+                    className="inline-flex items-center justify-center gap-1 bg-gradient-to-r from-green-600 to-green-500 text-white px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg font-semibold text-[10px] xs:text-xs sm:text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 border border-green-400 w-full sm:w-auto"
+                  >
+                    <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                    <span className="whitespace-nowrap">
+                      Early Bird Special - Limited Time Offer!
+                    </span>
+                  </Link>
+                </motion.div>
+              )}
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 lg:gap-6 justify-center items-center w-full max-w-md sm:max-w-none px-2">
                 <Link
                   href="/trial-booking"
