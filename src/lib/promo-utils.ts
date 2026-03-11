@@ -68,7 +68,8 @@ export async function checkReferralEligibility(userId: string): Promise<{
 }
 
 /**
- * Check if user is eligible for early bird discount (15%)
+ * Check if user is eligible for early bird discount (10%)
+ * First checks if early bird is enabled in promotions settings
  */
 export async function checkEarlyBirdEligibility(userId: string): Promise<{
   eligible: boolean
@@ -76,6 +77,36 @@ export async function checkEarlyBirdEligibility(userId: string): Promise<{
   expiresAt?: string | null
 }> {
   const supabase = getSupabaseAdmin()
+
+  // Check if early bird is enabled in settings
+  const { data: settings, error: settingsError } = await supabase
+    .from('system_settings')
+    .select('value')
+    .eq('key', 'promotions')
+    .single()
+
+  // Determine promo settings based on availability
+  let promosSettings: { early_bird_enabled?: boolean; early_bird_discount_percent?: number } = {}
+  
+  if (!settingsError && settings?.value) {
+    // Settings found - use them
+    promosSettings = settings.value
+  } else if (settingsError?.code === '42P01') {
+    // Table doesn't exist yet - use defaults (early bird enabled during migration)
+    promosSettings = {
+      early_bird_enabled: true,
+      early_bird_discount_percent: 10,
+    }
+  } else {
+    // Table exists but no record, or other error - treat as disabled
+    promosSettings = {
+      early_bird_enabled: false,
+    }
+  }
+
+  if (!promosSettings.early_bird_enabled) {
+    return { eligible: false, discountPercent: 0 }
+  }
 
   // Check if user is marked as early bird eligible
   const { data: user } = await supabase
@@ -96,17 +127,51 @@ export async function checkEarlyBirdEligibility(userId: string): Promise<{
     }
   }
 
-  // Early Steppers promo: 10% for first N users, valid for 2 months after granted
-  // Users can use this discount multiple times during the 2-month validity period
-  return { eligible: true, discountPercent: 10, expiresAt: user.early_bird_expires_at || null }
+  // Early Steppers promo: discount for first N users, valid for months defined in settings
+  const discountPercent = promosSettings.early_bird_discount_percent || 10
+  return { eligible: true, discountPercent, expiresAt: user.early_bird_expires_at || null }
 }
 
 /**
  * Claim Early Steppers promo for a new user (to be called on registration)
- * Grants early_bird_eligible and sets early_bird_expires_at for 2 months if limit not reached.
+ * Grants early_bird_eligible and sets early_bird_expires_at if early bird is enabled and limit not reached.
  */
-export async function claimEarlySteppers(userId: string, limit = 40, months = 2): Promise<{ claimed: boolean; message?: string; expiresAt?: string | null }>{
+export async function claimEarlySteppers(userId: string, limit?: number, months?: number): Promise<{ claimed: boolean; message?: string; expiresAt?: string | null }>{
   const supabase = getSupabaseAdmin()
+
+  // Check if early bird is enabled in settings
+  const { data: settings, error: settingsError } = await supabase
+    .from('system_settings')
+    .select('value')
+    .eq('key', 'promotions')
+    .single()
+
+  let promosSettings: { early_bird_enabled?: boolean; early_bird_limit?: number; early_bird_validity_months?: number; early_bird_discount_percent?: number } = {}
+  
+  if (!settingsError && settings?.value) {
+    // Settings found - use them
+    promosSettings = settings.value
+  } else if (settingsError?.code === '42P01') {
+    // Table doesn't exist yet - use defaults (early bird enabled)
+    promosSettings = {
+      early_bird_enabled: true,
+      early_bird_limit: 40,
+      early_bird_validity_months: 2,
+    }
+  } else {
+    // Table exists but no record, or other error - respect as disabled
+    promosSettings = {
+      early_bird_enabled: false,
+    }
+  }
+
+  if (!promosSettings.early_bird_enabled) {
+    return { claimed: false, message: 'Early Bird program is not enabled' }
+  }
+
+  // Use settings values or fallbacks
+  const earlyBirdLimit = limit ?? promosSettings.early_bird_limit ?? 40
+  const earlyBirdMonths = months ?? promosSettings.early_bird_validity_months ?? 2
 
   // Count current eligible users
   const { count } = await supabase
@@ -115,13 +180,13 @@ export async function claimEarlySteppers(userId: string, limit = 40, months = 2)
     .eq('early_bird_eligible', true)
 
   const current = count || 0
-  if (current >= limit) {
+  if (current >= earlyBirdLimit) {
     return { claimed: false, message: 'Early Steppers limit reached' }
   }
 
   const now = new Date()
   const expires = new Date(now)
-  expires.setMonth(expires.getMonth() + months)
+  expires.setMonth(expires.getMonth() + earlyBirdMonths)
 
   const { error } = await supabase
     .from('user_profiles')
