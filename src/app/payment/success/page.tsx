@@ -7,18 +7,49 @@ import { useSearchParams } from "next/navigation";
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [tokenCount, setTokenCount] = useState<number | null>(null);
+  const [packageName, setPackageName] = useState<string | null>(null);
   const reference = searchParams.get("reference");
   const paymentStatus = searchParams.get("status");
 
   useEffect(() => {
-    setStatus(paymentStatus);
-  }, [paymentStatus]);
+    // HitPay redirects with ?status=completed&reference=... when payment succeeds.
+    // We call our backend to confirm the payment in DB (fallback if webhook was missed).
+    if (paymentStatus === "completed" && reference) {
+      setSyncing(true);
+      fetch(`/api/payments/status?reference=${encodeURIComponent(reference)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.status === "succeeded" || data.status === "completed") {
+            setStatus("completed");
+            if (data.tokenCount) setTokenCount(data.tokenCount);
+            if (data.packageName) setPackageName(data.packageName);
+          } else {
+            // Payment not yet confirmed in DB — show success anyway (webhook may follow)
+            setStatus(paymentStatus);
+          }
+        })
+        .catch(() => {
+          // Network error — still show success from redirect params
+          setStatus(paymentStatus);
+        })
+        .finally(() => setSyncing(false));
+    } else {
+      setStatus(paymentStatus);
+    }
+  }, [paymentStatus, reference]);
 
-  // Show processing if still loading
-  if (status === null) {
+  // Show processing while syncing with backend or waiting for initial status
+  if (status === null || syncing) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#1a1a2e] px-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto"></div>
+          {syncing && (
+            <p className="mt-4 text-gray-600 dark:text-gray-400 text-sm">Confirming your payment…</p>
+          )}
+        </div>
       </div>
     );
   }
@@ -99,9 +130,15 @@ function PaymentSuccessContent() {
         <h1 className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-3">
           Payment Successful! 🎉
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-2">
-          Your tokens have been added to your account.
-        </p>
+        {packageName && tokenCount ? (
+          <p className="text-gray-600 dark:text-gray-400 mb-2">
+            <span className="font-semibold text-green-600 dark:text-green-400">{tokenCount} tokens</span> from <span className="font-medium">{packageName}</span> have been added to your account.
+          </p>
+        ) : (
+          <p className="text-gray-600 dark:text-gray-400 mb-2">
+            Your tokens have been added to your account.
+          </p>
+        )}
         <p className="text-gray-600 dark:text-gray-400 mb-8">
           You can now book classes!
         </p>
