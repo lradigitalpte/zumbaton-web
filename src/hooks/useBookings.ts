@@ -28,6 +28,7 @@ export function useUserBookings(
     queryKey: bookingKeys.list(userId || '', filter),
     queryFn: () => getUserBookings(userId!, filter),
     enabled: !!userId,
+    refetchOnMount: 'always',
     staleTime: 30 * 1000, // 30 seconds - bookings change when user books/cancels
     gcTime: 2 * 60 * 1000, // 2 minutes cache retention
     // Uses global retry logic from providers.tsx (max 2 retries, circuit breaker)

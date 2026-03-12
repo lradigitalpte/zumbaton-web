@@ -4,8 +4,29 @@ import { claimEarlySteppers, getPromoEligibility } from '@/lib/promo-utils'
 
 export const dynamic = 'force-dynamic'
 
+function isDebugEndpointAllowed(req: NextRequest): boolean {
+  // Keep this endpoint unavailable in production unless explicitly enabled.
+  const allowInProd = process.env.ALLOW_PROMOS_DEBUG_ENDPOINT === 'true'
+  if (process.env.NODE_ENV === 'production' && !allowInProd) {
+    return false
+  }
+
+  const expectedToken = process.env.PROMOS_DEBUG_TOKEN
+  if (!expectedToken) {
+    // In development without token configured, allow for local debugging.
+    return process.env.NODE_ENV !== 'production'
+  }
+
+  const providedToken = req.headers.get('x-debug-token')
+  return providedToken === expectedToken
+}
+
 export async function GET(req: NextRequest) {
   try {
+    if (!isDebugEndpointAllowed(req)) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+
     const url = new URL(req.url)
     const userId = url.searchParams.get('userId')
     
@@ -48,6 +69,10 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    if (!isDebugEndpointAllowed(req)) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+
     const body = await req.json()
     const userId = body?.userId
     

@@ -1,5 +1,5 @@
 /**
- * Direct Supabase queries for class details
+ * Class detail queries with API-only browser fetch and server-side Supabase fallback.
  */
 
 import { getSupabaseClient, TABLES } from './supabase'
@@ -32,6 +32,81 @@ export interface ClassDetail {
 export async function getClassDetail(classId: string): Promise<ClassDetail | null> {
   const supabase = getSupabaseClient()
   const QUERY_TIMEOUT = 15000 // 15 seconds
+
+  const fetchWithTimeout = async (url: string, timeoutMs = 8000): Promise<Response> => {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      return await fetch(url, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+        signal: controller.signal,
+      })
+    } finally {
+      clearTimeout(timeoutId)
+    }
+  }
+
+  // Browser path is API-only to avoid client-side fallback drift and hidden hangs.
+  if (typeof window !== 'undefined') {
+    const response = await fetchWithTimeout(`${window.location.origin}/api/classes/${classId}`, 10000)
+
+    if (response.status === 404) {
+      return null
+    }
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '')
+      throw new Error(`Class detail API failed (${response.status})${text ? `: ${text.slice(0, 180)}` : ''}`)
+    }
+
+    const result = await response.json()
+    if (!result?.success || !result?.data) {
+      throw new Error('Class detail API returned invalid payload')
+    }
+
+    const classData = result.data
+    const defaultWhatToBring: Record<string, string[]> = {
+      zumba: ['Water bottle', 'Towel', 'Athletic shoes'],
+      yoga: ['Yoga mat', 'Water bottle', 'Comfortable clothes'],
+      hiit: ['Water bottle', 'Towel', 'Athletic shoes'],
+      dance: ['Water bottle', 'Towel', 'Dance shoes'],
+      salsa: ['Water bottle', 'Comfortable shoes'],
+      pilates: ['Yoga mat', 'Water bottle'],
+      strength: ['Water bottle', 'Towel', 'Athletic shoes'],
+      cardio: ['Water bottle', 'Towel', 'Athletic shoes'],
+      stretch: ['Yoga mat', 'Water bottle'],
+    }
+
+    const fallbackBio = classData.instructor_name
+      ? `Certified ${classData.class_type.charAt(0).toUpperCase() + classData.class_type.slice(1)} instructor with years of experience. Passionate about making fitness fun and accessible to everyone.`
+      : null
+
+    return {
+      id: classData.id,
+      name: classData.title,
+      title: classData.title,
+      description: classData.description,
+      instructor_name: classData.instructor_name,
+      instructor_avatar: classData.instructor_avatar ?? null,
+      instructor_bio: classData.instructor_bio ?? fallbackBio,
+      scheduled_at: classData.scheduled_at,
+      duration_minutes: classData.duration_minutes,
+      location: classData.location,
+      capacity: classData.capacity,
+      booked_count: classData.booked_count || 0,
+      tokens_required: classData.token_cost,
+      token_cost: classData.token_cost,
+      class_type: classData.class_type,
+      difficulty_level: classData.level === 'all_levels' ? 'Beginner' : classData.level.charAt(0).toUpperCase() + classData.level.slice(1),
+      level: classData.level,
+      requirements: [],
+      what_to_bring: defaultWhatToBring[classData.class_type] || ['Water bottle', 'Towel', 'Athletic shoes'],
+    }
+  }
 
   // Get class details with timeout
   let classData: any, classError: any
@@ -103,12 +178,11 @@ export async function getClassDetail(classId: string): Promise<ClassDetail | nul
   if (classData.instructor_id) {
     try {
       // Use API endpoint to bypass RLS
-      const baseUrl = typeof window !== 'undefined' 
-        ? window.location.origin 
-        : process.env.NEXT_PUBLIC_WEB_APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      const baseUrl = process.env.NEXT_PUBLIC_WEB_APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
       
-      const response = await fetch(
-        `${baseUrl}/api/instructors/profiles?ids=${classData.instructor_id}`
+      const response = await fetchWithTimeout(
+        `${baseUrl}/api/instructors/profiles?ids=${classData.instructor_id}`,
+        8000
       )
       
       if (response.ok) {

@@ -24,6 +24,7 @@ export function useDashboardTokenBalance(userId: string | undefined) {
     enabled: !!userId,
     staleTime: 30 * 1000, // 30 seconds - balance changes after bookings
     gcTime: 2 * 60 * 1000, // 2 minutes cache retention
+    refetchOnMount: 'always',
     // Uses global retry logic from providers.tsx (max 2 retries, circuit breaker)
   })
 }
@@ -38,6 +39,7 @@ export function useDashboardUpcomingBookings(userId: string | undefined) {
     enabled: !!userId,
     staleTime: 30 * 1000, // 30 seconds - bookings change after booking/canceling
     gcTime: 2 * 60 * 1000, // 2 minutes cache retention
+    refetchOnMount: 'always',
     // Uses global retry logic from providers.tsx
   })
 }

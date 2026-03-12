@@ -9,7 +9,7 @@ type StatusFilter = "all" | "active" | "expired" | "depleted";
 const MyPackagesPage = () => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [packageToDelete, setPackageToDelete] = useState<MyPackage | null>(null);
-  const { data, isLoading, error } = useMyPackages(statusFilter === "all" ? undefined : statusFilter);
+  const { data, isLoading, error, refetch, isFetching } = useMyPackages(statusFilter === "all" ? undefined : statusFilter);
   const deletePackage = useDeletePackage();
 
   const formatDate = (dateString: string) => {
@@ -122,8 +122,16 @@ const MyPackagesPage = () => {
       ) : error ? (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6">
           <p className="text-red-800 dark:text-red-300 text-sm">
-            Failed to load packages. Please try again.
+            {(error as Error)?.message || "Failed to load packages. Please try again."}
           </p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="mt-3 inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
+          >
+            {isFetching ? "Retrying..." : "Retry"}
+          </button>
         </div>
       ) : (
         <>

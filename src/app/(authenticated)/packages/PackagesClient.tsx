@@ -20,11 +20,27 @@ interface Package {
 }
 
 export default function PackagesClient({ initialPromo }: { initialPromo?: { hasEarlyBirdDiscount?: boolean; earlyBirdDaysLeft?: number | null; earlyBirdExpiresAt?: string | null } | null }) {
-  const { data: adultPackages = [], isLoading: isLoadingAdults } = useAvailablePackages('adults');
-  const { data: kidsPackages = [], isLoading: isLoadingKids } = useAvailablePackages('kids');
+  const {
+    data: adultPackages = [],
+    isLoading: isLoadingAdults,
+    isFetching: isFetchingAdults,
+    isError: isAdultsError,
+    error: adultsError,
+    refetch: refetchAdults,
+  } = useAvailablePackages('adults');
+  const {
+    data: kidsPackages = [],
+    isLoading: isLoadingKids,
+    isFetching: isFetchingKids,
+    isError: isKidsError,
+    error: kidsError,
+    refetch: refetchKids,
+  } = useAvailablePackages('kids');
   const { user } = useAuth();
   const { data: profile } = useProfile();
-  const isLoading = isLoadingAdults || isLoadingKids;
+  const isLoading = isLoadingAdults || isLoadingKids || isFetchingAdults || isFetchingKids;
+  const hasPackageLoadError = isAdultsError || isKidsError;
+  const packageLoadError = (adultsError || kidsError) as Error | null;
   
   // Determine user type based on age
   const userType = useMemo(() => {
@@ -63,26 +79,44 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
 
   // Fetch promo data using user context if not available from server
   useEffect(() => {
-    if (user?.id && (!promo || !promo.hasEarlyBirdDiscount)) {
-      console.log('[PackagesClient] Fetching promo for user:', user.id);
-      
-      // Use the debug API that we know works
-      fetch(`/api/promos/debug?userId=${user.id}`)
-        .then(res => {
-          if (!res.ok) {
-            throw new Error(`HTTP ${res.status}: ${res.statusText}`)
-          }
-          return res.json()
-        })
-        .then(data => {
-          console.log('[PackagesClient] Promo debug result:', data);
-          if (data.eligibility) {
-            setPromo(data.eligibility);
-          }
-        })
-        .catch(err => console.warn('[PackagesClient] Promo fetch failed:', err));
-    }
-  }, [user, promo]);
+    if (!user?.id) return;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+    (async () => {
+      try {
+        console.log('[PackagesClient] Refreshing promo eligibility for user:', user.id);
+        const { apiFetchJson } = await import('@/lib/api-fetch');
+        const data = await apiFetchJson<{ success: boolean; data?: any }>('/api/promos/eligibility', {
+          method: 'GET',
+          requireAuth: true,
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+
+        if (data?.success && data?.data) {
+          setPromo(data.data);
+        } else {
+          setPromo(null);
+        }
+      } catch (err: any) {
+        if (err?.name === 'AbortError') {
+          console.warn('[PackagesClient] Promo eligibility timeout');
+        } else {
+          console.warn('[PackagesClient] Promo eligibility fetch failed:', err);
+        }
+        setPromo(null);
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    })();
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [user?.id]);
 
   // Check if user has purchased trial package
   useEffect(() => {
@@ -213,6 +247,25 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
           </div>
         )}
       </div>
+
+      {hasPackageLoadError && (
+        <div className="mb-8 mx-auto max-w-3xl px-4">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
+            <p className="font-semibold">Unable to load token packages right now.</p>
+            <p className="text-sm mt-1">{packageLoadError?.message || 'Please try again.'}</p>
+            <button
+              type="button"
+              onClick={() => {
+                refetchAdults();
+                refetchKids();
+              }}
+              className="mt-3 inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Adults Packages Section */}
       <div className="mb-12 xl:mb-16">

@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/Toast";
 import { useUpcomingClasses, useBookClass, useBookBatchClasses, type ClassWithAvailability } from "@/hooks/useClasses";
-import { getTokenBalance } from "@/lib/dashboard-queries";
+import { useDashboardTokenBalance } from "@/hooks/useDashboard";
 import ClassDetailsSlidePanel from "@/components/ClassDetails/ClassDetailsSlidePanel";
 import BookingConfirmationModal from "@/components/BookingConfirmation/BookingConfirmationModal";
 import { formatDate, formatDateFull, formatTime } from "@/lib/utils";
@@ -53,7 +53,6 @@ const ClassesPage = () => {
   }>({ open: false, class: null });
   const isConfirmationModalOpen = confirmationModal.open;
   const classToBook = confirmationModal.class;
-  const [userTokenBalance, setUserTokenBalance] = useState(0);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -73,17 +72,12 @@ const ClassesPage = () => {
   }
   const bookingWindowOpen = isBookingWindowOpen()
 
-  // Fetch token balance on mount and when user changes
-  useEffect(() => {
-    if (user?.id) {
-      getTokenBalance(user.id).then(balance => {
-        setUserTokenBalance(balance.available);
-      });
-    }
-  }, [user?.id]);
+  // Keep token balance in React Query (avoids stale local state when routes are cached)
+  const { data: tokenBalanceData } = useDashboardTokenBalance(user?.id);
+  const userTokenBalance = tokenBalanceData?.available ?? 0;
 
   // React Query hooks
-  const { data: allClasses = [], isLoading } = useUpcomingClasses({
+  const { data: allClasses = [], isLoading, isError, error, refetch } = useUpcomingClasses({
     type: filter.type !== "all" ? filter.type : undefined,
     difficulty: filter.difficulty !== "all" ? filter.difficulty : undefined,
     date: filter.date || undefined,
@@ -239,11 +233,7 @@ const ClassesPage = () => {
         classIds: sessionsToBook.map(s => s.id),
       },
       {
-        onSuccess: async (data) => {
-          // Token balance refresh handled by hook
-          const newBalance = await getTokenBalance(user.id);
-          setUserTokenBalance(newBalance.available);
-          
+        onSuccess: () => {
           // Close panel and reset selections
           setSessionsPanel({ isOpen: false, parentClass: null, sessions: [] });
           setSelectedSessions(new Set());
@@ -269,11 +259,8 @@ const ClassesPage = () => {
     bookClassMutation.mutate(
       { userId: user.id, classId: classToBook.id, className: classToBook.name || classToBook.title },
       {
-        onSuccess: async () => {
-          // Toast is handled by the hook, just refresh balance and close modal
-          const newBalance = await getTokenBalance(user.id);
-          setUserTokenBalance(newBalance.available);
-          
+        onSuccess: () => {
+          // Toast is handled by the hook; dashboard queries are invalidated by mutation hook
           setConfirmationModal({ open: false, class: null });
           setSelectedClass(null);
         },
@@ -568,6 +555,22 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      ) : isError ? (
+        <div className="bg-white dark:bg-dark rounded-2xl shadow-md border border-gray-100 dark:border-gray-800 p-8 sm:p-12 text-center">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 sm:w-10 sm:h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z" />
+            </svg>
+          </div>
+          <p className="text-base sm:text-lg font-semibold text-dark dark:text-white mb-2">Unable to load classes</p>
+          <p className="text-sm text-body-color dark:text-gray-400 mb-6">{error instanceof Error ? error.message : "Please try again."}</p>
+          <button
+            onClick={() => refetch()}
+            className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors active:scale-95 shadow-md"
+          >
+            Retry
+          </button>
         </div>
       ) : classes.length === 0 ? (
         <div className="bg-white dark:bg-dark rounded-2xl shadow-md border border-gray-100 dark:border-gray-800 p-8 sm:p-12 text-center">

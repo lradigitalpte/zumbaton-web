@@ -18,6 +18,8 @@ const HITPAY_API_KEY = process.env.HITPAY_API_KEY
 
 // App URL for redirects
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+const PAYMENT_AUTH_TIMEOUT_MS = 12000
+const HITPAY_REQUEST_TIMEOUT_MS = 25000
 
 // Initialize Supabase admin client directly (no auth client needed)
 const supabaseAdmin = createClient(
@@ -44,7 +46,7 @@ async function getAuthenticatedUser(request: NextRequest) {
     const { data: { user }, error } = await Promise.race([
       supabaseAdmin.auth.getUser(token),
       new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Auth timeout')), 5000)
+        setTimeout(() => reject(new Error('Auth timeout')), PAYMENT_AUTH_TIMEOUT_MS)
       )
     ])
     
@@ -232,24 +234,47 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       url: `${HITPAY_API_URL}/payment-requests`,
     })
 
-    const hitpayResponse = await fetch(`${HITPAY_API_URL}/payment-requests`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-BUSINESS-API-KEY': HITPAY_API_KEY,
-      },
-      body: JSON.stringify({
-        amount,
-        currency,
-        email: emailForPayment,
-        name: user.name,
-        purpose: `Purchase: ${pkg.name} (${pkg.token_count} tokens)`,
-        reference_number: referenceNumber,
-        redirect_url: `${APP_URL}/payment/success`,
-        webhook: `${APP_URL}/api/payments/webhook`,
-        send_email: true,
-      }),
-    })
+    const hitpayController = new AbortController()
+    const hitpayTimeoutId = setTimeout(() => hitpayController.abort(), HITPAY_REQUEST_TIMEOUT_MS)
+
+    let hitpayResponse: Response
+    try {
+      hitpayResponse = await fetch(`${HITPAY_API_URL}/payment-requests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-BUSINESS-API-KEY': HITPAY_API_KEY,
+        },
+        body: JSON.stringify({
+          amount,
+          currency,
+          email: emailForPayment,
+          name: user.name,
+          purpose: `Purchase: ${pkg.name} (${pkg.token_count} tokens)`,
+          reference_number: referenceNumber,
+          redirect_url: `${APP_URL}/payment/success`,
+          webhook: `${APP_URL}/api/payments/webhook`,
+          send_email: true,
+        }),
+        signal: hitpayController.signal,
+      })
+    } catch (error: any) {
+      if (error?.name === 'AbortError') {
+        console.error('[Payment] HitPay request timed out')
+        return NextResponse.json(
+          {
+            error: 'Payment Timeout',
+            message: 'Payment gateway timed out. Please try again in a moment.',
+            code: 'PAYMENT_GATEWAY_TIMEOUT',
+          },
+          { status: 504 }
+        )
+      }
+
+      throw error
+    } finally {
+      clearTimeout(hitpayTimeoutId)
+    }
 
     const hitpayData = await hitpayResponse.json()
 

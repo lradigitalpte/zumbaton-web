@@ -47,11 +47,157 @@ export interface ClassWithAvailability {
   _totalSessions?: number
 }
 
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs: number
+): Promise<Response> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    })
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
 /**
  * Helper function to process and group classes
  * Extracted from getUpcomingClasses to be reused for API responses
  */
-async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailability[]> {
+async function processAndGroupClasses(
+  classes: any[],
+  options?: { fromApi?: boolean }
+): Promise<ClassWithAvailability[]> {
+  const fromApi = options?.fromApi === true
+
+  if (fromApi) {
+    const getInitials = (name: string | null): string => {
+      if (!name) return '??'
+      return name
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    }
+
+    const getInstructorsLite = (classItem: any): InstructorInfo[] => {
+      if (classItem.instructor_name) {
+        return classItem.instructor_name
+          .split(',')
+          .map((n: string) => n.trim())
+          .filter(Boolean)
+          .map((name: string) => ({
+            id: classItem.instructor_id || '',
+            name,
+            avatar: null,
+            initials: getInitials(name),
+          }))
+      }
+
+      return [
+        {
+          id: classItem.instructor_id || '',
+          name: classItem.instructor_name || 'Unassigned',
+          avatar: null,
+          initials: getInitials(classItem.instructor_name || null),
+        },
+      ]
+    }
+
+    const parentClasses: any[] = []
+    const childInstances: any[] = []
+
+    classes.forEach((classItem: any) => {
+      const isRecurringType = classItem.recurrence_type === 'recurring' || classItem.recurrence_type === 'course'
+      const isOccurrenceClass = /-\s*\d{1,2}\/\d{1,2}\/\d{4}$/.test(classItem.title)
+
+      if (isRecurringType && !classItem.parent_class_id && !isOccurrenceClass) {
+        parentClasses.push(classItem)
+      } else if (classItem.parent_class_id || isOccurrenceClass) {
+        if (classItem.status === 'scheduled' || classItem.status === 'in-progress') {
+          childInstances.push(classItem)
+        }
+      } else if (classItem.status === 'scheduled' || classItem.status === 'in-progress') {
+        parentClasses.push(classItem)
+      }
+    })
+
+    const scheduledChildParentIds = new Set(
+      childInstances
+        .filter(c => c.status === 'scheduled' || c.status === 'in-progress')
+        .map(c => c.parent_class_id)
+        .filter(Boolean)
+    )
+
+    const filteredParentClasses = parentClasses.filter(parent => {
+      if (!parent.recurrence_type) return true
+      return parent.status === 'scheduled' || parent.status === 'in-progress' || scheduledChildParentIds.has(parent.id)
+    })
+
+    const transformedParents = filteredParentClasses.map((classItem: any) => {
+      const room = Array.isArray(classItem.rooms) ? classItem.rooms[0] : classItem.rooms
+      const category = Array.isArray(classItem.class_categories) ? classItem.class_categories[0] : classItem.class_categories
+
+      return {
+        ...classItem,
+        name: classItem.title || classItem.name,
+        title: classItem.title,
+        booked_count: Number(classItem.booked_count || 0),
+        tokens_required: classItem.token_cost,
+        difficulty_level:
+          classItem.level === 'all_levels'
+            ? 'Beginner'
+            : (classItem.level || 'all_levels').charAt(0).toUpperCase() + (classItem.level || 'all_levels').slice(1),
+        age_group: classItem.age_group || 'all',
+        room_id: classItem.room_id || null,
+        room_name: room?.name || classItem.location || null,
+        category_id: classItem.category_id || null,
+        category_name: category?.name || null,
+        instructors: getInstructorsLite(classItem),
+      }
+    })
+
+    const transformedChildren = childInstances.map((classItem: any) => {
+      const room = Array.isArray(classItem.rooms) ? classItem.rooms[0] : classItem.rooms
+      const category = Array.isArray(classItem.class_categories) ? classItem.class_categories[0] : classItem.class_categories
+
+      return {
+        ...classItem,
+        name: classItem.title || classItem.name,
+        title: classItem.title,
+        booked_count: Number(classItem.booked_count || 0),
+        tokens_required: classItem.token_cost,
+        difficulty_level:
+          classItem.level === 'all_levels'
+            ? 'Beginner'
+            : (classItem.level || 'all_levels').charAt(0).toUpperCase() + (classItem.level || 'all_levels').slice(1),
+        age_group: classItem.age_group || 'all',
+        room_id: classItem.room_id || null,
+        room_name: room?.name || classItem.location || null,
+        category_id: classItem.category_id || null,
+        category_name: category?.name || null,
+        instructors: getInstructorsLite(classItem),
+      }
+    })
+
+    try {
+      const grouped = groupRecurringClasses(transformedParents, transformedChildren, {})
+      if (grouped.length === 0 && transformedParents.length > 0) {
+        return transformedParents
+      }
+      return grouped
+    } catch (error) {
+      console.error('Error grouping classes (API path):', error)
+      return transformedParents
+    }
+  }
+
   const supabase = getSupabaseClient()
   
   if (!classes || classes.length === 0) {
@@ -93,7 +239,13 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
         }
 
         const apiUrl = `/api/instructors/profiles?${params.toString()}`
-        const response = await fetch(apiUrl)
+        const response = await fetchWithTimeout(apiUrl, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
+        }, 5000)
         if (response.ok) {
           const result = await response.json()
           if (result.success && result.data) {
@@ -141,8 +293,11 @@ async function processAndGroupClasses(classes: any[]): Promise<ClassWithAvailabi
     }
   }
   
-  // Also fetch by name for multiple instructors (in case IDs aren't available)
-  if (instructorNames.size > 0) {
+  // Avoid blocking client UI with redundant direct lookups when API already returned profiles.
+  const shouldRunDirectNameLookup = typeof window === 'undefined' || Object.keys(instructorProfilesByName).length === 0
+
+  // Also fetch by name for multiple instructors (fallback path)
+  if (instructorNames.size > 0 && shouldRunDirectNameLookup) {
     const nameArray = Array.from(instructorNames)
     
     // Try exact match first
@@ -445,8 +600,7 @@ export async function getUpcomingClasses(filters?: {
   recurrenceType?: 'single' | 'recurring' | 'course' | 'all'
   categoryId?: string
 }): Promise<ClassWithAvailability[]> {
-  // Try API endpoint first (bypasses RLS, faster), fallback to direct Supabase query
-  // Only use API endpoint in browser (client-side)
+  // Browser path is API-only to keep behavior deterministic and avoid client-side RLS/fallback drift.
   if (typeof window !== 'undefined') {
     try {
       const params = new URLSearchParams()
@@ -460,12 +614,15 @@ export async function getUpcomingClasses(filters?: {
       const queryString = params.toString()
       const url = queryString ? `${baseUrl}/api/classes?${queryString}` : `${baseUrl}/api/classes`
 
-      const response = await fetch(url, {
+      const response = await fetchWithTimeout(url, {
         method: 'GET',
+        cache: 'no-store',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
         },
-      })
+      }, 10000)
 
       if (response.ok) {
         const result = await response.json()
@@ -476,17 +633,21 @@ export async function getUpcomingClasses(filters?: {
           
           // Run the API response through the same processing pipeline as direct query
           // This ensures consistent grouping behavior
-          return await processAndGroupClasses(classes)
+          return await processAndGroupClasses(classes, { fromApi: true })
         }
+
+        throw new Error('Classes API returned invalid payload')
       } else {
-        console.warn('⚠️ API endpoint failed, falling back to direct Supabase query')
+        const text = await response.text().catch(() => '')
+        throw new Error(`Classes API failed (${response.status})${text ? `: ${text.slice(0, 180)}` : ''}`)
       }
     } catch (apiError) {
-      console.warn('⚠️ API endpoint error, falling back to direct Supabase query:', apiError)
+      console.error('⚠️ API endpoint error in browser (no client fallback):', apiError)
+      throw apiError instanceof Error ? apiError : new Error('Classes API request failed')
     }
   }
 
-  // Fallback to direct Supabase query (works in both client and server)
+  // Server-side fallback to direct Supabase query.
   try {
   const supabase = getSupabaseClient()
 

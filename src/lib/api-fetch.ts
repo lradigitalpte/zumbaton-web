@@ -11,6 +11,70 @@
 
 import { getSupabaseClient } from './supabase'
 
+const AUTH_HELPER_TIMEOUT_MS = 12000
+
+function getBrowserStoredAccessToken(): string | null {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return null
+  }
+
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+    const projectRef = supabaseUrl ? new URL(supabaseUrl).hostname.split('.')[0] : ''
+    const candidateKeys = new Set<string>()
+
+    if (projectRef) {
+      candidateKeys.add(`sb-${projectRef}-auth-token`)
+    }
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (!key) continue
+      if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        candidateKeys.add(key)
+      }
+    }
+
+    for (const key of candidateKeys) {
+      const raw = localStorage.getItem(key)
+      if (!raw) continue
+
+      try {
+        const parsed = JSON.parse(raw)
+        const token =
+          parsed?.currentSession?.access_token ||
+          parsed?.session?.access_token ||
+          parsed?.access_token ||
+          null
+
+        if (typeof token === 'string' && token.length > 0) {
+          return token
+        }
+      } catch {
+        // Ignore malformed entries and keep scanning.
+      }
+    }
+  } catch (error) {
+    console.warn('[API Fetch] Failed reading token from localStorage fallback:', error)
+  }
+
+  return null
+}
+
+async function withAuthTimeout<T>(promise: Promise<T>, timeoutMs = AUTH_HELPER_TIMEOUT_MS): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(`Auth helper timeout after ${timeoutMs}ms`)), timeoutMs)
+      }),
+    ])
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId)
+  }
+}
+
 export interface ApiFetchOptions extends RequestInit {
   requireAuth?: boolean // Default: true
   retryOn401?: boolean // Default: true
@@ -31,12 +95,21 @@ export async function apiFetch(
     ...fetchOptions
   } = options
 
-  // Get fresh token before request
+  // Get token before request
   let accessToken: string | null = null
   if (requireAuth) {
+    // Fast path: use persisted browser token immediately to avoid blocking request start.
+    accessToken = getBrowserStoredAccessToken()
+
+    if (accessToken) {
+      console.log('[API Fetch] Using fast localStorage token path')
+    }
+
+    // Fallback path: only call getSession if no stored token was found.
+    if (!accessToken) {
     try {
       const supabase = getSupabaseClient()
-      const { data: { session }, error } = await supabase.auth.getSession()
+      const { data: { session }, error } = await withAuthTimeout(supabase.auth.getSession())
       
       if (error) {
         console.warn('[API Fetch] Error getting session:', error)
@@ -49,11 +122,23 @@ export async function apiFetch(
         // Don't return fake 401 - let the actual request go through
         // Server will return real 401 which triggers refresh logic
         console.warn('[API Fetch] No session found, request will proceed without auth')
+        accessToken = getBrowserStoredAccessToken()
+        if (accessToken) {
+          console.log('[API Fetch] Using localStorage token fallback')
+        }
       }
     } catch (error) {
       console.error('[API Fetch] Error getting session:', error)
+      if (error instanceof Error && error.message.includes('Auth helper timeout')) {
+        console.warn('[API Fetch] Session read timed out, trying localStorage token fallback')
+      }
+      accessToken = getBrowserStoredAccessToken()
+      if (accessToken) {
+        console.log('[API Fetch] Using localStorage token fallback after session error')
+      }
       // Don't block - let the request proceed
       // If auth is truly required, server will return 401
+    }
     }
   }
 
@@ -83,7 +168,7 @@ export async function apiFetch(
       
       // Attempt to refresh the session
       const { data: { session: refreshedSession }, error: refreshError } = 
-        await supabase.auth.refreshSession()
+        await withAuthTimeout(supabase.auth.refreshSession())
 
       if (refreshError) {
         // Check if it's a refresh token error
@@ -139,6 +224,20 @@ export async function apiFetch(
       }
     } catch (error) {
       console.error('[API Fetch] Error during token refresh:', error)
+      if (error instanceof Error && error.message.includes('Auth helper timeout')) {
+        return new Response(
+          JSON.stringify({
+            error: 'Unauthorized',
+            message: 'Session refresh timed out. Please try again.',
+            code: 'SESSION_REFRESH_TIMEOUT',
+          }),
+          {
+            status: 401,
+            statusText: 'Unauthorized',
+            headers: { 'Content-Type': 'application/json' },
+          }
+        )
+      }
       // Return original 401 response
       return response
     }

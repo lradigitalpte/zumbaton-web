@@ -36,8 +36,11 @@ export async function getTokenBalance(userId: string): Promise<TokenBalance> {
       const baseUrl = window.location.origin
       const response = await fetch(`${baseUrl}/api/dashboard?userId=${userId}`, {
         method: 'GET',
+        cache: 'no-store',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
         },
       })
 
@@ -118,8 +121,11 @@ export async function getUpcomingBookings(userId: string): Promise<UpcomingBooki
       const baseUrl = window.location.origin
       const response = await fetch(`${baseUrl}/api/dashboard?userId=${userId}`, {
         method: 'GET',
+        cache: 'no-store',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
         },
       })
 
@@ -226,8 +232,11 @@ export async function getUserStats(userId: string): Promise<UserStats> {
       const baseUrl = window.location.origin
       const response = await fetch(`${baseUrl}/api/dashboard?userId=${userId}`, {
         method: 'GET',
+        cache: 'no-store',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
         },
       })
 

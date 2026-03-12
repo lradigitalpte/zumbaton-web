@@ -51,11 +51,19 @@ export default function PaymentModal({
   const [isValidatingVoucher, setIsValidatingVoucher] = useState(false);
   const [voucherError, setVoucherError] = useState<string | null>(null);
 
+  const effectivePromo = promo ?? (promoData
+    ? {
+        hasEarlyBirdDiscount: !!promoData.hasEarlyBirdDiscount,
+        earlyBirdDiscountPercent: promoData.earlyBirdDiscountPercent || 10,
+        earlyBirdDaysLeft: promoData.earlyBirdDaysLeft ?? null,
+      }
+    : null)
+
   // Price: voucher takes precedence over early bird
   const originalPrice = selectedPackage?.price_cents || 0
   const discountPercent = appliedVoucher
     ? appliedVoucher.discountPercent
-    : promoData?.hasEarlyBirdDiscount ? 10 : 0
+    : effectivePromo?.hasEarlyBirdDiscount ? (effectivePromo.earlyBirdDiscountPercent || 10) : 0
   const discountAmount = Math.round((originalPrice * discountPercent) / 100)
   const finalPrice = originalPrice - discountAmount
 
@@ -67,26 +75,17 @@ export default function PaymentModal({
       setVoucherInput("");
       setAppliedVoucher(null);
       setVoucherError(null);
-      // Fetch promo eligibility for current user
-      ;(async () => {
-        try {
-          const { apiFetchJson } = await import('@/lib/api-fetch')
-          const res = await apiFetchJson('/api/promos/eligibility', { method: 'GET', requireAuth: true })
-          if (res.success && res.data) {
-            setPromo({
-              hasEarlyBirdDiscount: res.data.hasEarlyBirdDiscount,
-              earlyBirdDiscountPercent: res.data.earlyBirdDiscountPercent || 0,
-              earlyBirdDaysLeft: res.data.earlyBirdDaysLeft ?? null,
-            })
-          } else {
-            setPromo(null)
-          }
-        } catch (e) {
-          setPromo(null)
-        }
-      })()
+      setPromo(
+        promoData
+          ? {
+              hasEarlyBirdDiscount: !!promoData.hasEarlyBirdDiscount,
+              earlyBirdDiscountPercent: promoData.earlyBirdDiscountPercent || 10,
+              earlyBirdDaysLeft: promoData.earlyBirdDaysLeft ?? null,
+            }
+          : null
+      )
     }
-  }, [isOpen, selectedPackage]);
+  }, [isOpen, selectedPackage, promoData]);
 
   const handleApplyVoucher = async () => {
     const code = voucherInput.trim();
@@ -122,25 +121,41 @@ export default function PaymentModal({
     setStatus("creating");
     setError(null);
 
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     try {
+      const controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), 35000);
+
       // Use centralized API fetch with automatic token refresh
       const { apiFetchJson } = await import('@/lib/api-fetch');
       
       const data = await apiFetchJson<{
         success: boolean;
-        paymentUrl: string;
-        paymentRequestId: string;
-        amount: number;
-        currency: string;
+        paymentUrl?: string;
+        paymentRequestId?: string;
+        amount?: number;
+        currency?: string;
+        error?: { message?: string } | string;
+        message?: string;
       }>("/api/payments", {
         method: "POST",
         body: JSON.stringify({ 
           packageId: selectedPackage.id,
-          promoType: appliedVoucher ? null : (promoData?.hasEarlyBirdDiscount ? 'early_bird' : null),
+          promoType: appliedVoucher ? null : (effectivePromo?.hasEarlyBirdDiscount ? 'early_bird' : null),
           voucherCode: appliedVoucher ? appliedVoucher.voucherCode : undefined,
         }),
         requireAuth: true,
+        retryOn401: false,
+        cache: 'no-store',
+        signal: controller.signal,
       });
+
+      if (!data.success) {
+        const apiError = typeof data.error === 'string'
+          ? data.error
+          : data.error?.message || data.message || 'Payment request failed';
+        throw new Error(apiError);
+      }
 
       // Redirect to HitPay checkout
       if (data.paymentUrl) {
@@ -149,10 +164,14 @@ export default function PaymentModal({
         throw new Error("No payment URL received");
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Payment failed";
+      const message = err instanceof Error
+        ? (err.name === 'AbortError' ? 'Payment request timed out while contacting gateway. Please try again.' : err.message)
+        : "Payment failed";
       setError(message);
       setStatus("error");
       toast.error(message);
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
     }
   };
 
@@ -230,8 +249,8 @@ export default function PaymentModal({
                   <div className="text-2xl font-bold text-green-600">
                     {formatPrice(finalPrice, selectedPackage.currency)}
                   </div>
-                  {!appliedVoucher && promoData?.hasEarlyBirdDiscount && promoData.earlyBirdDaysLeft != null && (
-                    <div className="text-xs text-amber-600">{promoData.earlyBirdDaysLeft} days left</div>
+                  {!appliedVoucher && effectivePromo?.hasEarlyBirdDiscount && effectivePromo.earlyBirdDaysLeft != null && (
+                    <div className="text-xs text-amber-600">{effectivePromo.earlyBirdDaysLeft} days left</div>
                   )}
                 </div>
               ) : (

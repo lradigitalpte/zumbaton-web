@@ -277,35 +277,35 @@ async function performCheckIn(
     // Non-blocking - check-in was successful
   }
 
-  // Send confirmation email (non-blocking)
-  try {
-    // Get user details
-    const { data: userData } = await supabaseAdmin
-      .from('users')
-      .select('email, name')
-      .eq('id', userId)
-      .single()
+  // Send confirmation email truly non-blocking so scanner UI is never held by email latency.
+  void (async () => {
+    try {
+      const { data: userData } = await supabaseAdmin
+        .from('users')
+        .select('email, name')
+        .eq('id', userId)
+        .single()
 
-    if (userData?.email && booking.class) {
-      const classDate = new Date(booking.class.scheduled_at)
-      const classEndTime = new Date(classDate.getTime() + (booking.class.duration_minutes || 60) * 60000)
-      
-      await sendCheckInConfirmationEmail({
-        userEmail: userData.email,
-        userName: userData.name || 'there',
-        className: booking.class.title || 'Your Class',
-        classDate: classDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
-        classTime: `${classDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - ${classEndTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
-        location: booking.class.location || 'Main Studio',
-        tokensUsed: tokensToConsume,
-      })
-      
-      console.log('[Check-In] Confirmation email sent to:', userData.email)
+      if (userData?.email && booking.class) {
+        const classDate = new Date(booking.class.scheduled_at)
+        const classEndTime = new Date(classDate.getTime() + (booking.class.duration_minutes || 60) * 60000)
+
+        await sendCheckInConfirmationEmail({
+          userEmail: userData.email,
+          userName: userData.name || 'there',
+          className: booking.class.title || 'Your Class',
+          classDate: classDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+          classTime: `${classDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - ${classEndTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
+          location: booking.class.location || 'Main Studio',
+          tokensUsed: tokensToConsume,
+        })
+
+        console.log('[Check-In] Confirmation email sent to:', userData.email)
+      }
+    } catch (emailError) {
+      console.error('[Check-In] Failed to send confirmation email:', emailError)
     }
-  } catch (emailError) {
-    console.error('[Check-In] Failed to send confirmation email:', emailError)
-    // Non-blocking - check-in was successful
-  }
+  })()
 
   return NextResponse.json({
     success: true,

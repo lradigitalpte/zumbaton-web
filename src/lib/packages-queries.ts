@@ -26,21 +26,34 @@ export interface Package {
  *   - 'kids': returns packages where package_type is 'kid'
  * 
  * This function uses the API endpoint which bypasses RLS using admin client.
- * Falls back to direct Supabase query if API fails.
+ * Browser requests are API-only; server-side keeps direct Supabase fallback.
  */
 export async function getAvailablePackages(packageType?: 'adults' | 'kids'): Promise<Package[]> {
-  // Try API endpoint first (bypasses RLS), fallback to direct Supabase query
-  // Only use API endpoint in browser (client-side)
+  const fetchWithTimeout = async (url: string, timeoutMs = 10000): Promise<Response> => {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      return await fetch(url, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+        signal: controller.signal,
+      })
+    } finally {
+      clearTimeout(timeoutId)
+    }
+  }
+
+  // Browser path is API-only to avoid hidden fallback drift.
   if (typeof window !== 'undefined') {
     try {
       const packageTypeParam = packageType ? `?packageType=${packageType}` : ''
       const baseUrl = window.location.origin
-      const response = await fetch(`${baseUrl}/api/packages${packageTypeParam}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
+      const response = await fetchWithTimeout(`${baseUrl}/api/packages${packageTypeParam}`, 10000)
 
       if (response.ok) {
         const result = await response.json()
@@ -61,15 +74,19 @@ export async function getAvailablePackages(packageType?: 'adults' | 'kids'): Pro
             is_popular: false,
           }))
         }
+
+        throw new Error('Packages API returned invalid payload')
       } else {
-        console.warn('⚠️ API endpoint failed, falling back to direct Supabase query')
+        const text = await response.text().catch(() => '')
+        throw new Error(`Packages API failed (${response.status})${text ? `: ${text.slice(0, 180)}` : ''}`)
       }
     } catch (apiError) {
-      console.warn('⚠️ API endpoint error, falling back to direct Supabase query:', apiError)
+      console.error('Packages API error in browser (no client fallback):', apiError)
+      throw apiError instanceof Error ? apiError : new Error('Packages API request failed')
     }
   }
 
-  // Fallback to direct Supabase query (works in both client and server)
+  // Server-side fallback to direct Supabase query.
   const supabase = getSupabaseClient()
 
   // Debug: Check current session/auth state

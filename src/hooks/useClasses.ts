@@ -34,9 +34,21 @@ export function useUpcomingClasses(filters?: {
 }) {
   return useQuery({
     queryKey: classKeys.list(filters),
-    queryFn: () => getUpcomingClasses(filters),
+    queryFn: async () => {
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Classes request timed out while processing'))
+        }, 20000)
+      })
+
+      return Promise.race([
+        getUpcomingClasses(filters),
+        timeoutPromise,
+      ])
+    },
     staleTime: 30 * 1000, // 30 seconds (matches global default)
     gcTime: 5 * 60 * 1000, // 5 minutes cache retention
+    refetchOnMount: 'always', // Prevent stale route-cache snapshots after navigation
     // Uses global retry logic from providers.tsx (max 2 retries, circuit breaker)
   })
 }
