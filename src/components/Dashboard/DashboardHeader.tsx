@@ -4,9 +4,16 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
 import SearchPanel from "./SearchPanel";
 import { useProfile } from "@/hooks/useProfile";
+import { 
+  useNotifications, 
+  useUnreadNotificationCount, 
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+  useNotificationsRealtime,
+  type Notification
+} from "@/hooks/useNotifications";
 
 interface DashboardHeaderProps {
   sidebarCollapsed?: boolean;
@@ -20,6 +27,34 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearchPanel, setShowSearchPanel] = useState(false);
+
+  // Notification hooks - replace manual API calls
+  const { data: notificationsData, isLoading: notificationsLoading } = useNotifications({
+    limit: 10,
+    channel: 'in_app', // Only show in-app notifications in dropdown
+  });
+  const unreadCount = useUnreadNotificationCount();
+  const markAsRead = useMarkNotificationRead();
+  const markAllAsRead = useMarkAllNotificationsRead();
+  
+  // Set up real-time notification updates
+  useNotificationsRealtime();
+
+  const notifications = notificationsData?.data || [];
+
+  // Handle notification click - mark as read
+  const handleNotificationClick = (notification: Notification) => {
+    if (!notification.readAt) {
+      markAsRead.mutate(notification.id);
+    }
+  };
+
+  // Handle mark all as read
+  const handleMarkAllAsRead = () => {
+    if (unreadCount > 0) {
+      markAllAsRead.mutate();
+    }
+  };
 
   // Memoize the close handler to prevent dependency array issues
   const handleCloseSearchPanel = useCallback(() => {
@@ -53,50 +88,59 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Fetch real notifications from API
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        // Use centralized API fetch with automatic token refresh
-        const { apiFetchJson } = await import('@/lib/api-fetch');
-        
-        const data = await apiFetchJson<{ 
-          notifications: any[];
-          unreadCount?: number;
-        }>('/api/notifications?limit=5', {
-          method: 'GET',
-          requireAuth: true,
-        });
-        
-        // Map API response to component format
-        const mappedNotifications = (data.notifications || []).map((n: any) => ({
-          id: n.id,
-          title: n.subject || n.title || 'Notification',
-          message: n.body || n.message || '',
-          time: n.created_at ? new Date(n.created_at).toLocaleString() : '',
-          unread: !n.read_at, // unread if read_at is null
-          type: n.type || 'info',
-        }));
-        
-        setNotifications(mappedNotifications);
-        setUnreadCount(data.unreadCount || 0);
-      } catch (error) {
-        console.error('Failed to fetch notifications:', error);
-        setNotifications([]); // Show empty state if fetch fails
-        setUnreadCount(0);
-      }
-    };
-    
-    if (user?.id) {
-      fetchNotifications();
-      // Refresh notifications every 30 seconds
-      const interval = setInterval(fetchNotifications, 30000);
-      return () => clearInterval(interval);
+  // Notification helper functions
+  const getNotificationColor = (type: string) => {
+    switch (type) {
+      case 'BOOKING_CONFIRMED':
+      case 'BOOKING_REMINDER':
+        return 'border-green-500';
+      case 'BOOKING_CANCELLED':
+        return 'border-red-500';
+      case 'PAYMENT_SUCCESS':
+        return 'border-blue-500';
+      case 'PAYMENT_FAILED':
+        return 'border-orange-500';
+      case 'GENERAL':
+        return 'border-primary';
+      default:
+        return 'border-gray-400';
     }
-  }, [user?.id]);
+  };
+
+  const getNotificationTitle = (type: string) => {
+    switch (type) {
+      case 'BOOKING_CONFIRMED':
+        return 'Class Booking Confirmed';
+      case 'BOOKING_REMINDER':
+        return 'Class Reminder';
+      case 'BOOKING_CANCELLED':
+        return 'Booking Cancelled';
+      case 'PAYMENT_SUCCESS':
+        return 'Payment Successful';
+      case 'PAYMENT_FAILED':
+        return 'Payment Failed';
+      case 'GENERAL':
+        return 'Notification';
+      default:
+        return 'Update';
+    }
+  };
+
+  const formatNotificationTime = (createdAt: string) => {
+    const date = new Date(createdAt);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return date.toLocaleDateString();
+  };
 
   return (
     <header
@@ -190,14 +234,30 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
             {showNotifications && (
               <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-dark rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 max-h-[400px] overflow-y-auto">
                 <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-dark z-10">
-                  <h3 className="font-semibold text-dark dark:text-white">Notifications</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-dark dark:text-white">Notifications</h3>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={handleMarkAllAsRead}
+                        disabled={markAllAsRead.isPending}
+                        className="text-xs text-primary hover:text-primary/80 font-medium disabled:opacity-50"
+                      >
+                        {markAllAsRead.isPending ? 'Marking...' : 'Mark all read'}
+                      </button>
+                    )}
+                  </div>
                   {unreadCount > 0 && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                       {unreadCount} unread
                     </p>
                   )}
                 </div>
-                {notifications.length === 0 ? (
+                {notificationsLoading ? (
+                  <div className="px-4 py-8 text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Loading notifications...</p>
+                  </div>
+                ) : notifications.length === 0 ? (
                   <div className="px-4 py-8 text-center">
                     <svg className="w-12 h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -209,15 +269,31 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
                     {notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-l-2 ${
-                          notification.unread 
-                            ? "bg-primary/5 border-primary" 
-                            : "border-transparent"
+                        onClick={() => handleNotificationClick(notification)}
+                        className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-l-2 transition-colors ${
+                          !notification.readAt 
+                            ? `${getNotificationColor(notification.type)} border-l-2`
+                            : "border-transparent hover:border-gray-200 dark:hover:border-gray-600"
+                        } ${
+                          markAsRead.isPending && markAsRead.variables === notification.id 
+                            ? 'opacity-50' 
+                            : ''
                         }`}
                       >
-                        <p className="font-medium text-dark dark:text-white text-sm">{notification.title}</p>
-                        <p className="text-body-color dark:text-gray-400 text-sm mt-0.5 line-clamp-2">{notification.message}</p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{notification.time}</p>
+                        <p className="font-medium text-dark dark:text-white text-sm">
+                          {notification.subject || getNotificationTitle(notification.type)}
+                        </p>
+                        <p className="text-body-color dark:text-gray-400 text-sm mt-0.5 line-clamp-2">
+                          {notification.body}
+                        </p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-xs text-gray-400 dark:text-gray-500">
+                            {formatNotificationTime(notification.createdAt)}
+                          </p>
+                          {!notification.readAt && (
+                            <div className="w-2 h-2 bg-primary rounded-full"></div>
+                          )}
+                        </div>
                       </div>
                     ))}
                     <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 sticky bottom-0 bg-white dark:bg-dark">

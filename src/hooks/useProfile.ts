@@ -39,8 +39,8 @@ export function useProfile() {
   return useQuery({
     queryKey: profileKeys.detail(),
     queryFn: fetchProfile,
-    staleTime: 30 * 60 * 1000, // 30 minutes - profile doesn't change often
-    gcTime: 60 * 60 * 1000, // 1 hour - keep profile cached longer
+    staleTime: 5 * 60 * 1000, // 5 minutes - show profile updates reasonably fast
+    gcTime: 30 * 60 * 1000, // 30 minutes cache retention
     retry: 1, // Only retry once on failure
   });
 }

@@ -61,10 +61,10 @@ export class ApiClient {
   }
 
   async request<T>(options: ApiRequestOptions): Promise<ApiResponse<T>> {
+    const cacheKey = this.getCacheKey(options)
+    const shouldCache = options.cache !== false && options.method === 'GET'
+    
     try {
-      const cacheKey = this.getCacheKey(options)
-      const shouldCache = options.cache !== false && options.method === 'GET'
-
       if (shouldCache && this.cache.has(cacheKey)) {
         const cached = this.cache.get(cacheKey) as CacheEntry<T>
         if (Date.now() - cached.timestamp < cached.ttl) {
@@ -89,17 +89,18 @@ export class ApiClient {
         this.cache.set(cacheKey, {
           data: response.data as T,
           timestamp: Date.now(),
-          ttl: options.timeout || this.cacheTTL,
+          ttl: this.cacheTTL, // FIX: Always use cacheTTL, not timeout
         })
-      }
-
-      if (shouldCache) {
-        this.pendingRequests.delete(cacheKey)
       }
 
       return response
     } catch (error) {
       return createErrorResponse(error as Error)
+    } finally {
+      // FIX: Always cleanup pending request, even on error
+      if (shouldCache) {
+        this.pendingRequests.delete(cacheKey)
+      }
     }
   }
 

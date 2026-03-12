@@ -26,8 +26,8 @@ export function useTokenTransactions(
     queryKey: tokenTransactionKeys.list(userId || '', filter),
     queryFn: () => getTokenTransactions(userId!, filter),
     enabled: !!userId,
-    staleTime: 30 * 60 * 1000, // 30 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes - keep transaction history cached longer
+    staleTime: 30 * 1000, // 30 seconds - transactions change after bookings
+    gcTime: 5 * 60 * 1000, // 5 minutes cache retention
     // Uses global retry logic from providers.tsx (max 2 retries, circuit breaker)
   })
 }
@@ -40,8 +40,8 @@ export function useTokenBalanceStats(userId: string | undefined) {
     queryKey: tokenTransactionKeys.stats(userId || ''),
     queryFn: () => getTokenBalanceStats(userId!),
     enabled: !!userId,
-    staleTime: 30 * 60 * 1000, // 30 minutes - stats don't change frequently
-    gcTime: 60 * 60 * 1000, // 1 hour - keep stats cached longer
+    staleTime: 2 * 60 * 1000, // 2 minutes - stats change less frequently
+    gcTime: 10 * 60 * 1000, // 10 minutes cache retention
     // Uses global retry logic from providers.tsx
   })
 }

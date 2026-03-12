@@ -35,8 +35,8 @@ export function useUpcomingClasses(filters?: {
   return useQuery({
     queryKey: classKeys.list(filters),
     queryFn: () => getUpcomingClasses(filters),
-    staleTime: 30 * 60 * 1000, // 30 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes - keep classes cached longer
+    staleTime: 30 * 1000, // 30 seconds (matches global default)
+    gcTime: 5 * 60 * 1000, // 5 minutes cache retention
     // Uses global retry logic from providers.tsx (max 2 retries, circuit breaker)
   })
 }
@@ -81,9 +81,12 @@ export function useBookClass() {
       }
     },
     onSuccess: (data, variables) => {
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: classKeys.lists() })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      // Invalidate all relevant queries for immediate UI updates
+      queryClient.invalidateQueries({ queryKey: classKeys.lists() }) // Refresh class availability
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }) // Refresh token balance & bookings
+      queryClient.invalidateQueries({ queryKey: ['bookings'] }) // Refresh user bookings  
+      queryClient.invalidateQueries({ queryKey: ['my-packages'] }) // Refresh package balance
+      queryClient.invalidateQueries({ queryKey: ['token-transactions'] }) // Refresh transaction history
       
       // Build success message with class name
       const classInfo = data.className ? ` for "${data.className}"` : ''

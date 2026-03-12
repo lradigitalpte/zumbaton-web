@@ -28,8 +28,8 @@ export function useUserBookings(
     queryKey: bookingKeys.list(userId || '', filter),
     queryFn: () => getUserBookings(userId!, filter),
     enabled: !!userId,
-    staleTime: 3 * 60 * 1000, // 3 minutes - bookings can change when user books/cancels
-    gcTime: 15 * 60 * 1000, // 15 minutes - keep bookings cached longer
+    staleTime: 30 * 1000, // 30 seconds - bookings change when user books/cancels
+    gcTime: 2 * 60 * 1000, // 2 minutes cache retention
     // Uses global retry logic from providers.tsx (max 2 retries, circuit breaker)
   })
 }
@@ -45,12 +45,12 @@ export function useCancelBooking() {
     mutationFn: ({ userId, bookingId, reason }: { userId: string; bookingId: string; reason?: string }) =>
       cancelBooking(userId, bookingId, reason),
     onSuccess: (data) => {
-      // Invalidate all booking queries
-      queryClient.invalidateQueries({ queryKey: bookingKeys.all })
-      // Also invalidate classes to update availability
-      queryClient.invalidateQueries({ queryKey: ['classes'] })
-      // Invalidate dashboard to refresh upcoming bookings and token balance
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      // Invalidate all relevant queries for immediate UI updates
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all }) // Refresh user bookings
+      queryClient.invalidateQueries({ queryKey: ['classes'] }) // Refresh class availability
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }) // Refresh token balance & bookings
+      queryClient.invalidateQueries({ queryKey: ['my-packages'] }) // Refresh package balance
+      queryClient.invalidateQueries({ queryKey: ['token-transactions'] }) // Refresh transaction history
       
       // Show success toast with penalty or refund message
       const message = data.penalty

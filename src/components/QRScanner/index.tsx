@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 
 interface QRScannerProps {
@@ -44,6 +45,7 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isCheckingInRef = useRef(false);
+  const queryClient = useQueryClient();
 
   // Cleanup on unmount
   useEffect(() => {
@@ -366,6 +368,13 @@ export default function QRScanner({ isOpen, onClose, onScanSuccess }: QRScannerP
         result.data?.message || 
         `Successfully checked in! ${result.data?.tokensConsumed ? `(${result.data.tokensConsumed} token${result.data.tokensConsumed > 1 ? 's' : ''} used)` : ''}`
       );
+
+      // CRITICAL: Invalidate cached data so UI updates immediately
+      queryClient.invalidateQueries({ queryKey: ['classes'] }); // Refresh class availability
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Refresh token balance & bookings  
+      queryClient.invalidateQueries({ queryKey: ['bookings'] }); // Refresh user bookings
+      queryClient.invalidateQueries({ queryKey: ['token-transactions'] }); // Refresh transaction history
+      queryClient.invalidateQueries({ queryKey: ['my-packages'] }); // Refresh package balance
 
       // SUCCESS FEEDBACK: Play sound and vibrate
       try {

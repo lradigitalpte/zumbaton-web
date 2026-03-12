@@ -71,6 +71,7 @@ export const TABLES = {
   WAITLIST: 'waitlist',
   USER_PROFILES: 'user_profiles',
   PASSWORD_RESET_OTPS: 'password_reset_otps',
+  NOTIFICATIONS: 'notifications',
 } as const
 
 // Supabase error codes
