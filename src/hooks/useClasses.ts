@@ -9,6 +9,17 @@ import { useToast } from '@/components/Toast'
 import { handleApiResponse, handleBatchResponse, handleMutationError } from '@/lib/toast-helper'
 import { getAdminApiUrl } from '@/lib/admin-api-url'
 
+function isTransientBookingError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase()
+  return (
+    message.includes('timeout') ||
+    message.includes('failed to fetch') ||
+    message.includes('network') ||
+    message.includes('session') ||
+    message.includes('unauthorized')
+  )
+}
+
 // Re-export type for convenience
 export type { ClassWithAvailability }
 
@@ -63,25 +74,46 @@ export function useBookClass() {
 
   return useMutation({
     mutationFn: async ({ userId, classId, className }: { userId: string; classId: string; className?: string }) => {
-      // Use centralized API fetch with automatic token refresh
       const { apiFetchJson } = await import('@/lib/api-fetch')
-      
-      const result = await apiFetchJson<{
-        success: boolean
-        data?: {
-          booking?: { id: string }
+
+      const attemptBooking = async (retryOn401 = true) => {
+        return apiFetchJson<{
+          success: boolean
+          data?: {
+            booking?: { id: string }
+            message?: string
+            waitlistPosition?: number
+          }
+          error?: { code?: string; message?: string }
           message?: string
-          waitlistPosition?: number
-        }
-        error?: { code: string; message: string }
-      }>('/api/bookings', {
-        method: 'POST',
-        body: JSON.stringify({ userId, classId }),
-        requireAuth: true,
-      })
+        }>('/api/bookings', {
+          method: 'POST',
+          body: JSON.stringify({ userId, classId }),
+          requireAuth: true,
+          retryOn401,
+          cache: 'no-store',
+        })
+      }
+
+      let result = await attemptBooking(true)
 
       if (!result.success) {
-        throw new Error(result.error?.message || 'Failed to book class')
+        const firstError = new Error(result.error?.message || result.message || 'Failed to book class')
+
+        // Fallback retry path for idle-session/network transient failures.
+        if (isTransientBookingError(firstError)) {
+          try {
+            result = await attemptBooking(false)
+          } catch {
+            throw firstError
+          }
+
+          if (!result.success) {
+            throw new Error(result.error?.message || result.message || 'Failed to book class')
+          }
+        } else {
+          throw firstError
+        }
       }
 
       return {
@@ -99,21 +131,6 @@ export function useBookClass() {
       queryClient.invalidateQueries({ queryKey: ['bookings'] }) // Refresh user bookings  
       queryClient.invalidateQueries({ queryKey: ['my-packages'] }) // Refresh package balance
       queryClient.invalidateQueries({ queryKey: ['token-transactions'] }) // Refresh transaction history
-      
-      // Build success message with class name
-      const classInfo = data.className ? ` for "${data.className}"` : ''
-      
-      // Show success toast with clear message
-      handleApiResponse(
-        { success: true, data, message: data.message || 'Your booking has been confirmed.' },
-        toast,
-        {
-          successTitle: data.waitlistPosition ? 'Added to Waitlist!' : 'Class Booked Successfully!',
-          successMessage: data.waitlistPosition
-            ? `You are now #${data.waitlistPosition} on the waitlist${classInfo}. You'll be notified if a spot opens up.`
-            : `Your booking${classInfo} has been confirmed. See you in class!`,
-        }
-      )
     },
     onError: (error: Error) => {
       handleMutationError(error, toast, 'Booking')

@@ -6,7 +6,6 @@
 import { getSupabaseClient, TABLES } from './supabase'
 import { getTokenBalance } from './dashboard-queries'
 import { getBookingSettings, type BookingSettings } from './booking-settings'
-import { getAdminApiUrl } from './admin-api-url'
 
 export interface InstructorInfo {
   id: string
@@ -1092,46 +1091,7 @@ export async function cancelBooking(
   tokensRefunded?: number
   penalty?: boolean
 }> {
-  // Use admin API for cancellations to ensure notifications are triggered
-  const adminApiUrl = getAdminApiUrl().replace(/\/api\/?$/, '').replace(/\/$/, '')
-  try {
-    // Use centralized API fetch with automatic token refresh
-    const { apiFetchJson } = await import('@/lib/api-fetch')
-    
-    const result = await apiFetchJson<{
-      success: boolean;
-      data?: any;
-      error?: { code: string; message: string };
-    }>(`${adminApiUrl}/api/bookings/${bookingId}`, {
-      method: 'DELETE',
-      body: JSON.stringify({
-        userId,
-        reason,
-      }),
-      requireAuth: true,
-    })
-
-    if (!result.success) {
-      // Admin API couldn't process the cancellation (e.g., 404). Fall back to local cancellation.
-      console.warn('Admin API cancellation returned non-success, falling back to local cancellation:', result.error)
-    } else {
-      return {
-        success: true,
-        // Ensure tokensRefunded and penalty are always defined to avoid 'undefined' in client messages
-        tokensRefunded: result.data?.tokensRefunded ?? 0,
-        penalty: result.data?.penalty ?? false,
-        message:
-          result.data?.message || (result.data?.penalty
-            ? `Booking cancelled. ${result.data?.tokensRefunded ?? 0} token(s) consumed as late cancellation penalty.`
-            : `Booking cancelled. ${result.data?.tokensRefunded ?? 0} token(s) refunded.`),
-      }
-    }
-  } catch (error) {
-    console.error('Error cancelling booking via admin API:', error)
-  }
-
-  // FALLBACK: Local cancellation (if admin API is unavailable)
-  // Note: Notifications won't be triggered in fallback mode
+  // Use one direct local cancellation path for consistency and reliability.
   const supabase = getSupabaseClient()
 
   try {

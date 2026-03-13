@@ -7,6 +7,7 @@ import { useUpcomingClasses, useBookClass, useBookBatchClasses, type ClassWithAv
 import { useDashboardTokenBalance } from "@/hooks/useDashboard";
 import ClassDetailsSlidePanel from "@/components/ClassDetails/ClassDetailsSlidePanel";
 import BookingConfirmationModal from "@/components/BookingConfirmation/BookingConfirmationModal";
+import Modal from "@/components/Modal/Modal";
 import { formatDate, formatDateFull, formatTime } from "@/lib/utils";
 import { handleMutationError } from "@/lib/toast-helper";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -51,6 +52,12 @@ const ClassesPage = () => {
     open: boolean;
     class: ClassWithAvailability | null;
   }>({ open: false, class: null });
+  const [bookingSuccessModal, setBookingSuccessModal] = useState<{
+    open: boolean;
+    className: string;
+    message: string;
+    waitlistPosition?: number;
+  }>({ open: false, className: "", message: "" });
   const isConfirmationModalOpen = confirmationModal.open;
   const classToBook = confirmationModal.class;
 
@@ -259,10 +266,15 @@ const ClassesPage = () => {
     bookClassMutation.mutate(
       { userId: user.id, classId: classToBook.id, className: classToBook.name || classToBook.title },
       {
-        onSuccess: () => {
-          // Toast is handled by the hook; dashboard queries are invalidated by mutation hook
+        onSuccess: (data) => {
           setConfirmationModal({ open: false, class: null });
           setSelectedClass(null);
+          setBookingSuccessModal({
+            open: true,
+            className: data.className || classToBook.name || classToBook.title || "Class",
+            message: data.message || "Your booking has been confirmed.",
+            waitlistPosition: data.waitlistPosition,
+          });
         },
       }
     );
@@ -843,6 +855,40 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
         userTokenBalance={userTokenBalance}
         isBookingWindowOpen={bookingWindowOpen}
       />
+
+      <Modal
+        isOpen={bookingSuccessModal.open}
+        onClose={() => setBookingSuccessModal({ open: false, className: "", message: "" })}
+        title={bookingSuccessModal.waitlistPosition ? "Added to Waitlist" : "Booking Confirmed"}
+        description={bookingSuccessModal.className}
+        size="md"
+        footer={
+          <button
+            onClick={() => setBookingSuccessModal({ open: false, className: "", message: "" })}
+            className="w-full px-6 py-3 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-primary/90 transition-colors"
+          >
+            Done
+          </button>
+        }
+      >
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 rounded-xl bg-green-50 dark:bg-green-900/20 p-4">
+            <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center shrink-0">
+              <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p className="text-sm text-green-800 dark:text-green-300 font-medium">
+              {bookingSuccessModal.waitlistPosition
+                ? `You are #${bookingSuccessModal.waitlistPosition} in the waitlist.`
+                : "Your spot is secured."}
+            </p>
+          </div>
+          <p className="text-sm text-body-color dark:text-gray-300">
+            {bookingSuccessModal.message}
+          </p>
+        </div>
+      </Modal>
 
       {/* Sessions Slider Panel for Recurring/Course Classes */}
       {sessionsPanel.isOpen && sessionsPanel.parentClass && (

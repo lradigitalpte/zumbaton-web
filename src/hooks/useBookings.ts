@@ -44,7 +44,12 @@ export function useCancelBooking() {
 
   return useMutation({
     mutationFn: ({ userId, bookingId, reason }: { userId: string; bookingId: string; reason?: string }) =>
-      cancelBooking(userId, bookingId, reason),
+      Promise.race([
+        cancelBooking(userId, bookingId, reason),
+        new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('Cancellation request timed out. Please try again.')), 20000)
+        }),
+      ]),
     onSuccess: (data) => {
       // Invalidate all relevant queries for immediate UI updates
       queryClient.invalidateQueries({ queryKey: bookingKeys.all }) // Refresh user bookings
