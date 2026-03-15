@@ -75,7 +75,7 @@ const Testimonials = () => {
         className="absolute inset-0 -z-10"
       >
         <Image
-          src="/images/images/image2z.jpg"
+          src="/images/image00065.jpeg"
           alt="Zumba background"
           fill
           className="object-cover"

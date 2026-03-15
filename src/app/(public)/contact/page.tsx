@@ -17,7 +17,7 @@ const ContactPage = () => {
           { label: "Home", href: "/" },
           { label: "Contact Us" }
         ]}
-        backgroundImage="/images/images/contactimg.jpeg"
+        backgroundImage="/images/hero/contact.jpeg"
       />
 
       <ContactLocations />

@@ -130,13 +130,13 @@ const ClassCard = ({ classItem, index }: ClassCardProps) => {
     >
       <Link href={`/classes/${classItem.slug}`} className="block group h-full">
         <div className="relative h-full bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-200 dark:border-gray-700 hover:border-green-400 dark:hover:border-green-500">
-          {/* Image Section */}
+          {/* Image Section - Zumbuddies: focus on upper part of image so faces show (not too low) */}
           <div className="relative h-64 md:h-72 overflow-hidden bg-gradient-to-br from-green-400 to-green-600">
             <Image
               src={classItem.image}
               alt={classItem.name}
               fill
-              className="object-cover group-hover:scale-110 transition-transform duration-700"
+              className={`object-cover group-hover:scale-110 transition-transform duration-700 ${classItem.slug === "zumbuddies" ? "object-[50%_20%]" : "object-center"}`}
               sizes="(max-width: 1024px) 100vw, 50vw"
             />
             {/* Gradient Overlay */}

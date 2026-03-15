@@ -38,7 +38,7 @@ const AboutSectionTwo = () => {
         className="absolute inset-0 -z-10"
       >
         <Image
-          src="/images/images/image4z.jpg"
+          src="/images/image00065.jpeg"
           alt="Zumba background"
           fill
           className="object-cover"
@@ -79,7 +79,7 @@ const AboutSectionTwo = () => {
             >
               <div className="relative w-full aspect-[4/3]">
               <Image
-                  src="/images/images/image1.jpg"
+                  src="/images/image00040.jpeg"
                   alt="Zumba Training Session"
                 fill
                   className="object-cover"
@@ -98,7 +98,7 @@ const AboutSectionTwo = () => {
             >
               <div className="relative w-full aspect-square">
               <Image
-                  src="/images/images/image4z.jpg"
+                  src="/images/image00065.jpeg"
                   alt="Personal Coaching Session"
                 fill
                   className="object-cover"

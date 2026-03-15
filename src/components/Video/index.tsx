@@ -27,7 +27,7 @@ export default function Video() {
             <div className="mx-auto max-w-[770px] overflow-hidden rounded-2xl shadow-2xl border border-white/30 bg-white/60 backdrop-blur">
               <div className="relative aspect-[16/9] items-center justify-center">
                 <img
-                  src="/images/landing1.jfif"
+                  src="/images/hero/notbad.jpeg"
                   alt="Zumba dance session"
                   className="absolute inset-0 w-full h-full object-cover"
                 />

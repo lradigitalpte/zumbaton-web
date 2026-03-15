@@ -16,7 +16,7 @@ const RefundPage = () => {
           { label: "Home", href: "/" },
           { label: "Refund Policy" },
         ]}
-        backgroundImage="/images/images/20251227_0814_Energetic Zumbathon Vibes_simple_compose_01kdfdy7cse3htgvxspp828dwf.png"
+        backgroundImage="/images/hero/hero.jpeg"
       />
       <section className="py-16 md:py-20 lg:py-28 bg-white dark:bg-gray-900">
         <div className="container px-3 sm:px-4 max-w-3xl mx-auto">

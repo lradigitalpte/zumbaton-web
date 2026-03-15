@@ -16,7 +16,7 @@ const FAQPage = () => {
           { label: "Home", href: "/" },
           { label: "FAQ" }
         ]}
-        backgroundImage="/images/images/20251227_0814_Energetic Zumbathon Vibes_simple_compose_01kdfdy7cse3htgvxspp828dwf.png"
+        backgroundImage="/images/hero/hero.jpeg"
       />
       <FAQSection />
       <FAQMap />

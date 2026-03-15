@@ -53,7 +53,7 @@ const Pricing = () => {
         className="absolute inset-0 -z-10"
       >
         <Image
-          src="/images/images/image4z.jpg"
+          src="/images/image00065.jpeg"
           alt="Zumba pricing background"
           fill
           className="object-cover"

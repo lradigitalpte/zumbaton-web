@@ -2,175 +2,136 @@
 
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
 
-  const slides = [
-    {
-      id: 1,
-      type: "image",
-      image: "/images/landing2.png",
-      headline: "Fun into Fitness with",
-      highlight: "Zumbaton",
-      description:
-        "Not world-class training. No pushing beyond your limits. Fitness is a happy side effect! Move at your pace. Smile through every step.",
-    },
-    {
-      id: 2,
-      type: "image",
-      image: "/images/images/vecteezy_ai-generated-hip-hop-dancing-class-advertisment-background_37246263.jpg",
-      headline: "Dance First",
-      highlight: "Fitness Follows",
-      description:
-        "No pressure, no stress. Not hardcore training. Just joyful movement with good energy. One Zumba step at a time, we're building a healthier, happier community.",
-    },
-    {
-      id: 3,
-      type: "image",
-      image: "/images/images/hero3z.jpg",
-      headline: "One Beat. One Step.",
-      highlight: "One Happy You",
-      description:
-        "This is not about perfection. This is not about pushing harder. This is about moving, dancing, and feeling alive. Join a community transforming lives one Zumba step at a time.",
-    },
-  ];
+const slides = [
+  {
+    id: 1,
+    image: "/images/hero/hero.jpeg",
+    headline: "Fun into Fitness with",
+    highlight: "Zumbaton",
+    description:
+      "Not world-class training. No pushing beyond your limits. Fitness is a happy side effect! Move at your pace. Smile through every step.",
+  },
+  {
+    id: 2,
+    image: "/images/hero/hero2.jpeg",
+    headline: "Dance First",
+    highlight: "Fitness Follows",
+    description:
+      "No pressure, no stress. Not hardcore training. Just joyful movement with good energy. One Zumba step at a time, we're building a healthier, happier community.",
+  },
+  {
+    id: 3,
+    image: "/images/hero/notbad.jpeg",
+    headline: "One Beat. One Step.",
+    highlight: "One Happy You",
+    description:
+      "This is not about perfection. This is not about pushing harder. This is about moving, dancing, and feeling alive. Join a community transforming lives one Zumba step at a time.",
+  },
+];
 
 const Hero = () => {
   const { openWhatsAppModal } = useWhatsAppModal();
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Auto-advance slides with pause on hover
   useEffect(() => {
-    // Clear any existing timer
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
+    timerRef.current = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 6000);
 
-    // Only start timer if not paused
-    if (!isPaused) {
-      timerRef.current = setInterval(() => {
-        setCurrentSlide((prev) => (prev + 1) % slides.length);
-      }, 8000); // 8 seconds - slower transition
-    }
-
-    // Cleanup function
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isPaused]);
-
-  const handleMouseEnter = () => {
-    setIsPaused(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsPaused(false);
-  };
+  }, []);
 
   return (
-      <section
-        id="home"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        className="relative text-white overflow-hidden min-h-screen sm:max-h-screen flex items-center bg-black"
-      >
-      {/* Background Images/Video with smooth crossfade - no white flash */}
-        <div className="absolute inset-0 w-full h-full">
-          {slides.map((slide, index) => (
-            <motion.div
-              key={`bg-${slide.id}`}
-              initial={{ opacity: index === 0 ? 1 : 0 }}
-              animate={{ 
-                opacity: currentSlide === index ? 1 : 0,
-              }}
-              transition={{ 
-                opacity: { duration: 2, ease: "easeInOut" },
-              }}
-              className="absolute inset-0 w-full h-full bg-fixed-mobile md:bg-fixed overflow-hidden"
-            >
+    <section id="home" className="relative w-full h-[100dvh] overflow-hidden bg-black">
+      {/* Background Slideshow */}
+      <div className="absolute inset-0 w-full h-full">
+        <AnimatePresence mode="popLayout">
+          <motion.div
+            key={currentSlide}
+            initial={{ opacity: 0, scale: 1.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
+            className="absolute inset-0 w-full h-full"
+          >
+            {/* Image */}
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: `url(${slides[currentSlide].image})` }}
+            />
+            {/* Modern Gradient Overlay - Darker at bottom for text readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/80" />
+            <div className="absolute inset-0 bg-black/20" />
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Content Container */}
+      <div className="relative z-10 w-full h-full flex flex-col justify-end pb-24 sm:justify-center sm:pb-0">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto text-center">
+            <AnimatePresence mode="wait">
               <motion.div
-                className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
-                style={{ 
-                  backgroundImage: `url(${slide.image})`,
-                  willChange: 'transform',
-                }}
-                initial={{ scale: 1 }}
-                animate={{
-                  scale: currentSlide === index ? [1, 1.2] : 1,
-                }}
-                transition={{
-                  scale: {
-                    duration: 8,
-                    ease: "linear",
-                    repeat: Infinity,
-                    repeatType: "reverse" as const,
-                  },
-                }}
-              />
-              {/* Dark overlay for better text readability */}
-              <div className="absolute inset-0 w-full h-full bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
-              <div className="absolute inset-0 w-full h-full bg-gradient-to-t from-black/40 to-transparent" />
-            </motion.div>
-          ))}
-        </div>
+                key={currentSlide}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="flex flex-col items-center"
+              >
+                {/* Headline */}
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white tracking-tight mb-4 drop-shadow-lg">
+                  {slides[currentSlide].headline}{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-300 block sm:inline mt-2 sm:mt-0">
+                    {slides[currentSlide].highlight}
+                  </span>
+                </h1>
 
+                {/* Description */}
+                <p className="text-base sm:text-lg md:text-xl text-gray-100 max-w-2xl mx-auto mb-8 leading-relaxed font-medium drop-shadow-md">
+                  {slides[currentSlide].description}
+                </p>
 
-        {/* Content */}
-        <div className="container relative z-10 pt-16 sm:pt-20 md:pt-24 pb-8 sm:pb-12 md:pb-16 lg:pb-32">
-        <div className="max-w-4xl mx-auto text-center px-2 xs:px-3 sm:px-4 relative min-h-[350px] sm:min-h-[450px] md:min-h-[550px] lg:min-h-[600px]">
-          {slides.map((slide, index) => (
-            <motion.div
-              key={`content-${slide.id}`}
-              initial={{ opacity: index === 0 ? 1 : 0, y: index === 0 ? 0 : 30 }}
-              animate={{ 
-                opacity: currentSlide === index ? 1 : 0,
-                y: currentSlide === index ? 0 : 30
-              }}
-              transition={{ 
-                opacity: { duration: 1, delay: 0.3, ease: "easeOut" },
-                y: { duration: 1, delay: 0.3, ease: "easeOut" }
-              }}
-              className={`absolute inset-0 flex flex-col items-center justify-center px-2 xs:px-3 sm:px-4 ${
-                currentSlide === index ? "pointer-events-auto" : "pointer-events-none"
-              }`}
-            >
-              <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-2 sm:mb-3 md:mb-5 lg:mb-7 leading-tight px-1">
-                {slide.headline}{" "}
-                <span className="text-green-400 dark:text-green-500">{slide.highlight}</span>
-              </h1>
-              <p className="text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl mb-2 sm:mb-3 md:mb-5 lg:mb-7 text-white/90 max-w-[95%] xs:max-w-[90%] sm:max-w-3xl mx-auto leading-relaxed break-words">
-                {slide.description}
-              </p>
-              <p className="text-xs xs:text-sm sm:text-base md:text-lg font-bold text-green-400 dark:text-green-500 mb-5 sm:mb-7 md:mb-10 lg:mb-12 uppercase tracking-wider">
-                Step it up!
-              </p>
-              {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 lg:gap-6 justify-center items-center w-full max-w-md sm:max-w-none px-2">
-                <Link
-                  href="/trial-booking"
-                  className="btn-hero-primary px-4 py-2 xs:px-5 xs:py-2.5 sm:px-6 sm:py-2.5 md:px-8 md:py-3 lg:px-10 lg:py-3.5 text-xs xs:text-sm sm:text-base md:text-lg font-bold text-white uppercase bg-green-600 hover:bg-green-700 transition-colors rounded-none shadow-lg relative overflow-hidden inline-block w-full sm:w-auto text-center"
-                >
-                  <span className="relative z-10">Start Trial</span>
-                </Link>
-                <button
-                  type="button"
-                  onClick={openWhatsAppModal}
-                  className="btn-hero-secondary px-4 py-2 xs:px-5 xs:py-2.5 sm:px-6 sm:py-2.5 md:px-8 md:py-3 lg:px-10 lg:py-3.5 text-xs xs:text-sm sm:text-base md:text-lg font-bold text-white uppercase border-2 border-white/40 hover:border-white/60 hover:bg-white/10 transition-colors rounded-none shadow-lg relative overflow-hidden inline-block w-full sm:w-auto text-center"
-                >
-                  <span className="relative z-10">Contact Us</span>
-                </button>
-              </div>
-            </motion.div>
-          ))}
+                {/* Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-4 sm:px-0">
+                  <Link
+                    href="/trial-booking"
+                    className="group relative px-8 py-4 bg-green-600 hover:bg-green-500 text-white font-bold text-lg rounded-full transition-all duration-300 shadow-[0_0_20px_rgba(22,163,74,0.4)] hover:shadow-[0_0_30px_rgba(22,163,74,0.6)] hover:-translate-y-1 w-full sm:w-auto text-center overflow-hidden"
+                  >
+                    <span className="relative z-10">Start Trial</span>
+                    <div className="absolute inset-0 h-full w-full scale-0 rounded-full transition-all duration-300 group-hover:scale-100 group-hover:bg-green-400/20" />
+                  </Link>
+                  
+                  <button
+                    onClick={openWhatsAppModal}
+                    className="group px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold text-lg rounded-full transition-all duration-300 hover:-translate-y-1 w-full sm:w-auto text-center"
+                  >
+                    Contact Us
+                  </button>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
-        </div>
-      </section>
+      </div>
+
+      {/* Scroll Indicator */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 2, duration: 1 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 hidden sm:flex flex-col items-center gap-2"
+      >
+        <span className="text-white/60 text-xs uppercase tracking-widest">Scroll</span>
+        <div className="w-[1px] h-12 bg-gradient-to-b from-white/0 via-white/50 to-white/0" />
+      </motion.div>
+    </section>
   );
 };
 

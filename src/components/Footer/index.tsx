@@ -103,7 +103,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 sm:gap-10 md:gap-12">
           {/* Brand Column */}
           <div className="lg:col-span-2">
-            <Link href="/" className="inline-block mb-4 sm:mb-6">
+            <Link href="/explore" className="inline-block mb-4 sm:mb-6">
               <Image
                 src="/logo/zumbaton logo (transparent).png"
                 alt="Zumbaton Logo"

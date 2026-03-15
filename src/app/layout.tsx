@@ -6,7 +6,7 @@ import "../styles/index.css";
 const inter = Inter({ subsets: ["latin"] });
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || "https://zumbaton.sg";
-const firstHeroImage = `${siteUrl}/images/landing2.png`;
+const firstHeroImage = `${siteUrl}/images/hero/hero.jpeg`;
 
 export const metadata: Metadata = {
   title: "Zumbaton - Dance Happy, Get Fit Naturally",

@@ -80,7 +80,7 @@ const AboutSectionOne = () => {
               >
                 <div className="relative w-full aspect-square">
                   <Image
-                    src="/images/landing3.jpg"
+                    src="/images/hero/hero2.jpeg"
                     alt="Zumba class"
                     fill
                     className="object-cover w-full"
@@ -98,7 +98,7 @@ const AboutSectionOne = () => {
               >
                 <div className="relative w-full aspect-square">
                 <Image
-                    src="/images/images/image2z.jpg"
+                    src="/images/image00059.jpeg"
                     alt="Zumba fitness"
                   fill
                     className="object-cover w-full"

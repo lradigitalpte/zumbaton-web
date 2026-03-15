@@ -75,7 +75,7 @@ const Header = () => {
           <div className="relative flex items-center justify-between">
             <div className="w-32 sm:w-40 md:w-60 max-w-full flex-shrink-0">
               <Link
-                href="/"
+                href="/explore"
                 className={`flex items-center gap-2 sm:gap-3 ${
                   needsBackground ? "py-2 sm:py-3 lg:py-2" : "py-3 sm:py-4 md:py-8"
                 }`}

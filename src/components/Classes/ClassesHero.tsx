@@ -1,85 +1,57 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { motion } from "framer-motion";
 import Link from "next/link";
+
+export interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
 
 interface ClassesHeroProps {
   title?: string;
-  breadcrumbs?: { label: string; href?: string }[];
+  breadcrumbs?: BreadcrumbItem[];
 }
 
-const ClassesHero = ({ 
-  title = "Our Classes", 
-  breadcrumbs = [
-    { label: "Home", href: "/" },
-    { label: "Classes" }
-  ] 
-}: ClassesHeroProps) => {
-  const sectionRef = useRef<HTMLElement>(null);
-  
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end start"]
-  });
-  
-  const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
-  const textY = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+const ClassesHero = ({ title = "Classes", breadcrumbs }: ClassesHeroProps) => {
+  const defaultBreadcrumbs: BreadcrumbItem[] = [
+    { label: "Home", href: "/explore" },
+    { label: "Classes", href: "/classes" },
+  ];
+  const items = breadcrumbs ?? defaultBreadcrumbs;
 
   return (
-    <section 
-      ref={sectionRef}
-      className="relative h-[60vh] md:h-[70vh] lg:h-[75vh] flex items-center justify-center overflow-hidden"
-    >
-      {/* Parallax Background Image */}
-      <motion.div 
-        style={{ y: backgroundY }}
-        className="absolute inset-0 -z-10"
-      >
-        <div 
-          className="absolute inset-0 w-full h-[120%] bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: "url('/images/landing2.png')",
-          }}
-        />
-        <div className="absolute inset-0 bg-black/60"></div>
-      </motion.div>
-
-      {/* Content */}
-      <motion.div 
-        style={{ y: textY, opacity }}
+    <section className="relative h-[50vh] min-h-[280px] flex items-center justify-center overflow-hidden">
+      <div
+        className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/images/hero/hero.jpeg')" }}
+      />
+      <div className="absolute inset-0 bg-black/60" />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
         className="container relative z-10 text-center"
       >
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-        >
-          <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-white mb-6">
-            {title}
-          </h1>
-          
-          {/* Breadcrumb */}
-          <nav className="flex items-center justify-center gap-2 text-white/80">
-            {breadcrumbs.map((crumb, index) => (
-              <span key={index} className="flex items-center gap-2">
-                {index > 0 && <span className="text-green-500">/</span>}
-                {crumb.href ? (
-                  <Link href={crumb.href} className="hover:text-green-400 transition-colors">
-                    {crumb.label}
-                  </Link>
-                ) : (
-                  <span className="text-green-400">{crumb.label}</span>
-                )}
-              </span>
-            ))}
-          </nav>
-        </motion.div>
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
+          {title}
+        </h1>
+        <nav className="flex items-center justify-center gap-2 text-white/90 text-sm flex-wrap">
+          {items.map((item, i) => (
+            <span key={i} className="flex items-center gap-2">
+              {i > 0 && <span className="text-green-400">/</span>}
+              {item.href ? (
+                <Link href={item.href} className="hover:text-green-400 transition-colors">
+                  {item.label}
+                </Link>
+              ) : (
+                <span className="text-green-400">{item.label}</span>
+              )}
+            </span>
+          ))}
+        </nav>
       </motion.div>
-
-      {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white dark:from-gray-dark to-transparent z-10"></div>
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white dark:from-gray-dark to-transparent z-10" />
     </section>
   );
 };

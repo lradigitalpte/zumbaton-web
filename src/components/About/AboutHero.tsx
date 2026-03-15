@@ -30,7 +30,7 @@ const AboutHero = () => {
         <div 
           className="absolute inset-0 w-full h-[120%] bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: "url('/images/landing3.jpg')",
+            backgroundImage: "url('/images/hero/hero2.jpeg')",
           }}
         />
         {/* Dark overlay */}

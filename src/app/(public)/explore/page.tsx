@@ -13,7 +13,9 @@ export const metadata: Metadata = {
   description: "Fun into fitness with Zumbaton! Not hardcore training — just joyful movement with good energy. Join our community transforming lives one Zumba step at a time.",
 };
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default function ExplorePage() {
   return (
     <>
       <ScrollUp />

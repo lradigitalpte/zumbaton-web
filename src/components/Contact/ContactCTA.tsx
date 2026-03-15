@@ -27,7 +27,7 @@ const ContactCTA = () => {
       >
         <div 
           className="absolute inset-0 w-full h-[140%] -top-[20%] bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/images/images/image2z.jpg')" }}
+          style={{ backgroundImage: "url('/images/image00040.jpeg')" }}
         />
         <div className="absolute inset-0 bg-black/70"></div>
       </motion.div>

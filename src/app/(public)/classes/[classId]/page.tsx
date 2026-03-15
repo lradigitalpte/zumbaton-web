@@ -33,7 +33,7 @@ export default function ClassDetailPage() {
       <ClassesHero 
         title={classData.name}
         breadcrumbs={[
-          { label: "Home", href: "/" },
+          { label: "Home", href: "/explore" },
           { label: "Classes", href: "/classes" },
           { label: classData.name }
         ]}
@@ -91,17 +91,18 @@ const ClassDetailContent = ({ classData }: { classData: ZumbaClass }) => {
             transition={{ duration: 0.6 }}
             className="lg:w-3/4"
           >
-            {/* Main Image */}
-            <div className="relative h-64 md:h-96 rounded-xl overflow-hidden mb-8">
+            {/* Main Image - Zumbuddies uses kids1, positioned so people (not walls) are in frame */}
+            <div className="relative h-64 md:h-96 rounded-xl overflow-hidden mb-8 bg-gray-200 dark:bg-gray-700">
               <Image
-                src={classData.image}
+                src={classData.slug === "zumbuddies" ? "/images/hero/kids1.png" : classData.image}
                 alt={classData.name}
                 fill
-                className="object-cover"
+                className={classData.slug === "zumbuddies" ? "object-cover object-[50%_35%]" : "object-cover object-center"}
                 sizes="(max-width: 1024px) 100vw, 75vw"
                 priority
+                unoptimized={classData.slug === "zumbuddies"}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
               
               {/* Quick Stats Overlay */}
               <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-4">
