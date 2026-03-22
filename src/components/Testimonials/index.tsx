@@ -7,13 +7,13 @@ import { motion, useScroll, useTransform } from "framer-motion";
 const testimonials = [
   {
     id: 1,
-    quote: "I found a Zumba class that feels like my own! No pressure, just pure dance joy. I smile through every step.",
+    quote: "I found a dance fitness class that feels like my own! No pressure, just pure dance joy. I smile through every step.",
     author: "Anna L.",
     location: "Paris",
   },
   {
     id: 2,
-    quote: "Dance first, fitness follows — that's exactly what I needed. The community here is transforming my life one Zumba step at a time.",
+    quote: "Dance first, fitness follows — that's exactly what I needed. The community here is transforming my life one dance step at a time.",
     author: "Michael H.",
     location: "Toronto",
   },
@@ -76,7 +76,7 @@ const Testimonials = () => {
       >
         <Image
           src="/images/image00065.jpeg"
-          alt="Zumba background"
+          alt="Dance fitness background"
           fill
           className="object-cover"
           sizes="100vw"

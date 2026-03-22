@@ -20,7 +20,7 @@ const values = [
       </svg>
     ),
     title: "Community",
-    description: "Together we grow stronger. Motivation thrives when shared, and our Zumba family supports each other.",
+    description: "Together we grow stronger. Motivation thrives when shared, and our dance fitness family supports each other.",
   },
   {
     icon: (

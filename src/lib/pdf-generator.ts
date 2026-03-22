@@ -316,13 +316,13 @@ export async function generateRegistrationFormPDF(formData: RegistrationFormData
       
       const packageTerms = [
         '1. Your package subscription is for your personal use and can\'t be transferred or shared. You must not allow anyone else to use your subscription package. A Fine will be charged for any breach based on sessions misused.',
-        '2. Package subscription is non-refundable. Unless, if there is a medical reason. In such case the following documentary proof must be provided and it will be subject to approval by the management:\n   a) Medical – A doctor from a Singapore hospital provides a letter indicating that Zumba / Step aerobics will seriously impair my health. If the following documents are approved by management, the subscriptions will be on hold till you are deemed fit to continue.',
+        '2. Package subscription is non-refundable. Unless, if there is a medical reason. In such case the following documentary proof must be provided and it will be subject to approval by the management:\n   a) Medical – A doctor from a Singapore hospital provides a letter indicating that aerobics / Step aerobics will seriously impair my health. If the following documents are approved by management, the subscriptions will be on hold till you are deemed fit to continue.',
         '3. You confirmed that you have no pre-existing medical conditions which would prevent you from engaging in active exercise and you agree to undertake the lessons within your fitness limits.',
         '4. If you are below 16 years old. You are required to bring along a Parent / Guardian on the registration date.',
         '5. Cancellation of class after booking must be made 24 hours before the class date.',
         '6. Booking timing is open from 0800H – 2200H daily VIA website.',
         '7. Booked class with a "NO SHOW" will be forfeited.',
-        '8. You acknowledge that you fully take responsibility of all risk of injuries arising from the Zumba and Step aerobics classes and not hold the trainers or management for any liability for any injury arising from the classes.',
+        '8. You acknowledge that you fully take responsibility of all risk of injuries arising from the aerobics and Step aerobics classes and not hold the trainers or management for any liability for any injury arising from the classes.',
         '9. You will be liable for the medical expenses in cases where there is a personal injury during classes.',
         '10. An e-copy of the terms and conditions will be sent to your email address. This letter of acceptance supplements the agreement.'
       ]

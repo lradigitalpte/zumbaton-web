@@ -53,7 +53,7 @@ const PricingContent = () => {
               Packages for Everyone
             </h2>
             <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-lg">
-              Find a Zumba class that feels like your own. Beginner-friendly, feel-good classes for all.
+              Find a dance fitness class that feels like your own. Beginner-friendly, feel-good classes for all.
             </p>
           </motion.div>
 
@@ -273,7 +273,7 @@ const PricingContent = () => {
         >
           <h3 className="text-2xl md:text-3xl font-bold mb-4">Ready to Start Dancing?</h3>
           <p className="text-white/90 mb-6 max-w-2xl mx-auto text-lg">
-            Join our community and find your Zumba class. One beat. One step. One happy you.
+            Join our community and find your dance fitness class. One beat. One step. One happy you.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button

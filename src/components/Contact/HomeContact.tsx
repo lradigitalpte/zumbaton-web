@@ -167,7 +167,7 @@ const HomeContact = () => {
                   Join Our Community
                 </h3>
                 <p className="text-sm sm:text-base text-gray-600 dark:text-white/70">
-                  Get exclusive access to new classes, special events, member-only offers, and dance tips delivered to your inbox. Be part of a community transforming lives one Zumba step at a time.
+                  Get exclusive access to new classes, special events, member-only offers, and dance tips delivered to your inbox. Be part of a community transforming lives one dance step at a time.
                 </p>
               </div>
 

@@ -14,7 +14,7 @@ const featuresData: Feature[] = [
     ),
     title: "Expert Certified Instructors",
     paragraph:
-      "Learn from the best! Our certified Zumba instructors bring years of experience and infectious energy to every class, ensuring you get the most effective and enjoyable workout.",
+      "Learn from the best! Our certified dance fitness instructors bring years of experience and infectious energy to every class, ensuring you get the most effective and enjoyable workout.",
   },
   {
     id: 2,

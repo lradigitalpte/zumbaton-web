@@ -12,7 +12,7 @@ const faqCategories = [
     questions: [
       {
         q: "What is Zumbaton (ZT)?",
-        a: "Zumbaton is a high-energy dance fitness program inspired by Zumba-style movements, combining cardio, rhythm, and fun choreography to help you stay active while enjoying the music."
+        a: "Zumbaton is a high-energy dance fitness program inspired by cardio-dance movements, combining cardio, rhythm, and fun choreography to help you stay active while enjoying the music."
       },
       {
         q: "Do I need dance experience to join?",

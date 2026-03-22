@@ -81,7 +81,7 @@ const AboutSectionOne = () => {
                 <div className="relative w-full aspect-square">
                   <Image
                     src="/images/hero/hero2.jpeg"
-                    alt="Zumba class"
+                    alt="Dance fitness class"
                     fill
                     className="object-cover w-full"
                     sizes="(max-width: 768px) 100vw, 50vw"
@@ -99,7 +99,7 @@ const AboutSectionOne = () => {
                 <div className="relative w-full aspect-square">
                 <Image
                     src="/images/image00059.jpeg"
-                    alt="Zumba fitness"
+                    alt="Dance fitness"
                   fill
                     className="object-cover w-full"
                     sizes="(max-width: 768px) 100vw, 50vw"
@@ -137,7 +137,7 @@ const AboutSectionOne = () => {
               transition={{ duration: 0.6, delay: 0.4 }}
               className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-300 mb-6 sm:mb-8 leading-relaxed"
             >
-              No strict rules. No intimidating workouts. Just music, movement, and motivation. Find your Zumba vibe with us — beginner-friendly, feel-good classes for all. Join a community where dance comes first and fitness follows naturally. Every step is a celebration, every beat brings joy.
+              No strict rules. No intimidating workouts. Just music, movement, and motivation. Find your dance fitness vibe with us — beginner-friendly, feel-good classes for all. Join a community where dance comes first and fitness follows naturally. Every step is a celebration, every beat brings joy.
             </motion.p>
             <motion.div
               ref={buttonRef}

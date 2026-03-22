@@ -379,7 +379,7 @@ const ClassesPage = () => {
                 className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3 text-dark dark:text-white outline-none focus:border-primary transition-colors text-sm font-medium"
               >
                 <option value="all">All Types</option>
-                <option value="zumba">Zumba</option>
+                <option value="zumba">Step aerobics</option>
                 <option value="dance">Dance</option>
               </select>
             </div>

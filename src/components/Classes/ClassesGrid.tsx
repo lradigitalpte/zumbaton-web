@@ -40,10 +40,10 @@ const ClassesGrid = () => {
               Explore Our Programs
             </div>
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-              Find Your Perfect Zumba Class
+              Find Your Perfect Dance Fitness Class
             </h2>
             <p className="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto text-lg">
-              From high-energy dance parties to low-impact sessions, we have a Zumba class for everyone. 
+              From high-energy dance parties to low-impact sessions, we have a dance fitness class for everyone. 
               Click on any class to learn more!
             </p>
           </motion.div>

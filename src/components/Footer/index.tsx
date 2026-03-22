@@ -83,7 +83,7 @@ const Footer = () => {
                 Ready to Dance?
               </h3>
               <p className="text-xs sm:text-sm md:text-base text-gray-400">
-                Join thousands of members transforming their lives through Zumba.
+                Join thousands of members transforming their lives through dance fitness.
               </p>
             </div>
             <div className="flex gap-3 sm:gap-4 w-full sm:w-auto">
@@ -265,7 +265,7 @@ const Footer = () => {
         <div className="container px-3 sm:px-4 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-xs sm:text-sm">
             <p className="text-gray-500">
-              © {currentYear} <span className="text-green-500">Zumba</span><span className="text-yellow-500">ton</span>. All rights reserved. Designed by <span className="text-gray-400">LRA Digital</span>.
+              © {currentYear} <span className="text-green-500">Zum</span><span className="text-yellow-500">baton</span>. All rights reserved. Designed by <span className="text-gray-400">LRA Digital</span>.
             </p>
             <div className="flex items-center gap-3 sm:gap-6 flex-wrap justify-center sm:justify-end">
               {footerLinks.legal.map((link) => (

@@ -4,7 +4,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Terms of Service | Zumbaton",
-  description: "Zumbaton terms and conditions. Membership, bookings, safety, and liability for Zumba and step aerobics classes.",
+  description: "Zumbaton terms and conditions. Membership, bookings, safety, and liability for aerobics and step aerobics classes.",
 };
 
 const TermsPage = () => {
@@ -27,7 +27,7 @@ const TermsPage = () => {
 
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-8">1. Acceptance of Terms</h2>
             <p>
-              These terms and conditions govern your rights and obligations as a ZUMBATON member. By using our website, booking platform, or attending our Zumba and step aerobics classes, you agree to be bound by these Terms. Please read and understand them before signing any membership agreement. Each member who agrees is individually and severally bound. If you do not agree, please do not use our services.
+              These terms and conditions govern your rights and obligations as a ZUMBATON member. By using our website, booking platform, or attending our aerobics and step aerobics classes, you agree to be bound by these Terms. Please read and understand them before signing any membership agreement. Each member who agrees is individually and severally bound. If you do not agree, please do not use our services.
             </p>
 
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-8">2. Membership</h2>
@@ -61,7 +61,7 @@ const TermsPage = () => {
 
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-8">6. Medical Expenses</h2>
             <p>
-              You will be liable for your own medical expenses in cases where there is personal injury during classes. You acknowledge that you fully take responsibility for all risk of injuries arising from Zumba and step aerobics classes and do not hold the trainers or management liable for any injury arising from the classes.
+              You will be liable for your own medical expenses in cases where there is personal injury during classes. You acknowledge that you fully take responsibility for all risk of injuries arising from aerobics and step aerobics classes and do not hold the trainers or management liable for any injury arising from the classes.
             </p>
 
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-8">7. Attire and Safety</h2>

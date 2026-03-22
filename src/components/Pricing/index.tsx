@@ -54,7 +54,7 @@ const Pricing = () => {
       >
         <Image
           src="/images/image00065.jpeg"
-          alt="Zumba pricing background"
+          alt="Dance fitness pricing background"
           fill
           className="object-cover"
           sizes="100vw"
@@ -103,7 +103,7 @@ const Pricing = () => {
                     packageName={pkg.name}
                     price={priceFormatted}
               duration="pack"
-                    subtitle={pkg.description || `${pkg.token_count} class tokens - Perfect for finding your Zumba vibe.`}
+              subtitle={pkg.description || `${pkg.token_count} class tokens - Perfect for finding your dance fitness vibe.`}
             >
                     <OfferList text={`${pkg.token_count} Class ${pkg.token_count === 1 ? 'Token' : 'Tokens'}`} status="active" />
                     <OfferList text={`Valid for ${formatValidity(pkg.validity_days)}`} status="active" />

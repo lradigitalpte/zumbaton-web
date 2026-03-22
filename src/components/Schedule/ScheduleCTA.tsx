@@ -28,7 +28,7 @@ const ScheduleCTA = () => {
               Ready to Start Dancing?
             </h3>
             <p className="text-white/90 text-lg">
-              Join now and find your Zumba class. One beat. One step. One happy you!
+              Join now and find your dance fitness class. One beat. One step. One happy you!
             </p>
           </motion.div>
 

@@ -39,7 +39,7 @@ const AboutSectionTwo = () => {
       >
         <Image
           src="/images/image00065.jpeg"
-          alt="Zumba background"
+          alt="Dance fitness background"
           fill
           className="object-cover"
           sizes="100vw"
@@ -80,7 +80,7 @@ const AboutSectionTwo = () => {
               <div className="relative w-full aspect-[4/3]">
               <Image
                   src="/images/image00040.jpeg"
-                  alt="Zumba Training Session"
+                  alt="Dance fitness training session"
                 fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 50vw"
@@ -146,7 +146,7 @@ const AboutSectionTwo = () => {
                   Feel-Good Classes for Everyone
                 </h4>
                 <p className="text-xs sm:text-sm md:text-base text-white/90 leading-relaxed">
-                  Find a Zumba class that feels like your own. We have Zumba step classes for everyone. Not about pushing limits — just joyful movement with good energy.
+                  Find a dance fitness class that feels like your own. We have step aerobics classes for everyone. Not about pushing limits — just joyful movement with good energy.
                 </p>
               </div>
             </motion.div>
@@ -166,7 +166,7 @@ const AboutSectionTwo = () => {
                   A Community That Transforms Lives
                 </h4>
                 <p className="text-xs sm:text-sm md:text-base text-white/90 leading-relaxed">
-                  Join a vibrant community transforming lives one Zumba step at a time. Dance happy, get fit naturally. Not fitness pressure — fitness pleasure.
+                  Join a vibrant community transforming lives one dance step at a time. Dance happy, get fit naturally. Not fitness pressure — fitness pleasure.
                 </p>
               </div>
             </motion.div>

@@ -20,7 +20,7 @@ const slides = [
     headline: "Dance First",
     highlight: "Fitness Follows",
     description:
-      "No pressure, no stress. Not hardcore training. Just joyful movement with good energy. One Zumba step at a time, we're building a healthier, happier community.",
+      "No pressure, no stress. Not hardcore training. Just joyful movement with good energy. One dance step at a time, we're building a healthier, happier community.",
   },
   {
     id: 3,
@@ -28,7 +28,7 @@ const slides = [
     headline: "One Beat. One Step.",
     highlight: "One Happy You",
     description:
-      "This is not about perfection. This is not about pushing harder. This is about moving, dancing, and feeling alive. Join a community transforming lives one Zumba step at a time.",
+      "This is not about perfection. This is not about pushing harder. This is about moving, dancing, and feeling alive. Join a community transforming lives one dance step at a time.",
   },
 ];
 

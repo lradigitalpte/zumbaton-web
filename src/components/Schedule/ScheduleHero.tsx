@@ -46,10 +46,10 @@ const ScheduleHero = () => {
           transition={{ duration: 0.8, delay: 0.2 }}
         >
           <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-white mb-4 md:mb-6">
-            Find Zumba Class of Your Own
+            Find Your Dance Fitness Class
           </h1>
           <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-6 max-w-3xl mx-auto px-4">
-            We have Zumba step class for everyone. Join now — this is the schedule.
+            We have step aerobics classes for everyone. Join now — this is the schedule.
           </p>
           
           {/* Breadcrumb */}

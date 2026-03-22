@@ -1,4 +1,4 @@
-// Zumba class types data
+// Dance fitness class types data
 export interface ZumbaClass {
   id: string;
   slug: string;
@@ -66,8 +66,8 @@ export const zumbaClasses: ZumbaClass[] = [
     id: "2",
     slug: "zumbaton",
     name: "ZUMBATON",
-    shortDescription: "A high-energy Zumba Step workout elevated for added intensity and calorie burn. Blends fun, easy-to-follow Zumba choreography with step movements for a full-body workout.",
-    fullDescription: "A high-energy Zumba Step workout elevated for added intensity and calorie burn. This class blends fun, easy-to-follow Zumba choreography with step movements, delivering a full-body workout that feels more like a party than exercise.",
+    shortDescription: "A high-energy step aerobics workout elevated for added intensity and calorie burn. Blends fun, easy-to-follow dance choreography with step movements for a full-body workout.",
+    fullDescription: "A high-energy step aerobics workout elevated for added intensity and calorie burn. This class blends fun, easy-to-follow dance choreography with step movements, delivering a full-body workout that feels more like a party than exercise.",
     image: "/images/hero/hero2.jpeg",
     featured: true,
     duration: "60 min",
@@ -110,8 +110,8 @@ export const zumbaClasses: ZumbaClass[] = [
     id: "3",
     slug: "zumbuddies",
     name: "ZUMBUDDIES",
-    shortDescription: "Fun and energetic Zumba classes designed especially for kids! Dance, play, and get fit while making new friends in a safe, supportive environment.",
-    fullDescription: "ZUMBUDDIES is our special Zumba program for kids, combining fun dance moves with games and activities designed to keep children active, healthy, and happy. Each class is packed with energy, creativity, and age-appropriate choreography that kids love. It's the perfect way for children to develop coordination, confidence, and a love for movement in a party-like atmosphere!",
+    shortDescription: "Fun and energetic dance fitness classes designed especially for kids! Dance, play, and get fit while making new friends in a safe, supportive environment.",
+    fullDescription: "ZUMBUDDIES is our special dance fitness program for kids, combining fun dance moves with games and activities designed to keep children active, healthy, and happy. Each class is packed with energy, creativity, and age-appropriate choreography that kids love. It's the perfect way for children to develop coordination, confidence, and a love for movement in a party-like atmosphere!",
     image: "/images/hero/kids.png",
     featured: true,
     duration: "60 min",

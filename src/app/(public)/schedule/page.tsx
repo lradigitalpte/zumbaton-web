@@ -4,7 +4,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Class Schedule | Zumbaton",
-  description: "Check out our weekly Zumba class schedule. Find the perfect class for your fitness level and join the dance fitness party!",
+  description: "Check out our weekly dance fitness class schedule. Find the perfect class for your fitness level and join the dance fitness party!",
 };
 
 const SchedulePage = () => {

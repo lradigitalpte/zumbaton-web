@@ -15,7 +15,7 @@ export default function Video() {
 
       <div className="container relative z-10">
         <SectionTitle
-          title="Feel the Zumba Energy"
+          title="Feel the Dance Fitness Energy"
           paragraph="See the rhythm, color, and community that make our sessions so much fun. One minute of real class energy — imagine yourself dancing with us. One beat. One step. One happy you."
           center
           mb="80px"
@@ -28,7 +28,7 @@ export default function Video() {
               <div className="relative aspect-[16/9] items-center justify-center">
                 <img
                   src="/images/hero/notbad.jpeg"
-                  alt="Zumba dance session"
+                  alt="Dance fitness session"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/25 to-transparent" />

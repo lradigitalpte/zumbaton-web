@@ -11,7 +11,7 @@ const firstHeroImage = `${siteUrl}/images/hero/hero.jpeg`;
 export const metadata: Metadata = {
   title: "Zumbaton - Dance Happy, Get Fit Naturally",
   description:
-    "Fun into fitness with Zumbaton! Not hardcore training — just joyful movement with good energy. Join our community transforming lives one Zumba step at a time.",
+    "Fun into fitness with Zumbaton! Not hardcore training — just joyful movement with good energy. Join our community transforming lives one dance step at a time.",
   metadataBase: new URL(siteUrl),
   icons: {
     icon: "/logo/logo fav.png",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Zumbaton - Dance Happy, Get Fit Naturally",
     description:
-      "Fun into fitness with Zumbaton! Not hardcore training — just joyful movement with good energy. Join our community transforming lives one Zumba step at a time.",
+      "Fun into fitness with Zumbaton! Not hardcore training — just joyful movement with good energy. Join our community transforming lives one dance step at a time.",
     url: siteUrl,
     siteName: "Zumbaton",
     images: [
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Zumbaton - Dance Happy, Get Fit Naturally",
     description:
-      "Fun into fitness with Zumbaton! Not hardcore training — just joyful movement with good energy. Join our community transforming lives one Zumba step at a time.",
+      "Fun into fitness with Zumbaton! Not hardcore training — just joyful movement with good energy. Join our community transforming lives one dance step at a time.",
     images: [firstHeroImage],
   },
 };

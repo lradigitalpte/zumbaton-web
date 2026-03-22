@@ -3,7 +3,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Our Instructors | Zumbaton",
-  description: "Meet our expert certified Zumba instructors. Passionate professionals bringing energy and expertise to every class.",
+  description: "Meet our expert certified dance fitness instructors. Passionate professionals bringing energy and expertise to every class.",
 };
 
 const InstructorsPage = () => {

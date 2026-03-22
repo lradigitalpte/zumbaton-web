@@ -43,7 +43,7 @@ test.describe('Class Booking Flow', () => {
     await page.waitForTimeout(3000); // Wait for classes to load
 
     // Look for class cards or items
-    const classCards = page.locator('[class*="card"], [class*="class"]').filter({ hasText: /zumba|fitness|dance|class/i });
+    const classCards = page.locator('[class*="card"], [class*="class"]').filter({ hasText: /dance\s*fitness|fitness|dance|class|step/i });
     const cardCount = await classCards.count();
     
     // Should have classes displayed (if any are available)
@@ -58,7 +58,7 @@ test.describe('Class Booking Flow', () => {
     await page.waitForTimeout(3000);
 
     // Look for class elements
-    const classCards = page.locator('text=/zumba|fitness|dance|class/i').first();
+    const classCards = page.locator('text=/dance\s*fitness|fitness|dance|class|step/i').first();
     const hasClasses = await classCards.isVisible({ timeout: 10000 }).catch(() => false);
     
     if (hasClasses) {
@@ -103,11 +103,11 @@ test.describe('Class Booking Flow', () => {
     const searchExists = await searchInput.isVisible({ timeout: 5000 }).catch(() => false);
     
     if (searchExists) {
-      await searchInput.fill('zumba');
+      await searchInput.fill('dance');
       await page.waitForTimeout(1000);
       
       // Results should update (this is hard to verify without specific class data)
-      await expect(searchInput).toHaveValue('zumba');
+      await expect(searchInput).toHaveValue('dance');
     }
   });
 
@@ -117,7 +117,7 @@ test.describe('Class Booking Flow', () => {
     await page.waitForTimeout(3000);
 
     // Find first clickable class element
-    const classCard = page.locator('text=/zumba|fitness|dance|class/i').first();
+    const classCard = page.locator('text=/dance\s*fitness|fitness|dance|class|step/i').first();
     const hasClasses = await classCard.isVisible({ timeout: 10000 }).catch(() => false);
     
     test.skip(!hasClasses, 'No classes available to test');

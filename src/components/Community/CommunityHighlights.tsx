@@ -53,7 +53,7 @@ const CommunityHighlights = () => {
       >
         <Image
           src="/images/image00059.jpeg"
-          alt="Zumba community background"
+          alt="Dance fitness community background"
           fill
           className="object-cover"
           sizes="100vw"

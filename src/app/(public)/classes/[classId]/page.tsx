@@ -223,7 +223,7 @@ const ClassDetailCTA = () => {
               Ready to try this class?
             </h3>
             <p className="text-white/80 text-lg">
-              Sign up now and experience the Zumba difference!
+                Sign up now and experience the dance fitness difference!
             </p>
           </motion.div>
 

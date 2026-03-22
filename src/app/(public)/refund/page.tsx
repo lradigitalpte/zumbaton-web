@@ -36,7 +36,7 @@ const RefundPage = () => {
             </p>
             <ul className="list-disc pl-6 space-y-1">
               <li>
-                A letter from a doctor at a Singapore hospital indicating that Zumba or step aerobics would seriously impair your health.
+                A letter from a doctor at a Singapore hospital indicating that aerobics or step aerobics would seriously impair your health.
               </li>
             </ul>
             <p>

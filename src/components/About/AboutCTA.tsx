@@ -28,7 +28,7 @@ const AboutCTA = () => {
               Ready to take the first step towards your fitness goals?
             </h3>
             <p className="text-white/80 text-lg">
-              Join our Zumba community today and start your transformation!
+              Join our dance fitness community today and start your transformation!
             </p>
           </motion.div>
 

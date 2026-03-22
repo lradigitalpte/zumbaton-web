@@ -695,7 +695,7 @@ AND A PARENT/GUARDIAN MUST BE PRESENT DURING CLASSES</p>
                   subscription package. A Fine will be charged for any breach based on sessions misused.</li>
                   <li>Package subscription is non-refundable. Unless, if there is a medical reason. In such case the following documentary proof must be
                   provided and it will be subject to approval by the management:
-                    <br />a) Medical – A doctor from a Singapore hospital provides a letter indicating that Zumba / Step aerobics will seriously impair my health.
+                    <br />a) Medical – A doctor from a Singapore hospital provides a letter indicating that aerobics / Step aerobics will seriously impair my health.
                   If the following documents are approved by management, the subscriptions will be on hold till you are deemed fit to continue.</li>
                   <li>You confirmed that you have no pre-existing medical conditions which would prevent you from engaging in active exercise and you
                   agree to undertake the lessons within your fitness limits.</li>
@@ -703,7 +703,7 @@ AND A PARENT/GUARDIAN MUST BE PRESENT DURING CLASSES</p>
                   <li>Cancellation of class after booking must be made 24 hours before the class date.</li>
                   <li>Booking timing is open from 0800H – 2200H daily VIA website.</li>
                   <li>Booked class with a "NO SHOW" will be forfeited.</li>
-                  <li>You acknowledge that you fully take responsibility of all risk of injuries arising from the Zumba and Step aerobics classes and not hold
+                  <li>You acknowledge that you fully take responsibility of all risk of injuries arising from the aerobics and Step aerobics classes and not hold
                   the trainers or management for any liability for any injury arising from the classes.</li>
                   <li>You will be liable for the medical expenses in cases where there is a personal injury during classes.</li>
                   <li>An e-copy of the terms and conditions will be sent to your email address. This letter of acceptance supplements the agreement.</li>

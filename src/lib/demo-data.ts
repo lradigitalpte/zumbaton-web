@@ -17,7 +17,7 @@ export const DEMO_UPCOMING_BOOKINGS = [
   {
     id: 'booking-1',
     class_id: 'class-1',
-    class_name: 'Zumba Fitness',
+    class_name: 'Dance Fitness',
     instructor_name: 'Maria Garcia',
     scheduled_at: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days from now
     duration_minutes: 60,
@@ -43,10 +43,10 @@ export const DEMO_UPCOMING_BOOKINGS = [
 export const DEMO_CLASSES = [
   {
     id: 'class-1',
-    name: 'Zumba Fitness',
+    name: 'Dance Fitness',
     description: 'High-energy dance workout that combines Latin and international music with dance moves. Perfect for burning calories while having fun!',
     instructor_name: 'Maria Garcia',
-    instructor_bio: 'Certified Zumba instructor with 8 years of experience. Passionate about making fitness fun and accessible to everyone.',
+    instructor_bio: 'Certified dance fitness instructor with 8 years of experience. Passionate about making fitness fun and accessible to everyone.',
     scheduled_at: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
     duration_minutes: 60,
     location: 'Studio A',
@@ -114,7 +114,7 @@ export const DEMO_CLASSES = [
     name: 'Dance Fitness Fusion',
     description: 'A mix of different dance styles including hip-hop, latin, and contemporary. Great cardio workout!',
     instructor_name: 'Maria Garcia',
-    instructor_bio: 'Certified Zumba instructor with 8 years of experience.',
+    instructor_bio: 'Certified dance fitness instructor with 8 years of experience.',
     scheduled_at: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
     duration_minutes: 55,
     location: 'Studio A',
@@ -128,10 +128,10 @@ export const DEMO_CLASSES = [
   },
   {
     id: 'class-6',
-    name: 'Zumba Gold',
-    description: 'Lower intensity Zumba class designed for active older adults or beginners. Same great music, easier moves!',
+    name: 'Dance Fitness Gold',
+    description: 'Lower intensity dance fitness class designed for active older adults or beginners. Same great music, easier moves!',
     instructor_name: 'Maria Garcia',
-    instructor_bio: 'Certified Zumba instructor with 8 years of experience.',
+    instructor_bio: 'Certified dance fitness instructor with 8 years of experience.',
     scheduled_at: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString(),
     duration_minutes: 45,
     location: 'Studio B',
@@ -186,7 +186,7 @@ export const DEMO_BOOKINGS = [
   {
     id: 'booking-3',
     class_id: 'class-past-1',
-    class_name: 'Zumba Fitness',
+    class_name: 'Dance Fitness',
     instructor_name: 'Maria Garcia',
     scheduled_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
     duration_minutes: 60,

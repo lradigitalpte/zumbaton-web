@@ -43,7 +43,7 @@ const ContactCTA = () => {
             Ready to Start <span className="text-green-400">Dancing?</span>
           </h2>
           <p className="text-lg text-gray-300 mb-8 max-w-xl mx-auto">
-            Find your Zumba class and join our vibrant community. 
+            Find your dance fitness class and join our vibrant community. 
             One beat. One step. One happy you.
           </p>
           
