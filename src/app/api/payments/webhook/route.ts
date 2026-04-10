@@ -429,6 +429,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
 
         console.log('[Webhook] Trial booking completed successfully:', payment.id)
+
+        // Fire-and-forget: log a token transaction for reporting — never blocks or breaks booking
+        if (booking) {
+          void Promise.resolve(
+            supabase.from('token_transactions').insert({
+              user_id: null,
+              booking_id: booking.id,
+              transaction_type: 'trial-booking-purchase',
+              tokens_change: 1,
+              tokens_before: 0,
+              tokens_after: 1,
+              description: `Trial class: ${classData.title} (${guestName})`,
+            })
+          ).then(() => {
+            console.log('[Webhook] Created trial token transaction for booking:', booking.id)
+          }).catch((err: unknown) => {
+            console.error('[Webhook] Non-critical: failed to create trial token transaction:', err)
+          })
+        }
+
         return NextResponse.json({ received: true, message: 'Trial booking processed' })
       }
 
