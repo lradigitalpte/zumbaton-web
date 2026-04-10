@@ -530,153 +530,144 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
         console.log('[Webhook] Created user package:', userPackage?.id)
 
-        // Record promo usage if discount was applied
-        if (payment.promo_type && payment.discount_percent && payment.discount_percent > 0) {
-          const { error: promoError } = await supabase
-            .from('promo_usage')
-            .insert({
-              user_id: payment.user_id,
-              promo_type: payment.promo_type,
-              discount_percent: payment.discount_percent,
-              discount_amount_cents: payment.discount_amount_cents || 0,
-              package_id: payment.package_id,
-              payment_id: payment.id,
-            })
-
-          if (promoError) {
-            console.error('[Webhook] Failed to record promo usage:', promoError)
-            // Don't fail the webhook - payment succeeded
-          } else {
-            console.log('[Webhook] Recorded promo usage:', payment.promo_type, payment.discount_percent + '%')
-
-            // If referral discount was used, update referral status
-            if (payment.promo_type === 'referral') {
-              const { data: referral } = await supabase
-                .from('referrals')
-                .select('id')
-                .eq('referred_id', payment.user_id)
-                .in('status', ['pending', 'completed'])
-                .single()
-
-              if (referral) {
-                await supabase
-                  .from('referrals')
-                  .update({
-                    status: 'used',
-                    discount_used_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                  })
-                  .eq('id', referral.id)
-              }
-            }
-          }
-        }
-
-        // Create token transaction
+        // Create token transaction — CRITICAL, do this before returning
         const { error: txError } = await supabase
           .from('token_transactions')
           .insert({
             user_id: payment.user_id,
             user_package_id: userPackage.id,
             transaction_type: 'purchase',
-            tokens_change: pkg.token_count, // positive = tokens added
-            tokens_before: 0, // Before purchase, user had 0 tokens from this package
-            tokens_after: pkg.token_count, // After purchase, user has all tokens
+            tokens_change: pkg.token_count,
+            tokens_before: 0,
+            tokens_after: pkg.token_count,
             description: `Purchased ${pkg.name}`,
           })
 
         if (txError) {
           console.error('[Webhook] Failed to create token transaction:', txError)
-          // Continue anyway - user package was created
-        } else {
-          console.log('[Webhook] Created token transaction for', pkg.token_count, 'tokens')
         }
 
-        // Update user stats (non-blocking)
-        try {
-          await supabase.rpc('increment_user_stat', {
-            p_user_id: payment.user_id,
-            p_field: 'total_tokens_purchased',
-            p_amount: pkg.token_count,
-          })
+        console.log('[Webhook] Payment completed successfully (tokens issued):', payment.id)
 
-          await supabase.rpc('increment_user_stat', {
-            p_user_id: payment.user_id,
-            p_field: 'total_spent_cents',
-            p_amount: payment.amount_cents,
-          })
-        } catch (statError) {
-          console.warn('[Webhook] Failed to update user stats:', statError)
-          // Non-critical, continue
-        }
+        // ── NON-CRITICAL work below — fire and forget to avoid timeout ──
+        // These run in the background; if any fail, tokens are already issued.
+        const nonCriticalWork = async () => {
+          try {
+            // Record promo usage if discount was applied
+            if (payment.promo_type && payment.discount_percent && payment.discount_percent > 0) {
+              await supabase
+                .from('promo_usage')
+                .insert({
+                  user_id: payment.user_id,
+                  promo_type: payment.promo_type,
+                  discount_percent: payment.discount_percent,
+                  discount_amount_cents: payment.discount_amount_cents || 0,
+                  package_id: payment.package_id,
+                  payment_id: payment.id,
+                })
 
-        // Send email confirmation
-        try {
-          const { data: userProfile } = await supabase
-            .from('user_profiles')
-            .select('email, name')
-            .eq('id', payment.user_id)
-            .single()
+              if (payment.promo_type === 'referral') {
+                const { data: referral } = await supabase
+                  .from('referrals')
+                  .select('id')
+                  .eq('referred_id', payment.user_id)
+                  .in('status', ['pending', 'completed'])
+                  .single()
 
-          if (userProfile?.email && userPackage) {
-            const { sendTokenPurchaseEmail } = await import('@/lib/email')
-            await sendTokenPurchaseEmail({
-              userEmail: userProfile.email,
-              userName: userProfile.name || 'User',
-              packageName: pkg.name,
-              tokenCount: pkg.token_count,
-              amount: payment.amount_cents / 100,
-              currency: payment.currency,
-              expiresAt: userPackage.expires_at,
-            })
-            console.log('[Webhook] Token purchase email sent to:', userProfile.email)
+                if (referral) {
+                  await supabase
+                    .from('referrals')
+                    .update({
+                      status: 'used',
+                      discount_used_at: new Date().toISOString(),
+                      updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', referral.id)
+                }
+              }
+            }
+
+            // Update user stats
+            await Promise.allSettled([
+              supabase.rpc('increment_user_stat', {
+                p_user_id: payment.user_id,
+                p_field: 'total_tokens_purchased',
+                p_amount: pkg.token_count,
+              }),
+              supabase.rpc('increment_user_stat', {
+                p_user_id: payment.user_id,
+                p_field: 'total_spent_cents',
+                p_amount: payment.amount_cents,
+              }),
+            ])
+
+            // Create invoice
+            await supabase
+              .from('invoices')
+              .insert({
+                user_id: payment.user_id,
+                payment_id: payment.id,
+                invoice_number: `INV-${Date.now()}`,
+                amount_cents: payment.amount_cents,
+                tax_cents: 0,
+                total_cents: payment.amount_cents,
+                currency: payment.currency,
+                status: 'paid',
+                issued_at: new Date().toISOString(),
+                paid_at: new Date().toISOString(),
+              })
+
+            // Send in-app notification
+            await supabase
+              .from('notifications')
+              .insert({
+                user_id: payment.user_id,
+                type: 'payment_successful',
+                channel: 'in_app',
+                subject: 'Payment Successful!',
+                body: `Your purchase of ${pkg.name} was successful. ${pkg.token_count} tokens have been added to your account.`,
+                status: 'sent',
+                sent_at: new Date().toISOString(),
+                data: {
+                  payment_id: payment.id,
+                  package_name: pkg.name,
+                  token_count: pkg.token_count,
+                  amount: payment.amount_cents / 100,
+                },
+              })
+
+            // Send email confirmation (slowest operation — SMTP)
+            const { data: userProfile } = await supabase
+              .from('user_profiles')
+              .select('email, name')
+              .eq('id', payment.user_id)
+              .single()
+
+            if (userProfile?.email && userPackage) {
+              const { sendTokenPurchaseEmail } = await import('@/lib/email')
+              await sendTokenPurchaseEmail({
+                userEmail: userProfile.email,
+                userName: userProfile.name || 'User',
+                packageName: pkg.name,
+                tokenCount: pkg.token_count,
+                amount: payment.amount_cents / 100,
+                currency: payment.currency,
+                expiresAt: userPackage.expires_at,
+              })
+              console.log('[Webhook] Token purchase email sent to:', userProfile.email)
+            }
+          } catch (bgError) {
+            console.error('[Webhook] Non-critical background work error:', bgError)
           }
-        } catch (emailError) {
-          console.error('[Webhook] Failed to send token purchase email:', emailError)
-          // Don't fail the webhook if email fails
         }
+
+        // Don't await — let it run in background while we return 200 immediately
+        nonCriticalWork()
+
       } else {
         console.error('[Webhook] Package data is missing for payment:', payment.id)
         return NextResponse.json({ received: true, error: 'Package data missing' })
       }
-
-      // Create invoice
-      const invoiceNumber = `INV-${Date.now()}`
-      await supabase
-        .from('invoices')
-        .insert({
-          user_id: payment.user_id,
-          payment_id: payment.id,
-          invoice_number: invoiceNumber,
-          amount_cents: payment.amount_cents,
-          tax_cents: 0,
-          total_cents: payment.amount_cents,
-          currency: payment.currency,
-          status: 'paid',
-          issued_at: new Date().toISOString(),
-          paid_at: new Date().toISOString(),
-        })
-
-      // Send notification (in-app)
-      await supabase
-        .from('notifications')
-        .insert({
-          user_id: payment.user_id,
-          type: 'payment_successful',
-          channel: 'in_app',
-          subject: 'Payment Successful!',
-          body: `Your purchase of ${pkg?.name || 'tokens'} was successful. ${pkg?.token_count || 0} tokens have been added to your account.`,
-          status: 'sent',
-          sent_at: new Date().toISOString(),
-          data: {
-            payment_id: payment.id,
-            package_name: pkg?.name,
-            token_count: pkg?.token_count,
-            amount: payment.amount_cents / 100,
-          },
-        })
-
-      console.log('[Webhook] Payment completed successfully:', payment.id)
     } else if (status === 'failed') {
       // Update payment status to failed
       await supabase

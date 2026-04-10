@@ -11,34 +11,72 @@ function PaymentSuccessContent() {
   const [tokenCount, setTokenCount] = useState<number | null>(null);
   const [packageName, setPackageName] = useState<string | null>(null);
   const reference = searchParams.get("reference");
+  // HitPay also sends payment_request_id — use as fallback if reference lookup fails
+  const paymentRequestId = searchParams.get("payment_request_id");
   const paymentStatus = searchParams.get("status");
 
   useEffect(() => {
     // HitPay redirects with ?status=completed&reference=... when payment succeeds.
     // We call our backend to confirm the payment in DB (fallback if webhook was missed).
-    if (paymentStatus === "completed" && reference) {
+    // Retries up to 3 times with increasing delays in case the webhook is still processing.
+    const lookupRef = reference || paymentRequestId;
+    if (paymentStatus === "completed" && lookupRef) {
       setSyncing(true);
-      fetch(`/api/payments/status?reference=${encodeURIComponent(reference)}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.status === "succeeded" || data.status === "completed") {
-            setStatus("completed");
-            if (data.tokenCount) setTokenCount(data.tokenCount);
-            if (data.packageName) setPackageName(data.packageName);
-          } else {
-            // Payment not yet confirmed in DB — show success anyway (webhook may follow)
-            setStatus(paymentStatus);
+      let cancelled = false;
+
+      const syncPayment = async () => {
+        const MAX_RETRIES = 3;
+        const RETRY_DELAYS = [0, 2000, 4000]; // immediate, 2s, 4s
+
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+          if (cancelled) return;
+
+          if (RETRY_DELAYS[attempt] > 0) {
+            await new Promise((r) => setTimeout(r, RETRY_DELAYS[attempt]));
           }
-        })
-        .catch(() => {
-          // Network error — still show success from redirect params
-          setStatus(paymentStatus);
-        })
-        .finally(() => setSyncing(false));
+          if (cancelled) return;
+
+          try {
+            const res = await fetch(
+              `/api/payments/status?reference=${encodeURIComponent(lookupRef)}`,
+              { keepalive: true }
+            );
+            const data = await res.json();
+
+            if (data.status === "succeeded" || data.status === "completed") {
+              if (!cancelled) {
+                setStatus("completed");
+                if (data.tokenCount) setTokenCount(data.tokenCount);
+                if (data.packageName) setPackageName(data.packageName);
+                setSyncing(false);
+              }
+              return; // Success — stop retrying
+            }
+
+            // If last attempt still not confirmed, show success from redirect params
+            if (attempt === MAX_RETRIES - 1 && !cancelled) {
+              setStatus(paymentStatus);
+              setSyncing(false);
+            }
+          } catch {
+            // On last retry failure, show success anyway
+            if (attempt === MAX_RETRIES - 1 && !cancelled) {
+              setStatus(paymentStatus);
+              setSyncing(false);
+            }
+          }
+        }
+      };
+
+      syncPayment();
+
+      return () => {
+        cancelled = true;
+      };
     } else {
       setStatus(paymentStatus);
     }
-  }, [paymentStatus, reference]);
+  }, [paymentStatus, reference, paymentRequestId]);
 
   // Show processing while syncing with backend or waiting for initial status
   if (status === null || syncing) {

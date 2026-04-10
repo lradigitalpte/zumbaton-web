@@ -253,7 +253,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           purpose: `Purchase: ${pkg.name} (${pkg.token_count} tokens)`,
           reference_number: referenceNumber,
           redirect_url: `${APP_URL}/payment/success`,
-          webhook: `${APP_URL}/api/payments/webhook`,
+          // HitPay rejects localhost webhook URLs — omit in local dev
+          ...(!APP_URL.includes('localhost') && { webhook: `${APP_URL}/api/payments/webhook` }),
           send_email: true,
         }),
         signal: hitpayController.signal,

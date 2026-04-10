@@ -33,18 +33,67 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'reference is required' }, { status: 400 })
     }
 
-    // Find payment by reference_number stored in metadata
-    const { data: payment, error: paymentError } = await supabaseAdmin
+    type PaymentRow = {
+      id: string
+      user_id: string
+      package_id: string
+      status: string
+      amount_cents: number
+      currency: string
+      hitpay_payment_request_id?: string | null
+      promo_type?: string | null
+      discount_percent?: number | null
+      discount_amount_cents?: number | null
+      referral_voucher_id?: string | null
+      metadata?: Record<string, unknown> | null
+      packages?: {
+        token_count?: number | null
+        name?: string | null
+        validity_days?: number | null
+      } | null
+    }
+
+    // Try 1: find by reference_number stored in metadata (current format: userId-packageId-timestamp)
+    let payment: PaymentRow | null = null
+    const { data: byMeta, error: metaError } = await supabaseAdmin
       .from('payments')
       .select('*, packages(*)')
       .contains('metadata', { reference_number: reference })
       .eq('is_trial_booking', false)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single()
+      .maybeSingle()
 
-    if (paymentError || !payment) {
-      console.error('[PaymentStatus] Payment not found for reference:', reference, paymentError?.message)
+    payment = byMeta as PaymentRow | null
+
+    // Try 2: reference might be the HitPay payment_request_id itself
+    if (!payment) {
+      const { data: byRequestId } = await supabaseAdmin
+        .from('payments')
+        .select('*, packages(*)')
+        .eq('hitpay_payment_request_id', reference)
+        .eq('is_trial_booking', false)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      payment = byRequestId as PaymentRow | null
+    }
+
+    // Try 3: reference might be the payment's own UUID
+    if (!payment) {
+      const { data: byId } = await supabaseAdmin
+        .from('payments')
+        .select('*, packages(*)')
+        .eq('id', reference)
+        .eq('is_trial_booking', false)
+        .maybeSingle()
+
+      payment = byId as PaymentRow | null
+    }
+
+    if (!payment) {
+      console.error('[PaymentStatus] Payment not found for reference:', reference, metaError?.message)
       return NextResponse.json({ error: 'Payment not found' }, { status: 404 })
     }
 
@@ -202,7 +251,7 @@ export async function GET(request: NextRequest) {
         }
 
         // 5. Mark admin-issued voucher as used
-        const voucherId = (payment as { referral_voucher_id?: string | null }).referral_voucher_id
+        const voucherId = payment.referral_voucher_id
         if (voucherId) {
           await supabaseAdmin
             .from('referral_vouchers')
