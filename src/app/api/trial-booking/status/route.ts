@@ -108,6 +108,24 @@ export async function GET(request: NextRequest) {
             .eq('id', paymentId)
             .single()
           if (updated) payment = updated
+
+            const alertMetadata = (payment.metadata as Record<string, unknown>) || {}
+          void Promise.resolve().then(async () => {
+            const { sendPaymentAlertEmail } = await import('@/lib/email')
+            await sendPaymentAlertEmail({
+              paymentId: payment.id,
+              event: 'succeeded',
+              paymentType: 'trial-booking',
+              source: 'status-sync',
+              amount: payment.amount_cents / 100,
+              currency: payment.currency,
+                guestName: typeof alertMetadata.guest_name === 'string' ? alertMetadata.guest_name : undefined,
+                guestEmail: typeof alertMetadata.guest_email === 'string' ? alertMetadata.guest_email : undefined,
+              className: payment.classes?.title,
+            })
+          }).catch((alertErr: unknown) => {
+            console.error('[Trial Booking Status] Payment alert send failed:', alertErr)
+          })
         }
       } catch (syncErr) {
         console.error('[Trial Booking Status] HitPay sync error:', syncErr)

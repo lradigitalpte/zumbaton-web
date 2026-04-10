@@ -321,6 +321,23 @@ export async function GET(request: NextRequest) {
               currency: payment.currency,
               expiresAt: userPackage.expires_at,
             })
+
+            void Promise.resolve().then(async () => {
+              const { sendSuccessfulPaymentAlertEmail } = await import('@/lib/email')
+              await sendSuccessfulPaymentAlertEmail({
+                paymentId: payment.id,
+                paymentType: 'package-purchase',
+                source: 'status-sync',
+                amount: payment.amount_cents / 100,
+                currency: payment.currency,
+                packageName: pkg.name,
+                tokenCount: pkg.token_count,
+                userName: userProfile.name || 'User',
+                userEmail: userProfile.email,
+              })
+            }).catch((alertErr: unknown) => {
+              console.error('[PaymentStatus] Payment alert send failed:', alertErr)
+            })
           }
         } catch (emailErr) {
           console.error('[PaymentStatus] Email send failed:', emailErr)

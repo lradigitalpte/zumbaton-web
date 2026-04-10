@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import {
+  sendPaymentAlertEmail,
   sendWelcomeEmail,
   sendTokenPurchaseEmail,
   sendTokenExpiryWarningEmail,
@@ -35,6 +36,7 @@ const EmailRequestSchema = z.object({
   type: z.enum([
     'welcome',
     'token-purchase',
+    'payment-alert',
     'token-expiry',
     'class-reminder',
     'booking-confirmation',
@@ -106,6 +108,25 @@ export async function POST(request: NextRequest) {
           amount: data.amount as number,
           currency: data.currency as string | undefined,
           expiresAt: data.expiresAt as string,
+        })
+        break
+
+      case 'payment-alert':
+        result = await sendPaymentAlertEmail({
+          paymentId: data.paymentId as string,
+          event: (data.event as 'initiated' | 'succeeded' | 'failed' | undefined) || 'succeeded',
+          paymentType: data.paymentType as 'package-purchase' | 'trial-booking',
+          source: data.source as string,
+          amount: data.amount as number,
+          currency: data.currency as string | undefined,
+          packageName: data.packageName as string | undefined,
+          tokenCount: data.tokenCount as number | undefined,
+          userName: data.userName as string | undefined,
+          userEmail: data.userEmail as string | undefined,
+          guestName: data.guestName as string | undefined,
+          guestEmail: data.guestEmail as string | undefined,
+          className: data.className as string | undefined,
+          failureReason: data.failureReason as string | undefined,
         })
         break
 

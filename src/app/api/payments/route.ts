@@ -323,6 +323,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     console.log(`[Payment] Created payment request for user ${user.id}, package ${pkg.name}`)
 
+    void Promise.resolve().then(async () => {
+      const { sendPaymentAlertEmail } = await import('@/lib/email')
+      await sendPaymentAlertEmail({
+        paymentId: hitpayData.id,
+        event: 'initiated',
+        paymentType: 'package-purchase',
+        source: 'checkout-created',
+        amount: finalAmountCents / 100,
+        currency,
+        packageName: pkg.name,
+        tokenCount: pkg.token_count,
+        userName: user.name,
+        userEmail: emailForPayment,
+      })
+    }).catch((alertErr: unknown) => {
+      console.error('[Payment] Non-critical: failed to send initiated payment alert:', alertErr)
+    })
+
     // Return the checkout URL with discount info
     return NextResponse.json({
       success: true,

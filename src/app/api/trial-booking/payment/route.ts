@@ -350,6 +350,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         .update({ status: 'failed', failure_reason: `HitPay API error: ${hitpayResponse.statusText}` })
         .eq('id', paymentRecord.id)
 
+      void Promise.resolve().then(async () => {
+        const { sendPaymentAlertEmail } = await import('@/lib/email')
+        await sendPaymentAlertEmail({
+          paymentId: paymentRecord.id,
+          event: 'failed',
+          paymentType: 'trial-booking',
+          source: 'checkout-created',
+          amount: paymentRecord.amount_cents / 100,
+          currency: paymentRecord.currency,
+          guestName,
+          guestEmail,
+          className: classData.title,
+          failureReason: `HitPay API error: ${hitpayResponse.statusText}`,
+        })
+      }).catch((alertErr: unknown) => {
+        console.error('[Trial Booking] Non-critical: failed to send failed payment alert:', alertErr)
+      })
+
       return NextResponse.json(
         { 
           error: 'Payment Error', 
@@ -376,6 +394,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         })
         .eq('id', paymentRecord.id)
 
+      void Promise.resolve().then(async () => {
+        const { sendPaymentAlertEmail } = await import('@/lib/email')
+        await sendPaymentAlertEmail({
+          paymentId: paymentRecord.id,
+          event: 'failed',
+          paymentType: 'trial-booking',
+          source: 'checkout-created',
+          amount: paymentRecord.amount_cents / 100,
+          currency: paymentRecord.currency,
+          guestName,
+          guestEmail,
+          className: classData.title,
+          failureReason: (hitpayData.message || hitpayData.error || `HitPay API error: ${hitpayResponse.statusText}`) as string,
+        })
+      }).catch((alertErr: unknown) => {
+        console.error('[Trial Booking] Non-critical: failed to send failed payment alert:', alertErr)
+      })
+
       return NextResponse.json(
         { 
           error: 'Payment Error', 
@@ -400,6 +436,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       console.error('[Trial Booking] Error updating payment:', updateError)
       // Continue anyway - payment URL is still valid
     }
+
+    void Promise.resolve().then(async () => {
+      const { sendPaymentAlertEmail } = await import('@/lib/email')
+      await sendPaymentAlertEmail({
+        paymentId: paymentRecord.id,
+        event: 'initiated',
+        paymentType: 'trial-booking',
+        source: 'checkout-created',
+        amount: paymentRecord.amount_cents / 100,
+        currency: paymentRecord.currency,
+        guestName,
+        guestEmail,
+        className: classData.title,
+      })
+    }).catch((alertErr: unknown) => {
+      console.error('[Trial Booking] Non-critical: failed to send initiated payment alert:', alertErr)
+    })
 
     // 5. Return payment URL
     return NextResponse.json({

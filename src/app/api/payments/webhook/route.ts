@@ -449,6 +449,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           })
         }
 
+        void Promise.resolve().then(async () => {
+          const { sendSuccessfulPaymentAlertEmail } = await import('@/lib/email')
+          await sendSuccessfulPaymentAlertEmail({
+            paymentId: payment.id,
+            paymentType: 'trial-booking',
+            source: 'webhook',
+            amount: payment.amount_cents / 100,
+            currency: payment.currency,
+            guestName,
+            guestEmail,
+            className: classData.title,
+          })
+        }).catch((err: unknown) => {
+          console.error('[Webhook] Non-critical: failed to send payment alert email:', err)
+        })
+
         return NextResponse.json({ received: true, message: 'Trial booking processed' })
       }
 
@@ -675,6 +691,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 expiresAt: userPackage.expires_at,
               })
               console.log('[Webhook] Token purchase email sent to:', userProfile.email)
+
+              await import('@/lib/email').then(({ sendSuccessfulPaymentAlertEmail }) =>
+                sendSuccessfulPaymentAlertEmail({
+                  paymentId: payment.id,
+                  paymentType: 'package-purchase',
+                  source: 'webhook',
+                  amount: payment.amount_cents / 100,
+                  currency: payment.currency,
+                  packageName: pkg.name,
+                  tokenCount: pkg.token_count,
+                  userName: userProfile.name || 'User',
+                  userEmail: userProfile.email,
+                })
+              )
             }
           } catch (bgError) {
             console.error('[Webhook] Non-critical background work error:', bgError)
@@ -689,6 +719,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         return NextResponse.json({ received: true, error: 'Package data missing' })
       }
     } else if (status === 'failed') {
+      const { data: failedPayment } = await supabase
+        .from('payments')
+        .select('id, amount_cents, currency, package_id, is_trial_booking, metadata')
+        .eq('hitpay_payment_request_id', payment_request_id)
+        .maybeSingle()
+
       // Update payment status to failed
       await supabase
         .from('payments')
@@ -698,6 +734,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           updated_at: new Date().toISOString(),
         })
         .eq('hitpay_payment_request_id', payment_request_id)
+
+      if (failedPayment) {
+        const metadata = (failedPayment.metadata as Record<string, unknown> | null) || {}
+        void Promise.resolve().then(async () => {
+          const { sendPaymentAlertEmail } = await import('@/lib/email')
+          await sendPaymentAlertEmail({
+            paymentId: failedPayment.id,
+            event: 'failed',
+            paymentType: failedPayment.is_trial_booking ? 'trial-booking' : 'package-purchase',
+            source: 'webhook',
+            amount: failedPayment.amount_cents / 100,
+            currency: failedPayment.currency,
+            packageName: typeof metadata.package_name === 'string' ? metadata.package_name : undefined,
+            tokenCount: typeof metadata.token_count === 'number' ? metadata.token_count : undefined,
+            guestName: typeof metadata.guest_name === 'string' ? metadata.guest_name : undefined,
+            guestEmail: typeof metadata.guest_email === 'string' ? metadata.guest_email : undefined,
+            className: typeof metadata.class_name === 'string' ? metadata.class_name : undefined,
+            failureReason: 'HitPay reported payment failed',
+          })
+        }).catch((alertErr: unknown) => {
+          console.error('[Webhook] Non-critical: failed to send failed payment alert:', alertErr)
+        })
+      }
 
       console.log('[Webhook] Payment failed:', payment_request_id)
     }

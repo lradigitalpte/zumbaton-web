@@ -25,6 +25,23 @@ export interface EmailResult {
   error?: string
 }
 
+export interface PaymentAlertEmailData {
+  paymentId: string
+  event: 'initiated' | 'succeeded' | 'failed'
+  paymentType: 'package-purchase' | 'trial-booking'
+  source: string
+  amount: number
+  currency?: string
+  packageName?: string
+  tokenCount?: number
+  userName?: string
+  userEmail?: string
+  guestName?: string
+  guestEmail?: string
+  className?: string
+  failureReason?: string
+}
+
 /**
  * Create a reusable email transporter
  * Uses SMTP configuration from environment variables
@@ -88,6 +105,86 @@ export async function sendEmail(options: SendEmailOptions): Promise<EmailResult>
       error: error instanceof Error ? error.message : 'Unknown error occurred',
     }
   }
+}
+
+function getConfiguredPaymentAlertRecipients(): string[] {
+  const configuredRecipients = process.env.PAYMENT_ALERT_EMAIL || process.env.PAYMENT_ALERT_EMAILS || ''
+
+  return configuredRecipients
+    .split(/[;,]/)
+    .map((recipient) => recipient.replace(/\s+#.*$/, '').trim())
+    .filter(Boolean)
+}
+
+export async function sendPaymentAlertEmail(data: PaymentAlertEmailData): Promise<EmailResult> {
+  const recipients = getConfiguredPaymentAlertRecipients()
+
+  if (recipients.length === 0) {
+    return { success: true }
+  }
+
+  const eventLabel = data.event === 'initiated'
+    ? 'Started'
+    : data.event === 'failed'
+      ? 'Failed'
+      : 'Successful'
+  const paymentTitle = data.paymentType === 'trial-booking'
+    ? `Trial Booking Payment ${eventLabel}`
+    : `Package Payment ${eventLabel}`
+  const customerName = data.userName || data.guestName || 'Unknown'
+  const customerEmail = data.userEmail || data.guestEmail || 'Not available'
+  const description = data.paymentType === 'trial-booking'
+    ? `Trial class: ${data.className || 'Unknown class'}`
+    : `Package: ${data.packageName || 'Unknown package'}`
+  const tokenLine = data.tokenCount != null ? `<p><strong>Tokens:</strong> ${data.tokenCount}</p>` : ''
+  const failureLine = data.failureReason ? `<p><strong>Failure reason:</strong> ${data.failureReason}</p>` : ''
+
+  return sendEmail({
+    to: recipients,
+    subject: `[Zumbaton] ${paymentTitle}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1f2937; max-width: 640px; margin: 0 auto;">
+        <div style="background: #111827; color: #ffffff; padding: 20px 24px; border-radius: 8px 8px 0 0;">
+          <h2 style="margin: 0; font-size: 20px;">${paymentTitle}</h2>
+        </div>
+        <div style="border: 1px solid #e5e7eb; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">
+          <p style="margin-top: 0;">A payment was completed successfully in Zumbaton.</p>
+          <p><strong>Customer:</strong> ${customerName}</p>
+          <p><strong>Email:</strong> ${customerEmail}</p>
+          <p><strong>Amount:</strong> ${data.amount} ${data.currency || 'SGD'}</p>
+          <p><strong>Payment ID:</strong> ${data.paymentId}</p>
+          <p><strong>Event:</strong> ${data.event}</p>
+          <p><strong>Source:</strong> ${data.source}</p>
+          <p><strong>Type:</strong> ${data.paymentType}</p>
+          <p><strong>Details:</strong> ${description}</p>
+          ${tokenLine}
+          ${failureLine}
+        </div>
+      </div>
+    `,
+    text: [
+      paymentTitle,
+      `Customer: ${customerName}`,
+      `Email: ${customerEmail}`,
+      `Amount: ${data.amount} ${data.currency || 'SGD'}`,
+      `Payment ID: ${data.paymentId}`,
+      `Event: ${data.event}`,
+      `Source: ${data.source}`,
+      `Type: ${data.paymentType}`,
+      `Details: ${description}`,
+      data.tokenCount != null ? `Tokens: ${data.tokenCount}` : null,
+      data.failureReason ? `Failure reason: ${data.failureReason}` : null,
+    ].filter(Boolean).join('\n'),
+  })
+}
+
+export async function sendSuccessfulPaymentAlertEmail(
+  data: Omit<PaymentAlertEmailData, 'event'>
+): Promise<EmailResult> {
+  return sendPaymentAlertEmail({
+    ...data,
+    event: 'succeeded',
+  })
 }
 
 /**

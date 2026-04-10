@@ -162,16 +162,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsAuthenticated(false)
           setIsLoading(false)
           setLoadingTooLong(false)
-          
-          // Clear any stale session data (idempotent - safe to call multiple times)
-          try {
-            await supabase.auth.signOut()
-          } catch (error) {
-            // Ignore errors during cleanup - session is already cleared
-            if (process.env.NODE_ENV === 'development') {
-              console.warn('[Auth] Error during signout cleanup (ignored):', error)
-            }
-          }
+          // NOTE: Do NOT call supabase.auth.signOut() here — it would trigger
+          // another SIGNED_OUT event, creating an infinite loop.
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           // Token was successfully refreshed
           const userResponse = await mapSupabaseUserToUserResponse(session.user)
