@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useToast } from "@/components/Toast";
 import Link from "next/link";
+import Image from "next/image";
 import { ClassesHero, ClassesCTA } from "@/components/Classes";
-import { ArrowRight, CalendarClock, MapPin } from "lucide-react";
+import { ArrowRight, CalendarClock, MapPin, Sparkles, CheckCircle2, Info } from "lucide-react";
 
 type FiestaPackage = "1_session" | "2_sessions" | "4_sessions";
 
@@ -77,139 +78,194 @@ export default function ZtFiestaPage() {
         ]}
       />
 
-      <section className="py-16 md:py-20 bg-gradient-to-b from-white to-gray-50 dark:from-gray-dark dark:to-gray-900">
-        <div className="container mx-auto px-4 md:px-6 max-w-6xl">
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">West Side Outdoor Classes</h2>
-            <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-              Submit your package request and our team will manually confirm payment and attendance.
-            </p>
+      <section className="py-16 md:py-24 bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950/10 relative overflow-hidden">
+        {/* Modern background accents */}
+        <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-emerald-400/5 dark:bg-emerald-500/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3"></div>
+        <div className="absolute bottom-0 left-0 w-[30rem] h-[30rem] bg-blue-400/5 dark:bg-blue-500/5 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4"></div>
+
+        <div className="container relative z-10 mx-auto px-4 md:px-6 max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20">
+            <div>
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-sm font-bold tracking-wide mb-6">
+                <MapPin className="w-4 h-4" />
+                West Side Outdoor Classes
+              </span>
+              <h2 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-[1.1]">
+                The <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">Fiesta</span> Experience
+              </h2>
+              <p className="mt-8 text-xl text-gray-600 dark:text-gray-300 leading-relaxed font-light max-w-xl">
+                Join our vibrant outdoor community. High-energy dance fitness under the open sky, designed for all fitness levels.
+              </p>
+              
+              <div className="mt-10 flex flex-col gap-4">
+                <div className="flex items-start gap-4 group">
+                  <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white dark:bg-gray-800 shadow-md border border-gray-100 dark:border-gray-700 group-hover:scale-110 transition-transform">
+                    <CalendarClock className="w-5 h-5 text-emerald-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 dark:text-white">Register Interest</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Submit your request today. Our team will contact you to finalize your booking and payment.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4 group">
+                  <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white dark:bg-gray-800 shadow-md border border-gray-100 dark:border-gray-700 group-hover:scale-110 transition-transform">
+                    <Sparkles className="w-5 h-5 text-emerald-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 dark:text-white">1-Month Validity</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Flexible packages that fit your schedule perfectly.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4 pt-12">
+                <div className="relative h-64 rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white dark:border-gray-800">
+                  <Image src="/images/hero/hero.jpeg" alt="ZT Fiesta outdoor class moment" fill className="object-cover" />
+                </div>
+                <div className="relative h-48 rounded-[2rem] overflow-hidden shadow-xl border-4 border-white dark:border-gray-800">
+                  <Image src="/images/image00065.jpeg" alt="ZT Fiesta group workout" fill className="object-cover" />
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="relative h-48 rounded-[2rem] overflow-hidden shadow-xl border-4 border-white dark:border-gray-800">
+                  <Image src="/images/hero/hero2.jpeg" alt="ZT Fiesta community energy" fill className="object-cover" />
+                </div>
+                <div className="relative h-64 rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white dark:border-gray-800">
+                  <Image src="/images/image00040.jpeg" alt="ZT Fiesta outdoor dance session" fill className="object-cover" />
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-4">
-              <p className="text-sm font-semibold text-blue-800 dark:text-blue-300 flex items-center gap-2">
-                <CalendarClock className="w-4 h-4" /> Manual Tracking Flow
-              </p>
-              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">No online payment required on checkout.</p>
-            </div>
-            <div className="rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-4">
-              <p className="text-sm font-semibold text-green-800 dark:text-green-300">Validity</p>
-              <p className="text-sm text-green-700 dark:text-green-300 mt-1">All ZT Fiesta packages are valid for 1 month.</p>
-            </div>
-            <div className="rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20 p-4">
-              <p className="text-sm font-semibold text-purple-800 dark:text-purple-300 flex items-center gap-2">
-                <MapPin className="w-4 h-4" /> Outdoor Program
-              </p>
-              <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">Designed for west side community classes.</p>
-            </div>
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            <div className="lg:col-span-7 space-y-12">
+              <div>
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="h-8 w-1 bg-emerald-500 rounded-full"></div>
+                  <h3 className="text-3xl font-extrabold text-gray-900 dark:text-white">Select Your Package</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {(Object.keys(FIESTA_PACKAGES) as FiestaPackage[]).map((key) => {
+                    const option = FIESTA_PACKAGES[key];
+                    const selected = selectedPackage === key;
+                    return (
+                      <label
+                        key={key}
+                        className={`group cursor-pointer relative rounded-[2rem] border-2 p-8 transition-all duration-300 ${
+                          selected
+                            ? "border-emerald-500 bg-white dark:bg-gray-800 shadow-2xl shadow-emerald-500/10 -translate-y-2"
+                            : "border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 hover:border-emerald-200"
+                        }`}
+                      >
+                        <input type="radio" className="sr-only" checked={selected} onChange={() => setSelectedPackage(key)} />
+                        {selected && (
+                          <div className="absolute -top-3 -right-3 bg-emerald-500 text-white p-1.5 rounded-full shadow-lg">
+                            <CheckCircle2 className="w-5 h-5" />
+                          </div>
+                        )}
+                        <p className={`text-sm font-bold uppercase tracking-widest mb-4 ${selected ? "text-emerald-600" : "text-gray-400"}`}>
+                          {option.label}
+                        </p>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-4xl font-black text-gray-900 dark:text-white">${(option.priceCents / 100).toFixed(0)}</span>
+                          <span className="text-gray-400 font-medium">.{(option.priceCents % 100).toString().padStart(2, '0')}</span>
+                        </div>
+                        <p className="mt-6 text-sm text-gray-500 dark:text-gray-400 font-medium">
+                          {option.sessions} Sessions Included
+                        </p>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
 
-          <div className="mt-10 grid grid-cols-1 xl:grid-cols-5 gap-7">
-            <div className="xl:col-span-3 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 md:p-8">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Choose Package</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {(Object.keys(FIESTA_PACKAGES) as FiestaPackage[]).map((key) => {
-                  const option = FIESTA_PACKAGES[key];
-                  const selected = selectedPackage === key;
-                  return (
-                    <label
-                      key={key}
-                      className={`cursor-pointer rounded-xl border p-4 transition-all ${
-                        selected
-                          ? "border-green-500 bg-green-50 dark:bg-green-900/20 shadow-md"
-                          : "border-gray-200 dark:border-gray-700 hover:border-green-400"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        className="sr-only"
-                        checked={selected}
-                        onChange={() => setSelectedPackage(key)}
+              <div className="rounded-[2.5rem] bg-gradient-to-br from-gray-900 to-gray-800 p-10 text-white relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl"></div>
+                <div className="relative z-10">
+                  <h4 className="text-2xl font-bold mb-6">Need something else?</h4>
+                  <div className="flex flex-wrap gap-3">
+                    {["Groove Stepper", "ZUMBATON", "ZUMBUDDIES", "ZumFamilia"].map((name) => (
+                      <Link 
+                        key={name}
+                        href={name === "ZumFamilia" ? "/zumfamilia" : `/classes/${name.toLowerCase().replace(" ", "-")}`}
+                        className="px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md transition-all font-medium"
+                      >
+                        {name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-5">
+              <div className="bg-white dark:bg-gray-900 rounded-[3rem] p-10 border border-gray-100 dark:border-gray-800 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] relative">
+                <div className="absolute -top-6 left-10 bg-emerald-500 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-emerald-500/30">
+                  Submit Request
+                </div>
+                
+                <div className="mb-8 pt-4">
+                  <div className="flex items-center gap-2 text-gray-400 text-sm font-bold uppercase tracking-widest mb-1">
+                    <Info className="w-4 h-4" /> Selected
+                  </div>
+                  <p className="text-2xl font-black text-gray-900 dark:text-white">
+                    {FIESTA_PACKAGES[selectedPackage].label} Package
+                  </p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="space-y-4">
+                    {[
+                      { id: "customerName", label: "Full Name", type: "text", required: true },
+                      { id: "customerEmail", label: "Email Address", type: "email", required: true },
+                      { id: "customerPhone", label: "Phone Number", type: "tel", required: true },
+                      { id: "participantName", label: "Participant Name (if different)", type: "text", required: false },
+                    ].map((field) => (
+                      <div key={field.id} className="relative group">
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                          {field.label} {field.required && "*"}
+                        </label>
+                        <input
+                          type={field.type}
+                          required={field.required}
+                          value={(form as any)[field.id]}
+                          onChange={(e) => setForm((prev) => ({ ...prev, [field.id]: e.target.value }))}
+                          className="w-full rounded-2xl border-2 border-gray-50 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 px-5 py-4 text-gray-900 dark:text-white focus:border-emerald-500 focus:bg-white dark:focus:bg-gray-900 transition-all outline-none"
+                        />
+                      </div>
+                    ))}
+                    <div className="relative group">
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Special Notes</label>
+                      <textarea
+                        rows={3}
+                        value={form.notes}
+                        onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+                        className="w-full rounded-2xl border-2 border-gray-50 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 px-5 py-4 text-gray-900 dark:text-white focus:border-emerald-500 focus:bg-white dark:focus:bg-gray-900 transition-all outline-none resize-none"
                       />
-                      <p className="font-semibold text-gray-900 dark:text-white">{option.label}</p>
-                      <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
-                        ${(option.priceCents / 100).toFixed(2)}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{option.sessions} session{option.sessions > 1 ? "s" : ""}</p>
-                    </label>
-                  );
-                })}
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full group relative inline-flex items-center justify-center gap-3 rounded-[2rem] bg-gray-900 dark:bg-white hover:bg-emerald-600 dark:hover:bg-emerald-500 text-white dark:text-gray-900 hover:text-white transition-all duration-300 font-bold py-5 text-lg shadow-xl"
+                  >
+                    {submitting ? (
+                      <div className="w-6 h-6 rounded-full border-2 border-current border-t-transparent animate-spin"></div>
+                    ) : (
+                      <>
+                        Send Request
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                      </>
+                    )}
+                  </button>
+                  <p className="text-center text-xs text-gray-400 font-medium">
+                    By submitting, you agree to our terms and conditions.
+                  </p>
+                </form>
               </div>
-
-              <div className="mt-8 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-5">
-                <h4 className="font-semibold text-gray-900 dark:text-white">Looking for other programs?</h4>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Link href="/classes/groove-stepper" className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-200">Groove Stepper</Link>
-                  <Link href="/classes/zumbaton" className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-200">ZUMBATON</Link>
-                  <Link href="/classes/zumbuddies" className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-200">ZUMBUDDIES</Link>
-                  <Link href="/zumfamilia" className="px-3 py-1.5 rounded-lg bg-green-600 text-white text-sm">ZumFamilia</Link>
-                </div>
-              </div>
-            </div>
-
-            <div className="xl:col-span-2 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 md:p-8 h-fit">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Submit Request</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Package selected: <span className="font-semibold">{FIESTA_PACKAGES[selectedPackage].label}</span>
-              </p>
-
-              <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Customer Name *</label>
-                  <input
-                    required
-                    value={form.customerName}
-                    onChange={(e) => setForm((prev) => ({ ...prev, customerName: e.target.value }))}
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2.5"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Customer Email *</label>
-                  <input
-                    type="email"
-                    required
-                    value={form.customerEmail}
-                    onChange={(e) => setForm((prev) => ({ ...prev, customerEmail: e.target.value }))}
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2.5"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Customer Phone *</label>
-                  <input
-                    required
-                    value={form.customerPhone}
-                    onChange={(e) => setForm((prev) => ({ ...prev, customerPhone: e.target.value }))}
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2.5"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Participant Name</label>
-                  <input
-                    value={form.participantName}
-                    onChange={(e) => setForm((prev) => ({ ...prev, participantName: e.target.value }))}
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2.5"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Notes</label>
-                  <textarea
-                    rows={3}
-                    value={form.notes}
-                    onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2.5"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3.5"
-                >
-                  {submitting ? "Submitting..." : "Submit Request"}
-                  {!submitting && <ArrowRight className="w-4 h-4" />}
-                </button>
-              </form>
             </div>
           </div>
         </div>
