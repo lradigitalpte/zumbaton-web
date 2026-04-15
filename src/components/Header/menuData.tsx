@@ -22,8 +22,27 @@ const menuData: Menu[] = [
   {
     id: 4,
     title: "Classes",
-    path: "/classes",
     newTab: false,
+    submenu: [
+      {
+        id: 41,
+        title: "Regular Classes",
+        path: "/classes",
+        newTab: false,
+      },
+      {
+        id: 42,
+        title: "ZumFamilia",
+        path: "/zumfamilia",
+        newTab: false,
+      },
+      {
+        id: 43,
+        title: "ZT Fiesta",
+        path: "/zt-fiesta",
+        newTab: false,
+      },
+    ],
   },
   {
     id: 5,

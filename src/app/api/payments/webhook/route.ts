@@ -142,6 +142,72 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         return NextResponse.json({ received: true, message: 'Already processed' })
       }
 
+      const metadata = (payment.metadata as Record<string, any>) || {}
+      const flowType = metadata.flow_type
+
+      // Handle ZumFamilia flow (class booking with guest details + payment, or custom schedule)
+      if (flowType === 'zumfamilia') {
+        console.log('[Webhook] Processing ZumFamilia payment:', payment.id)
+
+        await supabase
+          .from('payments')
+          .update({
+            status: 'succeeded',
+            hitpay_payment_id: payment_id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', payment.id)
+
+        const draftBookingId = metadata.draft_booking_id as string | undefined
+        if (draftBookingId) {
+          await supabase
+            .from('bookings')
+            .update({
+              status: 'confirmed',
+              payment_id: payment.id,
+              booked_at: new Date().toISOString(),
+            })
+            .eq('id', draftBookingId)
+        } else {
+          await supabase
+            .from('bookings')
+            .update({
+              status: 'confirmed',
+              payment_id: payment.id,
+              booked_at: new Date().toISOString(),
+            })
+            .eq('payment_id', payment.id)
+            .eq('status', 'draft')
+        }
+
+        const { data: zumBooking } = await supabase
+          .from('bookings')
+          .select('id, guest_name, guest_email')
+          .eq('payment_id', payment.id)
+          .maybeSingle()
+
+        if (zumBooking) {
+          void Promise.resolve(
+            supabase.from('token_transactions').insert({
+              user_id: null,
+              booking_id: zumBooking.id,
+              transaction_type: 'trial-booking-purchase',
+              tokens_change: 1,
+              tokens_before: 0,
+              tokens_after: 1,
+              description: `ZumFamilia booking: ${metadata.class_title || 'Custom Schedule'} (${zumBooking.guest_name || 'Guest'})`,
+            })
+          ).then(() => {
+            console.log('[Webhook] Created ZumFamilia token transaction for booking:', zumBooking.id)
+          }).catch((err: unknown) => {
+            console.error('[Webhook] Non-critical: failed to create ZumFamilia token transaction:', err)
+          })
+        }
+
+        console.log('[Webhook] ZumFamilia booking completed:', payment.id)
+        return NextResponse.json({ received: true, message: 'ZumFamilia booking processed' })
+      }
+
       // Handle trial booking vs package purchase
       if (payment.is_trial_booking && payment.class_id) {
         // TRIAL BOOKING FLOW

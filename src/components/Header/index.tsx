@@ -193,7 +193,24 @@ const Header = () => {
                                   : "text-gray-700 hover:text-lime-400 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-lime-400 dark:hover:bg-gray-800 lg:text-white/90 lg:hover:text-white lg:hover:bg-transparent"
                               }`}
                             >
-                              {menuItem.title}
+                              <span className="inline-flex items-center gap-1.5">
+                                {menuItem.title}
+                                <svg
+                                  className={`hidden lg:block w-4 h-4 transition-transform duration-300 ${
+                                    openIndex === index ? "rotate-180" : "group-hover:rotate-180"
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
+                                  />
+                                </svg>
+                              </span>
                               <svg
                                 className={`w-5 h-5 transition-transform lg:hidden ${
                                   openIndex === index ? "rotate-180" : ""
@@ -211,19 +228,23 @@ const Header = () => {
                               </svg>
                             </button>
                             <div
-                              className={`overflow-hidden transition-all duration-300 lg:absolute lg:top-full lg:left-0 lg:w-64 lg:bg-white lg:dark:bg-gray-800 lg:rounded-lg lg:shadow-xl lg:border lg:border-gray-200 lg:dark:border-gray-700 lg:opacity-0 lg:invisible lg:group-hover:opacity-100 lg:group-hover:visible ${
+                              className={`overflow-hidden transition-all duration-300 lg:absolute lg:top-[calc(100%+10px)] lg:left-1/2 lg:-translate-x-1/2 lg:w-[320px] lg:bg-white/95 lg:dark:bg-gray-800/95 lg:backdrop-blur-xl lg:rounded-2xl lg:shadow-2xl lg:border lg:border-gray-200/80 lg:dark:border-gray-700/80 lg:opacity-0 lg:invisible lg:group-hover:opacity-100 lg:group-hover:visible ${
                                 openIndex === index ? "max-h-96 lg:max-h-none" : "max-h-0 lg:max-h-none"
                               }`}
                             >
-                              <div className="pl-4 lg:pl-0 lg:p-4 space-y-1">
+                              <div className="pl-4 lg:pl-0 lg:p-3.5 space-y-1.5">
                                 {menuItem.submenu?.map((submenuItem, subIndex) => (
                                   <Link
                                     href={submenuItem.path}
                                     key={subIndex}
-                                    className="block py-2 px-4 rounded-lg text-sm text-gray-600 hover:text-lime-400 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-lime-400 dark:hover:bg-gray-800 transition-colors lg:px-3"
+                                    className="group/submenu relative block py-3 px-4 rounded-xl text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100/70 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700/70 transition-all lg:px-4"
                                     onClick={() => setNavbarOpen(false)}
                                   >
-                                    {submenuItem.title}
+                                    <span className="inline-flex items-center gap-2">
+                                      <span className="h-1.5 w-1.5 rounded-full bg-lime-500/80 opacity-0 group-hover/submenu:opacity-100 transition-opacity" />
+                                      {submenuItem.title}
+                                    </span>
+                                    <span className="pointer-events-none absolute inset-y-2 right-2 w-1 rounded-full bg-lime-500/0 group-hover/submenu:bg-lime-500/80 transition-colors" />
                                   </Link>
                                 ))}
                               </div>
