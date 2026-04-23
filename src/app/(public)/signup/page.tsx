@@ -1,66 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff, Sparkles, Gift } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/Toast";
 
 const SignupForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { signUp, signInWithGoogle, isLoading: authLoading } = useAuth();
+  const { signUp, isLoading: authLoading } = useAuth();
   const toast = useToast();
   
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [gender, setGender] = useState("prefer_not_to_say");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [referralCode, setReferralCode] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [earlyBirdData, setEarlyBirdData] = useState<{ remaining: number; isAvailable: boolean; discountPercent: number; validMonths: number } | null>(null);
 
-  // Check for referral code in URL
-  useEffect(() => {
-    const refCode = searchParams.get('ref');
-    if (refCode) {
-      setReferralCode(refCode.toUpperCase());
-    }
-  }, [searchParams]);
-
-  // Fetch early bird availability
-  useEffect(() => {
-    const fetchEarlyBirdAvailability = async () => {
-      try {
-        const response = await fetch('/api/promos/availability');
-        const result = await response.json();
-        if (result.success) {
-          setEarlyBirdData({
-            remaining: result.data.remaining,
-            isAvailable: result.data.isAvailable,
-            discountPercent: result.data.discountPercent,
-            validMonths: result.data.validMonths
-          });
-        }
-      } catch (error) {
-        console.error('Failed to fetch early bird availability:', error);
-      }
-    };
-    fetchEarlyBirdAvailability();
-  }, []);
-
-  const handleGoogleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      toast.error("Google Sign In Failed", error instanceof Error ? error.message : "Failed to sign in with Google");
-    }
-  };
+  const requestedNext = searchParams.get('next');
+  const nextPath = requestedNext && requestedNext.startsWith('/') ? requestedNext : '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,17 +58,19 @@ const SignupForm = () => {
       const response = await signUp({ 
         name, 
         email, 
+        phone,
+        dateOfBirth,
+        gender: gender as 'male' | 'female' | 'other' | 'prefer_not_to_say',
         password, 
-        confirmPassword,
-        referralCode: referralCode.trim() || undefined 
+        confirmPassword
       });
       
       if (response.success) {
         // Check if email confirmation is required (session is null but user exists)
         if (response.data?.tokens?.access_token) {
           // User is immediately signed in
-          toast.success("Account created!", "Welcome to Zumbaton.");
-          router.push("/dashboard");
+          toast.success("Account created!", "Welcome to One Step Fitness.");
+          router.push(nextPath);
         } else {
           // Email confirmation required
           toast.success("Account created!", "Please check your email to confirm your account.");
@@ -128,72 +97,10 @@ const SignupForm = () => {
               <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col lg:flex-row">
                 {/* Left Side - Sign Up Form */}
                 <div className="w-full lg:w-1/2 p-8 sm:p-10 lg:p-12">
-                  {/* Early Bird Banner */}
-                  {earlyBirdData?.isAvailable && (
-                    <div className="mb-4 p-2.5 sm:p-3 bg-gradient-to-r from-green-600 via-green-500 to-green-600 rounded-lg shadow-md border border-green-400">
-                      <div className="flex items-center gap-1.5 sm:gap-2">
-                        <Gift className="w-4 h-4 sm:w-5 sm:h-5 text-white flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[11px] xs:text-xs sm:text-sm font-semibold text-white leading-tight break-words">
-                            🎉 Early Bird: <span className="font-bold">{earlyBirdData.remaining}</span> spots left
-                            <span className="hidden sm:inline"> - Get <span className="font-bold">{earlyBirdData.discountPercent}% off</span> for {earlyBirdData.validMonths} months!</span>
-                            <span className="sm:hidden"> - <span className="font-bold">{earlyBirdData.discountPercent}% off</span>!</span>
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                   <h3 className="mb-6 text-3xl font-bold text-gray-900 sm:text-4xl dark:text-white">
                     Signup
                   </h3>
 
-                <button 
-                  onClick={handleGoogleSignIn}
-                  disabled={isSubmitting || authLoading}
-                  className="mb-6 flex w-full items-center justify-center rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-3.5 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
-                >
-                  <span className="mr-3">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <g clipPath="url(#clip0_95:967)">
-                        <path
-                          d="M20.0001 10.2216C20.0122 9.53416 19.9397 8.84776 19.7844 8.17725H10.2042V11.8883H15.8277C15.7211 12.539 15.4814 13.1618 15.1229 13.7194C14.7644 14.2769 14.2946 14.7577 13.7416 15.1327L13.722 15.257L16.7512 17.5567L16.961 17.5772C18.8883 15.8328 19.9997 13.266 19.9997 10.2216"
-                          fill="#4285F4"
-                        />
-                        <path
-                          d="M10.2042 20.0001C12.9592 20.0001 15.2721 19.1111 16.9616 17.5778L13.7416 15.1332C12.88 15.7223 11.7235 16.1334 10.2042 16.1334C8.91385 16.126 7.65863 15.7206 6.61663 14.9747C5.57464 14.2287 4.79879 13.1802 4.39915 11.9778L4.27957 11.9878L1.12973 14.3766L1.08856 14.4888C1.93689 16.1457 3.23879 17.5387 4.84869 18.512C6.45859 19.4852 8.31301 20.0005 10.2046 20.0001"
-                          fill="#34A853"
-                        />
-                        <path
-                          d="M4.39911 11.9777C4.17592 11.3411 4.06075 10.673 4.05819 9.99996C4.0623 9.32799 4.17322 8.66075 4.38696 8.02225L4.38127 7.88968L1.19282 5.4624L1.08852 5.51101C0.372885 6.90343 0.00012207 8.4408 0.00012207 9.99987C0.00012207 11.5589 0.372885 13.0963 1.08852 14.4887L4.39911 11.9777Z"
-                          fill="#FBBC05"
-                        />
-                        <path
-                          d="M10.2042 3.86663C11.6663 3.84438 13.0804 4.37803 14.1498 5.35558L17.0296 2.59996C15.1826 0.901848 12.7366 -0.0298855 10.2042 -3.6784e-05C8.3126 -0.000477834 6.45819 0.514732 4.8483 1.48798C3.2384 2.46124 1.93649 3.85416 1.08813 5.51101L4.38775 8.02225C4.79132 6.82005 5.56974 5.77231 6.61327 5.02675C7.6568 4.28118 8.91279 3.87541 10.2042 3.86663Z"
-                          fill="#EB4335"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_95:967">
-                          <rect width="20" height="20" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
-                  </span>
-                  Sign up with Google
-                </button>
-                <div className="mb-6 flex items-center justify-center">
-                  <span className="bg-gray-300 dark:bg-gray-600 h-[1px] w-full max-w-[70px]"></span>
-                  <p className="text-gray-500 dark:text-gray-400 w-full px-5 text-center text-sm font-medium">
-                    Or continue with email
-                  </p>
-                  <span className="bg-gray-300 dark:bg-gray-600 h-[1px] w-full max-w-[70px]"></span>
-                </div>
                 <form onSubmit={handleSubmit}>
                   <div className="mb-5">
                     <label
@@ -230,6 +137,64 @@ const SignupForm = () => {
                       required
                       className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-green-500 dark:focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all duration-300"
                     />
+                  </div>
+                  <div className="mb-5">
+                    <label
+                      htmlFor="phone"
+                      className="text-gray-700 dark:text-gray-200 mb-2 block text-sm font-medium"
+                    >
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      id="phone"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="Enter your phone number"
+                      required
+                      className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-green-500 dark:focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all duration-300"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+                    <div>
+                      <label
+                        htmlFor="dateOfBirth"
+                        className="text-gray-700 dark:text-gray-200 mb-2 block text-sm font-medium"
+                      >
+                        Date of Birth
+                      </label>
+                      <input
+                        type="date"
+                        name="dateOfBirth"
+                        id="dateOfBirth"
+                        value={dateOfBirth}
+                        onChange={(e) => setDateOfBirth(e.target.value)}
+                        required
+                        className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-base text-gray-900 dark:text-gray-100 focus:border-green-500 dark:focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all duration-300"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="gender"
+                        className="text-gray-700 dark:text-gray-200 mb-2 block text-sm font-medium"
+                      >
+                        Gender
+                      </label>
+                      <select
+                        name="gender"
+                        id="gender"
+                        value={gender}
+                        onChange={(e) => setGender(e.target.value)}
+                        required
+                        className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-base text-gray-900 dark:text-gray-100 focus:border-green-500 dark:focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all duration-300"
+                      >
+                        <option value="prefer_not_to_say">Prefer not to say</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
                   </div>
                   <div className="mb-5">
                     <label
@@ -314,32 +279,6 @@ const SignupForm = () => {
                       </p>
                     )}
                   </div>
-                  <div className="mb-5">
-                    <label
-                      htmlFor="referralCode"
-                      className="text-gray-700 dark:text-gray-200 mb-2 block text-sm font-medium"
-                    >
-                      Referral Code <span className="text-gray-400 dark:text-gray-500 text-xs font-normal">(Optional)</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="referralCode"
-                      id="referralCode"
-                      value={referralCode}
-                      onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                      placeholder="ZUMB-XXXXX"
-                      className="w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-green-500 dark:focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all duration-300"
-                    />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Get 8% off your first package purchase when you use a referral code
-                    </p>
-                    {earlyBirdData?.isAvailable && (
-                      <p className="mt-2 text-xs font-semibold text-green-600 dark:text-green-500 flex items-center gap-1">
-                        <Sparkles className="w-3 h-3" />
-                        Early Bird: {earlyBirdData.discountPercent}% off ({earlyBirdData.remaining} spots left)
-                      </p>
-                    )}
-                  </div>
                   <div className="mb-6 flex">
                     <label
                       htmlFor="checkboxLabel"
@@ -409,19 +348,8 @@ const SignupForm = () => {
                       Start Your Journey!
                     </h2>
                     <p className="text-white/90 text-base sm:text-lg mb-6 max-w-md">
-                      Join our vibrant community and experience the power of dance fitness. Transform your body and mind with Zumbaton.
+                      Join our vibrant community and experience the power of dance fitness. Transform your body and mind with One Step Fitness.
                     </p>
-                    {earlyBirdData?.isAvailable && (
-                      <div className="mb-4 p-3 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Sparkles className="w-4 h-4 text-green-300" />
-                          <h3 className="font-bold text-sm sm:text-base">Early Bird Special</h3>
-                        </div>
-                        <p className="text-xs sm:text-sm text-white/90">
-                          {earlyBirdData.remaining} spots left - {earlyBirdData.discountPercent}% off for {earlyBirdData.validMonths} months
-                        </p>
-                      </div>
-                    )}
                     <Link
                       href="/signin"
                       className="inline-block bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:scale-105 border border-white/30"

@@ -23,7 +23,7 @@ const FAQMap = () => {
             Find Us
           </span>
           <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            Visit Zumbaton in Singapore
+            Visit <span className="text-green-600 dark:text-green-400">One Step Fitness</span> in Singapore
           </h2>
         </motion.div>
 
@@ -86,10 +86,10 @@ const FAQMap = () => {
               Have questions about our location or want to know more?
             </p>
             <a
-              href="mailto:hello@zumbaton.sg"
+              href="mailto:hello@onestepfitness.sg"
               className="inline-flex items-center gap-2 text-green-600 dark:text-green-400 font-semibold hover:underline"
             >
-              hello@zumbaton.sg
+              hello@onestepfitness.sg
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>

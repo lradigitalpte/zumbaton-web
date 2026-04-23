@@ -76,7 +76,7 @@ const MissionVision = () => {
               <h4 className="text-2xl font-bold text-white">Our Mission</h4>
             </div>
             <p className="text-white/90 leading-relaxed text-lg">
-              Zumbaton exists to make fitness fun, inclusive, and empowering through high-energy dance-based workouts. 
+              One Step Fitness exists to make fitness fun, inclusive, and empowering through high-energy dance-based workouts. 
               We aim to create a supportive community where people of all fitness levels can move with confidence, 
               improve their physical and mental well-being, and enjoy every step of their fitness journey.
             </p>
@@ -101,7 +101,7 @@ const MissionVision = () => {
             </div>
             <p className="text-white/90 leading-relaxed text-lg">
               To become a leading dance-fitness community that inspires people to move freely, live actively, and embrace a healthier lifestyle 
-              — not just as a workout, but as a way of life. Zumbaton envisions a world where fitness is joyful, accessible, 
+              — not just as a workout, but as a way of life. One Step Fitness envisions a world where fitness is joyful, accessible, 
               and driven by connection, rhythm, and self-expression.
             </p>
           </motion.div>

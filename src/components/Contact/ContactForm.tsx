@@ -98,8 +98,8 @@ const ContactForm = () => {
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900 dark:text-white">Email Us</h4>
-                  <a href="mailto:hello@zumbaton.sg" className="text-gray-600 dark:text-gray-400 hover:text-green-600 transition-colors">
-                    hello@zumbaton.sg
+                  <a href="mailto:hello@onestepfitness.sg" className="text-gray-600 dark:text-gray-400 hover:text-green-600 transition-colors">
+                    hello@onestepfitness.sg
                   </a>
                 </div>
               </div>

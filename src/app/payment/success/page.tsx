@@ -209,10 +209,10 @@ function PaymentSuccessContent() {
           </Link>
         </div>
 
-        {/* Zumbaton Logo */}
+        {/* One Step Fitness Logo */}
         <div className="mt-10 pt-6 border-t border-gray-200 dark:border-gray-700">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Thank you for choosing Zumbaton!
+            Thank you for choosing One Step Fitness!
           </p>
         </div>
       </div>

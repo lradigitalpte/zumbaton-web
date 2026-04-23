@@ -3,8 +3,8 @@ import Link from "next/link";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Zumbaton",
-  description: "Zumbaton privacy policy. Learn how we collect, use, and protect your personal information.",
+  title: "Privacy Policy | One Step Fitness",
+  description: "One Step Fitness privacy policy. Learn how we collect, use, and protect your personal information.",
 };
 
 const PrivacyPage = () => {
@@ -26,7 +26,7 @@ const PrivacyPage = () => {
             </p>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-8">1. Introduction</h2>
             <p>
-              Zumbaton (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website, book classes, or interact with our services.
+              One Step Fitness (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website, book classes, or interact with our services.
             </p>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-8">2. Information We Collect</h2>
             <p>
@@ -42,21 +42,21 @@ const PrivacyPage = () => {
             </p>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-8">5. Media and Likeness</h2>
             <p>
-              When you participate in ZUMBATON activities, we may produce or use media (including your image, likeness, voice, performance, and visual works) that may be personally identifiable. Such media may be published on social media or elsewhere. By participating, you consent to this use unless you inform us otherwise in writing. See our Terms of Service for further details.
+              When you participate in One Step Fitness activities, we may produce or use media (including your image, likeness, voice, performance, and visual works) that may be personally identifiable. Such media may be published on social media or elsewhere. By participating, you consent to this use unless you inform us otherwise in writing. See our Terms of Service for further details.
             </p>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-8">6. Your Rights</h2>
             <p>
               You have the right to access, correct, or delete your personal data. You may also withdraw consent or object to certain processing. Contact us at{" "}
-              <a href="mailto:hello@zumbaton.sg" className="text-green-600 dark:text-green-400 hover:underline">
-                hello@zumbaton.sg
+              <a href="mailto:hello@onestepfitness.sg" className="text-green-600 dark:text-green-400 hover:underline">
+                hello@onestepfitness.sg
               </a>{" "}
               to exercise these rights.
             </p>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-8">7. Contact Us</h2>
             <p>
               For questions about this Privacy Policy, contact us at{" "}
-              <a href="mailto:hello@zumbaton.sg" className="text-green-600 dark:text-green-400 hover:underline">
-                hello@zumbaton.sg
+              <a href="mailto:hello@onestepfitness.sg" className="text-green-600 dark:text-green-400 hover:underline">
+                hello@onestepfitness.sg
               </a>
               , or visit us at 2 Jalan Klapa, #2-A, Singapore 199314.
             </p>

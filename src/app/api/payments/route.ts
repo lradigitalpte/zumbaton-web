@@ -20,6 +20,7 @@ const HITPAY_API_KEY = process.env.HITPAY_API_KEY
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 const PAYMENT_AUTH_TIMEOUT_MS = 12000
 const HITPAY_REQUEST_TIMEOUT_MS = 25000
+const UNLIMITED_TOKEN_BALANCE = 2147483647
 
 // Initialize Supabase admin client directly (no auth client needed)
 const supabaseAdmin = createClient(
@@ -250,7 +251,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           currency,
           email: emailForPayment,
           name: user.name,
-          purpose: `Purchase: ${pkg.name} (${pkg.token_count} tokens)`,
+          purpose: `Purchase: ${pkg.name} (${pkg.is_unlimited ? 'Unlimited' : `${pkg.token_count} tokens`})`,
           reference_number: referenceNumber,
           redirect_url: `${APP_URL}/payment/success`,
           // HitPay rejects localhost webhook URLs — omit in local dev
@@ -304,6 +305,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       metadata: {
         package_name: pkg.name,
         token_count: pkg.token_count,
+        is_unlimited: pkg.is_unlimited === true,
+        issued_token_count: pkg.is_unlimited ? UNLIMITED_TOKEN_BALANCE : pkg.token_count,
         reference_number: referenceNumber,
         discount_applied: discountPercent > 0,
         discount_percent: discountPercent,
@@ -333,7 +336,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         amount: finalAmountCents / 100,
         currency,
         packageName: pkg.name,
-        tokenCount: pkg.token_count,
+        tokenCount: pkg.is_unlimited ? UNLIMITED_TOKEN_BALANCE : pkg.token_count,
         userName: user.name,
         userEmail: emailForPayment,
       })

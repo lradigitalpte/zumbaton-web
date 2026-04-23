@@ -59,7 +59,7 @@ export async function generateRegistrationFormPDF(formData: RegistrationFormData
           doc.setFontSize(24)
           doc.setTextColor(22, 163, 74)
           doc.setFont('helvetica', 'bold')
-          doc.text('ZUMBATON', 105, y + 5, { align: 'center' })
+          doc.text('ONE STEP FITNESS', 105, y + 5, { align: 'center' })
           y += 15
         }
       } catch (error) {
@@ -68,7 +68,7 @@ export async function generateRegistrationFormPDF(formData: RegistrationFormData
         doc.setFontSize(24)
         doc.setTextColor(22, 163, 74)
         doc.setFont('helvetica', 'bold')
-        doc.text('ZUMBATON', 105, y + 5, { align: 'center' })
+        doc.text('ONE STEP FITNESS', 105, y + 5, { align: 'center' })
         y += 15
       }
 
@@ -177,7 +177,7 @@ export async function generateRegistrationFormPDF(formData: RegistrationFormData
       
       doc.setFontSize(8)
       doc.setFont('helvetica', 'normal')
-      const riskText = 'I hereby understand and acknowledge the risk of injury arising from and/or in connection with ZUMBATON\'s activities. I willingly assume all the risks associated with the exercise choreographed. I understand that ZUMBATON is independently owned and operated. I HEREBY RELEASE, INDEMNIFY, AND HOLD HARMLESS to ZUMBATON\'s employees, owners, and partners WITH RESPECT TO ANY AND ALL INJURY, DISABILITY, DEATH, LOSS OR DAMAGE to person and/or property that may arise out of or in connection with my use of the studio, or otherwise related to my subscription. I expressly agree that this release is intended to be as broad and inclusive as permitted by applicable law and if a portion of this release is held invalid, the balance shall remain in full force and effect.'
+      const riskText = 'I hereby understand and acknowledge the risk of injury arising from and/or in connection with ONE STEP FITNESS\'s activities. I willingly assume all the risks associated with the exercise choreographed. I understand that ONE STEP FITNESS is independently owned and operated. I HEREBY RELEASE, INDEMNIFY, AND HOLD HARMLESS to ONE STEP FITNESS\'s employees, owners, and partners WITH RESPECT TO ANY AND ALL INJURY, DISABILITY, DEATH, LOSS OR DAMAGE to person and/or property that may arise out of or in connection with my use of the studio, or otherwise related to my subscription. I expressly agree that this release is intended to be as broad and inclusive as permitted by applicable law and if a portion of this release is held invalid, the balance shall remain in full force and effect.'
       const riskLines = doc.splitTextToSize(riskText, 170)
       doc.text(riskLines, 20, y)
       y += riskLines.length * 3.5 + 5
@@ -192,7 +192,7 @@ export async function generateRegistrationFormPDF(formData: RegistrationFormData
 
       doc.setFontSize(8)
       doc.setFont('helvetica', 'normal')
-      const parentConsent = 'I am the parent/guardian of the above-named Member. I acknowledge that: The above-named Member has my express permission to participate in the ZUMBATON activities. The above-named Member and I have read and understood the Terms and Conditions & Safety Notices. By signing, I am agreeing to be bound along with the above-named Member by the Terms and Conditions, including Safety Notices.'
+      const parentConsent = 'I am the parent/guardian of the above-named Member. I acknowledge that: The above-named Member has my express permission to participate in the ONE STEP FITNESS activities. The above-named Member and I have read and understood the Terms and Conditions & Safety Notices. By signing, I am agreeing to be bound along with the above-named Member by the Terms and Conditions, including Safety Notices.'
       const parentConsentLines = doc.splitTextToSize(parentConsent, 170)
       doc.text(parentConsentLines, 20, y)
       y += parentConsentLines.length * 3.5 + 5
@@ -204,7 +204,7 @@ export async function generateRegistrationFormPDF(formData: RegistrationFormData
       y += 4
       doc.setFontSize(8)
       doc.setFont('helvetica', 'normal')
-      const terms11 = '1.1. The following terms and conditions govern the rights and obligations of ZUMBATON members thereof. It is important that you have read and understood all the terms and conditions stated herein before signing this Agreement. Each member who signs below will be individually and severally bound by this Agreement.'
+      const terms11 = '1.1. The following terms and conditions govern the rights and obligations of ONE STEP FITNESS members thereof. It is important that you have read and understood all the terms and conditions stated herein before signing this Agreement. Each member who signs below will be individually and severally bound by this Agreement.'
       const terms11Lines = doc.splitTextToSize(terms11, 170)
       doc.text(terms11Lines, 20, y)
       y += terms11Lines.length * 3.5 + 4
@@ -216,12 +216,12 @@ export async function generateRegistrationFormPDF(formData: RegistrationFormData
       y += 4
       doc.setFontSize(8)
       doc.setFont('helvetica', 'normal')
-      const terms21 = '2.1. Members who are under the age of 16 years, you confirm that you have the express permission of your parent/guardian to join ZUMBATON and use the facilities and services available. All references to "you" or "your" in this Agreement will denote you and/or your parent/guardian on behalf of you.'
+      const terms21 = '2.1. Members who are under the age of 16 years, you confirm that you have the express permission of your parent/guardian to join ONE STEP FITNESS and use the facilities and services available. All references to "you" or "your" in this Agreement will denote you and/or your parent/guardian on behalf of you.'
       const terms21Lines = doc.splitTextToSize(terms21, 170)
       doc.text(terms21Lines, 20, y)
       y += terms21Lines.length * 3.5 + 3
 
-      const terms22 = '2.2. Membership is personal to the member and is non-transferable and non-refundable. You may not loan or sell your membership or otherwise permit it to be used by any third party. You may be charged with a fine depending on the sessions being misused. ZUMBATON\'s management may assign the benefit of this Agreement to any person at any time with notice to the individual.'
+      const terms22 = '2.2. Membership is personal to the member and is non-transferable and non-refundable. You may not loan or sell your membership or otherwise permit it to be used by any third party. You may be charged with a fine depending on the sessions being misused. ONE STEP FITNESS\'s management may assign the benefit of this Agreement to any person at any time with notice to the individual.'
       const terms22Lines = doc.splitTextToSize(terms22, 170)
       doc.text(terms22Lines, 20, y)
       y += terms22Lines.length * 3.5 + 4
@@ -234,7 +234,7 @@ export async function generateRegistrationFormPDF(formData: RegistrationFormData
       doc.setFontSize(8)
       doc.setFont('helvetica', 'normal')
       
-      const terms31 = '3.1. Medical Cancellation: Subject to Clause, you may cancel and/or terminate this Agreement for medical reasons. If you wish to cancel and/or terminate the membership due to medical reasons, your doctor must provide the relevant certification(s) indicating that your participation in ZUMBATON step aerobics activities would impair your health.'
+      const terms31 = '3.1. Medical Cancellation: Subject to Clause, you may cancel and/or terminate this Agreement for medical reasons. If you wish to cancel and/or terminate the membership due to medical reasons, your doctor must provide the relevant certification(s) indicating that your participation in ONE STEP FITNESS step aerobics activities would impair your health.'
       const terms31Lines = doc.splitTextToSize(terms31, 170)
       doc.text(terms31Lines, 20, y)
       y += terms31Lines.length * 3.5 + 3
@@ -256,7 +256,7 @@ export async function generateRegistrationFormPDF(formData: RegistrationFormData
       doc.addPage()
       y = 20
 
-      const terms35 = '3.5. Zumbaton Management Team retains the sole and absolute right to cancel, freeze and/or suspend the membership of any person for any reason. If such cancellation and/or suspension is made due to a breach of any of the terms of this Agreement, including the Membership Policies and Safety Notices, or due to damage caused by you, the balance of your financial obligations under this Agreement shall become immediately due and payable.'
+      const terms35 = '3.5. One Step Fitness Management Team retains the sole and absolute right to cancel, freeze and/or suspend the membership of any person for any reason. If such cancellation and/or suspension is made due to a breach of any of the terms of this Agreement, including the Membership Policies and Safety Notices, or due to damage caused by you, the balance of your financial obligations under this Agreement shall become immediately due and payable.'
       const terms35Lines = doc.splitTextToSize(terms35, 170)
       doc.text(terms35Lines, 20, y)
       y += terms35Lines.length * 3.5 + 4
@@ -286,7 +286,7 @@ export async function generateRegistrationFormPDF(formData: RegistrationFormData
       y += 4
       doc.setFontSize(8)
       doc.setFont('helvetica', 'normal')
-      doc.text('5.1. You are required to wear covered shoes excluding boots for all ZUMBATON sessions regardless indoors or outdoors.', 20, y)
+      doc.text('5.1. You are required to wear covered shoes excluding boots for all ONE STEP FITNESS sessions regardless indoors or outdoors.', 20, y)
       y += 7
       doc.text('5.2. It will be highly recommended to wear active sportswear & bring bottled water for water breaks & hydration purposes.', 20, y)
       y += 7
@@ -414,7 +414,7 @@ export async function generateRegistrationFormPDF(formData: RegistrationFormData
         y += 4
         doc.setFontSize(8)
         doc.setFont('helvetica', 'italic')
-        doc.text('(To be signed by Zumbaton staff)', 20, y)
+        doc.text('(To be signed by One Step Fitness staff)', 20, y)
       }
 
       // Footer
@@ -422,7 +422,7 @@ export async function generateRegistrationFormPDF(formData: RegistrationFormData
       doc.setFontSize(8)
       doc.setTextColor(153, 153, 153)
       doc.setFont('helvetica', 'normal')
-      doc.text('This is a computer-generated document. For verification, please contact Zumbaton administration.', 105, y, { align: 'center' })
+      doc.text('This is a computer-generated document. For verification, please contact One Step Fitness administration.', 105, y, { align: 'center' })
 
       // Convert to Buffer
       const pdfData = doc.output('arraybuffer')

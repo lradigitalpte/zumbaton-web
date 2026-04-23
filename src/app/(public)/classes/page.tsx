@@ -2,8 +2,8 @@ import { ClassesHero, ClassesGrid, ClassesCTA } from "@/components/Classes";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Dance Fitness Classes | Zumbaton",
-  description: "Explore our range of dance fitness classes — from high-energy dance parties to low-impact sessions. Find the perfect class for your vibe!",
+  title: "Dance Fitness Classes | One Step Fitness",
+  description: "Explore One Step Fitness classes including Zumba Step, Groove Stepper, ThunderBolt, Lil Steppers, ZumFiesta, and One Familia.",
 };
 
 const ClassesPage = () => {

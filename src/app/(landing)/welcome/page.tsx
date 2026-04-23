@@ -8,8 +8,8 @@ import CallToActionV2 from "@/components/DesignV2/CallToActionV2";
 import ScrollUp from "@/components/Common/ScrollUp";
 
 export const metadata: Metadata = {
-  title: "Zumbaton - Welcome",
-  description: "Experience the new era of fitness with Zumbaton. Dance, sweat, and smile.",
+  title: "One Step Fitness - Welcome",
+  description: "Experience the new era of fitness with One Step Fitness. Dance, sweat, and smile.",
 };
 
 export default function WelcomePage() {

@@ -1,4 +1,4 @@
-export type ZumFamiliaPackageId = "1c1a" | "1c2a" | "2c1a" | "test";
+export type ZumFamiliaPackageId = "1c1a" | "1c2a" | "2c1a" | "2c2a" | "test";
 
 export interface ZumFamiliaPackage {
   id: ZumFamiliaPackageId;
@@ -83,6 +83,30 @@ export const zumFamiliaPackages: ZumFamiliaPackage[] = [
       {
         title: "Meaningful Family Time",
         description: "Turns workout time into quality bonding time with guided dance play.",
+      },
+    ],
+  },
+  {
+    id: "2c2a",
+    slug: "2c2a",
+    name: "2 Children + 2 Adults",
+    shortDescription:
+      "The complete family package where two adults and two children train together in one energetic class.",
+    fullDescription:
+      "Designed for bigger family groups, this package allows two adults and two children to join one guided One Familia session together. It combines bonding, movement, and teamwork in a fun format that keeps everyone active and engaged.",
+    priceCents: 7600,
+    highlights: [
+      {
+        title: "Full Family Experience",
+        description: "Two adults and two children can participate together in one coordinated class session.",
+      },
+      {
+        title: "Stronger Family Bonding",
+        description: "Shared routines and partner work create meaningful interaction across the whole family.",
+      },
+      {
+        title: "One-Time Flexible Booking",
+        description: "Simple one-time purchase with no subscription commitment required.",
       },
     ],
   },

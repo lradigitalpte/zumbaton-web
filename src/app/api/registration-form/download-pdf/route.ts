@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
     console.log('[Download PDF] PDF generated, size:', pdfBuffer.length, 'bytes')
 
     // Generate filename
-    const fileName = `zumbaton-registration-${formData.fullNameNric.replace(/\s+/g, '-')}.pdf`
+    const fileName = `one-step-fitness-registration-${formData.fullNameNric.replace(/\s+/g, '-')}.pdf`
 
     // Return PDF as download
     return new NextResponse(Buffer.from(pdfBuffer), {

@@ -73,7 +73,7 @@ const HomeContact = () => {
           </h2>
           <p className="text-sm sm:text-base text-gray-600 dark:text-white/70 max-w-2xl mx-auto">
             Have questions about our classes, packages, or anything else? 
-            We&apos;re here to help you every step of the way. Join our community and start your Zumbaton journey today!
+            We&apos;re here to help you every step of the way. Join our community and start your One Step Fitness journey today!
           </p>
         </motion.div>
 
@@ -116,8 +116,8 @@ const HomeContact = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-1">Email Us</h4>
-                    <a href="mailto:hello@zumbaton.sg" className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-semibold hover:underline break-all">
-                      hello@zumbaton.sg
+                    <a href="mailto:hello@onestepfitness.sg" className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-semibold hover:underline break-all">
+                      hello@onestepfitness.sg
                     </a>
                   </div>
                 </div>

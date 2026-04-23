@@ -9,26 +9,26 @@ const slides = [
   {
     id: 1,
     image: "/images/hero/hero.jpeg",
-    headline: "Fun into Fitness with",
-    highlight: "Zumbaton",
+    headline: "Train with",
+    highlight: "One Step Fitness",
     description:
-      "Not world-class training. No pushing beyond your limits. Fitness is a happy side effect! Move at your pace. Smile through every step.",
+      "One step to change your life. Move with joy, build fitness naturally, and stay consistent with classes designed for real people.",
   },
   {
     id: 2,
     image: "/images/hero/hero2.jpeg",
-    headline: "Dance First",
-    highlight: "Fitness Follows",
+    headline: "Your Pace",
+    highlight: "Your Progress",
     description:
-      "No pressure, no stress. Not hardcore training. Just joyful movement with good energy. One dance step at a time, we're building a healthier, happier community.",
+      "No pressure, no stress. Just great music, smart movement, and an encouraging community that helps you get stronger one class at a time.",
   },
   {
     id: 3,
     image: "/images/hero/notbad.jpeg",
-    headline: "One Beat. One Step.",
-    highlight: "One Happy You",
+    headline: "One Step Fitness",
+    highlight: "Starts Here",
     description:
-      "This is not about perfection. This is not about pushing harder. This is about moving, dancing, and feeling alive. Join a community transforming lives one dance step at a time.",
+      "From Zumba Step and Groove Stepper to ThunderBolt workouts, every session is built to keep you energized, confident, and coming back for more.",
   },
 ];
 

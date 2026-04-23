@@ -11,7 +11,7 @@ const classes = [
     color: "from-purple-600 to-blue-600",
   },
   {
-    title: "Zumbaton",
+    title: "One Step Fitness",
     description: "Our signature high-energy dance workout.",
     color: "from-green-600 to-emerald-600",
   },

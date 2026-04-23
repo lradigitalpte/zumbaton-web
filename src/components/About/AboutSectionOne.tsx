@@ -119,7 +119,7 @@ const AboutSectionOne = () => {
               transition={{ duration: 0.6, delay: 0 }}
               className="text-green-600 dark:text-green-500 font-semibold text-xs sm:text-sm uppercase tracking-wide mb-2 sm:mb-3"
             >
-              Welcome to Zumbaton
+              Welcome to <span className="text-green-600 dark:text-green-400">One Step Fitness</span>
             </motion.div>
             <motion.h2
               ref={headingRef}
@@ -128,7 +128,7 @@ const AboutSectionOne = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-gray-900 dark:text-white leading-tight"
             >
-              Your Pace. Your Dance. Your Zumbaton.
+              <span className="text-green-600 dark:text-green-400">One Step Fitness</span>. One Step To Change Your Life.
             </motion.h2>
             <motion.p
               ref={textRef}

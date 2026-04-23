@@ -30,7 +30,7 @@ const supabaseAdmin = createClient(
 const ZumFamiliaSchema = z.object({
   classId: z.string().uuid("Invalid class ID").optional().or(z.null()),
   customSchedule: z.string().optional(),
-  packageOption: z.enum(["1c1a", "1c2a", "2c1a", "test"]),
+  packageOption: z.enum(["1c1a", "1c2a", "2c1a", "2c2a", "test"]),
   parentName: z.string().min(1).max(200),
   parentEmail: z.string().email(),
   parentPhone: z.string().min(1).max(50),
@@ -43,6 +43,7 @@ const PRICE_MAP = {
   "1c1a": { label: "1 child + 1 adult", priceCents: 3800 },
   "1c2a": { label: "1 child + 2 adults", priceCents: 5600 },
   "2c1a": { label: "2 children + 1 adult", priceCents: 5800 },
+  "2c2a": { label: "2 children + 2 adults", priceCents: 7600 },
   "test": { label: "HitPay Test Package", priceCents: 100 },
 } as const;
 

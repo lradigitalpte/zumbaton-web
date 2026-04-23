@@ -18,6 +18,7 @@ const HITPAY_API_URL =
     ? 'https://api.hit-pay.com/v1'
     : 'https://api.sandbox.hit-pay.com/v1'
 const HITPAY_API_KEY = process.env.HITPAY_API_KEY
+const UNLIMITED_TOKEN_BALANCE = 2147483647
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -48,6 +49,7 @@ export async function GET(request: NextRequest) {
       metadata?: Record<string, unknown> | null
       packages?: {
         token_count?: number | null
+        is_unlimited?: boolean | null
         name?: string | null
         validity_days?: number | null
       } | null
@@ -192,6 +194,8 @@ export async function GET(request: NextRequest) {
         }
 
         // 3. Create user_package with tokens
+        const issuedTokenCount = pkg.is_unlimited ? UNLIMITED_TOKEN_BALANCE : pkg.token_count
+        const tokenLabel = pkg.is_unlimited ? 'unlimited' : `${pkg.token_count}`
         const expiresAt = new Date()
         expiresAt.setDate(expiresAt.getDate() + pkg.validity_days)
 
@@ -201,7 +205,7 @@ export async function GET(request: NextRequest) {
             user_id: payment.user_id,
             package_id: payment.package_id,
             payment_id: payment.id.toString(),
-            tokens_remaining: pkg.token_count,
+            tokens_remaining: issuedTokenCount,
             tokens_held: 0,
             expires_at: expiresAt.toISOString(),
             status: 'active',
@@ -264,15 +268,15 @@ export async function GET(request: NextRequest) {
           user_id: payment.user_id,
           user_package_id: userPackage.id,
           transaction_type: 'purchase',
-          tokens_change: pkg.token_count,
+          tokens_change: issuedTokenCount,
           tokens_before: 0,
-          tokens_after: pkg.token_count,
+          tokens_after: issuedTokenCount,
           description: `Purchased ${pkg.name} (synced from HitPay)`,
         })
 
         // 7. Update user stats (non-blocking)
         try {
-          await supabaseAdmin.rpc('increment_user_stat', { p_user_id: payment.user_id, p_field: 'total_tokens_purchased', p_amount: pkg.token_count })
+          await supabaseAdmin.rpc('increment_user_stat', { p_user_id: payment.user_id, p_field: 'total_tokens_purchased', p_amount: issuedTokenCount })
           await supabaseAdmin.rpc('increment_user_stat', { p_user_id: payment.user_id, p_field: 'total_spent_cents', p_amount: payment.amount_cents })
         } catch (_) { /* non-critical */ }
 
@@ -296,10 +300,10 @@ export async function GET(request: NextRequest) {
           type: 'payment_successful',
           channel: 'in_app',
           subject: 'Payment Successful!',
-          body: `Your purchase of ${pkg.name} was successful. ${pkg.token_count} tokens have been added to your account.`,
+          body: `Your purchase of ${pkg.name} was successful. ${tokenLabel} tokens have been added to your account.`,
           status: 'sent',
           sent_at: new Date().toISOString(),
-          data: { payment_id: payment.id, package_name: pkg.name, token_count: pkg.token_count, amount: payment.amount_cents / 100 },
+          data: { payment_id: payment.id, package_name: pkg.name, token_count: issuedTokenCount, is_unlimited: pkg.is_unlimited === true, amount: payment.amount_cents / 100 },
         })
 
         // 10. Send confirmation email (non-blocking)
@@ -316,7 +320,7 @@ export async function GET(request: NextRequest) {
               userEmail: userProfile.email,
               userName: userProfile.name || 'User',
               packageName: pkg.name,
-              tokenCount: pkg.token_count,
+              tokenCount: issuedTokenCount,
               amount: payment.amount_cents / 100,
               currency: payment.currency,
               expiresAt: userPackage.expires_at,
@@ -331,7 +335,7 @@ export async function GET(request: NextRequest) {
                 amount: payment.amount_cents / 100,
                 currency: payment.currency,
                 packageName: pkg.name,
-                tokenCount: pkg.token_count,
+                tokenCount: issuedTokenCount,
                 userName: userProfile.name || 'User',
                 userEmail: userProfile.email,
               })
@@ -348,7 +352,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
           status: 'succeeded',
           synced: true,
-          tokenCount: pkg.token_count,
+          tokenCount: issuedTokenCount,
           packageName: pkg.name,
         })
       }

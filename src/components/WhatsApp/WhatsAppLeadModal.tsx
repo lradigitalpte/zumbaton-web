@@ -50,7 +50,7 @@ export default function WhatsAppLeadModal({ isOpen, onClose }: WhatsAppLeadModal
     }
 
     // Format WhatsApp message
-    const whatsappMessage = `Hi! I'm interested in joining Zumbaton! 🎉
+    const whatsappMessage = `Hi! I'm interested in joining One Step Fitness! 🎉
 
 *My Details:*
 👤 Name: ${formData.name}
@@ -104,7 +104,7 @@ I'd like to learn more about your classes and packages!`;
     <SlidePanel
       isOpen={isOpen}
       onClose={onClose}
-      title="Join Zumbaton via WhatsApp"
+      title="Join One Step Fitness via WhatsApp"
       description="Fill in your details and we'll send you to WhatsApp to complete your inquiry!"
       size="md"
       position="right"

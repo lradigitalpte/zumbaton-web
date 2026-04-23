@@ -2,7 +2,7 @@ import { InstructorsHero, InstructorsTabs } from "@/components/Instructors";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Our Instructors | Zumbaton",
+  title: "Our Instructors | One Step Fitness",
   description: "Meet our expert certified dance fitness instructors. Passionate professionals bringing energy and expertise to every class.",
 };
 

@@ -8,6 +8,7 @@ import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 
 const HITPAY_SALT = process.env.HITPAY_SALT
+const UNLIMITED_TOKEN_BALANCE = 2147483647
 
 /**
  * Verify HitPay webhook signature using HMAC-SHA256
@@ -144,6 +145,39 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       const metadata = (payment.metadata as Record<string, any>) || {}
       const flowType = metadata.flow_type
+
+      // Handle ZumFiesta guest checkout flow
+      if (flowType === 'zt_fiesta') {
+        console.log('[Webhook] Processing ZumFiesta payment:', payment.id)
+
+        await supabase
+          .from('payments')
+          .update({
+            status: 'succeeded',
+            hitpay_payment_id: payment_id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', payment.id)
+
+        const enrollmentId = metadata.enrollment_id as string | undefined
+        if (enrollmentId) {
+          const now = new Date().toISOString()
+          const existingNotes = typeof metadata.notes === 'string' ? metadata.notes : ''
+          const paymentTrail = `Paid via HitPay at ${now}`
+          const mergedNotes = existingNotes ? `${existingNotes} | ${paymentTrail}` : paymentTrail
+
+          await supabase
+            .from('manual_class_enrollments')
+            .update({
+              payment_status: 'paid',
+              notes: mergedNotes,
+            })
+            .eq('id', enrollmentId)
+        }
+
+        console.log('[Webhook] ZumFiesta booking completed:', payment.id)
+        return NextResponse.json({ received: true, message: 'ZumFiesta booking processed' })
+      }
 
       // Handle ZumFamilia flow (class booking with guest details + payment, or custom schedule)
       if (flowType === 'zumfamilia') {
@@ -602,6 +636,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       // Create user package with tokens
       if (pkg) {
+        const issuedTokenCount = pkg.is_unlimited ? UNLIMITED_TOKEN_BALANCE : pkg.token_count
+        const tokenLabel = pkg.is_unlimited ? 'unlimited' : `${pkg.token_count}`
         const expiresAt = new Date()
         expiresAt.setDate(expiresAt.getDate() + pkg.validity_days)
 
@@ -612,7 +648,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             user_id: payment.user_id,
             package_id: payment.package_id,
             payment_id: payment.id.toString(), // Convert UUID to string for VARCHAR(255) column
-            tokens_remaining: pkg.token_count,
+            tokens_remaining: issuedTokenCount,
             tokens_held: 0, // Initialize held tokens to 0
             expires_at: expiresAt.toISOString(),
             status: 'active',
@@ -639,9 +675,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             user_id: payment.user_id,
             user_package_id: userPackage.id,
             transaction_type: 'purchase',
-            tokens_change: pkg.token_count,
+            tokens_change: issuedTokenCount,
             tokens_before: 0,
-            tokens_after: pkg.token_count,
+            tokens_after: issuedTokenCount,
             description: `Purchased ${pkg.name}`,
           })
 
@@ -694,7 +730,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               supabase.rpc('increment_user_stat', {
                 p_user_id: payment.user_id,
                 p_field: 'total_tokens_purchased',
-                p_amount: pkg.token_count,
+                p_amount: issuedTokenCount,
               }),
               supabase.rpc('increment_user_stat', {
                 p_user_id: payment.user_id,
@@ -727,13 +763,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 type: 'payment_successful',
                 channel: 'in_app',
                 subject: 'Payment Successful!',
-                body: `Your purchase of ${pkg.name} was successful. ${pkg.token_count} tokens have been added to your account.`,
+                body: `Your purchase of ${pkg.name} was successful. ${tokenLabel} tokens have been added to your account.`,
                 status: 'sent',
                 sent_at: new Date().toISOString(),
                 data: {
                   payment_id: payment.id,
                   package_name: pkg.name,
-                  token_count: pkg.token_count,
+                  token_count: issuedTokenCount,
+                  is_unlimited: pkg.is_unlimited === true,
                   amount: payment.amount_cents / 100,
                 },
               })
@@ -751,7 +788,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 userEmail: userProfile.email,
                 userName: userProfile.name || 'User',
                 packageName: pkg.name,
-                tokenCount: pkg.token_count,
+                tokenCount: issuedTokenCount,
                 amount: payment.amount_cents / 100,
                 currency: payment.currency,
                 expiresAt: userPackage.expires_at,
@@ -766,7 +803,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                   amount: payment.amount_cents / 100,
                   currency: payment.currency,
                   packageName: pkg.name,
-                  tokenCount: pkg.token_count,
+                  tokenCount: issuedTokenCount,
                   userName: userProfile.name || 'User',
                   userEmail: userProfile.email,
                 })

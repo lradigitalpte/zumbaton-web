@@ -4,8 +4,10 @@ import { useAvailablePackages } from "@/hooks/usePackages";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
+import { useRouter } from "next/navigation";
 
 const PricingContent = () => {
+  const router = useRouter();
   const { openWhatsAppModal } = useWhatsAppModal();
   const { data: adultPackages = [], isLoading: isLoadingAdults, error: errorAdults } = useAvailablePackages('adults');
   const { data: kidsPackages = [], isLoading: isLoadingKids, error: errorKids } = useAvailablePackages('kids');
@@ -32,6 +34,10 @@ const PricingContent = () => {
     if (days === 60) return "2 months";
     if (days === 90) return "3 months";
     return `${days} days`;
+  };
+
+  const goToSignupForPackages = () => {
+    router.push("/signup?next=/packages");
   };
 
   return (
@@ -96,7 +102,7 @@ const PricingContent = () => {
                     )}
                     <div className="p-6 md:p-8">
                       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{pkg.name}</h3>
-                      <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm">{pkg.description || `${pkg.token_count} class tokens`}</p>
+                      <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm">{pkg.description || (pkg.is_unlimited ? "Unlimited class access" : `${pkg.token_count} class tokens`)}</p>
                       
                       <div className="mb-6">
                         <div className="flex items-baseline gap-2 mb-2">
@@ -105,7 +111,7 @@ const PricingContent = () => {
                           </span>
                         </div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {pkg.token_count} {pkg.token_count === 1 ? 'token' : 'tokens'} • Valid for {formatValidity(pkg.validity_days)}
+                          {pkg.is_unlimited ? 'Unlimited tokens' : `${pkg.token_count} ${pkg.token_count === 1 ? 'token' : 'tokens'}`} • Valid for {formatValidity(pkg.validity_days)}
                         </p>
                       </div>
 
@@ -114,7 +120,7 @@ const PricingContent = () => {
                           <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
-                          <span>{pkg.token_count} class {pkg.token_count === 1 ? 'token' : 'tokens'}</span>
+                          <span>{pkg.is_unlimited ? 'Unlimited class bookings' : `${pkg.token_count} class ${pkg.token_count === 1 ? 'token' : 'tokens'}`}</span>
                         </li>
                         <li className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                           <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,14 +144,14 @@ const PricingContent = () => {
 
                       <button
                         type="button"
-                        onClick={openWhatsAppModal}
+                        onClick={goToSignupForPackages}
                         className={`block w-full text-center py-3 px-6 rounded-lg font-bold transition-all ${
                           isPopular
                             ? "bg-green-600 hover:bg-green-700 text-white"
                             : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
                         }`}
                       >
-                        Get Started
+                        Purchase Package
                       </button>
                     </div>
                   </motion.div>
@@ -199,7 +205,7 @@ const PricingContent = () => {
                     )}
                     <div className="p-6 md:p-8">
                       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{pkg.name}</h3>
-                      <p className="text-gray-600 dark:text-gray-400 mb-2 text-sm">{pkg.description || `${pkg.token_count} class tokens`}</p>
+                      <p className="text-gray-600 dark:text-gray-400 mb-2 text-sm">{pkg.description || (pkg.is_unlimited ? "Unlimited class access" : `${pkg.token_count} class tokens`)}</p>
                       {pkg.age_requirement && (
                         <p className="text-orange-600 dark:text-orange-400 text-xs font-semibold mb-4 italic">
                           {pkg.age_requirement}
@@ -213,7 +219,7 @@ const PricingContent = () => {
                           </span>
                         </div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {pkg.token_count} {pkg.token_count === 1 ? 'token' : 'tokens'} • Valid for {formatValidity(pkg.validity_days)}
+                          {pkg.is_unlimited ? 'Unlimited tokens' : `${pkg.token_count} ${pkg.token_count === 1 ? 'token' : 'tokens'}`} • Valid for {formatValidity(pkg.validity_days)}
                         </p>
                       </div>
 
@@ -222,7 +228,7 @@ const PricingContent = () => {
                           <svg className="w-5 h-5 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
-                          <span>{pkg.token_count} class {pkg.token_count === 1 ? 'token' : 'tokens'}</span>
+                          <span>{pkg.is_unlimited ? 'Unlimited class bookings' : `${pkg.token_count} class ${pkg.token_count === 1 ? 'token' : 'tokens'}`}</span>
                         </li>
                         <li className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                           <svg className="w-5 h-5 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -246,14 +252,14 @@ const PricingContent = () => {
 
                       <button
                         type="button"
-                        onClick={openWhatsAppModal}
+                        onClick={goToSignupForPackages}
                         className={`block w-full text-center py-3 px-6 rounded-lg font-bold transition-all ${
                           isPopular
                             ? "bg-orange-500 hover:bg-orange-600 text-white"
                             : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
                         }`}
                       >
-                        Get Started
+                        Purchase Package
                       </button>
                     </div>
                   </motion.div>

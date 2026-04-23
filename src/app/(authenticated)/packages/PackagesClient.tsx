@@ -12,6 +12,7 @@ interface Package {
   name: string;
   description?: string;
   token_count: number;
+  is_unlimited?: boolean;
   price_cents: number;
   currency: string;
   validity_days: number;
@@ -288,8 +289,8 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
         ) : (
           <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 xl:gap-6 max-w-5xl mx-auto">
             {filteredAdultPackages.map((pkg, index) => {
-              const isPopular = index === Math.floor(filteredAdultPackages.length / 2) || 
-                               pkg.token_count === Math.max(...filteredAdultPackages.map(p => p.token_count));
+              const isPopular = index === Math.floor(filteredAdultPackages.length / 2) ||
+                               (!pkg.is_unlimited && pkg.token_count === Math.max(...filteredAdultPackages.filter((p) => !p.is_unlimited).map(p => p.token_count)));
 
               return (
                 <div
@@ -313,7 +314,7 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
                       {pkg.name}
                     </h3>
                     <p className="text-[10px] xl:text-sm text-body-color dark:text-gray-400 mb-2 xl:mb-4 line-clamp-2">
-                      {pkg.description || `${pkg.token_count} class tokens`}
+                      {pkg.description || (pkg.is_unlimited ? "Unlimited class access" : `${pkg.token_count} class tokens`)}
                     </p>
                     <div className="mb-1 xl:mb-2">
                       <span className="text-xl xl:text-4xl font-bold text-dark dark:text-white">
@@ -321,8 +322,8 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
                       </span>
                     </div>
                     <div className="flex items-center justify-center gap-1 xl:gap-2 flex-wrap">
-                      <span className="text-lg xl:text-2xl font-bold text-primary">{pkg.token_count}</span>
-                      <span className="text-[10px] xl:text-base text-body-color dark:text-gray-400">tokens</span>
+                      <span className="text-lg xl:text-2xl font-bold text-primary">{pkg.is_unlimited ? "Unlimited" : pkg.token_count}</span>
+                      <span className="text-[10px] xl:text-base text-body-color dark:text-gray-400">{pkg.is_unlimited ? "" : "tokens"}</span>
                     </div>
                     <p className="text-[9px] xl:text-sm text-body-color dark:text-gray-400 mt-0.5 xl:mt-1">
                       Valid for {pkg.validity_days} days
@@ -334,7 +335,7 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
                       <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      <span>{pkg.token_count} class tokens</span>
+                      <span>{pkg.is_unlimited ? "Unlimited class bookings" : `${pkg.token_count} class tokens`}</span>
                     </li>
                     <li className="flex items-center gap-2 text-body-color dark:text-gray-400 text-sm">
                       <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -379,8 +380,8 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
           </div>
           <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 xl:gap-6 max-w-5xl mx-auto">
             {filteredKidsPackages.map((pkg, index) => {
-              const isPopular = index === Math.floor(filteredKidsPackages.length / 2) || 
-                               pkg.token_count === Math.max(...filteredKidsPackages.map(p => p.token_count));
+              const isPopular = index === Math.floor(filteredKidsPackages.length / 2) ||
+                               (!pkg.is_unlimited && pkg.token_count === Math.max(...filteredKidsPackages.filter((p) => !p.is_unlimited).map(p => p.token_count)));
 
               return (
                 <div
@@ -404,7 +405,7 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
                       {pkg.name}
                     </h3>
                     <p className="text-[10px] xl:text-sm text-body-color dark:text-gray-400 mb-2 xl:mb-4 line-clamp-2">
-                      {pkg.description || `${pkg.token_count} class tokens`}
+                      {pkg.description || (pkg.is_unlimited ? "Unlimited class access" : `${pkg.token_count} class tokens`)}
                     </p>
                     {pkg.age_requirement && (
                       <p className="text-[9px] xl:text-xs text-orange-600 dark:text-orange-400 mb-2 font-semibold">
@@ -417,8 +418,8 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
                       </span>
                     </div>
                     <div className="flex items-center justify-center gap-1 xl:gap-2 flex-wrap">
-                      <span className="text-lg xl:text-2xl font-bold text-primary">{pkg.token_count}</span>
-                      <span className="text-[10px] xl:text-base text-body-color dark:text-gray-400">tokens</span>
+                      <span className="text-lg xl:text-2xl font-bold text-primary">{pkg.is_unlimited ? "Unlimited" : pkg.token_count}</span>
+                      <span className="text-[10px] xl:text-base text-body-color dark:text-gray-400">{pkg.is_unlimited ? "" : "tokens"}</span>
                     </div>
                     <p className="text-[9px] xl:text-sm text-body-color dark:text-gray-400 mt-0.5 xl:mt-1">
                       Valid for {pkg.validity_days} days
@@ -430,7 +431,7 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
                       <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      <span>{pkg.token_count} class tokens</span>
+                      <span>{pkg.is_unlimited ? "Unlimited class bookings" : `${pkg.token_count} class tokens`}</span>
                     </li>
                     <li className="flex items-center gap-2 text-body-color dark:text-gray-400 text-sm">
                       <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -526,7 +527,6 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
         isOpen={isPaymentModalOpen}
         onClose={handleClosePayment}
         selectedPackage={selectedPackage}
-        promoData={promo}
       />
     </div>
   );

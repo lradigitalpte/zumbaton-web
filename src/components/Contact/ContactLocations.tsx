@@ -8,7 +8,7 @@ const locations = [
     city: "Singapore",
     address: "2 JALAN KLAPA, #2-A, SINGAPORE 199314",
     phone: "+65 8492 7347",
-    email: "hello@zumbaton.sg",
+    email: "hello@onestepfitness.sg",
     hours: "Mon - Sun: 9AM - 9PM",
     lat: 1.3521,
     lng: 103.8198
@@ -35,7 +35,7 @@ const ContactLocations = () => {
             Visit Our Studios
           </h2>
           <p className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
-            Find a Zumbaton studio near you and start your fitness journey today.
+            Find a One Step Fitness studio near you and start your fitness journey today.
           </p>
         </motion.div>
 
@@ -71,7 +71,7 @@ const ContactLocations = () => {
                     </div>
                     <div>
                       <h3 className="text-3xl md:text-4xl font-bold mb-2">{location.city}</h3>
-                      <p className="text-white/90 text-sm font-medium">Zumbaton Studio</p>
+                      <p className="text-white/90 text-sm font-medium">One Step Fitness Studio</p>
                     </div>
                   </div>
 
@@ -172,7 +172,7 @@ const ContactLocations = () => {
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               className="w-full h-full"
-              title="Zumbaton Location - 2 JALAN KLAPA, #2-A, SINGAPORE 199314"
+              title="One Step Fitness Location - 2 JALAN KLAPA, #2-A, SINGAPORE 199314"
             />
           </div>
         </motion.div>

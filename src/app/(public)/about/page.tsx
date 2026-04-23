@@ -8,8 +8,8 @@ import AboutCTA from "@/components/About/AboutCTA";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "About | Zumbaton",
-  description: "Learn more about Zumbaton and our mission to bring fitness and joy to your life.",
+  title: "About | One Step Fitness - one step to change your life",
+  description: "Learn more about One Step Fitness and our mission to bring fitness and joy to your life.",
 };
 
 const AboutPage = () => {

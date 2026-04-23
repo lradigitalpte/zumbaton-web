@@ -24,10 +24,10 @@ const Features = () => {
             Why Choose Us
           </div>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
-            Why Choose Zumbaton?
+            Why Choose One Step Fitness?
           </h2>
           <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Experience the perfect blend of fitness, fun, and community. Discover what makes Zumbaton the premier destination for dance fitness.
+            Experience the perfect blend of fitness, fun, and community. Discover what makes One Step Fitness the premier destination for dance fitness.
           </p>
         </motion.div>
 

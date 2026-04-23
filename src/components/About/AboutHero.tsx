@@ -50,6 +50,9 @@ const AboutHero = () => {
           <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-white mb-6">
             About
           </h1>
+          <p className="text-base md:text-xl font-semibold text-green-400 mb-6">
+            one step to change your life
+          </p>
           
           {/* Breadcrumb */}
           <nav className="flex items-center justify-center gap-2 text-white/80">

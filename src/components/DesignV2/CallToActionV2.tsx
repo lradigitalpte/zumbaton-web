@@ -34,7 +34,7 @@ const CallToActionV2 = () => {
           transition={{ delay: 0.2 }}
           className="text-xl md:text-2xl text-gray-500 dark:text-gray-400 mb-12 max-w-2xl mx-auto"
         >
-          Your first class is the start of something amazing. Join the Zumbaton family today.
+          Your first class is the start of something amazing. Join the One Step Fitness family today.
         </motion.p>
         
         <motion.div

@@ -33,7 +33,7 @@ export const zumbaClasses: ZumbaClass[] = [
     duration: "60 min",
     intensity: "All Levels",
     calories: "400-600",
-    instructor: "Coach Lavs",
+    instructor: "Laavania",
     highlights: [
       {
         title: "Improves Coordination and Balance",
@@ -65,7 +65,7 @@ export const zumbaClasses: ZumbaClass[] = [
   {
     id: "2",
     slug: "zumbaton",
-    name: "ZUMBATON",
+    name: "Zumba Step",
     shortDescription: "A high-energy step aerobics workout elevated for added intensity and calorie burn. Blends fun, easy-to-follow dance choreography with step movements for a full-body workout.",
     fullDescription: "A high-energy step aerobics workout elevated for added intensity and calorie burn. This class blends fun, easy-to-follow dance choreography with step movements, delivering a full-body workout that feels more like a party than exercise.",
     image: "/images/hero/hero2.jpeg",
@@ -73,7 +73,7 @@ export const zumbaClasses: ZumbaClass[] = [
     duration: "60 min",
     intensity: "All Levels",
     calories: "500-700",
-    instructor: "Coach Lavs",
+    instructor: "Robert",
     highlights: [
       {
         title: "High-Calorie Burn",
@@ -109,15 +109,15 @@ export const zumbaClasses: ZumbaClass[] = [
   {
     id: "3",
     slug: "zumbuddies",
-    name: "ZUMBUDDIES",
+    name: "Lil Steppers",
     shortDescription: "Fun and energetic dance fitness classes designed especially for kids! Dance, play, and get fit while making new friends in a safe, supportive environment.",
-    fullDescription: "ZUMBUDDIES is our special dance fitness program for kids, combining fun dance moves with games and activities designed to keep children active, healthy, and happy. Each class is packed with energy, creativity, and age-appropriate choreography that kids love. It's the perfect way for children to develop coordination, confidence, and a love for movement in a party-like atmosphere!",
+    fullDescription: "Lil Steppers is our special dance fitness program for kids, combining fun dance moves with games and activities designed to keep children active, healthy, and happy. Each class is packed with energy, creativity, and age-appropriate choreography that kids love. It's the perfect way for children to develop coordination, confidence, and a love for movement in a party-like atmosphere!",
     image: "/images/hero/kids.png",
     featured: true,
     duration: "60 min",
     intensity: "Beginner",
     calories: "200-300",
-    instructor: "Coach Lavs",
+    instructor: "Laavania",
     highlights: [
       {
         title: "Kid-Friendly Choreography",
@@ -147,6 +147,50 @@ export const zumbaClasses: ZumbaClass[] = [
     schedule: [
       { day: "Wednesday", time: "4:00 PM" },
       { day: "Saturday", time: "9:00 AM" }
+    ]
+  },
+  {
+    id: "4",
+    slug: "thunderbolt-full-body-workout",
+    name: "ThunderBolt Full Body Workout",
+    shortDescription: "A Tabata-style full-body stepper workout using short, high-intensity intervals to build stamina, burn calories, and improve strength in less time.",
+    fullDescription: "ThunderBolt Full Body Workout is our Tabata-inspired class that combines explosive intervals with stepper board movement. You will alternate between high-intensity work and short recovery to challenge both cardio and strength, while improving coordination, rhythm, and agility. It is designed for members who want an efficient, powerful session with visible results.",
+    image: "/images/hero/notbad.jpeg",
+    featured: true,
+    duration: "45-60 min",
+    intensity: "Intermediate",
+    calories: "500-800",
+    instructor: "Laavania",
+    highlights: [
+      {
+        title: "Afterburn for Fat Loss",
+        description: "Tabata intervals can keep your body burning calories after class through excess post-exercise oxygen consumption."
+      },
+      {
+        title: "Full-Body Conditioning",
+        description: "Stepper patterns and interval blocks train legs, core, and upper-body coordination in one session."
+      },
+      {
+        title: "Improves Cardio and Stamina",
+        description: "High-effort rounds help improve VO2 max, endurance, and overall cardiovascular fitness."
+      },
+      {
+        title: "Builds Power and Agility",
+        description: "Fast-twitch muscle recruitment supports explosive movement, better reaction speed, and athletic control."
+      },
+      {
+        title: "Time-Efficient Workout",
+        description: "A focused 45-60 minute class delivers high training quality for busy schedules."
+      },
+      {
+        title: "High-Energy Music Experience",
+        description: "Driven by motivating music and coaching cues to keep intensity high and class engagement strong."
+      }
+    ],
+    schedule: [
+      { day: "Tuesday", time: "7:00 PM" },
+      { day: "Friday", time: "7:30 PM" },
+      { day: "Sunday", time: "10:30 AM" }
     ]
   }
 ];

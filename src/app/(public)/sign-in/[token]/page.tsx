@@ -128,7 +128,7 @@ function SignInWithQRContent() {
           <div className="text-center mb-8">
             <Image
               src="/images/logo/zumbaton logo (transparent).png"
-              alt="Zumbaton Logo"
+              alt="One Step Fitness Logo"
               width={200}
               height={67}
               className="h-16 w-auto mx-auto dark:invert"
@@ -156,7 +156,7 @@ function SignInWithQRContent() {
           <div className="text-center mb-8">
             <Image
               src="/images/logo/zumbaton logo (transparent).png"
-              alt="Zumbaton Logo"
+              alt="One Step Fitness Logo"
               width={200}
               height={67}
               className="h-16 w-auto mx-auto dark:invert"
@@ -220,7 +220,7 @@ function SignInWithQRContent() {
           <div className="text-center mb-8">
             <Image
               src="/images/logo/zumbaton logo (transparent).png"
-              alt="Zumbaton Logo"
+              alt="One Step Fitness Logo"
               width={200}
               height={67}
               className="h-16 w-auto mx-auto dark:invert"
@@ -248,7 +248,7 @@ function SignInWithQRContent() {
           <div className="text-center mb-8">
             <Image
               src="/images/logo/zumbaton logo (transparent).png"
-              alt="Zumbaton Logo"
+              alt="One Step Fitness Logo"
               width={200}
               height={67}
               className="h-16 w-auto mx-auto dark:invert"
@@ -290,7 +290,7 @@ function SignInWithQRContent() {
         <div className="text-center mb-8">
           <Image
             src="/images/logo/zumbaton logo (transparent).png"
-            alt="Zumbaton Logo"
+            alt="One Step Fitness Logo"
             width={200}
             height={67}
             className="h-16 w-auto mx-auto dark:invert"
@@ -346,7 +346,7 @@ export default function SignInWithQRPage() {
             <div className="text-center mb-8">
               <Image
                 src="/images/logo/zumbaton logo (transparent).png"
-                alt="Zumbaton Logo"
+                alt="One Step Fitness Logo"
                 width={200}
                 height={67}
                 className="h-16 w-auto mx-auto dark:invert"

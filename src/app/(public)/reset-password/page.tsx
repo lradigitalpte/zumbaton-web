@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const adminBaseUrl = process.env.NEXT_PUBLIC_ADMIN_APP_URL || "https://admin.onestepfitness.sg";
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -45,7 +46,7 @@ function ResetPasswordForm() {
               
               if (isAdminUser) {
                 // Redirect admin users to admin app's set-password page
-                const adminUrl = `https://admin.zumbaton.sg/set-password${window.location.hash}`;
+                const adminUrl = `${adminBaseUrl}/set-password${window.location.hash}`;
                 window.location.href = adminUrl;
                 return;
               }
@@ -66,7 +67,7 @@ function ResetPasswordForm() {
           
           if (isAdminUser && window.location.pathname === '/reset-password') {
             // Redirect admin users to admin app's set-password page
-            const adminUrl = `https://admin.zumbaton.sg/set-password${window.location.hash}`;
+            const adminUrl = `${adminBaseUrl}/set-password${window.location.hash}`;
             window.location.href = adminUrl;
             return;
           }
@@ -85,7 +86,7 @@ function ResetPasswordForm() {
     };
 
     checkSession();
-  }, [searchParams]);
+  }, [searchParams, adminBaseUrl]);
 
   const validatePassword = (pwd: string) => {
     const checks = {

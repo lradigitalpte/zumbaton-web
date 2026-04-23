@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       ? (process.env.NEXT_PUBLIC_WEB_APP_URL || 
          process.env.NEXT_PUBLIC_APP_URL ||
          (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'))
-      : 'https://zumbaton.sg'
+      : 'https://onestepfitness.sg'
 
     // Send OTP email using our custom email service
     try {

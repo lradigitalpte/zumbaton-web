@@ -79,7 +79,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<EmailResult>
     const transporter = createTransporter()
     
     const fromEmail = options.from || process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER
-    const fromName = process.env.SMTP_FROM_NAME || 'Zumbaton'
+    const fromName = process.env.SMTP_FROM_NAME || 'One Step Fitness'
     const from = fromName ? `"${fromName}" <${fromEmail}>` : fromEmail
 
     const mailOptions = {
@@ -141,14 +141,14 @@ export async function sendPaymentAlertEmail(data: PaymentAlertEmailData): Promis
 
   return sendEmail({
     to: recipients,
-    subject: `[Zumbaton] ${paymentTitle}`,
+    subject: `[One Step Fitness] ${paymentTitle}`,
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1f2937; max-width: 640px; margin: 0 auto;">
         <div style="background: #111827; color: #ffffff; padding: 20px 24px; border-radius: 8px 8px 0 0;">
           <h2 style="margin: 0; font-size: 20px;">${paymentTitle}</h2>
         </div>
         <div style="border: 1px solid #e5e7eb; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">
-          <p style="margin-top: 0;">A payment was completed successfully in Zumbaton.</p>
+          <p style="margin-top: 0;">A payment was completed successfully in One Step Fitness.</p>
           <p><strong>Customer:</strong> ${customerName}</p>
           <p><strong>Email:</strong> ${customerEmail}</p>
           <p><strong>Amount:</strong> ${data.amount} ${data.currency || 'SGD'}</p>
@@ -202,7 +202,7 @@ export interface ContactFormData {
 }
 
 export async function sendContactEmail(formData: ContactFormData): Promise<EmailResult> {
-  const recipientEmail = process.env.CONTACT_EMAIL || 'hello@zumbaton.sg'
+  const recipientEmail = process.env.CONTACT_EMAIL || 'hello@onestepfitness.sg'
   
   const html = `
     <!DOCTYPE html>
@@ -251,7 +251,7 @@ export async function sendContactEmail(formData: ContactFormData): Promise<Email
           </div>
         </div>
         <div class="footer">
-          <p>This email was sent from the Zumbaton website contact form.</p>
+          <p>This email was sent from the One Step Fitness website contact form.</p>
           <p>You can reply directly to this email to respond to ${escapeHtml(formData.name)}.</p>
         </div>
       </div>
@@ -271,7 +271,7 @@ Message:
 ${formData.message}
 
 ---
-This email was sent from the Zumbaton website contact form.
+This email was sent from the One Step Fitness website contact form.
 You can reply directly to this email to respond to ${formData.name}.
   `
 
@@ -328,7 +328,7 @@ export async function sendWelcomeEmail(userEmail: string, userName: string): Pro
   
   return sendEmail({
     to: userEmail,
-    subject: 'Welcome to Zumbaton! 🎉',
+    subject: 'Welcome to One Step Fitness! 🎉',
     html: template.html,
     text: template.text,
   })
@@ -496,7 +496,7 @@ export async function sendAdminCreatedUserEmail(data: {
   
   return sendEmail({
     to: data.userEmail,
-    subject: 'Welcome to Zumbaton! Your account has been created',
+    subject: 'Welcome to One Step Fitness! Your account has been created',
     html: template.html,
     text: template.text,
   })
@@ -635,7 +635,7 @@ export async function sendForgotPasswordEmail(data: {
   
   return sendEmail({
     to: data.userEmail,
-    subject: 'Reset Your Password - Zumbaton',
+    subject: 'Reset Your Password - One Step Fitness',
     html: template.html,
     text: template.text,
   })
@@ -660,7 +660,7 @@ export async function sendForgotPasswordOTPEmail(data: {
   
   return sendEmail({
     to: data.userEmail,
-    subject: 'Password Reset Verification Code - Zumbaton',
+    subject: 'Password Reset Verification Code - One Step Fitness',
     html: template.html,
     text: template.text,
   })
@@ -683,7 +683,7 @@ export async function sendPasswordResetEmail(data: {
   
   return sendEmail({
     to: data.userEmail,
-    subject: 'Password Reset - Zumbaton',
+    subject: 'Password Reset - One Step Fitness',
     html: template.html,
     text: template.text,
   })
@@ -824,10 +824,10 @@ function getCheckInConfirmationTemplate(data: {
               <tr>
                 <td style="padding: 30px 40px; background-color: #f9fafb; border-radius: 0 0 8px 8px; text-align: center;">
                   <p style="margin: 0 0 10px; color: #6b7280; font-size: 14px;">
-                    Questions? Contact us at <a href="mailto:support@zumbaton.com" style="color: #f59e0b; text-decoration: none;">support@zumbaton.com</a>
+                    Questions? Contact us at <a href="mailto:support@onestepfitness.com" style="color: #f59e0b; text-decoration: none;">support@onestepfitness.com</a>
                   </p>
                   <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-                    © ${new Date().getFullYear()} Zumbaton. All rights reserved.
+                    © ${new Date().getFullYear()} One Step Fitness. All rights reserved.
                   </p>
                 </td>
               </tr>
@@ -860,9 +860,9 @@ What to bring:
 
 See you in class! 💃🕺
 
-Questions? Contact us at support@zumbaton.com
+Questions? Contact us at support@onestepfitness.com
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `
 
   return { html, text }
@@ -886,7 +886,7 @@ export async function sendReferralVoucherEmail(data: {
       </head>
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">Zumbaton</h1>
+          <h1 style="color: white; margin: 0; font-size: 28px;">One Step Fitness</h1>
           <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Your Referral Discount</p>
         </div>
         
@@ -894,7 +894,7 @@ export async function sendReferralVoucherEmail(data: {
           <p style="font-size: 16px; margin-bottom: 20px;">Hi <strong>${data.userName}</strong>,</p>
           
           <p style="margin-bottom: 20px;">
-            You've received a <strong>${data.discountPercent}% discount</strong> voucher for your next token package purchase at Zumbaton.
+            You've received a <strong>${data.discountPercent}% discount</strong> voucher for your next token package purchase at One Step Fitness.
           </p>
           
           <div style="background: white; border: 2px dashed #84cc16; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0;">
@@ -904,16 +904,16 @@ export async function sendReferralVoucherEmail(data: {
           </div>
           
           <p style="margin-bottom: 20px;">
-            Use this code when you buy tokens on the Zumbaton app or website. The discount will be applied at checkout.
+            Use this code when you buy tokens on the One Step Fitness app or website. The discount will be applied at checkout.
           </p>
           
           <p style="margin-top: 24px; font-size: 14px; color: #6b7280;">
-            This voucher is for one-time use. If you have any questions, contact the Zumbaton team.
+            This voucher is for one-time use. If you have any questions, contact the One Step Fitness team.
           </p>
         </div>
         
         <div style="text-align: center; padding: 20px; font-size: 12px; color: #9ca3af;">
-          <p>© ${new Date().getFullYear()} Zumbaton. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} One Step Fitness. All rights reserved.</p>
         </div>
       </body>
     </html>
@@ -924,20 +924,20 @@ Your Referral Discount
 
 Hi ${data.userName},
 
-You've received a ${data.discountPercent}% discount voucher for your next token package purchase at Zumbaton.
+You've received a ${data.discountPercent}% discount voucher for your next token package purchase at One Step Fitness.
 
 Your voucher code: ${data.voucherCode}
 
-Use this code when you buy tokens on the Zumbaton app or website. The discount will be applied at checkout.
+Use this code when you buy tokens on the One Step Fitness app or website. The discount will be applied at checkout.
 
 This voucher is for one-time use.
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `
 
   return sendEmail({
     to: data.userEmail,
-    subject: `Your ${data.discountPercent}% discount voucher – Zumbaton`,
+    subject: `Your ${data.discountPercent}% discount voucher – One Step Fitness`,
     html,
     text: text.trim(),
   })
@@ -960,7 +960,7 @@ export async function sendRegistrationFormEmail(data: {
       </head>
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">Zumbaton</h1>
+          <h1 style="color: white; margin: 0; font-size: 28px;">One Step Fitness</h1>
           <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Complete Your Registration</p>
         </div>
         
@@ -969,7 +969,7 @@ export async function sendRegistrationFormEmail(data: {
           
           <p style="margin-bottom: 20px;">
             Please complete your registration by filling out the membership terms and conditions form. 
-            This is required to finalize your membership with Zumbaton.
+            This is required to finalize your membership with One Step Fitness.
           </p>
           
           <div style="text-align: center; margin: 30px 0;">
@@ -997,7 +997,7 @@ export async function sendRegistrationFormEmail(data: {
         </div>
         
         <div style="text-align: center; padding: 20px; font-size: 12px; color: #999;">
-          <p>© ${new Date().getFullYear()} Zumbaton. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} One Step Fitness. All rights reserved.</p>
           <p>If you didn't request this, please ignore this email.</p>
         </div>
       </body>
@@ -1010,18 +1010,18 @@ Complete Your Registration
 Hi ${data.userName},
 
 Please complete your registration by filling out the membership terms and conditions form.
-This is required to finalize your membership with Zumbaton.
+This is required to finalize your membership with One Step Fitness.
 
 Form Link: ${data.formUrl}
 
 This link will expire in 7 days. If you need a new link, please contact us.
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `
 
   return await sendEmail({
     to: data.userEmail,
-    subject: 'Zumbaton Registration Form - Action Required',
+    subject: 'One Step Fitness Registration Form - Action Required',
     html,
     text,
   })
@@ -1056,7 +1056,7 @@ export async function sendRegistrationFormCompletedEmail(data: {
           <div class="content">
             <p>Hi ${data.userName},</p>
             
-            <p>Thank you for completing your Zumbaton membership registration!</p>
+            <p>Thank you for completing your One Step Fitness membership registration!</p>
             
             <p>Your registration form has been submitted and is attached to this email as a PDF. Please save this for your records.</p>
             
@@ -1069,10 +1069,10 @@ export async function sendRegistrationFormCompletedEmail(data: {
             
             <p>If you have any questions, please don't hesitate to contact us.</p>
             
-            <p>Welcome to the Zumbaton family! 💃🕺</p>
+            <p>Welcome to the One Step Fitness family! 💃🕺</p>
           </div>
           <div class="footer">
-            <p>© ${new Date().getFullYear()} Zumbaton. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} One Step Fitness. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -1084,7 +1084,7 @@ Registration Complete!
 
 Hi ${data.userName},
 
-Thank you for completing your Zumbaton membership registration!
+Thank you for completing your One Step Fitness membership registration!
 
 Your registration form has been submitted and is attached to this email as a PDF. 
 Please save this for your records.
@@ -1096,14 +1096,14 @@ What happens next:
 
 If you have any questions, please don't hesitate to contact us.
 
-Welcome to the Zumbaton family!
+Welcome to the One Step Fitness family!
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `
 
   return await sendEmail({
     to: data.userEmail,
-    subject: '✅ Your Zumbaton Registration Form',
+    subject: '✅ Your One Step Fitness Registration Form',
     html,
     text,
     attachments: [

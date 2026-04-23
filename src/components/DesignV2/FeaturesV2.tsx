@@ -50,7 +50,7 @@ const FeaturesV2 = () => {
             transition={{ delay: 0.2 }}
             className="text-xl text-gray-500 dark:text-gray-400 max-w-2xl"
           >
-            We're building a movement where fitness meets happiness. Discover what makes Zumbaton different.
+            We are building a movement where fitness meets happiness. Discover what makes One Step Fitness different.
           </motion.p>
         </div>
 

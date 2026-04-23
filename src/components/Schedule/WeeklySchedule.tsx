@@ -120,7 +120,7 @@ const WeeklySchedule = () => {
           </h2>
           <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
             Find a dance fitness class that feels like your own. Beginner-friendly, feel-good classes throughout the week. 
-            Your pace. Your dance. Your Zumbaton.
+            Your pace. Your progress. One Step Fitness.
           </p>
         </div>
 

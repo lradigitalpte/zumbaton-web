@@ -10,7 +10,7 @@ const supabaseAdmin = createClient(
 );
 
 const FiestaSchema = z.object({
-  packageOption: z.enum(["1_session", "2_sessions", "4_sessions"]),
+  packageOption: z.enum(["1_session"]),
   customerName: z.string().min(1).max(200),
   customerEmail: z.string().email(),
   customerPhone: z.string().min(1).max(50),
@@ -20,8 +20,6 @@ const FiestaSchema = z.object({
 
 const PACKAGE_MAP = {
   "1_session": { sessions: 1, priceCents: 2800, label: "1 session" },
-  "2_sessions": { sessions: 2, priceCents: 5400, label: "2 sessions" },
-  "4_sessions": { sessions: 4, priceCents: 10500, label: "4 sessions" },
 } as const;
 
 export async function POST(request: NextRequest): Promise<NextResponse> {

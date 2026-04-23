@@ -32,6 +32,7 @@ export const PackageSchema = BaseTimestampsSchema.extend({
   classTypes: z.array(ClassTypeSchema).default(['all']),
   packageType: PackageTypeSchema.default('adults'),
   ageRequirement: z.string().max(200).nullable().optional(),
+  isUnlimited: z.boolean().default(false),
   isActive: z.boolean().default(true),
 })
 export type Package = z.infer<typeof PackageSchema>
@@ -45,6 +46,7 @@ export const CreatePackageRequestSchema = z.object({
   currency: z.string().length(3).default('USD'),
   validityDays: z.number().int().positive('Validity must be at least 1 day'),
   classTypes: z.array(ClassTypeSchema).default(['all']),
+  isUnlimited: z.boolean().default(false).optional(),
   isActive: z.boolean().default(true),
 })
 export type CreatePackageRequest = z.infer<typeof CreatePackageRequestSchema>
@@ -58,6 +60,7 @@ export const UpdatePackageRequestSchema = z.object({
   currency: z.string().length(3).optional(),
   validityDays: z.number().int().positive().optional(),
   classTypes: z.array(ClassTypeSchema).optional(),
+  isUnlimited: z.boolean().optional(),
   isActive: z.boolean().optional(),
 })
 export type UpdatePackageRequest = z.infer<typeof UpdatePackageRequestSchema>

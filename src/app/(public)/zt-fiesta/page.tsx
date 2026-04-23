@@ -7,12 +7,10 @@ import Image from "next/image";
 import { ClassesHero, ClassesCTA } from "@/components/Classes";
 import { ArrowRight, CalendarClock, MapPin, Sparkles, CheckCircle2, Info } from "lucide-react";
 
-type FiestaPackage = "1_session" | "2_sessions" | "4_sessions";
+type FiestaPackage = "1_session";
 
 const FIESTA_PACKAGES: Record<FiestaPackage, { sessions: number; priceCents: number; label: string }> = {
   "1_session": { sessions: 1, priceCents: 2800, label: "1 session" },
-  "2_sessions": { sessions: 2, priceCents: 5400, label: "2 sessions" },
-  "4_sessions": { sessions: 4, priceCents: 10500, label: "4 sessions" },
 };
 
 export default function ZtFiestaPage() {
@@ -23,7 +21,11 @@ export default function ZtFiestaPage() {
     customerName: "",
     customerEmail: "",
     customerPhone: "",
+    dateOfBirth: "",
+    gender: "prefer_not_to_say",
     participantName: "",
+    preferredDate: "",
+    preferredTime: "",
     notes: "",
   });
 
@@ -32,7 +34,7 @@ export default function ZtFiestaPage() {
     setSubmitting(true);
 
     try {
-      const response = await fetch("/api/zt-fiesta/enroll", {
+      const response = await fetch("/api/zt-fiesta/payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -40,7 +42,11 @@ export default function ZtFiestaPage() {
           customerName: form.customerName,
           customerEmail: form.customerEmail,
           customerPhone: form.customerPhone,
+          dateOfBirth: form.dateOfBirth,
+          gender: form.gender,
           participantName: form.participantName,
+          preferredDate: form.preferredDate,
+          preferredTime: form.preferredTime,
           notes: form.notes,
         }),
       });
@@ -50,18 +56,14 @@ export default function ZtFiestaPage() {
         throw new Error(result.message || "Unable to submit your request.");
       }
 
-      toast.success("Request submitted. Our team will confirm your sessions shortly.");
-      setForm({
-        customerName: "",
-        customerEmail: "",
-        customerPhone: "",
-        participantName: "",
-        notes: "",
-      });
-      setSelectedPackage("1_session");
+      if (result.paymentUrl) {
+        window.location.href = result.paymentUrl;
+      } else {
+        throw new Error("Payment URL not received.");
+      }
     } catch (error) {
       console.error(error);
-      toast.error(error instanceof Error ? error.message : "Submission failed.");
+      toast.error(error instanceof Error ? error.message : "Payment failed.");
     } finally {
       setSubmitting(false);
     }
@@ -70,11 +72,11 @@ export default function ZtFiestaPage() {
   return (
     <>
       <ClassesHero
-        title="ZT Fiesta"
+        title="ZumFiesta"
         breadcrumbs={[
           { label: "Home", href: "/explore" },
           { label: "Classes", href: "/classes" },
-          { label: "ZT Fiesta" },
+          { label: "ZumFiesta" },
         ]}
       />
 
@@ -103,8 +105,8 @@ export default function ZtFiestaPage() {
                     <CalendarClock className="w-5 h-5 text-emerald-500" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-900 dark:text-white">Register Interest</h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Submit your request today. Our team will contact you to finalize your booking and payment.</p>
+                    <h4 className="font-bold text-gray-900 dark:text-white">Book & Pay Instantly</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Choose your preferred slot, add your details, and proceed directly to secure payment.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 group">
@@ -122,18 +124,38 @@ export default function ZtFiestaPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-4 pt-12">
                 <div className="relative h-64 rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white dark:border-gray-800">
-                  <Image src="/images/hero/hero.jpeg" alt="ZT Fiesta outdoor class moment" fill className="object-cover" />
+                  <Image
+                    src="/images/fiesta/Screen7.png"
+                    alt="ZumFiesta outdoor class moment"
+                    fill
+                    className="object-cover object-[50%_35%]"
+                  />
                 </div>
                 <div className="relative h-48 rounded-[2rem] overflow-hidden shadow-xl border-4 border-white dark:border-gray-800">
-                  <Image src="/images/image00065.jpeg" alt="ZT Fiesta group workout" fill className="object-cover" />
+                  <Image
+                    src="/images/fiesta/Screen2.png"
+                    alt="ZumFiesta group workout"
+                    fill
+                    className="object-cover object-center"
+                  />
                 </div>
               </div>
               <div className="space-y-4">
                 <div className="relative h-48 rounded-[2rem] overflow-hidden shadow-xl border-4 border-white dark:border-gray-800">
-                  <Image src="/images/hero/hero2.jpeg" alt="ZT Fiesta community energy" fill className="object-cover" />
+                  <Image
+                    src="/images/fiesta/Screen6.png"
+                    alt="ZumFiesta community energy"
+                    fill
+                    className="object-cover object-[50%_30%]"
+                  />
                 </div>
                 <div className="relative h-64 rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white dark:border-gray-800">
-                  <Image src="/images/image00040.jpeg" alt="ZT Fiesta outdoor dance session" fill className="object-cover" />
+                  <Image
+                    src="/images/fiesta/Screen8.png"
+                    alt="ZumFiesta outdoor dance session"
+                    fill
+                    className="object-contain object-bottom bg-black/5 dark:bg-white/5"
+                  />
                 </div>
               </div>
             </div>
@@ -186,10 +208,18 @@ export default function ZtFiestaPage() {
                 <div className="relative z-10">
                   <h4 className="text-2xl font-bold mb-6">Need something else?</h4>
                   <div className="flex flex-wrap gap-3">
-                    {["Groove Stepper", "ZUMBATON", "ZUMBUDDIES", "ZumFamilia"].map((name) => (
+                    {["Groove Stepper", "Zumba Step", "Lil Steppers", "One Familia"].map((name) => (
                       <Link 
                         key={name}
-                        href={name === "ZumFamilia" ? "/zumfamilia" : `/classes/${name.toLowerCase().replace(" ", "-")}`}
+                        href={
+                          name === "One Familia"
+                            ? "/zumfamilia"
+                            : name === "Zumba Step"
+                              ? "/classes/zumbaton"
+                              : name === "Lil Steppers"
+                                ? "/classes/zumbuddies"
+                                : `/classes/${name.toLowerCase().replace(" ", "-")}`
+                        }
                         className="px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md transition-all font-medium"
                       >
                         {name}
@@ -202,8 +232,8 @@ export default function ZtFiestaPage() {
 
             <div className="lg:col-span-5">
               <div className="bg-white dark:bg-gray-900 rounded-[3rem] p-10 border border-gray-100 dark:border-gray-800 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] relative">
-                <div className="absolute -top-6 left-10 bg-emerald-500 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-emerald-500/30">
-                  Submit Request
+                  <div className="absolute -top-6 left-10 bg-emerald-500 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-emerald-500/30">
+                  Book & Pay
                 </div>
                 
                 <div className="mb-8 pt-4">
@@ -221,7 +251,10 @@ export default function ZtFiestaPage() {
                       { id: "customerName", label: "Full Name", type: "text", required: true },
                       { id: "customerEmail", label: "Email Address", type: "email", required: true },
                       { id: "customerPhone", label: "Phone Number", type: "tel", required: true },
+                      { id: "dateOfBirth", label: "Date of Birth", type: "date", required: true },
                       { id: "participantName", label: "Participant Name (if different)", type: "text", required: false },
+                      { id: "preferredDate", label: "Preferred Date", type: "date", required: true },
+                      { id: "preferredTime", label: "Preferred Time", type: "time", required: true },
                     ].map((field) => (
                       <div key={field.id} className="relative group">
                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">
@@ -236,6 +269,22 @@ export default function ZtFiestaPage() {
                         />
                       </div>
                     ))}
+                    <div className="relative group">
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                        Gender *
+                      </label>
+                      <select
+                        required
+                        value={form.gender}
+                        onChange={(e) => setForm((prev) => ({ ...prev, gender: e.target.value }))}
+                        className="w-full rounded-2xl border-2 border-gray-50 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 px-5 py-4 text-gray-900 dark:text-white focus:border-emerald-500 focus:bg-white dark:focus:bg-gray-900 transition-all outline-none"
+                      >
+                        <option value="prefer_not_to_say">Prefer not to say</option>
+                        <option value="female">Female</option>
+                        <option value="male">Male</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
                     <div className="relative group">
                       <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Special Notes</label>
                       <textarea
@@ -256,7 +305,7 @@ export default function ZtFiestaPage() {
                       <div className="w-6 h-6 rounded-full border-2 border-current border-t-transparent animate-spin"></div>
                     ) : (
                       <>
-                        Send Request
+                        Proceed to Payment
                         <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
                       </>
                     )}

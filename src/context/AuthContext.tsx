@@ -576,6 +576,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           options: {
             data: {
               name: data.name,
+              phone: data.phone,
+              date_of_birth: data.dateOfBirth,
+              gender: data.gender,
               role: 'user', // Default role for new users
             },
             emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : undefined,
@@ -606,6 +609,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             timestamp: new Date().toISOString(),
           }
         }
+
+        // Trigger registration form email from admin app after self-signup.
+        // Non-blocking: signup should not fail if this auxiliary flow fails.
+        void Promise.resolve().then(async () => {
+          try {
+            const adminApiUrl = getAdminApiUrl()
+            const endpoint = adminApiUrl.endsWith('/api')
+              ? `${adminApiUrl}/registration-form/send`
+              : `${adminApiUrl}/api/registration-form/send`
+
+            // Retry briefly to tolerate profile creation race conditions
+            for (let attempt = 1; attempt <= 3; attempt += 1) {
+              const resp = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: authData.user.id }),
+              })
+
+              if (resp.ok) {
+                console.log('[Auth] Registration form send triggered for user:', authData.user.id)
+                break
+              }
+
+              if (attempt < 3) {
+                await new Promise((resolve) => setTimeout(resolve, 1500))
+              } else {
+                const errText = await resp.text().catch(() => '')
+                console.error('[Auth] Registration form send failed:', resp.status, errText)
+              }
+            }
+          } catch (formError) {
+            console.error('[Auth] Failed to trigger registration form email:', formError)
+          }
+        })
 
         // Note: Supabase may require email confirmation before creating a session
         // If email confirmation is required, session will be null
@@ -639,22 +676,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(userResponse)
           setIsAuthenticated(true)
 
-          // Process referral code if provided
-          if (data.referralCode && data.referralCode.trim()) {
-            try {
-              await fetch('/api/referrals/process', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  userId: userResponse.id,
-                  referralCode: data.referralCode.trim(),
-                }),
-              })
-            } catch (referralError) {
-              console.error('[Auth] Failed to process referral code:', referralError)
-              // Don't fail signup if referral processing fails
-            }
+          // Persist signup details into user_profiles
+          try {
+            await fetch('/api/profile', {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${authData.session.access_token}`,
+              },
+              body: JSON.stringify({
+                name: data.name,
+                phone: data.phone,
+                dateOfBirth: data.dateOfBirth,
+                gender: data.gender,
+              }),
+            })
+          } catch (profileUpdateError) {
+            console.error('[Auth] Failed to persist signup profile details:', profileUpdateError)
           }
+
 
           // Send welcome email via API route (server-side only)
           try {
@@ -690,21 +730,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             })
           } catch (welcomeError) {
             console.error('[Auth] Failed to send welcome notification:', welcomeError)
-          }
-
-          // Attempt to claim Early Steppers promo for this new user (fire-and-forget)
-          try {
-            console.log('[Auth] Attempting to claim Early Steppers for user:', userResponse.id)
-            fetch('/api/promos/claim', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: userResponse.id }),
-            })
-            .then(res => res.json())
-            .then(data => console.log('[Auth] Promo claim result:', data))
-            .catch((e) => console.warn('[Auth] claim promo failed', e))
-          } catch (promoErr) {
-            console.warn('[Auth] Failed to initiate promo claim:', promoErr)
           }
 
           return {

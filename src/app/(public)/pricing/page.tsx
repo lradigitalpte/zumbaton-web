@@ -3,8 +3,8 @@ import PricingHero from "@/components/Pricing/PricingHero";
 import PricingContent from "@/components/Pricing/PricingContent";
 
 export const metadata: Metadata = {
-  title: "Pricing & Packages | Zumbaton",
-  description: "Choose the perfect Zumbaton package for you. Flexible token packages for adults and kids. Find your dance fitness vibe with packages that fit your schedule.",
+  title: "Pricing & Packages | One Step Fitness",
+  description: "Choose the right One Step Fitness package for your goals. Flexible plans for adults and kids with 1-month validity options.",
 };
 
 const PricingPage = () => {

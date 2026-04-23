@@ -3,8 +3,8 @@ import { FAQSection, FAQMap } from "@/components/FAQ";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "FAQ | Zumbaton",
-  description: "Find answers to frequently asked questions about Zumbaton memberships, classes, billing, and more.",
+  title: "FAQ | One Step Fitness",
+  description: "Find answers to frequently asked questions about One Step Fitness memberships, classes, billing, and more.",
 };
 
 const FAQPage = () => {

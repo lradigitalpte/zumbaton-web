@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Page Not Found | Zumbaton",
+  title: "Page Not Found | One Step Fitness",
   description: "The page you're looking for doesn't exist.",
 };
 

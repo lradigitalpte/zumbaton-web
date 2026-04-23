@@ -59,6 +59,7 @@ export async function GET(request: NextRequest) {
         emergencyContactName: profile.emergency_contact_name || null,
         emergencyContactPhone: profile.emergency_contact_phone || null,
         bio: profile.bio || null,
+        gender: profile.gender || null,
         createdAt: profile.created_at,
         updatedAt: profile.updated_at,
         // Add early bird fields for promo system
@@ -102,6 +103,7 @@ export async function PUT(request: NextRequest) {
       emergencyContactName,
       emergencyContactPhone,
       bio,
+      gender,
     } = body
 
     // Build update data
@@ -116,6 +118,7 @@ export async function PUT(request: NextRequest) {
     if (emergencyContactName !== undefined) updateData.emergency_contact_name = emergencyContactName || null
     if (emergencyContactPhone !== undefined) updateData.emergency_contact_phone = emergencyContactPhone || null
     if (bio !== undefined) updateData.bio = bio || null
+    if (gender !== undefined) updateData.gender = gender || null
 
     // Update user profile
     const { data, error } = await supabaseAdmin
@@ -148,6 +151,7 @@ export async function PUT(request: NextRequest) {
         emergencyContactName: data.emergency_contact_name || null,
         emergencyContactPhone: data.emergency_contact_phone || null,
         bio: data.bio || null,
+        gender: data.gender || null,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
       },

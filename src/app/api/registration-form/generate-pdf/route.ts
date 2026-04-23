@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       pdf: pdfBase64,
-      filename: `zumbaton-registration-${formData.fullNameNric.replace(/\s+/g, '-')}.pdf`
+      filename: `one-step-fitness-registration-${formData.fullNameNric.replace(/\s+/g, '-')}.pdf`
     })
   } catch (error) {
     console.error('[PDF Generation] Error:', error)

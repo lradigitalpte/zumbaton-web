@@ -9,11 +9,11 @@ export default function ZumFamiliaPage() {
   return (
     <>
       <ClassesHero
-        title="ZumFamilia"
+        title="One Familia"
         breadcrumbs={[
           { label: "Home", href: "/explore" },
           { label: "Classes", href: "/classes" },
-          { label: "ZumFamilia" },
+          { label: "One Familia" },
         ]}
       />
 
@@ -29,7 +29,7 @@ export default function ZumFamiliaPage() {
               Child & Parent Bonding Class
             </span>
             <h2 className="mt-6 text-3xl md:text-5xl lg:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 tracking-tight">
-              Choose Your ZumFamilia Package
+              Choose Your One Familia Package
             </h2>
             <p className="mt-4 text-base md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed font-light">
               Pick a package below to view full details, select your preferred class date, and proceed to payment.
@@ -46,7 +46,7 @@ export default function ZumFamiliaPage() {
                 <div className="relative z-10 flex-1">
                   <p className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/40 px-3 py-1.5 rounded-full">
                     <Sparkles className="w-4 h-4" />
-                    ZumFamilia Package
+                    One Familia Package
                   </p>
                   <h3 className="mt-4 md:mt-6 text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white leading-tight">{pkg.name}</h3>
                   <p className="mt-3 md:mt-4 text-sm md:text-base leading-relaxed text-gray-600 dark:text-gray-400 min-h-[64px] md:min-h-[80px]">
@@ -83,9 +83,9 @@ export default function ZumFamiliaPage() {
             </div>
             <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 flex-shrink-0">
               <Link href="/classes/groove-stepper" className="px-5 py-2.5 rounded-xl bg-white dark:bg-gray-700 shadow-sm border border-gray-100 dark:border-gray-600 text-gray-900 dark:text-white font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">Groove Stepper</Link>
-              <Link href="/classes/zumbaton" className="px-5 py-2.5 rounded-xl bg-white dark:bg-gray-700 shadow-sm border border-gray-100 dark:border-gray-600 text-gray-900 dark:text-white font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">ZUMBATON</Link>
-              <Link href="/classes/zumbuddies" className="px-5 py-2.5 rounded-xl bg-white dark:bg-gray-700 shadow-sm border border-gray-100 dark:border-gray-600 text-gray-900 dark:text-white font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">ZUMBUDDIES</Link>
-              <Link href="/zt-fiesta" className="px-5 py-2.5 rounded-xl bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800/50 text-green-800 dark:text-green-300 font-bold hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors">ZT Fiesta</Link>
+              <Link href="/classes/zumbaton" className="px-5 py-2.5 rounded-xl bg-white dark:bg-gray-700 shadow-sm border border-gray-100 dark:border-gray-600 text-gray-900 dark:text-white font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">Zumba Step</Link>
+              <Link href="/classes/zumbuddies" className="px-5 py-2.5 rounded-xl bg-white dark:bg-gray-700 shadow-sm border border-gray-100 dark:border-gray-600 text-gray-900 dark:text-white font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">Lil Steppers</Link>
+              <Link href="/zt-fiesta" className="px-5 py-2.5 rounded-xl bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800/50 text-green-800 dark:text-green-300 font-bold hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors">ZumFiesta</Link>
               <Link href="/classes" className="px-5 py-2.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold hover:opacity-90 transition-opacity">View All Classes</Link>
             </div>
           </div>

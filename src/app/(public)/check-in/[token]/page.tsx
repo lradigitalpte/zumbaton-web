@@ -43,7 +43,7 @@ export default function CheckInPage() {
     if (token) {
       try {
         // Handle full URL from mobile camera (extract path if needed)
-        // Mobile cameras often capture the full URL like: https://zumbaton.sg/check-in/TOKEN
+        // Mobile cameras often capture the full URL like: https://onestepfitness.sg/check-in/TOKEN
         if (token.includes('/check-in/')) {
           token = token.split('/check-in/')[1] || token;
         }
@@ -234,7 +234,7 @@ export default function CheckInPage() {
           <div className="text-center mb-8">
             <Image
               src="/images/logo/zumbaton logo (transparent).png"
-              alt="Zumbaton Logo"
+              alt="One Step Fitness Logo"
               width={200}
               height={67}
               className="h-16 w-auto mx-auto dark:invert"
@@ -258,7 +258,7 @@ export default function CheckInPage() {
           <div className="text-center mb-8">
             <Image
               src="/images/logo/zumbaton logo (transparent).png"
-              alt="Zumbaton Logo"
+              alt="One Step Fitness Logo"
               width={200}
               height={67}
               className="h-16 w-auto mx-auto dark:invert"
@@ -287,7 +287,7 @@ export default function CheckInPage() {
           <div className="text-center mb-8">
             <Image
               src="/images/logo/zumbaton logo (transparent).png"
-              alt="Zumbaton Logo"
+              alt="One Step Fitness Logo"
               width={200}
               height={67}
               className="h-16 w-auto mx-auto dark:invert"
@@ -338,7 +338,7 @@ export default function CheckInPage() {
           <div className="text-center mb-8">
             <Image
               src="/images/logo/zumbaton logo (transparent).png"
-              alt="Zumbaton Logo"
+              alt="One Step Fitness Logo"
               width={200}
               height={67}
               className="h-16 w-auto mx-auto dark:invert"
@@ -433,7 +433,7 @@ export default function CheckInPage() {
           <div className="text-center mb-8">
             <Image
               src="/images/logo/zumbaton logo (transparent).png"
-              alt="Zumbaton Logo"
+              alt="One Step Fitness Logo"
               width={200}
               height={67}
               className="h-16 w-auto mx-auto dark:invert"
@@ -461,7 +461,7 @@ export default function CheckInPage() {
         <div className="text-center mb-8">
           <Image
             src="/images/logo/zumbaton logo (transparent).png"
-            alt="Zumbaton Logo"
+            alt="One Step Fitness Logo"
             width={200}
             height={67}
             className="h-16 w-auto mx-auto dark:invert"

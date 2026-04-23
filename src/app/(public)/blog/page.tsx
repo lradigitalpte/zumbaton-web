@@ -5,8 +5,8 @@ import Breadcrumb from "@/components/Common/Breadcrumb";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Blog | Zumbaton",
-  description: "Read the latest fitness tips, class updates, and health articles from Zumbaton.",
+  title: "Blog | One Step Fitness",
+  description: "Read the latest fitness tips, class updates, and health articles from One Step Fitness.",
 };
 
 const Blog = () => {

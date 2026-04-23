@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Generate filename
-      const fileName = `zumbaton-registration-${formData.fullNameNric.replace(/\s+/g, '-')}.pdf`
+      const fileName = `one-step-fitness-registration-${formData.fullNameNric.replace(/\s+/g, '-')}.pdf`
 
       // Send email to user
       console.log('[Send PDF] Sending email to user:', formData.email)
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
     const pdfBuffer = await generateRegistrationFormPDF(formData)
     
     // Generate filename
-    const fileName = `zumbaton-registration-${formData.fullNameNric.replace(/\s+/g, '-')}.pdf`
+    const fileName = `one-step-fitness-registration-${formData.fullNameNric.replace(/\s+/g, '-')}.pdf`
 
     // Send email with PDF attachment
     const emailResult = await sendRegistrationFormCompletedEmail({

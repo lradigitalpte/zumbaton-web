@@ -3,7 +3,7 @@ import { ScheduleHero, WeeklySchedule, ScheduleCTA } from "@/components/Schedule
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Class Schedule | Zumbaton",
+  title: "Class Schedule | One Step Fitness",
   description: "Check out our weekly dance fitness class schedule. Find the perfect class for your fitness level and join the dance fitness party!",
 };
 

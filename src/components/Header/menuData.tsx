@@ -32,13 +32,13 @@ const menuData: Menu[] = [
       },
       {
         id: 42,
-        title: "ZumFamilia",
+        title: "One Familia",
         path: "/zumfamilia",
         newTab: false,
       },
       {
         id: 43,
-        title: "ZT Fiesta",
+        title: "ZumFiesta",
         path: "/zt-fiesta",
         newTab: false,
       },

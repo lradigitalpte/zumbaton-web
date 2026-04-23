@@ -3,12 +3,15 @@
 import { useState, useEffect } from "react";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useToast } from "@/components/Toast";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 interface Package {
   id: string;
   name: string;
   description?: string;
   token_count: number;
+  is_unlimited?: boolean;
   price_cents: number;
   currency: string;
   validity_days: number;
@@ -18,11 +21,6 @@ interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedPackage: Package | null;
-  promoData?: {
-    hasEarlyBirdDiscount?: boolean;
-    earlyBirdDiscountPercent?: number;
-    earlyBirdDaysLeft?: number | null;
-  } | null;
 }
 
 type PaymentStatus = "idle" | "creating" | "error";
@@ -36,87 +34,33 @@ export default function PaymentModal({
   isOpen,
   onClose,
   selectedPackage,
-  promoData,
 }: PaymentModalProps) {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const toast = useToast();
   const [status, setStatus] = useState<PaymentStatus>("idle");
   const [error, setError] = useState<string | null>(null);
-  const [promo, setPromo] = useState<{
-    hasEarlyBirdDiscount: boolean
-    earlyBirdDiscountPercent: number
-    earlyBirdDaysLeft?: number | null
-  } | null>(null);
-  const [voucherInput, setVoucherInput] = useState("");
-  const [appliedVoucher, setAppliedVoucher] = useState<{ voucherCode: string; discountPercent: number } | null>(null);
-  const [isValidatingVoucher, setIsValidatingVoucher] = useState(false);
-  const [voucherError, setVoucherError] = useState<string | null>(null);
-
-  const effectivePromo = promo ?? (promoData
-    ? {
-        hasEarlyBirdDiscount: !!promoData.hasEarlyBirdDiscount,
-        earlyBirdDiscountPercent: promoData.earlyBirdDiscountPercent || 10,
-        earlyBirdDaysLeft: promoData.earlyBirdDaysLeft ?? null,
-      }
-    : null)
-
-  // Price: voucher takes precedence over early bird
+ 
   const originalPrice = selectedPackage?.price_cents || 0
-  const discountPercent = appliedVoucher
-    ? appliedVoucher.discountPercent
-    : effectivePromo?.hasEarlyBirdDiscount ? (effectivePromo.earlyBirdDiscountPercent || 10) : 0
-  const discountAmount = Math.round((originalPrice * discountPercent) / 100)
-  const finalPrice = originalPrice - discountAmount
+  const finalPrice = originalPrice
 
   // Reset state when modal opens/closes
   useEffect(() => {
     if (isOpen && selectedPackage) {
       setStatus("idle");
       setError(null);
-      setVoucherInput("");
-      setAppliedVoucher(null);
-      setVoucherError(null);
-      setPromo(
-        promoData
-          ? {
-              hasEarlyBirdDiscount: !!promoData.hasEarlyBirdDiscount,
-              earlyBirdDiscountPercent: promoData.earlyBirdDiscountPercent || 10,
-              earlyBirdDaysLeft: promoData.earlyBirdDaysLeft ?? null,
-            }
-          : null
-      )
     }
-  }, [isOpen, selectedPackage, promoData]);
-
-  const handleApplyVoucher = async () => {
-    const code = voucherInput.trim();
-    if (!code) {
-      setVoucherError("Enter your voucher code");
-      return;
-    }
-    setIsValidatingVoucher(true);
-    setVoucherError(null);
-    try {
-      const { apiFetchJson } = await import('@/lib/api-fetch');
-      const res = await apiFetchJson<{ success: boolean; valid: boolean; discountPercent?: number; voucherId?: string; error?: string }>(
-        "/api/promos/voucher/validate",
-        { method: "POST", body: JSON.stringify({ voucherCode: code }), requireAuth: true }
-      );
-      if (res.valid && res.discountPercent != null) {
-        setAppliedVoucher({ voucherCode: code.toUpperCase(), discountPercent: res.discountPercent });
-        toast.success(`${res.discountPercent}% discount applied`);
-      } else {
-        setVoucherError(res.error || "Invalid or already used voucher code");
-      }
-    } catch {
-      setVoucherError("Could not validate voucher");
-    } finally {
-      setIsValidatingVoucher(false);
-    }
-  };
+  }, [isOpen, selectedPackage]);
 
   // Create payment request and redirect to HitPay
   const handlePay = async () => {
     if (!selectedPackage) return;
+    if (!isAuthenticated) {
+      toast.info("Continue to checkout", "Please continue with your details to complete package checkout.");
+      onClose();
+      router.push("/signup?next=/packages");
+      return;
+    }
 
     setStatus("creating");
     setError(null);
@@ -140,9 +84,7 @@ export default function PaymentModal({
       }>("/api/payments", {
         method: "POST",
         body: JSON.stringify({ 
-          packageId: selectedPackage.id,
-          promoType: appliedVoucher ? null : (effectivePromo?.hasEarlyBirdDiscount ? 'early_bird' : null),
-          voucherCode: appliedVoucher ? appliedVoucher.voucherCode : undefined,
+          packageId: selectedPackage.id
         }),
         requireAuth: true,
         retryOn401: false,
@@ -226,83 +168,26 @@ export default function PaymentModal({
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
             {selectedPackage.description ||
-              `${selectedPackage.token_count} class tokens`}
+              (selectedPackage.is_unlimited ? "Unlimited class access" : `${selectedPackage.token_count} class tokens`)}
           </p>
           <div className="flex items-center justify-between">
             <div>
               <span className="text-2xl font-bold text-green-600">
-                {selectedPackage.token_count}
+                {selectedPackage.is_unlimited ? "Unlimited" : selectedPackage.token_count}
               </span>
               <span className="text-gray-600 dark:text-gray-400 ml-1">
-                tokens
+                {selectedPackage.is_unlimited ? "" : "tokens"}
               </span>
             </div>
             <div className="text-right">
-              {discountPercent > 0 ? (
-                <div className="text-right">
-                  <div className="text-xs text-amber-600 dark:text-amber-400 font-medium mb-1">
-                    {appliedVoucher ? `Voucher • ${discountPercent}% off` : "Early Steppers • 10% off"}
-                  </div>
-                  <div className="text-sm text-gray-500 line-through">
-                    {formatPrice(originalPrice, selectedPackage.currency)}
-                  </div>
-                  <div className="text-2xl font-bold text-green-600">
-                    {formatPrice(finalPrice, selectedPackage.currency)}
-                  </div>
-                  {!appliedVoucher && effectivePromo?.hasEarlyBirdDiscount && effectivePromo.earlyBirdDaysLeft != null && (
-                    <div className="text-xs text-amber-600">{effectivePromo.earlyBirdDaysLeft} days left</div>
-                  )}
-                </div>
-              ) : (
-                <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {formatPrice(originalPrice, selectedPackage.currency)}
-                </span>
-              )}
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                {formatPrice(originalPrice, selectedPackage.currency)}
+              </span>
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-2">
             Valid for {selectedPackage.validity_days} days
           </p>
-        </div>
-
-        {/* Voucher */}
-        <div className="mb-6">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Have a voucher?</p>
-          {appliedVoucher ? (
-            <div className="flex items-center justify-between rounded-xl bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-800 p-3">
-              <span className="text-sm text-lime-800 dark:text-lime-200">
-                Voucher applied: {appliedVoucher.discountPercent}% off
-              </span>
-              <button
-                type="button"
-                onClick={() => { setAppliedVoucher(null); setVoucherError(null); setVoucherInput(""); }}
-                className="text-xs font-medium text-lime-700 dark:text-lime-300 hover:underline"
-              >
-                Remove
-              </button>
-            </div>
-          ) : (
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={voucherInput}
-                onChange={(e) => { setVoucherInput(e.target.value); setVoucherError(null); }}
-                placeholder="Enter voucher code"
-                className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:border-green-500 focus:ring-1 focus:ring-green-500"
-              />
-              <button
-                type="button"
-                onClick={handleApplyVoucher}
-                disabled={isValidatingVoucher || !voucherInput.trim()}
-                className="rounded-lg bg-gray-200 dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isValidatingVoucher ? "..." : "Apply"}
-              </button>
-            </div>
-          )}
-          {voucherError && (
-            <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{voucherError}</p>
-          )}
         </div>
 
         {/* Payment Methods Info */}

@@ -15,6 +15,7 @@ export interface Package {
   class_types: string[]
   package_type: 'adult' | 'kid' | 'all'
   age_requirement?: string | null
+  is_unlimited?: boolean
   is_active: boolean
   is_popular?: boolean
 }
@@ -70,6 +71,7 @@ export async function getAvailablePackages(packageType?: 'adults' | 'kids'): Pro
             class_types: pkg.class_types || ['all'],
             package_type: pkg.package_type || 'adult',
             age_requirement: pkg.age_requirement || null,
+            is_unlimited: pkg.is_unlimited || false,
             is_active: pkg.is_active,
             is_popular: false,
           }))
@@ -169,6 +171,7 @@ export async function getAvailablePackages(packageType?: 'adults' | 'kids'): Pro
     class_types: pkg.class_types || ['all'],
     package_type: pkg.package_type || 'adult',
     age_requirement: pkg.age_requirement || null,
+    is_unlimited: pkg.is_unlimited || false,
     is_active: pkg.is_active,
     // Mark as popular if it's the middle package or has most tokens
     is_popular: false, // Can be calculated based on business logic

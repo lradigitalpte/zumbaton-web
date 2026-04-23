@@ -11,12 +11,12 @@ const faqCategories = [
     name: "About the Classes",
     questions: [
       {
-        q: "What is Zumbaton (ZT)?",
-        a: "Zumbaton is a high-energy dance fitness program inspired by cardio-dance movements, combining cardio, rhythm, and fun choreography to help you stay active while enjoying the music."
+        q: "What is One Step Fitness (ZT)?",
+        a: "One Step Fitness is a high-energy dance fitness program inspired by cardio-dance movements, combining cardio, rhythm, and fun choreography to help you stay active while enjoying the music."
       },
       {
         q: "Do I need dance experience to join?",
-        a: "Not at all! Zumbaton classes are designed for everyone — beginners to experienced dancers. Just follow along and move at your own pace."
+        a: "Not at all! One Step Fitness classes are designed for everyone — beginners to experienced dancers. Just follow along and move at your own pace."
       },
       {
         q: "What kind of music is used in ZT classes?",
@@ -33,7 +33,7 @@ const faqCategories = [
         a: "All fitness levels are welcome. You can modify movements to suit your comfort and ability."
       },
       {
-        q: "Is Zumbaton suitable for beginners?",
+        q: "Is One Step Fitness suitable for beginners?",
         a: "Yes! Beginners are encouraged to join. Our instructors guide you through the routines and ensure a welcoming environment."
       },
       {
@@ -65,7 +65,7 @@ const faqCategories = [
     name: "Community & Safety",
     questions: [
       {
-        q: "Is Zumbaton suitable for all ages?",
+        q: "Is One Step Fitness suitable for all ages?",
         a: "Most classes are suitable for adults of all ages. Age-specific classes or guidelines will be stated where applicable. For example: Kids will have to be supervised by a guardian/parent."
       },
       {
@@ -102,7 +102,8 @@ const FAQSection = () => {
             FAQ
           </span>
           <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
-            Everything You Need to Know About Zumbaton
+            Everything You Need to Know About{" "}
+            <span className="text-green-600 dark:text-green-400">One Step Fitness</span>
           </h2>
           <p className="text-sm sm:text-base text-gray-600 dark:text-white/70">
             Have questions about our token packages, classes, or account? Find answers here or reach out to our support team.

@@ -4,9 +4,11 @@ import { UuidSchema, EmailSchema, PasswordSchema, RoleSchema, BaseTimestampsSche
 export const SignUpRequestSchema = z.object({
   name: z.string().min(1).max(255),
   email: EmailSchema,
+  phone: z.string().min(6).max(30),
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
+  gender: z.enum(['male', 'female', 'other', 'prefer_not_to_say']),
   password: PasswordSchema,
   confirmPassword: z.string(),
-  referralCode: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword'],

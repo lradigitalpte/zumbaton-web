@@ -44,7 +44,7 @@ const featuresData: Feature[] = [
     ),
     title: "50+ Weekly Classes",
     paragraph:
-      "Never miss a beat! With over 50 classes per week across multiple styles and difficulty levels, there's always a perfect class waiting for you at Zumbaton.",
+      "Never miss a beat! With over 50 classes per week across multiple styles and difficulty levels, there is always a perfect class waiting for you at One Step Fitness.",
   },
   {
     id: 4,
@@ -89,7 +89,7 @@ const featuresData: Feature[] = [
     ),
     title: "Vibrant Community",
     paragraph:
-      "Join a supportive community of fitness enthusiasts! Make new friends, stay motivated, and celebrate your fitness journey together in our welcoming Zumbaton family.",
+      "Join a supportive community of fitness enthusiasts! Make new friends, stay motivated, and celebrate your fitness journey together in our welcoming One Step Fitness family.",
   },
 ];
 export default featuresData;

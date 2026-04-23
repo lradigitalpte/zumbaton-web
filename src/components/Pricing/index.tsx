@@ -72,7 +72,7 @@ const Pricing = () => {
           </div>
           <SectionTitle
             title="Choose the Perfect Plan That Truly Fits You"
-            paragraph="Flexible token packages for every lifestyle. Pick a pack, join the rhythm, and dance whenever you want. Your pace. Your dance. Your Zumbaton."
+            paragraph="Flexible token packages for every lifestyle. Pick a plan, book your classes, and train your way with One Step Fitness."
             center
             width="720px"
           />
@@ -103,9 +103,9 @@ const Pricing = () => {
                     packageName={pkg.name}
                     price={priceFormatted}
               duration="pack"
-              subtitle={pkg.description || `${pkg.token_count} class tokens - Perfect for finding your dance fitness vibe.`}
+              subtitle={pkg.description || (pkg.is_unlimited ? "Unlimited class access - Perfect for finding your dance fitness vibe." : `${pkg.token_count} class tokens - Perfect for finding your dance fitness vibe.`)}
             >
-                    <OfferList text={`${pkg.token_count} Class ${pkg.token_count === 1 ? 'Token' : 'Tokens'}`} status="active" />
+                    <OfferList text={pkg.is_unlimited ? 'Unlimited Class Bookings' : `${pkg.token_count} Class ${pkg.token_count === 1 ? 'Token' : 'Tokens'}`} status="active" />
                     <OfferList text={`Valid for ${formatValidity(pkg.validity_days)}`} status="active" />
               <OfferList text="All class types included" status="active" />
               <OfferList text="Easy online booking" status="active" />

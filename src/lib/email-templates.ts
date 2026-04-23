@@ -1,5 +1,5 @@
 /**
- * Professional Email Templates for Zumbaton
+ * Professional Email Templates for One Step Fitness
  * All templates use a consistent, clean design without emojis
  */
 
@@ -20,7 +20,7 @@ function getBaseTemplate(content: string, preheader?: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
   <meta name="supported-color-schemes" content="light dark">
-  <title>Zumbaton</title>
+  <title>One Step Fitness</title>
   <style type="text/css">
     ${preheader ? `#preheader { display: none !important; visibility: hidden; opacity: 0; color: transparent; height: 0; width: 0; }` : ''}
     
@@ -139,7 +139,7 @@ function getBaseTemplate(content: string, preheader?: string): string {
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 40px 30px; text-align: center;" class="email-header">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Zumbaton</h1>
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">One Step Fitness</h1>
               <p style="margin: 8px 0 0 0; color: #d1fae5; font-size: 14px; font-weight: 500;">Dance Your Way to Fitness</p>
             </td>
           </tr>
@@ -155,13 +155,13 @@ function getBaseTemplate(content: string, preheader?: string): string {
           <tr>
             <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;" class="email-footer">
               <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
-                <strong style="color: #374151;">Zumbaton Fitness Studio</strong><br>
+                <strong style="color: #374151;">One Step Fitness Fitness Studio</strong><br>
                 Singapore<br>
-                <a href="mailto:hello@zumbaton.sg" style="color: #16a34a; text-decoration: none;">hello@zumbaton.sg</a><span class="mobile-link-break" style="display: inline;"> | </span>
+                <a href="mailto:hello@onestepfitness.sg" style="color: #16a34a; text-decoration: none;">hello@onestepfitness.sg</a><span class="mobile-link-break" style="display: inline;"> | </span>
                 <a href="tel:+6584927347" style="color: #16a34a; text-decoration: none;">+65 8492 7347</a>
               </p>
               <p style="margin: 20px 0 0 0; color: #9ca3af; font-size: 12px;">
-                © ${new Date().getFullYear()} Zumbaton. All rights reserved.<br>
+                © ${new Date().getFullYear()} One Step Fitness. All rights reserved.<br>
                 Designed by LRA Digital
               </p>
             </td>
@@ -181,7 +181,7 @@ function getBaseTemplate(content: string, preheader?: string): string {
 export function getWelcomeEmailTemplate(data: { userName: string }): { html: string; text: string } {
   const html = getBaseTemplate(`
     <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Welcome to Zumbaton, ${escapeHtml(data.userName)}!</h2>
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Welcome to One Step Fitness, ${escapeHtml(data.userName)}!</h2>
       <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">We're thrilled to have you join our dance fitness community!</p>
     </div>
     
@@ -195,7 +195,7 @@ export function getWelcomeEmailTemplate(data: { userName: string }): { html: str
     </div>
     
     <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/packages" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/packages" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         Browse Packages
       </a>
@@ -203,12 +203,12 @@ export function getWelcomeEmailTemplate(data: { userName: string }): { html: str
     
     <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
       If you have any questions, feel free to reach out to us at 
-      <a href="mailto:hello@zumbaton.sg" style="color: #16a34a; text-decoration: none;">hello@zumbaton.sg</a>
+      <a href="mailto:hello@onestepfitness.sg" style="color: #16a34a; text-decoration: none;">hello@onestepfitness.sg</a>
     </p>
-  `, `Welcome to Zumbaton! Start your dance fitness journey today.`)
+  `, `Welcome to One Step Fitness! Start your dance fitness journey today.`)
 
   const text = `
-Welcome to Zumbaton, ${data.userName}!
+Welcome to One Step Fitness, ${data.userName}!
 
 We're thrilled to have you join our dance fitness community!
 
@@ -217,11 +217,11 @@ Get Started:
 - Purchase token packages to book classes
 - Book your first session and start dancing!
 
-Visit: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/packages
+Visit: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/packages
 
-If you have any questions, feel free to reach out to us at hello@zumbaton.sg
+If you have any questions, feel free to reach out to us at hello@onestepfitness.sg
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
 
   return { html, text }
@@ -280,14 +280,14 @@ export function getTokenPurchaseEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-packages" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-packages" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         View My Packages
       </a>
     </div>
     
     <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
-      Ready to book a class? <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes" style="color: #16a34a; text-decoration: none; font-weight: 600;">Browse Classes</a>
+      Ready to book a class? <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes" style="color: #16a34a; text-decoration: none; font-weight: 600;">Browse Classes</a>
     </p>
   `, `Payment successful! ${data.tokenCount} tokens added to your account.`)
 
@@ -303,10 +303,10 @@ Tokens Added: ${data.tokenCount} tokens
 Amount Paid: ${formattedAmount}
 Expires: ${formattedExpiry}
 
-View your packages: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-packages
-Browse classes: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes
+View your packages: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-packages
+Browse classes: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
 
   return { html, text }
@@ -361,7 +361,7 @@ export function getTokenExpiryWarningEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         Book a Class Now
       </a>
@@ -381,9 +381,9 @@ Expiry Date: ${formattedExpiry}
 
 Important: Book a class now to use your tokens before they expire! Unused tokens will be lost after the expiry date.
 
-Book a class: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes
+Book a class: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
 
   return { html, text }
@@ -437,7 +437,7 @@ export function getClassReminderEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-bookings" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-bookings" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         View My Bookings
       </a>
@@ -459,9 +459,9 @@ ${data.instructorName ? `Instructor: ${data.instructorName}` : ''}
 
 Reminder: Please arrive 10 minutes early. Bring water and wear comfortable workout clothes. We can't wait to see you!
 
-View bookings: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-bookings
+View bookings: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-bookings
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
 
   return { html, text }
@@ -521,7 +521,7 @@ export function getBookingConfirmationEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-bookings" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-bookings" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         View My Bookings
       </a>
@@ -545,9 +545,9 @@ Tokens: ${data.tokensUsed} token${data.tokensUsed !== 1 ? 's' : ''} used
 What's Next?
 You'll receive a reminder 3 hours before your class. Please arrive 10 minutes early and bring water!
 
-View bookings: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-bookings
+View bookings: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-bookings
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
 
   return { html, text }
@@ -597,7 +597,7 @@ export function getTokenAdjustmentEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-packages" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-packages" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         View My Packages
       </a>
@@ -616,9 +616,9 @@ New Balance: ${data.newBalance} tokens
 Reason: ${data.reason}
 ${data.adjustedBy ? `Adjusted By: ${data.adjustedBy}` : ''}
 
-View your packages: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-packages
+View your packages: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-packages
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
 
   return { html, text }
@@ -635,7 +635,7 @@ export function getAdminCreatedUserEmailTemplate(data: {
 }): { html: string; text: string } {
   const html = getBaseTemplate(`
     <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Welcome to Zumbaton, ${escapeHtml(data.userName)}!</h2>
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Welcome to One Step Fitness, ${escapeHtml(data.userName)}!</h2>
       <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Your account has been created by our team</p>
     </div>
     
@@ -661,7 +661,7 @@ export function getAdminCreatedUserEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="https://zumbaton.sg/signin" 
+      <a href="https://onestepfitness.sg/signin" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3); margin-bottom: 15px;" class="mobile-button">
         Sign In Now
       </a>
@@ -670,7 +670,7 @@ export function getAdminCreatedUserEmailTemplate(data: {
         <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px;" class="mobile-text">
           Want to change your password?
         </p>
-        <a href="https://zumbaton.sg/forgot-password" 
+        <a href="https://onestepfitness.sg/forgot-password" 
            style="display: inline-block; color: #16a34a; text-decoration: none; font-size: 14px; font-weight: 500; border-bottom: 1px solid #16a34a;">
           Go to Forgot Password →
         </a>
@@ -680,12 +680,12 @@ export function getAdminCreatedUserEmailTemplate(data: {
     
     <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
       If you have any questions, feel free to reach out to us at 
-      <a href="mailto:hello@zumbaton.sg" style="color: #16a34a; text-decoration: none;">hello@zumbaton.sg</a>
+      <a href="mailto:hello@onestepfitness.sg" style="color: #16a34a; text-decoration: none;">hello@onestepfitness.sg</a>
     </p>
-  `, `Welcome to Zumbaton! Your account has been created.${data.temporaryPassword ? ` Temporary password: ${data.temporaryPassword}` : ''}`)
+  `, `Welcome to One Step Fitness! Your account has been created.${data.temporaryPassword ? ` Temporary password: ${data.temporaryPassword}` : ''}`)
 
   const text = `
-Welcome to Zumbaton, ${data.userName}!
+Welcome to One Step Fitness, ${data.userName}!
 
 Your account has been created by our team.
 
@@ -699,15 +699,15 @@ Get Started:
 - ${data.temporaryPassword ? 'Change your temporary password' : 'Set up your profile'}
 - Browse classes and book your first session
 
-Sign in: https://zumbaton.sg/signin
+Sign in: https://onestepfitness.sg/signin
 ${data.temporaryPassword ? `
-Change your password: https://zumbaton.sg/forgot-password
+Change your password: https://onestepfitness.sg/forgot-password
 You can change your password anytime by visiting the forgot password page.
 ` : ''}
 
-If you have any questions, feel free to reach out to us at hello@zumbaton.sg
+If you have any questions, feel free to reach out to us at hello@onestepfitness.sg
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
 
   return { html, text }
@@ -765,7 +765,7 @@ export function getBookingCancellationEmailTemplate(data: {
     ` : ''}
     
     <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         Book Another Class
       </a>
@@ -785,9 +785,9 @@ Time: ${data.classTime}
 ${data.tokensRefunded > 0 ? `Tokens: ${data.tokensRefunded} token${data.tokensRefunded !== 1 ? 's' : ''} refunded` : data.penalty ? 'Note: Late cancellation - tokens consumed' : ''}
 ${data.reason ? `Reason: ${data.reason}` : ''}
 
-Book another class: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes
+Book another class: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
 
   return { html, text }
@@ -854,7 +854,7 @@ Important: This spot is reserved for you, but you need to confirm your booking s
 
 Confirm booking: ${data.confirmUrl}
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
 
   return { html, text }
@@ -902,7 +902,7 @@ export function getClassCancellationEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         Browse Other Classes
       </a>
@@ -924,9 +924,9 @@ Tokens: ${data.tokensRefunded} token${data.tokensRefunded !== 1 ? 's' : ''} refu
 What Happened?
 This class has been cancelled by our team. Your tokens have been automatically refunded to your account. We apologize for any inconvenience.
 
-Browse other classes: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes
+Browse other classes: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
 
   return { html, text }
@@ -987,7 +987,7 @@ export function getNoShowWarningEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-bookings" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-bookings" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         View My Bookings
       </a>
@@ -1011,9 +1011,9 @@ ${data.isFlagged ? 'Your account has been flagged due to multiple no-shows. Plea
 
 Reminder: If you can't make it to a class, please cancel at least 24 hours in advance to avoid losing tokens. You can cancel bookings from your "My Bookings" page.
 
-View bookings: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/my-bookings
+View bookings: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-bookings
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
 
   return { html, text }
@@ -1073,7 +1073,7 @@ Security Note: This link will expire ${data.expiresIn || 'in 1 hour'}. If you di
 
 If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
 
   return { html, text }
@@ -1136,7 +1136,7 @@ Security Note: If you didn't request this password reset, please ignore this ema
 
 If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
 
   return { html, text }
@@ -1175,7 +1175,7 @@ export function getPasswordResetEmailTemplate(data: {
     ` : ''}
     
     <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_ADMIN_APP_URL || process.env.ADMIN_APP_URL || 'https://admin.zumbaton.sg'}/signin" 
+      <a href="${process.env.NEXT_PUBLIC_ADMIN_APP_URL || process.env.ADMIN_APP_URL || 'https://admin.onestepfitness.sg'}/signin" 
          style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
         Sign In Now
       </a>
@@ -1183,7 +1183,7 @@ export function getPasswordResetEmailTemplate(data: {
     
     <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
       If you didn't request this password reset, please contact us immediately at 
-      <a href="mailto:hello@zumbaton.sg" style="color: #16a34a; text-decoration: none;">hello@zumbaton.sg</a>
+      <a href="mailto:hello@onestepfitness.sg" style="color: #16a34a; text-decoration: none;">hello@onestepfitness.sg</a>
     </p>
   `, `Password reset: Your new password is ${data.newPassword}`)
 
@@ -1199,11 +1199,11 @@ Please change this password after your first login for security.
 
 ${data.resetBy ? `Password reset by: ${data.resetBy}` : ''}
 
-Sign in: ${process.env.NEXT_PUBLIC_ADMIN_APP_URL || process.env.ADMIN_APP_URL || 'https://admin.zumbaton.sg'}/signin
+Sign in: ${process.env.NEXT_PUBLIC_ADMIN_APP_URL || process.env.ADMIN_APP_URL || 'https://admin.onestepfitness.sg'}/signin
 
-If you didn't request this password reset, please contact us immediately at hello@zumbaton.sg
+If you didn't request this password reset, please contact us immediately at hello@onestepfitness.sg
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
 
   return { html, text }
@@ -1227,7 +1227,7 @@ export function getBirthdayEmailTemplate(data: {
     
     <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 25px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
       <p style="margin: 0; color: #374151; font-size: 16px; line-height: 1.8; text-align: center;" class="mobile-text">
-        <strong>Thank you for being part of the Zumbaton family!</strong><br>
+        <strong>Thank you for being part of the One Step Fitness family!</strong><br>
         We're so grateful to have you in our dance fitness community. On this special day, we want to celebrate you and wish you a year filled with health, happiness, and amazing dance sessions!
       </p>
     </div>
@@ -1240,7 +1240,7 @@ export function getBirthdayEmailTemplate(data: {
     </div>
     
     <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes" 
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes" 
          style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3);" class="mobile-button">
         Book a Class Today
       </a>
@@ -1258,17 +1258,17 @@ Happy Birthday${ageText}, ${data.userName}!
 
 We hope your special day is filled with joy and celebration!
 
-Thank you for being part of the Zumbaton family!
+Thank you for being part of the One Step Fitness family!
 We're so grateful to have you in our dance fitness community. On this special day, we want to celebrate you and wish you a year filled with health, happiness, and amazing dance sessions!
 
 Ready to Dance?
 What better way to celebrate than with a fun dance session? Book a class and let's make your birthday even more special!
 
-Book a class: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://zumbaton.sg'}/classes
+Book a class: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes
 
 Once again, happy birthday! We hope you have an absolutely wonderful day!
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
 
   return { html, text }
@@ -1359,7 +1359,7 @@ Please arrive 10 minutes early for check-in. Bring water and wear comfortable wo
 Want to become a member?
 If you enjoy the class, our team can help you set up a membership account. Just ask at the front desk!
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
 
   return { html, text }
@@ -1475,7 +1475,7 @@ Booking ID: ${data.bookingId}
 Action Required:
 Please create a user account for this guest if they want to become a member. The guest information is provided above.
 
-© ${new Date().getFullYear()} Zumbaton. All rights reserved.
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
 
   return { html, text }

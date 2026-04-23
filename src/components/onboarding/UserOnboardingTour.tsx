@@ -21,7 +21,7 @@ const USER_ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: 'welcome',
     target: 'body',
-    title: 'Welcome to Zumbaton! 🎉',
+    title: 'Welcome to One Step Fitness! 🎉',
     content: 'Let\'s take a quick tour to help you get started. You\'ll learn how to browse classes, book sessions, and manage your fitness journey.',
     position: 'center',
   },
@@ -106,7 +106,7 @@ const USER_ONBOARDING_STEPS: OnboardingStep[] = [
     id: 'complete',
     target: 'body',
     title: 'You\'re All Set! 🚀',
-    content: 'You now know your way around Zumbaton! Start browsing classes and book your first session. Let\'s get moving!',
+    content: 'You now know your way around One Step Fitness! Start browsing classes and book your first session. Let\'s get moving!',
     position: 'center',
   },
 ];

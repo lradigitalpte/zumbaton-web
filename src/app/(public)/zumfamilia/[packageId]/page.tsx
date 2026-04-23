@@ -77,7 +77,7 @@ export default function ZumFamiliaDetailPage() {
         }
       } catch (error) {
         console.error(error);
-        toast.error("Failed to load ZumFamilia schedule.");
+        toast.error("Failed to load One Familia schedule.");
       } finally {
         setLoadingClasses(false);
       }
@@ -97,7 +97,7 @@ export default function ZumFamiliaDetailPage() {
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Package Not Found</h1>
           <Link href="/zumfamilia" className="text-green-600 font-semibold mt-4 inline-block">
-            Back to ZumFamilia
+            Back to One Familia
           </Link>
         </div>
       </div>
@@ -149,7 +149,7 @@ export default function ZumFamiliaDetailPage() {
         title={pkg.name}
         breadcrumbs={[
           { label: "Home", href: "/explore" },
-          { label: "ZumFamilia", href: "/zumfamilia" },
+          { label: "One Familia", href: "/zumfamilia" },
           { label: pkg.name },
         ]}
       />
@@ -163,7 +163,7 @@ export default function ZumFamiliaDetailPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 xl:gap-14">
             <aside className="lg:col-span-3 xl:col-span-3">
               <div className="lg:sticky lg:top-32 space-y-6">
-                <h4 className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300">All ZumFamilia Packages</h4>
+                <h4 className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300">All One Familia Packages</h4>
                 <div className="flex flex-col gap-3">
                   {zumFamiliaPackages.map((item) => (
                     <Link

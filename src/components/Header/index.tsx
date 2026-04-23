@@ -84,7 +84,7 @@ const Header = () => {
                 <span className="inline-flex items-center justify-center rounded-xl bg-gray-800/90 dark:bg-gray-950/90 backdrop-blur-sm px-3 py-2 sm:px-4 sm:py-2.5 shadow-lg shadow-black/15 ring-1 ring-white/5">
                   <Image
                     src="/logo/zumbaton logo (transparent).png"
-                    alt="Zumbaton Logo"
+                    alt="One Step Fitness Logo"
                     width={80}
                     height={80}
                     className="h-10 sm:h-12 md:h-16 w-auto object-contain"

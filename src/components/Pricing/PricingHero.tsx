@@ -49,7 +49,7 @@ const PricingHero = () => {
             Pricing & Packages
           </h1>
           <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-6 max-w-3xl mx-auto px-4">
-            Choose the perfect package that fits your schedule. Your pace. Your dance. Your Zumbaton.
+            Choose the perfect package that fits your schedule. Your pace. Your class. Your One Step Fitness journey.
           </p>
           
           {/* Breadcrumb */}

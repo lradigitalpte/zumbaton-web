@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Blog Post | Zumbaton",
+  title: "Blog Post | One Step Fitness",
   description: "Read our latest fitness and health articles.",
 };
 

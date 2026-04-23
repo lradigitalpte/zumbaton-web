@@ -3,8 +3,8 @@ import Link from "next/link";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Refund Policy | Zumbaton",
-  description: "Zumbaton refund policy. Package non-refundability, medical exceptions, and class cancellation rules.",
+  title: "Refund Policy | One Step Fitness",
+  description: "One Step Fitness refund policy. Package non-refundability, medical exceptions, and class cancellation rules.",
 };
 
 const RefundPage = () => {
@@ -32,7 +32,7 @@ const RefundPage = () => {
 
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-8">2. Medical Exceptions</h2>
             <p>
-              You may cancel or terminate your membership for medical reasons. The following documentary proof must be provided and will be subject to approval by ZUMBATON management:
+              You may cancel or terminate your membership for medical reasons. The following documentary proof must be provided and will be subject to approval by One Step Fitness management:
             </p>
             <ul className="list-disc pl-6 space-y-1">
               <li>
@@ -48,7 +48,7 @@ const RefundPage = () => {
               Cancellation of a class after booking must be made at least 24 hours before the class date. If you cancel in time, the token will be returned to your account. A booked class with a &quot;NO SHOW&quot; will be forfeited; no token refund or credit will be given.
             </p>
 
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-8">4. Cancellations by ZUMBATON</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-8">4. Cancellations by One Step Fitness</h2>
             <p>
               If we cancel a class (e.g. instructor illness, low attendance, facility issues), your token will be refunded to your account automatically. We will notify you as early as possible.
             </p>
@@ -56,8 +56,8 @@ const RefundPage = () => {
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-8">5. How to Request a Refund or Hold</h2>
             <p>
               To request a refund or membership hold based on medical grounds, contact us at{" "}
-              <a href="mailto:hello@zumbaton.sg" className="text-green-600 dark:text-green-400 hover:underline">
-                hello@zumbaton.sg
+              <a href="mailto:hello@onestepfitness.sg" className="text-green-600 dark:text-green-400 hover:underline">
+                hello@onestepfitness.sg
               </a>{" "}
               with your membership details and the required doctor&apos;s letter. All requests are subject to management approval. Approved refunds will be processed within a reasonable time to the original payment method.
             </p>
@@ -65,8 +65,8 @@ const RefundPage = () => {
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-8">6. Contact</h2>
             <p>
               For refund or hold enquiries, email{" "}
-              <a href="mailto:hello@zumbaton.sg" className="text-green-600 dark:text-green-400 hover:underline">
-                hello@zumbaton.sg
+              <a href="mailto:hello@onestepfitness.sg" className="text-green-600 dark:text-green-400 hover:underline">
+                hello@onestepfitness.sg
               </a>{" "}
               or visit us at 2 Jalan Klapa, #2-A, Singapore 199314.
             </p>

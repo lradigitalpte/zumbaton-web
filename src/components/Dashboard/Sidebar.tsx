@@ -164,7 +164,7 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
             <Link href="/dashboard" className="flex items-center">
               <Image
                 src="/logo/zumbaton logo (solid bg).png"
-                alt="Zumbaton Logo"
+                alt="One Step Fitness Logo"
                 width={200}
                 height={67}
                 className="h-10 w-auto"
@@ -175,7 +175,7 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
             <Link href="/dashboard" className="flex items-center justify-center">
               <Image
                 src="/logo/logo fav.png"
-                alt="Zumbaton"
+                alt="One Step Fitness"
                 width={40}
                 height={40}
                 className="h-10 w-10 rounded-xl"

@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 
 export default function SetPasswordPage() {
   const [redirecting, setRedirecting] = useState(true);
+  const adminBaseUrl = process.env.NEXT_PUBLIC_ADMIN_APP_URL || "https://admin.onestepfitness.sg";
 
   useEffect(() => {
     const handleRedirect = () => {
@@ -30,7 +31,7 @@ export default function SetPasswordPage() {
               if (isAdminUser) {
                 // Redirect immediately without waiting for API call
                 console.log('[SetPassword] Redirecting admin user to admin app');
-                window.location.replace(`https://admin.zumbaton.sg/set-password${window.location.hash}`);
+                window.location.replace(`${adminBaseUrl}/set-password${window.location.hash}`);
                 return;
               }
             }
@@ -47,7 +48,7 @@ export default function SetPasswordPage() {
             
             if (isAdminUser) {
               console.log('[SetPassword] Redirecting admin user to admin app (from session)');
-              window.location.replace(`https://admin.zumbaton.sg/set-password${window.location.hash}`);
+              window.location.replace(`${adminBaseUrl}/set-password${window.location.hash}`);
               return;
             }
           }
@@ -74,7 +75,7 @@ export default function SetPasswordPage() {
 
     // Execute immediately - no delay needed
     handleRedirect();
-  }, []);
+  }, [adminBaseUrl]);
 
   // Show loading state while redirecting
   return (

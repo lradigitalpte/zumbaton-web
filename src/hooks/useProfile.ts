@@ -11,6 +11,7 @@ interface ProfileData {
   emergencyContactName: string | null;
   emergencyContactPhone: string | null;
   bio: string | null;
+  gender: string | null;
   createdAt: string;
   updatedAt: string;
 }

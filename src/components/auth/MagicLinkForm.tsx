@@ -87,7 +87,7 @@ export default function MagicLinkForm({ onSuccess, redirectTo, className = "" }:
       <div className="text-center mb-6">
         <Image
           src="/images/logo/zumbaton logo (transparent).png"
-          alt="Zumbaton Logo"
+          alt="One Step Fitness Logo"
           width={200}
           height={67}
           className="h-12 w-auto mx-auto dark:invert mb-4"

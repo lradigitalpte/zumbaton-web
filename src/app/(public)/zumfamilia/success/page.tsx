@@ -47,10 +47,10 @@ function ZumFamiliaSuccessContent() {
     <div className="min-h-screen bg-white dark:bg-gray-dark py-12">
       <div className="container mx-auto px-4 max-w-2xl">
         <div className={`rounded-lg border p-8 text-center ${success ? "bg-green-50 border-green-200" : "bg-yellow-50 border-yellow-200"}`}>
-          <h1 className="text-3xl font-bold text-gray-900">{success ? "ZumFamilia Booking Confirmed!" : "Payment Pending"}</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{success ? "One Familia Booking Confirmed!" : "Payment Pending"}</h1>
           <p className="mt-3 text-gray-700">
             {success
-              ? "Your ZumFamilia class booking is confirmed."
+              ? "Your One Familia class booking is confirmed."
               : "We are still confirming your payment. Please refresh shortly."}
           </p>
 

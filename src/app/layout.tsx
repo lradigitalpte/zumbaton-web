@@ -1,17 +1,16 @@
 import { Providers } from "./providers";
-import { Inter } from "next/font/google";
 import type { Metadata } from "next";
 import "../styles/index.css";
 
-const inter = Inter({ subsets: ["latin"] });
-
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || "https://zumbaton.sg";
+const defaultWebUrl = "https://onestepfitness.sg";
+const configuredWebUrl = process.env.NEXT_PUBLIC_WEB_APP_URL || process.env.NEXT_PUBLIC_APP_URL || defaultWebUrl;
+const siteUrl = configuredWebUrl.includes("admin.") ? defaultWebUrl : configuredWebUrl;
 const firstHeroImage = `${siteUrl}/images/hero/hero.jpeg`;
 
 export const metadata: Metadata = {
-  title: "Zumbaton - Dance Happy, Get Fit Naturally",
+  title: "One Step Fitness - one step to change your life",
   description:
-    "Fun into fitness with Zumbaton! Not hardcore training — just joyful movement with good energy. Join our community transforming lives one dance step at a time.",
+    "One Step Fitness brings joyful movement, dance cardio, and step workouts for all levels. One step to change your life.",
   metadataBase: new URL(siteUrl),
   icons: {
     icon: "/logo/logo fav.png",
@@ -19,26 +18,26 @@ export const metadata: Metadata = {
     apple: "/logo/logo fav.png",
   },
   openGraph: {
-    title: "Zumbaton - Dance Happy, Get Fit Naturally",
+    title: "One Step Fitness - one step to change your life",
     description:
-      "Fun into fitness with Zumbaton! Not hardcore training — just joyful movement with good energy. Join our community transforming lives one dance step at a time.",
+      "One Step Fitness brings joyful movement, dance cardio, and step workouts for all levels. One step to change your life.",
     url: siteUrl,
-    siteName: "Zumbaton",
+    siteName: "One Step Fitness",
     images: [
       {
         url: firstHeroImage,
         width: 1200,
         height: 630,
-        alt: "Zumbaton - Fun into Fitness",
+        alt: "One Step Fitness",
       },
     ],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Zumbaton - Dance Happy, Get Fit Naturally",
+    title: "One Step Fitness - one step to change your life",
     description:
-      "Fun into fitness with Zumbaton! Not hardcore training — just joyful movement with good energy. Join our community transforming lives one dance step at a time.",
+      "One Step Fitness brings joyful movement, dance cardio, and step workouts for all levels. One step to change your life.",
     images: [firstHeroImage],
   },
 };
@@ -63,7 +62,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         />
         {/* End Google Tag Manager */}
       </head>
-      <body className={`bg-[#FCFCFC] dark:bg-black ${inter.className}`}>
+      <body className="bg-[#FCFCFC] dark:bg-black font-sans">
         {/* Google Tag Manager (noscript) */}
         <noscript>
           <iframe

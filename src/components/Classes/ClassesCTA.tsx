@@ -33,7 +33,7 @@ const ClassesCTA = () => {
               Ready to Start Dancing?
             </h3>
             <p className="text-white/95 text-lg md:text-xl leading-relaxed">
-              Join our community and find your dance fitness class. Your pace. Your dance. Your Zumbaton.
+              Join our community and find your perfect class. One Step Fitness helps you build consistency one workout at a time.
             </p>
           </motion.div>
 

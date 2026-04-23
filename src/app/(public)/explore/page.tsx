@@ -9,8 +9,8 @@ import Video from "@/components/Video";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Zumbaton - Dance Happy, Get Fit Naturally",
-  description: "Fun into fitness with Zumbaton! Not hardcore training — just joyful movement with good energy. Join our community transforming lives one dance step at a time.",
+  title: "One Step Fitness - one step to change your life",
+  description: "Move, sweat, and smile with One Step Fitness. Group classes for all levels, from dance cardio to step workouts.",
 };
 
 export const dynamic = "force-dynamic";
