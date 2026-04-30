@@ -42,9 +42,9 @@ export async function generateRegistrationFormPDF(formData: RegistrationFormData
 
       let y = 15 // Current Y position (reduced to make room for logo)
 
-      // Add Logo - using optimized logo fav.png (76KB)
+      // Add Logo - using One Step Fitness logo asset
       try {
-        const logoPath = path.join(process.cwd(), 'public', 'logo', 'logo fav.png')
+        const logoPath = path.join(process.cwd(), 'public', 'logo', 'One step fitness logo.png')
         
         if (fs.existsSync(logoPath)) {
           const logoBuffer = fs.readFileSync(logoPath)

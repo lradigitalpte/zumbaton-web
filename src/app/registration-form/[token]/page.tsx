@@ -357,7 +357,7 @@ export default function RegistrationFormPage() {
         <div className="text-center mb-8">
           <div className="inline-block bg-black rounded-lg p-4 mb-4">
             <Image 
-              src="/logo/zumbaton logo (transparent).png" 
+              src="/logo/One step fitness logo.png" 
               alt="One Step Fitness Logo" 
               width={200} 
               height={80}

@@ -158,23 +158,23 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
       >
       {/* Logo & Toggle */}
       <div className="relative flex items-center h-16 px-4 border-b border-gray-800 shrink-0">
-        {/* Logo - centered when collapsed, left-aligned when expanded */}
-        <div className={`flex-1 flex items-center ${isCollapsed ? "justify-center" : ""}`}>
+        {/* Logo - centered in both states */}
+        <div className="flex-1 flex items-center justify-center">
           {!isCollapsed ? (
-            <Link href="/dashboard" className="flex items-center">
+            <Link href="/dashboard" className="flex items-center justify-center w-full pr-8">
               <Image
-                src="/logo/zumbaton logo (solid bg).png"
+                src="/logo/One step fitness logo.png"
                 alt="One Step Fitness Logo"
-                width={200}
-                height={67}
-                className="h-10 w-auto"
+                width={240}
+                height={80}
+                className="h-12 w-auto object-contain"
                 priority
               />
             </Link>
           ) : (
             <Link href="/dashboard" className="flex items-center justify-center">
               <Image
-                src="/logo/logo fav.png"
+                src="/logo/One step fitness logo.png"
                 alt="One Step Fitness"
                 width={40}
                 height={40}

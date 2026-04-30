@@ -86,11 +86,11 @@ function MagicLinkCallbackContent() {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Image
-              src="/images/logo/zumbaton logo (transparent).png"
+              src="/logo/One step fitness logo.png"
               alt="One Step Fitness Logo"
               width={200}
               height={67}
-              className="h-16 w-auto mx-auto dark:invert"
+              className="h-16 w-auto mx-auto"
               priority
             />
           </div>
@@ -114,11 +114,11 @@ function MagicLinkCallbackContent() {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Image
-              src="/images/logo/zumbaton logo (transparent).png"
+              src="/logo/One step fitness logo.png"
               alt="One Step Fitness Logo"
               width={200}
               height={67}
-              className="h-16 w-auto mx-auto dark:invert"
+              className="h-16 w-auto mx-auto"
               priority
             />
           </div>
@@ -167,11 +167,11 @@ function MagicLinkCallbackContent() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Image
-            src="/images/logo/zumbaton logo (transparent).png"
+            src="/logo/One step fitness logo.png"
             alt="One Step Fitness Logo"
             width={200}
             height={67}
-            className="h-16 w-auto mx-auto dark:invert"
+            className="h-16 w-auto mx-auto"
             priority
           />
         </div>
@@ -211,11 +211,11 @@ export default function MagicLinkCallbackPage() {
           <div className="w-full max-w-md">
             <div className="text-center mb-8">
               <Image
-                src="/images/logo/zumbaton logo (transparent).png"
+                src="/logo/One step fitness logo.png"
                 alt="One Step Fitness Logo"
                 width={200}
                 height={67}
-                className="h-16 w-auto mx-auto dark:invert"
+                className="h-16 w-auto mx-auto"
                 priority
               />
             </div>

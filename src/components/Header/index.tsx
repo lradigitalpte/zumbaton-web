@@ -73,21 +73,21 @@ const Header = () => {
         {!sticky && <TickerStrip />}
         <div className="w-full flex items-center px-2 sm:px-4 md:px-6 lg:px-8">
           <div className="relative flex items-center justify-between">
-            <div className="w-32 sm:w-40 md:w-60 max-w-full flex-shrink-0">
+            <div className="w-44 sm:w-56 md:w-72 lg:w-[340px] max-w-full flex-shrink-0">
               <Link
                 href="/explore"
                 className={`flex items-center gap-2 sm:gap-3 ${
                   needsBackground ? "py-2 sm:py-3 lg:py-2" : "py-3 sm:py-4 md:py-8"
                 }`}
               >
-                {/* Logo on soft dark patch – rounded, subtle shadow, no hard edges */}
-                <span className="inline-flex items-center justify-center rounded-xl bg-gray-800/90 dark:bg-gray-950/90 backdrop-blur-sm px-3 py-2 sm:px-4 sm:py-2.5 shadow-lg shadow-black/15 ring-1 ring-white/5">
+                {/* Clean navbar logo without forced background plate */}
+                <span className="inline-flex items-center justify-center px-1 py-1 sm:px-2 sm:py-1.5">
                   <Image
-                    src="/logo/zumbaton logo (transparent).png"
+                    src="/logo/One step fitness logo.png"
                     alt="One Step Fitness Logo"
-                    width={80}
-                    height={80}
-                    className="h-10 sm:h-12 md:h-16 w-auto object-contain"
+                    width={260}
+                    height={90}
+                    className="h-12 sm:h-14 md:h-16 lg:h-[68px] w-auto object-contain mix-blend-lighten dark:mix-blend-normal origin-left scale-125 sm:scale-130 md:scale-[1.35]"
                     priority
                   />
                 </span>

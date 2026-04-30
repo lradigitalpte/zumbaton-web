@@ -23,6 +23,7 @@ const SettingsPage = () => {
     newPassword: "",
     confirmPassword: "",
   });
+  const [passwordError, setPasswordError] = useState("");
 
   // Load settings on mount
   useEffect(() => {
@@ -83,13 +84,19 @@ const SettingsPage = () => {
   };
 
   const handlePasswordChange = async () => {
+    setPasswordError("");
+
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error("Password mismatch", "New passwords do not match.");
+      const message = "New passwords do not match.";
+      setPasswordError(message);
+      toast.error("Password mismatch", message);
       return;
     }
     
     if (passwordForm.newPassword.length < 8) {
-      toast.error("Invalid password", "Password must be at least 8 characters.");
+      const message = "Password must be at least 8 characters.";
+      setPasswordError(message);
+      toast.error("Invalid password", message);
       return;
     }
 
@@ -105,15 +112,19 @@ const SettingsPage = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        toast.error('Error', errorData.error?.message || 'Failed to change password');
+        const message = errorData?.error?.message || 'Failed to change password';
+        setPasswordError(message);
+        toast.error('Error', message);
         return;
       }
       
       toast.success("Password changed", "Your password has been updated successfully.");
+      setPasswordError("");
       setIsChangingPassword(false);
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
     } catch (error) {
       console.error('Error changing password:', error);
+      setPasswordError('Failed to change password');
       toast.error('Error', 'Failed to change password');
     } finally {
       setIsSaving(false);
@@ -274,7 +285,10 @@ const SettingsPage = () => {
                 <input
                   type="password"
                   value={passwordForm.currentPassword}
-                  onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
+                  onChange={(e) => {
+                    setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }));
+                    if (passwordError) setPasswordError("");
+                  }}
                   className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-dark dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
                 />
               </div>
@@ -285,7 +299,10 @@ const SettingsPage = () => {
                 <input
                   type="password"
                   value={passwordForm.newPassword}
-                  onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
+                  onChange={(e) => {
+                    setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }));
+                    if (passwordError) setPasswordError("");
+                  }}
                   className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-dark dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
                 />
               </div>
@@ -296,15 +313,24 @@ const SettingsPage = () => {
                 <input
                   type="password"
                   value={passwordForm.confirmPassword}
-                  onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                  onChange={(e) => {
+                    setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }));
+                    if (passwordError) setPasswordError("");
+                  }}
                   className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-dark dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
                 />
               </div>
+              {passwordError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
+                  {passwordError}
+                </div>
+              )}
               <div className="flex items-center gap-2 pt-2">
                 <button
                   onClick={() => {
                     setIsChangingPassword(false);
                     setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+                    setPasswordError("");
                   }}
                   className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 >

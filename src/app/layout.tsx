@@ -13,9 +13,9 @@ export const metadata: Metadata = {
     "One Step Fitness brings joyful movement, dance cardio, and step workouts for all levels. One step to change your life.",
   metadataBase: new URL(siteUrl),
   icons: {
-    icon: "/logo/logo fav.png",
-    shortcut: "/logo/logo fav.png",
-    apple: "/logo/logo fav.png",
+    icon: "/favicon.png?v=20260501",
+    shortcut: "/favicon.png?v=20260501",
+    apple: "/apple-touch-icon.png?v=20260501",
   },
   openGraph: {
     title: "One Step Fitness - one step to change your life",
@@ -50,6 +50,10 @@ export default function RootLayout({
   return (
     <html suppressHydrationWarning lang="en">
       <head>
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=20260501" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png?v=20260501" />
+        <link rel="shortcut icon" href="/favicon.png?v=20260501" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20260501" />
         {/* Google Tag Manager */}
         <script
           dangerouslySetInnerHTML={{

@@ -108,11 +108,11 @@ const Footer = () => {
           <div className="lg:col-span-2">
             <Link href="/explore" className="inline-block mb-4 sm:mb-6">
               <Image
-                src="/logo/zumbaton logo (transparent).png"
+                src="/logo/One step fitness logo.png"
                 alt="One Step Fitness Logo"
-                width={160}
-                height={160}
-                className="h-16 sm:h-20 md:h-24 w-auto object-contain"
+                width={240}
+                height={240}
+                className="h-20 sm:h-24 md:h-28 w-auto object-contain"
               />
             </Link>
             <p className="text-xs sm:text-sm md:text-base text-gray-400 mb-2 sm:mb-3 max-w-sm leading-relaxed">
