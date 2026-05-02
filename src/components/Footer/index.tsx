@@ -106,13 +106,13 @@ const Footer = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 sm:gap-10 md:gap-12">
           {/* Brand Column */}
           <div className="lg:col-span-2">
-            <Link href="/explore" className="inline-block mb-4 sm:mb-6">
+            <Link href="/explore" className="inline-block mb-2 sm:mb-6">
               <Image
                 src="/logo/One step fitness logo.png"
                 alt="One Step Fitness Logo"
-                width={240}
-                height={240}
-                className="h-20 sm:h-24 md:h-28 w-auto object-contain"
+                width={120}
+                height={40}
+                className="h-8 sm:h-12 md:h-16 w-auto object-contain max-w-[120px] sm:max-w-none"
               />
             </Link>
             <p className="text-xs sm:text-sm md:text-base text-gray-400 mb-2 sm:mb-3 max-w-sm leading-relaxed">
