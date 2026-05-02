@@ -23,17 +23,16 @@ export default function TickerStrip() {
   const renderCopy = (copyIndex: number) =>
     items.map((item) => (
       <span key={`${item.id}-c${copyIndex}`} className="inline-flex items-center gap-2 mx-8">
-        <span className="w-1 h-1 rounded-full bg-white/80 shrink-0" aria-hidden />
+        <span className="w-1.5 h-1.5 rounded-full bg-black shrink-0" aria-hidden />
         {item.message}
       </span>
     ));
 
   return (
     <div
-      className="relative w-full overflow-hidden bg-gradient-to-r from-green-600 via-green-500 to-green-600 text-white py-2 text-xs font-medium shadow-sm dark:from-green-700 dark:via-green-600 dark:to-green-700"
+      className="relative w-full overflow-hidden bg-lime-500 text-black py-2.5 text-xs font-black uppercase tracking-widest shadow-lg"
       aria-live="polite"
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" aria-hidden />
       <div className="relative flex animate-ticker whitespace-nowrap items-center">
         {renderCopy(0)}
         {renderCopy(1)}

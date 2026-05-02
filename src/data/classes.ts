@@ -108,7 +108,7 @@ export const zumbaClasses: ZumbaClass[] = [
   },
   {
     id: "3",
-    slug: "zumbuddies",
+    slug: "lil-steppers",
     name: "Lil Steppers",
     shortDescription: "Fun and energetic dance fitness classes designed especially for kids! Dance, play, and get fit while making new friends in a safe, supportive environment.",
     fullDescription: "Lil Steppers is our special dance fitness program for kids, combining fun dance moves with games and activities designed to keep children active, healthy, and happy. Each class is packed with energy, creativity, and age-appropriate choreography that kids love. It's the perfect way for children to develop coordination, confidence, and a love for movement in a party-like atmosphere!",

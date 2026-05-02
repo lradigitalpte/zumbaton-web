@@ -11,14 +11,15 @@ const CLASSES_PER_PAGE = 6;
 
 const ClassesGrid = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(zumbaClasses.length / CLASSES_PER_PAGE);
+  const filteredClasses = useMemo(() => zumbaClasses.filter(c => c.slug !== "zumbuddies"), []);
+  const totalPages = Math.ceil(filteredClasses.length / CLASSES_PER_PAGE);
   const paginatedClasses = useMemo(
     () =>
-      zumbaClasses.slice(
+      filteredClasses.slice(
         (currentPage - 1) * CLASSES_PER_PAGE,
         currentPage * CLASSES_PER_PAGE
       ),
-    [currentPage]
+    [currentPage, filteredClasses]
   );
 
   const handlePageChange = (page: number) => {
@@ -65,8 +66,8 @@ const ClassesGrid = () => {
           >
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Showing {(currentPage - 1) * CLASSES_PER_PAGE + 1} to{" "}
-              {Math.min(currentPage * CLASSES_PER_PAGE, zumbaClasses.length)} of{" "}
-              {zumbaClasses.length} classes
+              {Math.min(currentPage * CLASSES_PER_PAGE, filteredClasses.length)} of{" "}
+              {filteredClasses.length} classes
             </p>
             <div className="flex items-center gap-2">
               <button

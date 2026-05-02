@@ -6,17 +6,9 @@ import { motion } from "framer-motion";
 const CallToActionV2 = () => {
   return (
     <section
-      className="py-32 relative overflow-hidden bg-gray-100 dark:bg-black"
-      style={{
-        backgroundImage: `
-          radial-gradient(circle at 20% 30%, rgba(34, 197, 94, 0.15) 0%, transparent 45%),
-          radial-gradient(circle at 80% 70%, rgba(34, 197, 94, 0.1) 0%, transparent 45%),
-          radial-gradient(circle 1.5px at center center, rgba(34, 197, 94, 0.12) 0%, transparent 100%)
-        `,
-        backgroundSize: "100% 100%, 100% 100%, 28px 28px",
-      }}
+      className="py-32 relative overflow-hidden bg-black text-white"
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-green-500/5 to-transparent dark:via-green-950/20 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-lime-500/5 to-transparent dark:via-lime-950/20 pointer-events-none" />
       
       <div className="container mx-auto px-4 relative z-10 text-center">
         <motion.h2
@@ -25,14 +17,14 @@ const CallToActionV2 = () => {
           viewport={{ once: true }}
           className="text-5xl md:text-7xl font-black text-gray-900 dark:text-white mb-8 tracking-tight"
         >
-          Ready to <span className="text-green-600 dark:text-green-500">Sweat?</span>
+          Ready to <span className="text-lime-500">Sweat?</span>
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          className="text-xl md:text-2xl text-gray-500 dark:text-gray-400 mb-12 max-w-2xl mx-auto"
+          className="text-xl md:text-2xl text-zinc-400 mb-12 max-w-2xl mx-auto font-bold"
         >
           Your first class is the start of something amazing. Join the One Step Fitness family today.
         </motion.p>
@@ -45,7 +37,7 @@ const CallToActionV2 = () => {
         >
           <Link
             href="/trial-booking"
-            className="inline-block px-12 py-6 bg-green-600 hover:bg-green-500 text-white font-bold text-xl rounded-full transition-all hover:scale-105 shadow-[0_0_40px_rgba(22,163,74,0.4)] hover:shadow-[0_0_60px_rgba(22,163,74,0.6)]"
+            className="inline-block px-12 py-6 bg-lime-500 hover:bg-yellow-400 text-black font-black text-xl rounded-full transition-all hover:scale-105 shadow-[0_10px_30px_rgba(132,204,22,0.3)] hover:shadow-[0_15px_40px_rgba(250,204,21,0.4)]"
           >
             Book Your Trial Class
           </Link>

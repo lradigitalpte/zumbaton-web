@@ -8,32 +8,32 @@ const classes = [
   {
     title: "Groove Stepper",
     description: "Step up your game with rhythmic cardio.",
-    color: "from-purple-600 to-blue-600",
+    accent: "bg-lime-500",
   },
   {
     title: "One Step Fitness",
     description: "Our signature high-energy dance workout.",
-    color: "from-green-600 to-emerald-600",
+    accent: "bg-yellow-400",
   },
   {
-    title: "Zumbuddies",
+    title: "Lil Steppers",
     description: "Fun and movement for the little ones.",
-    color: "from-orange-500 to-yellow-500",
+    accent: "bg-lime-400",
   },
 ];
 
 const ClassesV2 = () => {
   return (
-    <section className="py-24 bg-gray-100 dark:bg-zinc-900 text-gray-900 dark:text-white overflow-hidden">
+    <section className="py-24 bg-black text-white overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
           <div>
-            <h2 className="text-4xl md:text-6xl font-bold mb-4">Our Classes</h2>
-            <p className="text-gray-500 dark:text-gray-400 text-xl">Find your rhythm.</p>
+            <h2 className="text-4xl md:text-7xl font-black mb-4 tracking-tighter uppercase italic">Our Classes</h2>
+            <p className="text-zinc-400 text-xl font-medium">Find your rhythm.</p>
           </div>
           <Link
             href="/schedule"
-            className="flex items-center gap-2 text-green-600 dark:text-green-500 hover:text-green-500 dark:hover:text-green-400 transition-colors text-lg font-medium"
+            className="flex items-center gap-2 text-lime-500 hover:text-yellow-400 transition-colors text-lg font-black uppercase tracking-wider"
           >
             View Full Schedule <ArrowRight className="w-5 h-5" />
           </Link>
@@ -41,32 +41,32 @@ const ClassesV2 = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {classes.map((cls, index) => (
-            <Link key={index} href="/schedule" className="block h-full">
+            <Link key={index} href="/schedule" className="block h-full group">
               <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="group relative p-1 rounded-3xl bg-gray-200/80 dark:bg-gradient-to-br dark:from-white/10 dark:to-white/5 border border-gray-200 dark:border-transparent hover:border-green-400/50 dark:hover:from-green-500/50 dark:hover:to-emerald-500/50 transition-all duration-500 h-full block cursor-pointer"
+                className="relative p-[1px] rounded-3xl bg-zinc-800 group-hover:bg-lime-500 transition-all duration-500 h-full"
               >
-                <div className="bg-white dark:bg-zinc-900 h-full rounded-[22px] p-8 flex flex-col justify-between relative overflow-hidden">
-                  <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${cls.color} blur-[60px] opacity-20 group-hover:opacity-40 transition-opacity`} />
+                <div className="bg-zinc-900 h-full rounded-[23px] p-10 flex flex-col justify-between relative overflow-hidden transition-colors group-hover:bg-zinc-800/50">
+                  <div className={`absolute top-0 right-0 w-24 h-1 ${cls.accent}`} />
                   
                   <div>
-                    <h3 className="text-3xl font-bold mb-3 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+                    <h3 className="text-3xl font-black mb-4 group-hover:text-lime-400 transition-colors uppercase italic tracking-tight">
                       {cls.title}
                     </h3>
-                    <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
+                    <p className="text-zinc-400 leading-relaxed text-lg group-hover:text-zinc-200 transition-colors">
                       {cls.description}
                     </p>
                   </div>
 
-                  <div className="mt-8 pt-8 border-t border-gray-200 dark:border-white/10 flex justify-end items-center">
-                    <span className="text-sm font-medium text-green-600 dark:text-green-400 group-hover:underline">
+                  <div className="mt-12 pt-8 border-t border-zinc-800 flex justify-end items-center">
+                    <span className="text-sm font-black text-lime-500 uppercase tracking-widest group-hover:text-yellow-400 transition-colors">
                       View schedule
                     </span>
-                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-green-500 group-hover:text-white dark:group-hover:text-black transition-all ml-3">
-                      <ArrowRight className="w-5 h-5" />
+                    <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center group-hover:bg-lime-500 group-hover:text-black transition-all ml-4">
+                      <ArrowRight className="w-6 h-6" />
                     </div>
                   </div>
                 </div>

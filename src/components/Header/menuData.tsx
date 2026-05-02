@@ -26,19 +26,19 @@ const menuData: Menu[] = [
     submenu: [
       {
         id: 41,
-        title: "Regular Classes",
+        title: "Adult",
         path: "/classes",
         newTab: false,
       },
       {
         id: 42,
-        title: "One Familia",
+        title: "Kids & Family (Lil Steppers & One Familia)",
         path: "/zumfamilia",
         newTab: false,
       },
       {
         id: 43,
-        title: "ZumFiesta",
+        title: "Outdoor",
         path: "/zt-fiesta",
         newTab: false,
       },

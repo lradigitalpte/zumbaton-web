@@ -161,13 +161,13 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
         {/* Logo - centered in both states */}
         <div className="flex-1 flex items-center justify-center">
           {!isCollapsed ? (
-            <Link href="/dashboard" className="flex items-center justify-center w-full pr-8">
+            <Link href="/dashboard" className="flex items-center justify-center w-full">
               <Image
                 src="/logo/One step fitness logo.png"
                 alt="One Step Fitness Logo"
-                width={240}
-                height={80}
-                className="h-12 w-auto object-contain"
+                width={180}
+                height={60}
+                className="sidebar-logo h-12 w-auto object-contain"
                 priority
               />
             </Link>
@@ -178,7 +178,7 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
                 alt="One Step Fitness"
                 width={40}
                 height={40}
-                className="h-10 w-10 rounded-xl"
+                className="sidebar-logo-collapsed h-8 w-8 object-contain"
                 priority
               />
             </Link>

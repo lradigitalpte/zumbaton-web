@@ -10,55 +10,31 @@ import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
 
 const Header = () => {
   const { openWhatsAppModal } = useWhatsAppModal();
-  // Navbar toggle
   const [navbarOpen, setNavbarOpen] = useState(false);
-  const navbarToggleHandler = () => {
-    setNavbarOpen(!navbarOpen);
-  };
+  const navbarToggleHandler = () => setNavbarOpen(!navbarOpen);
 
-  // Sticky Navbar
   const [sticky, setSticky] = useState(false);
   const handleStickyNavbar = () => {
-    if (window.scrollY >= 80) {
-      setSticky(true);
-    } else {
-      setSticky(false);
-    }
+    setSticky(window.scrollY >= 80);
   };
   useEffect(() => {
     window.addEventListener("scroll", handleStickyNavbar);
     return () => window.removeEventListener("scroll", handleStickyNavbar);
   }, []);
 
-  // Lock body scroll when mobile menu is open
   useEffect(() => {
-    if (navbarOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    document.body.style.overflow = navbarOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
   }, [navbarOpen]);
 
-  // submenu handler
   const [openIndex, setOpenIndex] = useState(-1);
-  const handleSubmenu = (index: number) => {
-    if (openIndex === index) {
-      setOpenIndex(-1);
-    } else {
-      setOpenIndex(index);
-    }
-  };
+  const handleSubmenu = (index: number) => setOpenIndex(openIndex === index ? -1 : index);
 
   const usePathName = usePathname();
-  
-  // Pages with light backgrounds that need dark text on header
   const lightBackgroundPages = ['/signin', '/signup', '/forgot-password', '/schedule', '/packages'];
   const isLightBackgroundPage = lightBackgroundPages.some(path => usePathName?.startsWith(path));
   
-  // Force sticky/background on light pages when not scrolled
+  // Header is now ALWAYS dark when it needs a background
   const needsBackground = sticky || isLightBackgroundPage;
 
   return (
@@ -66,118 +42,68 @@ const Header = () => {
       <header
         className={`header top-0 left-0 z-40 w-full flex flex-col transition-all duration-300 ${
           needsBackground
-            ? "dark:bg-gray-dark dark:shadow-sticky-dark shadow-sticky fixed z-[9999] bg-white/95 backdrop-blur-sm"
+            ? "bg-black/95 shadow-2xl fixed z-[9999] backdrop-blur-md border-b border-zinc-800"
             : "absolute bg-transparent pb-2 sm:pb-4"
         }`}
       >
         {!sticky && <TickerStrip />}
-        <div className="w-full flex items-center px-2 sm:px-4 md:px-6 lg:px-8">
-          <div className="relative flex items-center justify-between">
-            <div className="w-44 sm:w-56 md:w-72 lg:w-[340px] max-w-full flex-shrink-0">
-              <Link
-                href="/explore"
-                className={`flex items-center gap-2 sm:gap-3 ${
-                  needsBackground ? "py-2 sm:py-3 lg:py-2" : "py-3 sm:py-4 md:py-8"
-                }`}
-              >
-                {/* Clean navbar logo without forced background plate */}
-                <span className="inline-flex items-center justify-center px-1 py-1 sm:px-2 sm:py-1.5">
+        <div className="w-full px-4 sm:px-6 md:px-8 lg:px-10">
+          <div className="relative flex items-center justify-between w-full h-16 sm:h-20 md:h-24 lg:h-28">
+            
+            {/* LOGO - Left Aligned */}
+            <div className="w-auto lg:w-1/4 flex items-center justify-start flex-shrink-0">
+              <Link href="/explore" className="flex items-center">
+                <span className="inline-flex items-center justify-center">
                   <Image
                     src="/logo/One step fitness logo.png"
                     alt="One Step Fitness Logo"
-                    width={260}
-                    height={90}
-                    className="h-12 sm:h-14 md:h-16 lg:h-[68px] w-auto object-contain mix-blend-lighten dark:mix-blend-normal origin-left scale-125 sm:scale-130 md:scale-[1.35]"
+                    width={300}
+                    height={100}
+                    className={`nav-logo-mobile h-12 sm:h-14 md:h-20 lg:h-[90px] w-auto object-contain lg:scale-150 origin-left transition-all duration-300 ${
+                      needsBackground 
+                        ? "drop-shadow-[0_2px_12px_rgba(132,204,22,0.2)]" 
+                        : ""
+                    }`}
                     priority
                   />
                 </span>
               </Link>
             </div>
-            <div className="flex-1 flex items-center justify-center">
-              <button
-                onClick={navbarToggleHandler}
-                id="navbarToggler"
-                aria-label="Mobile Menu"
-                className={`ring-primary block rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 focus:ring-2 lg:hidden z-50 touch-center transition-colors ${
-                  needsBackground ? "bg-gray-100 dark:bg-gray-800" : ""
-                }`}
-              >
-                <span
-                  className={`relative my-1 sm:my-1.5 block h-0.5 w-6 sm:w-[30px] transition-all duration-300 ${
-                    needsBackground ? "bg-black dark:bg-white" : "bg-white"
-                  } ${navbarOpen ? "top-[7px] rotate-45" : ""}`}
-                />
-                <span
-                  className={`relative my-1 sm:my-1.5 block h-0.5 w-6 sm:w-[30px] transition-all duration-300 ${
-                    needsBackground ? "bg-black dark:bg-white" : "bg-white"
-                  } ${navbarOpen ? "opacity-0" : ""}`}
-                />
-                <span
-                  className={`relative my-1 sm:my-1.5 block h-0.5 w-6 sm:w-[30px] transition-all duration-300 ${
-                    needsBackground ? "bg-black dark:bg-white" : "bg-white"
-                  } ${navbarOpen ? "top-[-8px] -rotate-45" : ""}`}
-                />
-              </button>
-              
-              {/* Mobile Menu Overlay */}
-              {navbarOpen && (
-                <div
-                  className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
-                  onClick={navbarToggleHandler}
-                />
-              )}
 
-              <nav
-                id="navbarCollapse"
-                className={`navbar fixed top-0 right-0 z-50 h-screen w-80 max-w-[85vw] bg-white dark:bg-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out lg:relative lg:h-auto lg:w-auto lg:max-h-none lg:overflow-visible lg:transform-none lg:shadow-none lg:bg-transparent lg:dark:bg-transparent ${
-                  navbarOpen
-                    ? "translate-x-0"
-                    : "translate-x-full lg:translate-x-0"
-                }`}
-              >
+            {/* NAVIGATION - Centered on Desktop */}
+            <div className={`fixed inset-0 z-40 lg:static lg:flex lg:flex-1 lg:justify-center lg:items-center ${navbarOpen ? "block" : "hidden lg:flex"}`}>
+              {/* Mobile Overlay */}
+              <div 
+                className="fixed inset-0 bg-black/80 backdrop-blur-sm lg:hidden" 
+                onClick={navbarToggleHandler}
+                aria-hidden="true"
+              />
+              
+              <nav className={`absolute right-0 top-0 h-screen w-80 max-w-[85vw] bg-gray-900 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out lg:relative lg:h-auto lg:w-auto lg:max-h-none lg:bg-transparent lg:shadow-none lg:transform-none lg:flex-row lg:items-center ${navbarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"}`}>
+                
                 {/* Mobile Menu Header */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 lg:hidden">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Menu</h2>
+                <div className="flex items-center justify-between p-4 border-b border-gray-800 lg:hidden">
+                  <h2 className="text-lg font-bold text-white tracking-wide">Menu</h2>
                   <div className="flex items-center gap-2">
-                    <div className="lg:hidden">
-                      <ThemeToggler />
-                    </div>
-                    <button
-                      onClick={navbarToggleHandler}
-                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                      aria-label="Close Menu"
-                    >
-                      <svg
-                        className="w-6 h-6 text-gray-600 dark:text-gray-300"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
+                    <ThemeToggler />
+                    <button onClick={navbarToggleHandler} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                   </div>
                 </div>
 
                 {/* Menu Items */}
-                <div className="overflow-y-auto h-[calc(100vh-80px)] lg:overflow-visible lg:h-auto">
-                  <ul className="flex flex-col lg:flex-row lg:space-x-8 xl:space-x-12 lg:justify-center p-4 lg:p-0">
+                <div className="flex-1 overflow-y-auto lg:overflow-visible">
+                  <ul className="flex flex-col lg:flex-row lg:items-center lg:gap-6 xl:gap-10 p-4 lg:p-0">
                     {menuData.map((menuItem, index) => (
                       <li key={index} className="group relative">
                         {menuItem.path ? (
                           <Link
                             href={menuItem.path}
-                            className={`flex items-center py-3 px-4 rounded-lg text-base font-medium transition-colors lg:py-6 lg:px-0 lg:rounded-none relative ${
+                            className={`flex items-center py-3 px-4 lg:py-2 lg:px-0 rounded-lg lg:rounded-none text-base font-medium transition-all relative ${
                               usePathName === menuItem.path
-                                ? "text-lime-400 lg:text-lime-400 lg:bg-transparent lg:after:absolute lg:after:bottom-0 lg:after:left-0 lg:after:w-full lg:after:h-[2px] lg:after:bg-lime-400 lg:after:rounded-full"
-                                : needsBackground
-                                ? "text-gray-700 hover:text-lime-400 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-lime-400 dark:hover:bg-gray-800 lg:hover:bg-transparent"
-                                : "text-gray-700 hover:text-lime-400 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-lime-400 dark:hover:bg-gray-800 lg:text-white/90 lg:hover:text-white lg:hover:bg-transparent"
+                                ? "text-lime-400 bg-gray-800 lg:bg-transparent lg:after:absolute lg:after:-bottom-2 lg:after:left-0 lg:after:w-full lg:after:h-[2px] lg:after:bg-lime-400 lg:after:rounded-full"
+                                : "text-gray-300 hover:text-white hover:bg-gray-800 lg:hover:bg-transparent lg:hover:text-lime-400"
                             }`}
                             onClick={() => setNavbarOpen(false)}
                           >
@@ -187,64 +113,21 @@ const Header = () => {
                           <>
                             <button
                               onClick={() => handleSubmenu(index)}
-                              className={`w-full flex items-center justify-between py-3 px-4 rounded-lg text-base font-medium transition-colors lg:py-6 lg:px-0 lg:rounded-none ${
-                                needsBackground
-                                  ? "text-gray-700 hover:text-lime-400 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-lime-400 dark:hover:bg-gray-800 lg:hover:bg-transparent"
-                                  : "text-gray-700 hover:text-lime-400 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-lime-400 dark:hover:bg-gray-800 lg:text-white/90 lg:hover:text-white lg:hover:bg-transparent"
-                              }`}
+                              className="w-full flex items-center justify-between py-3 px-4 lg:py-2 lg:px-0 rounded-lg lg:rounded-none text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800 lg:hover:bg-transparent lg:hover:text-lime-400 transition-all"
                             >
-                              <span className="inline-flex items-center gap-1.5">
-                                {menuItem.title}
-                                <svg
-                                  className={`hidden lg:block w-4 h-4 transition-transform duration-300 ${
-                                    openIndex === index ? "rotate-180" : "group-hover:rotate-180"
-                                  }`}
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19 9l-7 7-7-7"
-                                  />
-                                </svg>
-                              </span>
-                              <svg
-                                className={`w-5 h-5 transition-transform lg:hidden ${
-                                  openIndex === index ? "rotate-180" : ""
-                                }`}
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 9l-7 7-7-7"
-                                />
-                              </svg>
+                              <span className="inline-flex items-center gap-1.5">{menuItem.title}</span>
+                              <svg className={`w-4 h-4 transition-transform duration-300 ${openIndex === index ? "rotate-180" : "lg:group-hover:rotate-180"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             </button>
-                            <div
-                              className={`overflow-hidden transition-all duration-300 lg:absolute lg:top-[calc(100%+10px)] lg:left-1/2 lg:-translate-x-1/2 lg:w-[320px] lg:bg-white/95 lg:dark:bg-gray-800/95 lg:backdrop-blur-xl lg:rounded-2xl lg:shadow-2xl lg:border lg:border-gray-200/80 lg:dark:border-gray-700/80 lg:opacity-0 lg:invisible lg:group-hover:opacity-100 lg:group-hover:visible ${
-                                openIndex === index ? "max-h-96 lg:max-h-none" : "max-h-0 lg:max-h-none"
-                              }`}
-                            >
-                              <div className="pl-4 lg:pl-0 lg:p-3.5 space-y-1.5">
+                            <div className={`overflow-hidden transition-all duration-300 lg:absolute lg:top-full lg:left-1/2 lg:-translate-x-1/2 lg:mt-4 lg:w-56 lg:bg-gray-900 lg:rounded-xl lg:shadow-2xl lg:border lg:border-gray-800 lg:opacity-0 lg:invisible lg:group-hover:opacity-100 lg:group-hover:visible lg:group-hover:mt-2 ${openIndex === index ? "max-h-96 lg:max-h-none" : "max-h-0 lg:max-h-none"}`}>
+                              <div className="pl-4 lg:pl-0 lg:p-2 space-y-1">
                                 {menuItem.submenu?.map((submenuItem, subIndex) => (
                                   <Link
                                     href={submenuItem.path}
                                     key={subIndex}
-                                    className="group/submenu relative block py-3 px-4 rounded-xl text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100/70 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700/70 transition-all lg:px-4"
+                                    className="block py-2.5 px-4 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition-all"
                                     onClick={() => setNavbarOpen(false)}
                                   >
-                                    <span className="inline-flex items-center gap-2">
-                                      <span className="h-1.5 w-1.5 rounded-full bg-lime-500/80 opacity-0 group-hover/submenu:opacity-100 transition-opacity" />
-                                      {submenuItem.title}
-                                    </span>
-                                    <span className="pointer-events-none absolute inset-y-2 right-2 w-1 rounded-full bg-lime-500/0 group-hover/submenu:bg-lime-500/80 transition-colors" />
+                                    {submenuItem.title}
                                   </Link>
                                 ))}
                               </div>
@@ -257,56 +140,39 @@ const Header = () => {
                 </div>
               </nav>
             </div>
-            <div className="hidden lg:flex items-center justify-end gap-3 sm:gap-4 lg:gap-5 ml-3 sm:ml-4 flex-shrink-0">
-                <Link
-                  href="/signin"
-                  className={`px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 text-xs sm:text-sm md:text-base font-medium transition-colors ${
-                    needsBackground
-                      ? "text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
-                      : "text-green-300 hover:text-white"
-                  }`}
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/trial-booking"
-                  className={`rounded-lg px-5 sm:px-6 md:px-7 py-2 sm:py-2.5 text-xs sm:text-sm md:text-base font-semibold text-white shadow-md transition-colors ${
-                    sticky
-                      ? "bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
-                      : "bg-green-600 hover:bg-green-700"
-                  }`}
-                >
-                  Join Now
-                </Link>
-                <div className="flex-shrink-0 relative z-50 ml-2 sm:ml-3">
-                  <ThemeToggler />
+
+            {/* BUTTONS - Right Aligned */}
+            <div className="w-auto lg:w-1/4 flex items-center justify-end gap-3 sm:gap-4 flex-shrink-0 z-50">
+              <Link
+                href="/signin"
+                className="hidden sm:inline-flex px-4 py-2 text-sm font-black text-zinc-400 hover:text-lime-500 transition-colors uppercase tracking-widest"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/trial-booking"
+                className="rounded-xl px-5 sm:px-8 py-2.5 sm:py-3 text-sm font-black text-black bg-lime-500 hover:bg-yellow-400 shadow-[0_0_20px_rgba(132,204,22,0.3)] transition-all hover:scale-105 uppercase tracking-wider"
+              >
+                Join Now
+              </Link>
+              <div className="hidden lg:block ml-2">
+                <ThemeToggler />
+              </div>
+              
+              {/* Mobile Toggle Button */}
+              <button
+                onClick={navbarToggleHandler}
+                className="lg:hidden p-2 text-gray-300 hover:text-white transition-colors"
+                aria-label="Toggle Menu"
+              >
+                <div className="w-6 h-5 relative flex flex-col justify-between">
+                  <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ${navbarOpen ? "rotate-45 translate-y-2.5" : ""}`} />
+                  <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ${navbarOpen ? "opacity-0" : ""}`} />
+                  <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ${navbarOpen ? "-rotate-45 -translate-y-2" : ""}`} />
                 </div>
+              </button>
             </div>
-            <div className={`flex lg:hidden items-center gap-2 sm:gap-3 flex-shrink-0 transition-opacity duration-300 ${navbarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-                <Link
-                  href="/signin"
-                  className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-colors rounded-lg ${
-                    needsBackground
-                      ? "text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/20"
-                      : "text-white/90 hover:text-white hover:bg-white/10"
-                  }`}
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/trial-booking"
-                  className={`rounded-lg px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white shadow-md transition-colors ${
-                    sticky
-                      ? "bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
-                      : "bg-green-600 hover:bg-green-700"
-                  }`}
-                >
-                  Join Now
-                </Link>
-                <div className="flex-shrink-0 relative z-50">
-                  <ThemeToggler />
-                </div>
-            </div>
+
           </div>
         </div>
       </header>

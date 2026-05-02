@@ -32,23 +32,23 @@ const features = [
 
 const FeaturesV2 = () => {
   return (
-    <section className="py-24 bg-white dark:bg-black text-gray-900 dark:text-white">
+    <section className="py-24 bg-black text-white">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="mb-16">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-4xl md:text-6xl font-bold mb-6"
+            className="text-4xl md:text-6xl font-black mb-6 uppercase italic tracking-tighter"
           >
-            More Than Just <span className="text-green-600 dark:text-green-500">Dance.</span>
+            More Than Just <span className="text-lime-500">Dance.</span>
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-gray-500 dark:text-gray-400 max-w-2xl"
+            className="text-xl text-zinc-400 max-w-2xl font-medium"
           >
             We are building a movement where fitness meets happiness. Discover what makes One Step Fitness different.
           </motion.p>

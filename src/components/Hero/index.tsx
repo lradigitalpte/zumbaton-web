@@ -9,26 +9,26 @@ const slides = [
   {
     id: 1,
     image: "/images/hero/hero.jpeg",
-    headline: "Train with",
-    highlight: "One Step Fitness",
+    headline: "Move with",
+    highlight: "Passion",
     description:
-      "One step to change your life. Move with joy, build fitness naturally, and stay consistent with classes designed for real people.",
+      "One step to change your life. Experience the joy of movement with high-energy dance fitness designed for everyone.",
   },
   {
     id: 2,
     image: "/images/hero/hero2.jpeg",
-    headline: "Your Pace",
-    highlight: "Your Progress",
+    headline: "Join the",
+    highlight: "Energy",
     description:
-      "No pressure, no stress. Just great music, smart movement, and an encouraging community that helps you get stronger one class at a time.",
+      "Break a sweat with an encouraging community. Smart movement, great music, and real results one class at a time.",
   },
   {
     id: 3,
     image: "/images/hero/notbad.jpeg",
-    headline: "One Step Fitness",
-    highlight: "Starts Here",
+    headline: "Fitness Meets",
+    highlight: "Happiness",
     description:
-      "From Zumba Step and Groove Stepper to ThunderBolt workouts, every session is built to keep you energized, confident, and coming back for more.",
+      "From Zumba Step to ThunderBolt workouts, every session is built to keep you energized, confident, and coming back for more.",
   },
 ];
 
@@ -86,15 +86,15 @@ const Hero = () => {
                 className="flex flex-col items-center"
               >
                 {/* Headline */}
-                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white tracking-tight mb-4 drop-shadow-lg">
+                <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white tracking-tighter mb-4 drop-shadow-2xl">
                   {slides[currentSlide].headline}{" "}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-300 block sm:inline mt-2 sm:mt-0">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-lime-400 via-yellow-300 to-yellow-500 block sm:inline mt-2 sm:mt-0 uppercase italic">
                     {slides[currentSlide].highlight}
                   </span>
                 </h1>
 
                 {/* Description */}
-                <p className="text-base sm:text-lg md:text-xl text-gray-100 max-w-2xl mx-auto mb-8 leading-relaxed font-medium drop-shadow-md">
+                <p className="text-base sm:text-lg md:text-xl text-gray-100 max-w-2xl mx-auto mb-10 leading-relaxed font-bold drop-shadow-md">
                   {slides[currentSlide].description}
                 </p>
 
@@ -102,17 +102,17 @@ const Hero = () => {
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-4 sm:px-0">
                   <Link
                     href="/trial-booking"
-                    className="group relative px-8 py-4 bg-green-600 hover:bg-green-500 text-white font-bold text-lg rounded-full transition-all duration-300 shadow-[0_0_20px_rgba(22,163,74,0.4)] hover:shadow-[0_0_30px_rgba(22,163,74,0.6)] hover:-translate-y-1 w-full sm:w-auto text-center overflow-hidden"
+                    className="group relative px-10 py-5 bg-lime-500 hover:bg-lime-400 text-black font-black text-lg rounded-full transition-all duration-300 shadow-[0_10px_30px_rgba(132,204,22,0.4)] hover:shadow-[0_15px_40px_rgba(132,204,22,0.6)] hover:-translate-y-1 w-full sm:w-auto text-center overflow-hidden"
                   >
-                    <span className="relative z-10">Start Trial</span>
-                    <div className="absolute inset-0 h-full w-full scale-0 rounded-full transition-all duration-300 group-hover:scale-100 group-hover:bg-green-400/20" />
+                    <span className="relative z-10">START YOUR JOURNEY</span>
+                    <div className="absolute inset-0 h-full w-full scale-0 rounded-full transition-all duration-300 group-hover:scale-100 group-hover:bg-white/20" />
                   </Link>
                   
                   <button
                     onClick={openWhatsAppModal}
-                    className="group px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold text-lg rounded-full transition-all duration-300 hover:-translate-y-1 w-full sm:w-auto text-center"
+                    className="group px-10 py-5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-black text-lg rounded-full transition-all duration-300 hover:-translate-y-1 w-full sm:w-auto text-center"
                   >
-                    Contact Us
+                    CONTACT US
                   </button>
                 </div>
               </motion.div>
@@ -128,8 +128,8 @@ const Hero = () => {
         transition={{ delay: 2, duration: 1 }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 hidden sm:flex flex-col items-center gap-2"
       >
-        <span className="text-white/60 text-xs uppercase tracking-widest">Scroll</span>
-        <div className="w-[1px] h-12 bg-gradient-to-b from-white/0 via-white/50 to-white/0" />
+        <span className="text-white/60 text-xs uppercase tracking-[0.3em] font-black">Scroll</span>
+        <div className="w-[2px] h-12 bg-gradient-to-b from-transparent via-lime-500 to-transparent" />
       </motion.div>
     </section>
   );
