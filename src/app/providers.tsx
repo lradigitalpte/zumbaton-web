@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
 import { ToastProvider } from "@/components/Toast";
+import { MothersDayPromoBanner } from "@/components/Promo/MothersDayPromoBanner";
 import { useState } from "react";
 
 // Create a client with timeout protection
@@ -100,6 +101,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <AuthProvider>
           <ToastProvider>
             {children}
+            <MothersDayPromoBanner />
           </ToastProvider>
         </AuthProvider>
       </QueryClientProvider>

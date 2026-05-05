@@ -195,6 +195,19 @@
   animation: slide-in 0.3s ease-out forwards;
 }
 
+@keyframes promo-banner-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.animate-promo-banner-shimmer {
+  animation: promo-banner-shimmer 8s linear infinite;
+}
+
 /* Hero Button Overlay Effects - PowerFlow Style with Lime/Yellow from Logo */
 .btn-hero-primary {
   position: relative;
