@@ -8,10 +8,14 @@ import { zumbaClasses } from "@/data/classes";
 import { Clock, Flame, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 const CLASSES_PER_PAGE = 6;
+const EXCLUDED_CLASS_SLUGS = new Set(["zumbuddies", "lil-steppers"]);
 
 const ClassesGrid = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const filteredClasses = useMemo(() => zumbaClasses.filter(c => c.slug !== "zumbuddies"), []);
+  const filteredClasses = useMemo(
+    () => zumbaClasses.filter((c) => !EXCLUDED_CLASS_SLUGS.has(c.slug)),
+    []
+  );
   const totalPages = Math.ceil(filteredClasses.length / CLASSES_PER_PAGE);
   const paginatedClasses = useMemo(
     () =>
@@ -38,14 +42,13 @@ const ClassesGrid = () => {
             transition={{ duration: 0.6 }}
           >
             <div className="inline-block px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-sm font-semibold rounded-full mb-4">
-              Explore Our Programs
+              Adult Dance Programs
             </div>
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-              Find Your Perfect Dance Fitness Class
+              Find Your Perfect Adult Dance Fitness Class
             </h2>
             <p className="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto text-lg">
-              From high-energy dance parties to low-impact sessions, we have a dance fitness class for everyone. 
-              Click on any class to learn more!
+              Explore our adult dance fitness lineup, from high-energy step workouts to structured choreography sessions built for stamina, strength, and fun.
             </p>
           </motion.div>
         </div>
