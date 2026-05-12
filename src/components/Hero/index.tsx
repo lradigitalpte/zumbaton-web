@@ -12,7 +12,7 @@ const slides = [
     headline: "Move with",
     highlight: "Passion",
     description:
-      "One step to change your life. Experience the joy of movement with high-energy dance fitness designed for everyone.",
+      "Effective workout routines for all fitness levels. Experience smart movement with our high-energy classes.",
   },
   {
     id: 2,
@@ -20,7 +20,7 @@ const slides = [
     headline: "Join the",
     highlight: "Energy",
     description:
-      "Break a sweat with an encouraging community. Smart movement, great music, and real results one class at a time.",
+      "Join our community for effective workouts and real results. Routines designed for every fitness stage.",
   },
   {
     id: 3,
@@ -28,7 +28,7 @@ const slides = [
     headline: "Fitness Meets",
     highlight: "Happiness",
     description:
-      "From Zumba Step to ThunderBolt workouts, every session is built to keep you energized, confident, and coming back for more.",
+      "A variety of classes from Zumba Step to ThunderBolt. Effective workouts tailored to different people and goals.",
   },
 ];
 
@@ -65,15 +65,14 @@ const Hero = () => {
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"
               style={{ backgroundImage: `url(${slides[currentSlide].image})` }}
             />
-            {/* Modern Gradient Overlay - Darker at bottom for text readability */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/80" />
-            <div className="absolute inset-0 bg-black/20" />
+            {/* Modern Solid Overlay - Darker at top for menu visibility */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/40 to-black/70" />
           </motion.div>
         </AnimatePresence>
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 w-full h-full flex flex-col justify-end pb-24 sm:justify-center sm:pb-0">
+      <div className="relative z-10 w-full h-full flex flex-col justify-center pt-32 sm:pt-40 lg:pt-48 pb-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
             <AnimatePresence mode="wait">
@@ -86,31 +85,31 @@ const Hero = () => {
                 className="flex flex-col items-center"
               >
                 {/* Headline */}
-                <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white tracking-tighter mb-4 drop-shadow-2xl">
+                <h1 className="text-3xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white tracking-tighter mb-4 md:mb-6 drop-shadow-2xl leading-[0.9]">
                   {slides[currentSlide].headline}{" "}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-lime-400 via-yellow-300 to-yellow-500 block sm:inline mt-2 sm:mt-0 uppercase italic">
+                  <span className="text-lime-400 block sm:inline mt-2 sm:mt-0 uppercase italic">
                     {slides[currentSlide].highlight}
                   </span>
                 </h1>
 
                 {/* Description */}
-                <p className="text-base sm:text-lg md:text-xl text-gray-100 max-w-2xl mx-auto mb-10 leading-relaxed font-bold drop-shadow-md">
+                <p className="text-[10px] sm:text-lg md:text-xl text-gray-100 max-w-2xl mx-auto mb-6 md:mb-10 leading-relaxed font-bold drop-shadow-md uppercase tracking-wide">
                   {slides[currentSlide].description}
                 </p>
 
                 {/* Buttons */}
-                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-4 sm:px-0">
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto px-10 sm:px-0">
                   <Link
                     href="/trial-booking"
-                    className="group relative px-10 py-5 bg-lime-500 hover:bg-lime-400 text-black font-black text-lg rounded-full transition-all duration-300 shadow-[0_10px_30px_rgba(132,204,22,0.4)] hover:shadow-[0_15px_40px_rgba(132,204,22,0.6)] hover:-translate-y-1 w-full sm:w-auto text-center overflow-hidden"
+                    className="group relative px-6 py-3 md:px-10 md:py-5 bg-lime-500 hover:bg-lime-400 text-black font-black text-sm md:text-lg rounded-none transition-all duration-300 shadow-[0_10px_30px_rgba(132,204,22,0.4)] hover:shadow-[0_15px_40px_rgba(132,204,22,0.6)] hover:-translate-y-1 w-full sm:w-auto text-center overflow-hidden"
                   >
                     <span className="relative z-10">START YOUR JOURNEY</span>
-                    <div className="absolute inset-0 h-full w-full scale-0 rounded-full transition-all duration-300 group-hover:scale-100 group-hover:bg-white/20" />
+                    <div className="absolute inset-0 h-full w-full scale-0 rounded-none transition-all duration-300 group-hover:scale-100 group-hover:bg-white/20" />
                   </Link>
                   
                   <button
                     onClick={openWhatsAppModal}
-                    className="group px-10 py-5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-black text-lg rounded-full transition-all duration-300 hover:-translate-y-1 w-full sm:w-auto text-center"
+                    className="group px-6 py-3 md:px-10 md:py-5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-black text-sm md:text-lg rounded-none transition-all duration-300 hover:-translate-y-1 w-full sm:w-auto text-center"
                   >
                     CONTACT US
                   </button>
@@ -129,7 +128,7 @@ const Hero = () => {
         className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 hidden sm:flex flex-col items-center gap-2"
       >
         <span className="text-white/60 text-xs uppercase tracking-[0.3em] font-black">Scroll</span>
-        <div className="w-[2px] h-12 bg-gradient-to-b from-transparent via-lime-500 to-transparent" />
+        <div className="w-[2px] h-12 bg-lime-500/50" />
       </motion.div>
     </section>
   );

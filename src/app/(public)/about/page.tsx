@@ -4,6 +4,7 @@ import AboutSectionTwo from "@/components/About/AboutSectionTwo";
 import MissionVision from "@/components/About/MissionVision";
 import CoreValues from "@/components/About/CoreValues";
 import AboutCTA from "@/components/About/AboutCTA";
+import ExploreClassesShowcase from "@/components/Explore/ExploreClassesShowcase";
 
 import { Metadata } from "next";
 
@@ -19,6 +20,7 @@ const AboutPage = () => {
       <AboutSectionOne />
       <MissionVision />
       <AboutSectionTwo />
+      <ExploreClassesShowcase />
       <CoreValues />
       <AboutCTA />
     </>

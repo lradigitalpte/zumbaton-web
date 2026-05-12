@@ -7,6 +7,8 @@ import ThemeToggler from "./ThemeToggler";
 import menuData from "./menuData";
 import TickerStrip from "./TickerStrip";
 import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Menu as MenuIcon, ChevronDown, ArrowRight } from "lucide-react";
 
 const Header = () => {
   const { openWhatsAppModal } = useWhatsAppModal();
@@ -33,164 +35,236 @@ const Header = () => {
   const usePathName = usePathname();
   const lightBackgroundPages = ['/signin', '/signup', '/forgot-password', '/schedule', '/packages'];
   const isLightBackgroundPage = lightBackgroundPages.some(path => usePathName?.startsWith(path));
-  const isSigninPage = usePathName === '/signin';
   
-  // Header is now ALWAYS dark when it needs a background
   const needsBackground = sticky || isLightBackgroundPage;
-  const desktopIdleText = needsBackground ? "lg:text-gray-300" : "lg:text-white/85";
-  const desktopHoverText = needsBackground ? "lg:hover:text-lime-400" : "lg:hover:text-white";
-  const desktopActiveText = needsBackground ? "lg:text-lime-400" : "lg:text-lime-400";
 
   return (
     <>
       <header
-        className={`header top-0 left-0 z-40 w-full flex flex-col transition-all duration-300 ${
+        className={`header top-0 left-0 z-50 w-full flex flex-col transition-all duration-500 ${
           needsBackground
-            ? "bg-black/95 shadow-2xl fixed z-9999 backdrop-blur-md border-b border-zinc-800"
-            : "absolute bg-transparent pb-2 sm:pb-4"
+            ? "bg-black shadow-2xl fixed z-9999 border-b border-white/10"
+            : "absolute bg-transparent"
         }`}
       >
         {!sticky && <TickerStrip />}
-        <div className="w-full px-4 sm:px-6 md:px-8 lg:px-10">
-          <div className="relative flex items-center justify-between w-full h-16 sm:h-20 md:h-24 lg:h-28">
+        
+        <div className="w-full px-3 sm:px-6 lg:px-12">
+          <div className="relative flex min-h-[4rem] w-full items-center justify-between gap-2 py-2 sm:h-20 sm:min-h-0 sm:py-0 lg:h-32">
             
-            {/* LOGO - Left Aligned */}
-            <div className="w-auto lg:w-1/4 flex items-center justify-start shrink-0">
-              <Link href="/explore" className="flex items-center">
-                <span className="inline-flex items-center justify-center">
+            {/* LOGO — larger on small screens; width cap keeps room for actions */}
+            <div className="flex min-w-0 flex-1 items-center sm:flex-initial sm:min-w-0">
+              <Link href="/explore" className="group flex max-w-[8.75rem] items-center sm:max-w-[11rem] md:max-w-none">
+                <div className="relative w-full">
                   <Image
                     src="/logo/One step fitness logo.png"
                     alt="One Step Fitness Logo"
-                    width={300}
-                    height={100}
-                    className={`nav-logo-mobile h-12 sm:h-14 md:h-20 lg:h-[90px] w-auto object-contain lg:scale-150 origin-left transition-all duration-300 ${
-                      needsBackground 
-                        ? "drop-shadow-[0_2px_12px_rgba(132,204,22,0.2)]" 
-                        : ""
+                    width={200}
+                    height={66}
+                    className={`h-8 w-auto max-h-8 max-w-full object-contain object-left transition-all duration-500 sm:h-10 sm:max-h-none md:h-12 lg:h-16 ${
+                      needsBackground ? "brightness-110" : ""
                     }`}
                     priority
                   />
-                </span>
+                  <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-lime-500 transition-all duration-500 group-hover:w-full" />
+                </div>
               </Link>
             </div>
 
-            {/* NAVIGATION - Centered on Desktop */}
-            <div className={`fixed inset-0 z-40 lg:static lg:flex lg:flex-1 lg:justify-center lg:items-center ${navbarOpen ? "block" : "hidden lg:flex"}`}>
-              {/* Mobile Overlay */}
-              <div 
-                className="fixed inset-0 bg-black/55 backdrop-blur-sm lg:hidden" 
-                onClick={navbarToggleHandler}
-                aria-hidden="true"
-              />
-              
-              <nav className={`absolute right-0 top-0 h-screen w-80 max-w-[85vw] bg-white dark:bg-gray-900 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out border-l border-gray-200 dark:border-gray-800 lg:relative lg:h-auto lg:w-auto lg:max-h-none lg:bg-transparent lg:border-l-0 lg:shadow-none lg:transform-none lg:flex-row lg:items-center ${navbarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"}`}>
-                
-                {/* Mobile Menu Header */}
-                <div className="border-b border-gray-200 dark:border-gray-800 lg:hidden">
-                  <div className="flex items-center justify-between p-4">
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-wide">Menu</h2>
-                    <div className="flex items-center gap-2">
-                      <button onClick={navbarToggleHandler} className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
-                    </div>
-                  </div>
-                  <div className="px-4 pb-4 grid grid-cols-1 gap-3">
-                    <Link
-                      href="/signin"
-                      className="flex items-center justify-center rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-4 py-3 text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
-                      onClick={() => setNavbarOpen(false)}
-                    >
-                      Sign In
-                    </Link>
-                    <ThemeToggler showLabel />
-                  </div>
-                </div>
-
-                {/* Menu Items */}
-                <div className="flex-1 overflow-y-auto lg:overflow-visible">
-                  <ul className="flex flex-col lg:flex-row lg:items-center lg:gap-6 xl:gap-10 p-4 lg:p-0">
-                    {menuData.map((menuItem, index) => (
-                      <li key={index} className="group relative">
-                        {menuItem.path ? (
-                          <Link
-                            href={menuItem.path}
-                            className={`flex items-center py-3 px-4 lg:py-2 lg:px-0 rounded-lg lg:rounded-none text-base font-medium transition-all relative ${
-                              usePathName === menuItem.path
-                                ? `text-lime-600 dark:text-lime-400 bg-lime-50 dark:bg-gray-800 lg:bg-transparent ${desktopActiveText} lg:after:absolute lg:after:-bottom-2 lg:after:left-0 lg:after:w-full lg:after:h-0.5 lg:after:bg-lime-400 lg:after:rounded-full`
-                                : `text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 lg:hover:bg-transparent ${desktopIdleText} ${desktopHoverText}`
-                            }`}
-                            onClick={() => setNavbarOpen(false)}
-                          >
-                            {menuItem.title}
-                          </Link>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => handleSubmenu(index)}
-                              className={`w-full flex items-center justify-between py-3 px-4 lg:py-2 lg:px-0 rounded-lg lg:rounded-none text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 lg:hover:bg-transparent ${desktopIdleText} ${desktopHoverText} transition-all`}
-                            >
-                              <span className="inline-flex items-center gap-1.5">{menuItem.title}</span>
-                              <svg className={`w-4 h-4 transition-transform duration-300 ${openIndex === index ? "rotate-180" : "lg:group-hover:rotate-180"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                            </button>
-                            <div className={`overflow-hidden transition-all duration-300 lg:absolute lg:top-full lg:left-1/2 lg:-translate-x-1/2 lg:mt-4 lg:w-56 lg:bg-white dark:lg:bg-gray-900 lg:rounded-xl lg:shadow-2xl lg:border lg:border-gray-200 dark:lg:border-gray-800 lg:opacity-0 lg:invisible lg:group-hover:opacity-100 lg:group-hover:visible lg:group-hover:mt-2 ${openIndex === index ? "max-h-96 lg:max-h-none" : "max-h-0 lg:max-h-none"}`}>
-                              <div className="pl-4 lg:pl-0 lg:p-2 space-y-1">
-                                {menuItem.submenu?.map((submenuItem, subIndex) => (
-                                  <Link
-                                    href={submenuItem.path}
-                                    key={subIndex}
-                                    className="block py-2.5 px-4 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
-                                    onClick={() => setNavbarOpen(false)}
-                                  >
-                                    {submenuItem.title}
-                                  </Link>
-                                ))}
-                              </div>
-                            </div>
-                          </>
+            {/* DESKTOP NAVIGATION */}
+            <nav className="hidden xl:flex flex-1 justify-center items-center">
+              <ul className="flex items-center gap-2 xl:gap-4">
+                {menuData.map((menuItem, index) => (
+                  <li key={index} className="group relative">
+                    {menuItem.path ? (
+                      <Link
+                        href={menuItem.path}
+                        className={`px-3 xl:px-4 py-2 text-sm xl:text-base font-black uppercase tracking-wider transition-all duration-300 relative ${
+                          usePathName === menuItem.path
+                            ? "text-lime-500"
+                            : "text-white/70 hover:text-white"
+                        }`}
+                      >
+                        {menuItem.title}
+                        {usePathName === menuItem.path && (
+                          <motion.div 
+                            layoutId="navUnderline"
+                            className="absolute -bottom-1 left-3 xl:left-4 right-3 xl:right-4 h-0.5 bg-lime-500"
+                          />
                         )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </nav>
-            </div>
+                      </Link>
+                    ) : (
+                      <div className="relative group">
+                        <button
+                          onClick={() => handleSubmenu(index)}
+                          className="flex items-center gap-1.5 px-3 xl:px-4 py-2 text-sm xl:text-base font-black uppercase tracking-wider text-white/70 hover:text-white transition-all duration-300"
+                        >
+                          {menuItem.title}
+                          <ChevronDown className="w-3 h-3 transition-transform duration-300 group-hover:rotate-180" />
+                        </button>
+                        
+                        {/* Brutalist Dropdown */}
+                        <div className="absolute top-full left-0 mt-2 w-64 bg-black border border-white/10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50">
+                          <div className="p-2 space-y-1">
+                            {menuItem.submenu?.map((submenuItem, subIndex) => (
+                              <Link
+                                href={submenuItem.path}
+                                key={subIndex}
+                                className="flex items-center justify-between px-4 py-3 text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-black hover:bg-lime-500 transition-all duration-300"
+                              >
+                                {submenuItem.title}
+                                <ArrowRight className="w-3 h-3 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </nav>
 
-            {/* BUTTONS - Right Aligned */}
-            <div className="w-auto lg:w-1/4 flex items-center justify-end gap-3 sm:gap-4 shrink-0 z-50">
+            {/* ACTIONS — Sign In visible below xl (mobile / tablet) */}
+            <div className="flex shrink-0 items-center gap-2 sm:gap-3 lg:gap-6">
               <Link
                 href="/signin"
-                className={`hidden sm:inline-flex px-4 py-2 text-sm font-black transition-colors uppercase tracking-widest ${needsBackground ? "text-zinc-300 hover:text-lime-500" : "text-white/85 hover:text-white"}`}
+                className="whitespace-nowrap px-1.5 py-1.5 text-[11px] font-black uppercase tracking-wide text-white hover:text-lime-400 sm:px-2.5 sm:text-xs xl:px-4 xl:py-2 xl:text-sm xl:tracking-wider xl:text-white/70 xl:hover:text-lime-500"
               >
                 Sign In
               </Link>
+              
               <Link
                 href="/trial-booking"
-                className="rounded-xl px-5 sm:px-8 py-2.5 sm:py-3 text-sm font-black text-black bg-lime-500 hover:bg-yellow-400 shadow-[0_0_20px_rgba(132,204,22,0.3)] transition-all hover:scale-105 uppercase tracking-wider"
+                className="bg-lime-500 px-3 py-2 text-center text-[11px] font-black uppercase leading-tight tracking-wide text-black shadow-xl transition-all hover:bg-white sm:px-4 sm:py-2.5 sm:text-xs lg:px-8 lg:py-4 lg:text-sm"
               >
                 Join Now
               </Link>
-              <div className="hidden lg:block ml-2">
+
+              <div className="hidden sm:block">
                 <ThemeToggler />
               </div>
               
-              {/* Mobile Toggle Button */}
               <button
                 onClick={navbarToggleHandler}
-                className="lg:hidden p-2 text-gray-300 hover:text-white transition-colors"
+                className="flex h-10 w-10 shrink-0 items-center justify-center border border-white/10 bg-white/5 hover:bg-white/10 sm:h-11 sm:w-11 xl:hidden"
                 aria-label="Toggle Menu"
               >
-                <div className="w-6 h-5 relative flex flex-col justify-between">
-                  <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ${navbarOpen ? "rotate-45 translate-y-2.5" : ""}`} />
-                  <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ${navbarOpen ? "opacity-0" : ""}`} />
-                  <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ${navbarOpen ? "-rotate-45 -translate-y-2" : ""}`} />
-                </div>
+                {navbarOpen ? <X className="w-5 h-5 text-white" /> : <MenuIcon className="w-5 h-5 text-white" />}
               </button>
             </div>
 
           </div>
         </div>
       </header>
+
+      {/* MOBILE MENU OVERLAY */}
+      <AnimatePresence>
+        {navbarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] xl:hidden"
+          >
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={navbarToggleHandler} />
+            
+            {/* Menu Content */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="absolute right-0 top-0 h-full w-full max-w-sm bg-black border-l border-white/10 flex flex-col p-6 sm:p-10"
+            >
+              <div className="flex items-center justify-between mb-6 sm:mb-10">
+                <Image
+                  src="/logo/One step fitness logo.png"
+                  alt="Logo"
+                  width={180}
+                  height={58}
+                  className="h-8 w-auto max-h-8 max-w-[9.5rem] object-contain object-left sm:h-10 sm:max-h-none sm:max-w-[12rem]"
+                />
+                <button onClick={navbarToggleHandler} className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center border border-white/10 hover:bg-white/5 transition-colors">
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+
+              <nav className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                <ul className="space-y-4 sm:space-y-6">
+                  {menuData.map((menuItem, index) => (
+                    <li key={index}>
+                      {menuItem.path ? (
+                        <Link
+                          href={menuItem.path}
+                          className={`block text-2xl sm:text-4xl font-black uppercase italic tracking-tighter transition-colors ${
+                            usePathName === menuItem.path ? "text-lime-500" : "text-white hover:text-lime-500"
+                          }`}
+                          onClick={() => setNavbarOpen(false)}
+                        >
+                          {menuItem.title}
+                        </Link>
+                      ) : (
+                        <div className="space-y-4">
+                          <button
+                            onClick={() => handleSubmenu(index)}
+                            className="flex items-center justify-between w-full text-2xl sm:text-4xl font-black uppercase italic tracking-tighter text-white"
+                          >
+                            {menuItem.title}
+                            <ChevronDown className={`w-6 h-6 sm:w-8 sm:h-8 transition-transform ${openIndex === index ? "rotate-180" : ""}`} />
+                          </button>
+                          <AnimatePresence>
+                            {openIndex === index && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden pl-4 sm:pl-6 border-l-2 border-lime-500/30 space-y-3 sm:space-y-4"
+                              >
+                                {menuItem.submenu?.map((sub, idx) => (
+                                  <Link
+                                    key={idx}
+                                    href={sub.path}
+                                    className="block text-lg sm:text-xl font-black uppercase italic tracking-tighter text-zinc-500 hover:text-lime-500"
+                                    onClick={() => setNavbarOpen(false)}
+                                  >
+                                    {sub.title}
+                                  </Link>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+
+              <div className="mt-8 space-y-3 border-t border-white/10 pt-8 sm:space-y-4">
+                <Link
+                  href="/signin"
+                  className="block border border-white/20 py-3 text-center text-xs font-black uppercase tracking-widest text-white transition-colors hover:border-lime-500 hover:text-lime-400"
+                  onClick={() => setNavbarOpen(false)}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/trial-booking"
+                  className="block bg-lime-500 py-4 text-center text-sm font-black uppercase tracking-[0.2em] text-black shadow-2xl transition-all hover:bg-white active:scale-[0.99] sm:py-5"
+                  onClick={() => setNavbarOpen(false)}
+                >
+                  Join Now
+                </Link>
+                <div className="flex justify-center">
+                  <ThemeToggler showLabel />
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

@@ -94,13 +94,13 @@ const ClassDetailContent = ({ classData }: { classData: ZumbaClass }) => {
             {/* Main Image - Zumbuddies uses kids1, positioned so people (not walls) are in frame */}
             <div className="relative h-64 md:h-96 rounded-xl overflow-hidden mb-8 bg-gray-200 dark:bg-gray-700">
               <Image
-                src={classData.slug === "zumbuddies" ? "/images/hero/kids1.png" : classData.image}
+                src={classData.slug === "lil-steppers" ? "/images/hero/kids1.png" : classData.image}
                 alt={classData.name}
                 fill
-                className={classData.slug === "zumbuddies" ? "object-cover object-[50%_35%]" : "object-cover object-center"}
+                className={classData.slug === "lil-steppers" ? "object-cover object-[50%_35%]" : "object-cover object-center"}
                 sizes="(max-width: 1024px) 100vw, 75vw"
                 priority
-                unoptimized={classData.slug === "zumbuddies"}
+                unoptimized={classData.slug === "lil-steppers"}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
               

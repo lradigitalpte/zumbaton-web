@@ -1,110 +1,74 @@
 "use client";
 
-import { motion, useInView, useScroll, useTransform } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import Image from "next/image";
 
 const MissionVision = () => {
   const sectionRef = useRef<HTMLElement>(null);
-  
-  // Parallax scroll tracking - fixed parallax effect
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"]
-  });
-  
-  const backgroundY = useTransform(scrollYProgress, [0, 1], ["-20%", "20%"]);
-
-  const headerRef = useRef(null);
-  const missionRef = useRef(null);
-  const visionRef = useRef(null);
-
-  const headerInView = useInView(headerRef, { once: true, margin: "-50px" });
-  const missionInView = useInView(missionRef, { once: true, margin: "-50px" });
-  const visionInView = useInView(visionRef, { once: true, margin: "-50px" });
+  const isInView = useInView(sectionRef, { once: true, amount: 0.15 });
 
   return (
-    <section ref={sectionRef} className="relative py-20 md:py-28 lg:py-36 overflow-hidden">
-      {/* Background Image with Parallax - using CSS background for better performance */}
-      <motion.div 
-        style={{ y: backgroundY }}
-        className="absolute inset-0 -top-[20%] -bottom-[20%] -z-10"
-      >
-        <div 
-          className="absolute inset-0 w-full h-full bg-cover bg-center bg-fixed"
-          style={{
-            backgroundImage: "url('/images/image00059.jpeg')",
-          }}
-        />
-        <div className="absolute inset-0 bg-black/75"></div>
-      </motion.div>
+    <section ref={sectionRef} className="relative bg-black overflow-hidden">
+      <div className="flex flex-col lg:flex-row min-h-[80vh]">
+        
+        {/* Left Side - Visual Statement */}
+        <div className="lg:w-1/2 relative min-h-[40vh] lg:min-h-0">
+          <Image
+            src="/images/image00059.jpeg"
+            alt="One Step Fitness Mission"
+            fill
+            className="object-cover opacity-60 grayscale"
+          />
+          <div className="absolute inset-0 flex items-center justify-center p-12">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.5 }}
+              className="border-[10px] border-lime-500 p-8 md:p-12 text-center"
+            >
+              <h2 className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none">
+                OUR <br />
+                <span className="text-lime-500">PURPOSE</span>
+              </h2>
+            </motion.div>
+          </div>
+        </div>
 
-      {/* Gradient edges like PowerFlow */}
-      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-white dark:from-gray-dark to-transparent z-[1]"></div>
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white dark:from-gray-dark to-transparent z-[1]"></div>
-
-      {/* Content */}
-      <div className="container relative z-10">
-        {/* Header */}
-        <motion.div
-          ref={headerRef}
-          initial={{ opacity: 0, y: 30 }}
-          animate={headerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
-        >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
-            Our Mission & Vision
-          </h2>
-        </motion.div>
-
-        {/* Mission & Vision Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-          {/* Mission Card */}
-          <motion.div
-            ref={missionRef}
-            initial={{ opacity: 0, x: -50 }}
-            animate={missionInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="p-8 md:p-10 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 h-full"
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+        {/* Right Side - Content */}
+        <div className="lg:w-1/2 flex flex-col justify-center p-8 md:p-16 lg:p-24 bg-zinc-950">
+          <div className="max-w-xl">
+            {/* Mission */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="mb-16 md:mb-24"
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <span className="text-lime-500 font-black text-sm tracking-[0.3em]">01</span>
+                <h3 className="text-3xl md:text-4xl font-black text-white uppercase italic tracking-tight">Our Mission</h3>
               </div>
-              <h4 className="text-2xl font-bold text-white">Our Mission</h4>
-            </div>
-            <p className="text-white/90 leading-relaxed text-lg">
-              One Step Fitness exists to make fitness fun, inclusive, and empowering through high-energy dance-based workouts. 
-              We aim to create a supportive community where people of all fitness levels can move with confidence, 
-              improve their physical and mental well-being, and enjoy every step of their fitness journey.
-            </p>
-          </motion.div>
+              <p className="text-white/60 text-lg md:text-xl font-medium leading-relaxed border-l border-lime-500/30 pl-8">
+                One Step Fitness exists to make fitness effective, inclusive, and empowering through structured aerobic routines. We provide a supportive environment where all fitness levels can move with confidence and achieve real results.
+              </p>
+            </motion.div>
 
-          {/* Vision Card */}
-          <motion.div
-            ref={visionRef}
-            initial={{ opacity: 0, x: 50 }}
-            animate={visionInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="p-8 md:p-10 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 h-full"
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 bg-lime-500 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
+            {/* Vision */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <span className="text-lime-500 font-black text-sm tracking-[0.3em]">02</span>
+                <h3 className="text-3xl md:text-4xl font-black text-white uppercase italic tracking-tight">Our Vision</h3>
               </div>
-              <h4 className="text-2xl font-bold text-white">Our Vision</h4>
-            </div>
-            <p className="text-white/90 leading-relaxed text-lg">
-              To become a leading dance-fitness community that inspires people to move freely, live actively, and embrace a healthier lifestyle 
-              — not just as a workout, but as a way of life. One Step Fitness envisions a world where fitness is joyful, accessible, 
-              and driven by connection, rhythm, and self-expression.
-            </p>
-          </motion.div>
+              <p className="text-white/60 text-lg md:text-xl font-medium leading-relaxed border-l border-lime-500/30 pl-8">
+                To be the leading community for structured fitness that inspires active living. We envision a world where effective workouts are accessible to everyone, driven by smart movement and consistent progress.
+              </p>
+            </motion.div>
+          </div>
         </div>
       </div>
     </section>

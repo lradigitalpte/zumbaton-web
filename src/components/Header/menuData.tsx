@@ -15,34 +15,34 @@ const menuData: Menu[] = [
   },
   {
     id: 3,
-    title: "Schedule",
-    path: "/schedule",
-    newTab: false,
-  },
-  {
-    id: 4,
     title: "Classes",
     newTab: false,
     submenu: [
       {
-        id: 41,
+        id: 31,
         title: "Adult",
         path: "/classes",
         newTab: false,
       },
       {
-        id: 42,
+        id: 32,
         title: "Kids & Family (Lil Steppers & One Familia)",
         path: "/zumfamilia",
         newTab: false,
       },
       {
-        id: 43,
+        id: 33,
         title: "Outdoor",
         path: "/zt-fiesta",
         newTab: false,
       },
     ],
+  },
+  {
+    id: 4,
+    title: "Pricing",
+    path: "/pricing",
+    newTab: false,
   },
   {
     id: 5,
@@ -52,8 +52,8 @@ const menuData: Menu[] = [
   },
   {
     id: 6,
-    title: "Pricing",
-    path: "/pricing",
+    title: "Schedule",
+    path: "/schedule",
     newTab: false,
   },
   {

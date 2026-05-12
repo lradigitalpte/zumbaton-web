@@ -19,10 +19,10 @@ const OfferList = ({
 }) => {
   return (
     <div className="mb-3 flex items-center">
-      <span className={`mr-3 flex h-[18px] w-full max-w-[18px] items-center justify-center rounded-full ${
+      <span className={`mr-3 flex h-[18px] w-full max-w-[18px] items-center justify-center rounded-none ${
         status === "active" 
-          ? "bg-green-600 dark:bg-green-500 text-white" 
-          : "bg-gray-300 dark:bg-white/20 text-gray-500 dark:text-white/40"
+          ? "bg-lime-500 text-black" 
+          : "bg-gray-200 dark:bg-white/10 text-gray-400 dark:text-white/30"
       }`}>
         {status === "active" ? checkIcon : crossIcon}
       </span>

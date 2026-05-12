@@ -12,21 +12,21 @@ const slides = [
     image: "/images/hero/hero.jpeg",
     title: "Move With",
     highlight: "Passion",
-    description: "Fitness isn't a chore. It's a celebration of what your body can do.",
+    description: "Step into a class that feels energizing, clear, and easy to follow.",
   },
   {
     id: 2,
     image: "/images/hero/hero2.jpeg",
     title: "Dance With",
     highlight: "Energy",
-    description: "Join a community that lifts you up while you break a sweat.",
+    description: "Train with a welcoming group that keeps the pace strong and motivating.",
   },
   {
     id: 3,
     image: "/images/hero/notbad.jpeg",
     title: "Live With",
     highlight: "Joy",
-    description: "Every beat is a new opportunity to feel alive.",
+    description: "Feel stronger every session with music, structure, and real momentum.",
   },
 ];
 
@@ -35,7 +35,7 @@ const HeroV2 = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
-  const y = useTransform(scrollY, [0, 500], [0, 200]); // Parallax effect
+  const y = useTransform(scrollY, [0, 500], [0, 160]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -45,8 +45,7 @@ const HeroV2 = () => {
   }, []);
 
   return (
-    <section ref={containerRef} className="relative h-[100dvh] w-full overflow-hidden bg-black">
-      {/* Background Slides */}
+    <section ref={containerRef} className="relative min-h-svh w-full overflow-hidden bg-black md:h-dvh">
       <motion.div style={{ y }} className="absolute inset-0 w-full h-full">
         <AnimatePresence mode="popLayout">
           <motion.div
@@ -64,15 +63,88 @@ const HeroV2 = () => {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
-            <div className="absolute inset-0 bg-black/20" />
+            <div className="absolute inset-0 bg-black/55" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(132,204,22,0.18),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_30%)]" />
           </motion.div>
         </AnimatePresence>
       </motion.div>
 
-      {/* Content */}
-      <div className="relative z-10 h-full flex flex-col justify-end pb-32 sm:justify-center sm:pb-0 container mx-auto px-4 sm:px-6">
-        <div className="max-w-5xl">
+      <div className="relative z-10 md:hidden">
+        <div className="container mx-auto px-4 pb-10 pt-24">
+          <div className="w-full max-w-md">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentSlide}
+                initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -24, filter: "blur(10px)" }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="w-full"
+              >
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-white/80 backdrop-blur-md">
+                  <span className="inline-block h-2 w-2 rounded-full bg-lime-400" />
+                  One Step Fitness
+                </div>
+
+                <div className="rounded-[28px] border border-white/12 bg-black/30 p-4 backdrop-blur-md">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-lime-300/90">
+                    Adult step fitness
+                  </p>
+
+                  <h1 className="mt-3 text-[2rem] font-black uppercase italic leading-[0.92] tracking-[-0.06em] text-white">
+                    <span className="block text-white/95">{slides[currentSlide].title}</span>
+                    <span className="block text-lime-400">{slides[currentSlide].highlight}</span>
+                  </h1>
+
+                  <p className="mt-3 max-w-sm text-sm font-medium leading-6 text-white/80">
+                    {slides[currentSlide].description}
+                  </p>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-[11px] font-semibold text-white/78">
+                    <div className="rounded-xl border border-white/10 bg-white/6 px-3 py-2.5">Beginner friendly</div>
+                    <div className="rounded-xl border border-white/10 bg-white/6 px-3 py-2.5">High-energy coaching</div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <Link
+                      href="/trial-booking"
+                      className="inline-flex items-center justify-center rounded-full bg-lime-500 px-4 py-3 text-center text-sm font-black text-black shadow-[0_12px_30px_rgba(132,204,22,0.25)] transition-all hover:bg-lime-400"
+                    >
+                      Book Trial
+                    </Link>
+                    <button
+                      onClick={openWhatsAppModal}
+                      className="rounded-full border border-white/18 bg-white/8 px-4 py-3 text-center text-sm font-black text-white backdrop-blur-sm transition-all hover:border-white/30 hover:bg-white/12"
+                    >
+                      WhatsApp
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.7 }}
+              className="mt-5 flex items-center gap-3"
+            >
+              {slides.map((slide, index) => (
+                <button
+                  key={slide.id}
+                  type="button"
+                  aria-label={`Show slide ${index + 1}`}
+                  onClick={() => setCurrentSlide(index)}
+                  className={`transition-all duration-300 ${currentSlide === index ? "h-2.5 w-10 rounded-full bg-lime-400" : "h-2.5 w-2.5 rounded-full bg-white/35 hover:bg-white/55"}`}
+                />
+              ))}
+            </motion.div>
+          </div>
+        </div>
+      </div>
+
+      <div className="relative z-10 hidden md:flex md:h-full md:items-center">
+        <div className="container mx-auto px-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentSlide}
@@ -80,20 +152,28 @@ const HeroV2 = () => {
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               exit={{ opacity: 0, y: -40, filter: "blur(10px)" }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="relative"
+              className="relative max-w-6xl"
             >
-              <div className="absolute -top-20 -left-20 w-64 h-64 bg-lime-500/20 rounded-full blur-[100px] pointer-events-none" />
-              <div className="absolute top-20 right-0 w-64 h-64 bg-yellow-400/10 rounded-full blur-[100px] pointer-events-none" />
+              <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/8 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-white/80 backdrop-blur-md">
+                <span className="inline-block h-2 w-2 rounded-full bg-lime-400" />
+                One Step Fitness Singapore
+              </div>
 
-              <h1 className="text-6xl sm:text-8xl md:text-9xl font-black text-yellow-400 tracking-tighter leading-[0.9] mb-6 uppercase italic">
-                {slides[currentSlide].title}
-                <span className="block text-lime-500">
-                  {slides[currentSlide].highlight}
-                </span>
+              <h1 className="mb-6 max-w-5xl text-7xl font-black uppercase italic leading-[0.9] tracking-[-0.06em] text-white md:text-8xl lg:text-[7rem]">
+                <span className="block text-white/95">{slides[currentSlide].title}</span>
+                <span className="block text-lime-400">{slides[currentSlide].highlight}</span>
               </h1>
-              <p className="text-lg sm:text-2xl text-zinc-400 max-w-xl font-bold leading-relaxed mb-10 border-l-4 border-lime-500 pl-6 drop-shadow-lg">
-                {slides[currentSlide].description}
-              </p>
+
+              <div className="max-w-3xl rounded-4xl border border-white/12 bg-black/20 p-8 backdrop-blur-md">
+                <p className="text-2xl font-medium leading-relaxed text-white/82">
+                  {slides[currentSlide].description}
+                </p>
+
+                <div className="mt-6 grid grid-cols-2 gap-4 text-sm font-semibold text-white/80">
+                  <div className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3">All levels welcome</div>
+                  <div className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3">Community-first coaching</div>
+                </div>
+              </div>
             </motion.div>
           </AnimatePresence>
 
@@ -101,40 +181,55 @@ const HeroV2 = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.8 }}
-            className="flex flex-wrap gap-3 sm:gap-4"
+            className="mt-10 flex flex-wrap gap-4"
           >
             <Link
               href="/trial-booking"
-              className="group relative px-6 py-3.5 sm:px-8 sm:py-4 bg-lime-500 text-black font-black text-base sm:text-lg rounded-full overflow-hidden transition-transform hover:scale-[1.02] active:scale-[0.98] w-full xs:w-auto text-center shadow-[0_0_20px_rgba(132,204,22,0.3)]"
+              className="group inline-flex items-center justify-center rounded-full bg-lime-500 px-8 py-4 text-center text-lg font-black text-black shadow-[0_12px_30px_rgba(132,204,22,0.25)] transition-all hover:scale-[1.02] hover:bg-lime-400 active:scale-[0.98]"
             >
-              <span className="relative z-10 group-hover:text-black transition-colors">Start Your Journey</span>
-              <div className="absolute inset-0 bg-yellow-400 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+              Book Trial
             </Link>
             <button
               onClick={openWhatsAppModal}
-              className="px-6 py-3.5 sm:px-8 sm:py-4 border-2 border-lime-500/50 text-white font-black text-base sm:text-lg rounded-full hover:bg-lime-500/10 backdrop-blur-sm transition-all hover:border-lime-500 w-full xs:w-auto text-center"
+              className="rounded-full border border-white/18 bg-white/8 px-8 py-4 text-center text-lg font-black text-white backdrop-blur-sm transition-all hover:border-white/30 hover:bg-white/12"
             >
-              Contact Us
+              WhatsApp
             </button>
             <Link
-              href="/explore"
-              className="px-6 py-3.5 sm:px-8 sm:py-4 border-2 border-white/20 text-white font-bold text-base sm:text-lg rounded-full hover:bg-white/10 backdrop-blur-sm transition-all hover:border-white w-full xs:w-auto text-center"
+              href="/schedule"
+              className="rounded-full border border-white/18 bg-transparent px-8 py-4 text-center text-lg font-bold text-white transition-all hover:border-lime-400 hover:text-lime-300"
             >
-              Home
+              Schedule
             </Link>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.8 }}
+            className="mt-10 flex items-center gap-3"
+          >
+            {slides.map((slide, index) => (
+              <button
+                key={slide.id}
+                type="button"
+                aria-label={`Show slide ${index + 1}`}
+                onClick={() => setCurrentSlide(index)}
+                className={`transition-all duration-300 ${currentSlide === index ? "h-2.5 w-12 rounded-full bg-lime-400" : "h-2.5 w-2.5 rounded-full bg-white/35 hover:bg-white/55"}`}
+              />
+            ))}
           </motion.div>
         </div>
       </div>
 
-      {/* Scroll Indicator */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1, duration: 1 }}
         className="absolute bottom-10 right-10 hidden md:flex flex-col items-center gap-4"
       >
-        <div className="text-xs font-mono text-white/50 rotate-90 origin-right translate-x-2">SCROLL</div>
-        <div className="w-[1px] h-24 bg-gradient-to-b from-white/10 to-white/50" />
+        <div className="text-[11px] font-semibold tracking-[0.25em] text-white/55 rotate-90 origin-right translate-x-2">SCROLL</div>
+        <div className="h-24 w-px bg-white/30" />
       </motion.div>
     </section>
   );

@@ -6,6 +6,7 @@ import Hero from "@/components/Hero";
 import Pricing from "@/components/Pricing";
 import CommunityHighlights from "@/components/Community/CommunityHighlights";
 import Video from "@/components/Video";
+import ExploreClassesShowcase from "@/components/Explore/ExploreClassesShowcase";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -22,6 +23,7 @@ export default function ExplorePage() {
       <Hero />
       <AboutSectionOne />
       <AboutSectionTwo />
+      <ExploreClassesShowcase />
       <Video />
       <CommunityHighlights />
       <Pricing />

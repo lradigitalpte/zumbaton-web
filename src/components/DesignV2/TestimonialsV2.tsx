@@ -13,27 +13,37 @@ const trustBadges = [
 
 const TestimonialsV2 = () => {
   return (
-    <section className="py-20 md:py-28 bg-gray-50 dark:bg-zinc-900 overflow-hidden">
+    <section className="py-16 md:py-28 bg-white dark:bg-zinc-950 overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6">
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-4xl md:text-5xl font-black text-center text-gray-900 dark:text-white mb-6 tracking-tight uppercase italic"
-        >
-          Community <span className="text-lime-500">Love</span>
-        </motion.h2>
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.1 }}
-          className="text-center text-gray-600 dark:text-zinc-400 mb-16 max-w-2xl mx-auto text-lg font-medium"
-        >
-          Join thousands of members who've transformed their lives through dance fitness and community.
-        </motion.p>
+        <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-start lg:gap-14">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="rounded-[28px] border border-gray-200 bg-[#fbfaf6] p-5 sm:p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 md:p-10"
+          >
+            <span className="mb-5 inline-flex rounded-full border border-gray-300 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-gray-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+              Community Love
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white tracking-tight uppercase italic leading-[0.96]">
+              Real energy. <span className="text-lime-500 block mt-2">Real consistency.</span>
+            </h2>
+            <p className="mt-4 sm:mt-6 max-w-2xl text-base sm:text-lg md:text-xl leading-relaxed font-medium text-gray-600 dark:text-zinc-400">
+              Members stay because the classes are fun, the coaching feels human, and the environment helps people keep showing up.
+            </p>
+            <div className="mt-6 sm:mt-8 grid grid-cols-2 gap-3 sm:gap-4 sm:max-w-md">
+              <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3.5 dark:border-zinc-800 dark:bg-zinc-950 sm:px-5 sm:py-4">
+                <div className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Vibe</div>
+                <div className="mt-1 text-2xl font-black">Welcoming</div>
+              </div>
+              <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3.5 dark:border-zinc-800 dark:bg-zinc-950 sm:px-5 sm:py-4">
+                <div className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Focus</div>
+                <div className="mt-1 text-2xl font-black">Progress</div>
+              </div>
+            </div>
+          </motion.div>
 
-        <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
           {trustBadges.map((badge, i) => (
             <motion.div
               key={badge.label}
@@ -41,12 +51,13 @@ const TestimonialsV2 = () => {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.08 }}
-              className="inline-flex items-center gap-2 px-6 md:px-7 py-3 md:py-4 rounded-full bg-white dark:bg-black/40 backdrop-blur-sm border border-gray-300 dark:border-white/10 text-gray-800 dark:text-white text-sm md:text-base font-semibold shadow-md hover:shadow-lg dark:shadow-none hover:scale-105 transition-all duration-300"
+              className="flex min-h-[88px] sm:min-h-[96px] items-center gap-3 rounded-[20px] sm:rounded-[24px] border border-gray-200 bg-[#fbfaf6] px-4 sm:px-6 py-4 sm:py-5 text-gray-800 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
             >
-              <span className="text-lime-500 font-black text-lg">{badge.icon}</span>
-              {badge.label}
+              <span className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full bg-lime-500 text-base sm:text-lg font-black text-black">{badge.icon}</span>
+              <span className="text-xs sm:text-sm md:text-base font-semibold leading-snug">{badge.label}</span>
             </motion.div>
           ))}
+          </div>
         </div>
       </div>
     </section>

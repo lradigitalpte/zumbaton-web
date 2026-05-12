@@ -1,180 +1,116 @@
 "use client";
 
 import Image from "next/image";
-import { motion, useInView, useScroll, useTransform } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 
 const AboutSectionTwo = () => {
   const sectionRef = useRef<HTMLElement>(null);
-  
-  // Parallax scroll tracking - background moves slower
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"]
-  });
-  
-  // Background image moves slower (parallax effect)
-  const backgroundY = useTransform(scrollYProgress, [0, 1], [0, 150]);
-
-  const headerRef = useRef(null);
-  const image1Ref = useRef(null);
-  const image2Ref = useRef(null);
-  const feature1Ref = useRef(null);
-  const feature2Ref = useRef(null);
-  const feature3Ref = useRef(null);
-
-  const headerInView = useInView(headerRef, { once: true, margin: "-50px" });
-  const image1InView = useInView(image1Ref, { once: true, margin: "-50px" });
-  const image2InView = useInView(image2Ref, { once: true, margin: "-50px" });
-  const feature1InView = useInView(feature1Ref, { once: true, margin: "-50px" });
-  const feature2InView = useInView(feature2Ref, { once: true, margin: "-50px" });
-  const feature3InView = useInView(feature3Ref, { once: true, margin: "-50px" });
+  const isInView = useInView(sectionRef, { once: true, amount: 0.18 });
 
   return (
-    <section ref={sectionRef} className="relative py-12 sm:py-16 md:py-20 lg:py-28 overflow-hidden">
-      {/* Background Image with Parallax */}
-      <motion.div 
-        style={{ y: backgroundY }}
-        className="absolute inset-0 -z-10"
-      >
-        <Image
-          src="/images/image00065.jpeg"
-          alt="Dance fitness background"
-          fill
-          className="object-cover"
-          sizes="100vw"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/70"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-      </motion.div>
-
-      {/* Content */}
-      <div className="container relative z-10 px-3 sm:px-4">
-        {/* Header */}
-        <motion.div
-          ref={headerRef}
-          initial={{ opacity: 0, y: 30 }}
-          animate={headerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-center mb-8 sm:mb-12"
-        >
-          <div className="text-green-400 dark:text-green-500 font-semibold text-xs sm:text-sm uppercase tracking-wide mb-2 sm:mb-3">
-            Why Choose Us
-          </div>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
-            Community. Music. Movement.
-          </h2>
-        </motion.div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-start lg:items-center">
-          {/* Left Side - Images */}
-          <div className="relative hidden lg:block">
+    <section ref={sectionRef} className="relative py-20 md:py-32 bg-[#f6f4ee] dark:bg-zinc-950 overflow-hidden">
+      <div className="container px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-start">
+          
+          {/* Left Side - Text Content */}
+          <div className="lg:col-span-5">
             <motion.div
-              ref={image1Ref}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={image1InView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.6 }}
-              className="relative rounded-2xl overflow-hidden w-[90%]"
+              initial={{ opacity: 0, x: -20 }}
+              animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+              transition={{ duration: 0.4 }}
             >
-              <div className="relative w-full aspect-[4/3]">
-              <Image
-                  src="/images/image00040.jpeg"
-                  alt="Dance fitness training session"
-                fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
+              <div className="text-lime-600 dark:text-lime-400 font-black text-xs md:text-sm uppercase tracking-[0.3em] mb-6">
+                Why Choose Us
+              </div>
+              <h2 className="text-5xl md:text-7xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter leading-[0.85] mb-12">
+                COMMUNITY. <br />
+                MUSIC. <br />
+                <span className="text-lime-500">MOVEMENT.</span>
+              </h2>
+
+              <div className="space-y-12">
+                <FeatureItem 
+                  number="01"
+                  title="Supportive Instructors"
+                  desc="Experienced instructors providing guidance for all fitness levels. Move at your own pace and achieve your fitness goals."
+                />
+                <FeatureItem 
+                  number="02"
+                  title="Workouts for Everyone"
+                  desc="A variety of aerobic and step classes designed for all stages. We focus on effective movement and structured routines."
+                />
+                <FeatureItem 
+                  number="03"
+                  title="Goal-Oriented Community"
+                  desc="Join a community focused on fitness through structured movement. Achieve your health goals in a welcoming environment."
                 />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-green-600/60 to-transparent pointer-events-none"></div>
-            </motion.div>
-
-            <motion.div
-              ref={image2Ref}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={image2InView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="absolute right-0 bottom-0 w-[50%] -mb-12 z-10 rounded-2xl overflow-hidden shadow-2xl"
-            >
-              <div className="relative w-full aspect-square">
-              <Image
-                  src="/images/image00065.jpeg"
-                  alt="Personal Coaching Session"
-                fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 50vw, 25vw"
-              />
-            </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-lime-500/60 to-transparent pointer-events-none"></div>
             </motion.div>
           </div>
 
-          {/* Right Side - Numbered Features */}
-          <div>
-            <motion.div
-              ref={feature1Ref}
-              initial={{ opacity: 0, y: 30 }}
-              animate={feature1InView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="relative mb-6 sm:mb-8 pl-16 sm:pl-20"
-            >
-              <div className="absolute left-0 w-12 sm:w-16 h-12 sm:h-16 bg-green-600 dark:bg-green-500 text-white text-center text-2xl sm:text-3xl font-bold rounded-lg flex items-center justify-center flex-shrink-0">
-                1
-              </div>
-              <div>
-                <h4 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 text-white">
-                  Friendly, Supportive Instructors
-                </h4>
-                <p className="text-xs sm:text-sm md:text-base text-white/90 leading-relaxed">
-                  Dance with instructors who make every class feel like your own. No certified pressure — just pure dance joy. Move at your pace, smile through every step.
-                </p>
-              </div>
-            </motion.div>
+          {/* Right Side - Visual Composition */}
+          <div className="lg:col-span-7 relative">
+            <div className="relative aspect-square w-full max-w-2xl ml-auto">
+              {/* Background Block */}
+              <div className="absolute top-12 right-12 w-full h-full bg-lime-500/10 border border-lime-500/20"></div>
+              
+              {/* Top Image */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="absolute top-0 left-0 w-[85%] aspect-[4/3] z-10 border-4 border-white dark:border-zinc-900 shadow-2xl overflow-hidden"
+              >
+                <Image
+                  src="/images/image00040.jpeg"
+                  alt="Training Session"
+                  fill
+                  className="object-cover"
+                />
+              </motion.div>
 
-            <motion.div
-              ref={feature2Ref}
-              initial={{ opacity: 0, y: 30 }}
-              animate={feature2InView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="relative mb-6 sm:mb-8 pl-16 sm:pl-20"
-            >
-              <div className="absolute left-0 w-12 sm:w-16 h-12 sm:h-16 bg-green-600 dark:bg-green-500 text-white text-center text-2xl sm:text-3xl font-bold rounded-lg flex items-center justify-center flex-shrink-0">
-                2
-              </div>
-              <div>
-                <h4 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 text-white">
-                  Feel-Good Classes for Everyone
-                </h4>
-                <p className="text-xs sm:text-sm md:text-base text-white/90 leading-relaxed">
-                  Find a dance fitness class that feels like your own. We have step aerobics classes for everyone. Not about pushing limits — just joyful movement with good energy.
-                </p>
-              </div>
-            </motion.div>
+              {/* Overlapping Image */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="absolute bottom-0 right-0 w-[60%] aspect-square z-20 border-4 border-lime-500 shadow-2xl overflow-hidden"
+              >
+                <Image
+                  src="/images/image00065.jpeg"
+                  alt="Personal Coaching"
+                  fill
+                  className="object-cover"
+                />
+              </motion.div>
 
-            <motion.div
-              ref={feature3Ref}
-              initial={{ opacity: 0, y: 30 }}
-              animate={feature3InView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-              className="relative pl-16 sm:pl-20"
-            >
-              <div className="absolute left-0 w-12 sm:w-16 h-12 sm:h-16 bg-green-600 dark:bg-green-500 text-white text-center text-2xl sm:text-3xl font-bold rounded-lg flex items-center justify-center flex-shrink-0">
-                3
+              {/* Vertical Text */}
+              <div className="absolute -left-12 top-1/2 -rotate-90 origin-center hidden xl:block">
+                <span className="text-6xl font-black text-black/5 dark:text-white/5 uppercase tracking-[0.5em] whitespace-nowrap">
+                  ONE STEP FITNESS
+                </span>
               </div>
-              <div>
-                <h4 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 text-white">
-                  A Community That Transforms Lives
-                </h4>
-                <p className="text-xs sm:text-sm md:text-base text-white/90 leading-relaxed">
-                  Join a vibrant community transforming lives one dance step at a time. Dance happy, get fit naturally. Not fitness pressure — fitness pleasure.
-                </p>
-              </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>
     </section>
   );
 };
+
+const FeatureItem = ({ number, title, desc }: { number: string; title: string; desc: string }) => (
+  <div className="group flex gap-8">
+    <div className="text-lime-500 font-black text-2xl italic tracking-tighter shrink-0">{number}</div>
+    <div>
+      <h4 className="text-xl md:text-2xl font-black text-gray-900 dark:text-white uppercase italic tracking-tight mb-3">
+        {title}
+      </h4>
+      <p className="text-gray-600 dark:text-zinc-400 font-medium leading-relaxed">
+        {desc}
+      </p>
+    </div>
+  </div>
+);
 
 export default AboutSectionTwo;

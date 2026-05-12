@@ -1,5 +1,6 @@
 import { Providers } from "./providers";
 import type { Metadata } from "next";
+import Script from "next/script";
 import "../styles/index.css";
 
 const defaultWebUrl = "https://onestepfitness.sg";
@@ -54,8 +55,12 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png?v=20260501" />
         <link rel="shortcut icon" href="/favicon.png?v=20260501" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20260501" />
+      </head>
+      <body className="bg-[#FCFCFC] dark:bg-black font-sans">
         {/* Google Tag Manager */}
-        <script
+        <Script
+          id="gtm-script"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -65,8 +70,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           }}
         />
         {/* End Google Tag Manager */}
-      </head>
-      <body className="bg-[#FCFCFC] dark:bg-black font-sans">
         {/* Google Tag Manager (noscript) */}
         <noscript>
           <iframe

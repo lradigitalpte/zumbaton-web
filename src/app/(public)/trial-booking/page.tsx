@@ -2,9 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { formatDate, formatTime } from "@/lib/utils";
 import { useToast } from "@/components/Toast";
 import TrialBookingHero from "@/components/TrialBooking/TrialBookingHero";
+import { motion, AnimatePresence } from "framer-motion";
+import { Calendar, Users, Clock, MapPin, ArrowRight, X, ChevronLeft, ChevronRight, Check, Zap } from "lucide-react";
+import Image from "next/image";
+import LoadingIcon from "@/components/Common/LoadingIcon";
 
 interface Class {
   id: string;
@@ -33,18 +38,14 @@ interface InstructorProfile {
 
 const CLASSES_PER_PAGE = 10;
 
-// Helper function to get default trial price based on age group
 function getDefaultTrialPrice(ageGroup: 'adult' | 'kid' | 'all' | null | undefined): number {
-  if (ageGroup === 'kid') {
-    return 1800; // $18 for kids
-  }
-  return 2300; // $23 for adults and 'all'
+  if (ageGroup === 'kid') return 1800;
+  return 2300;
 }
 
-// Kids price was updated from $17 to $18; treat 1700 from DB as legacy and use 1800
 function getTrialPriceCents(ageGroup: 'adult' | 'kid' | 'all' | null | undefined, trialPriceCents: number | null): number {
   const fromDb = trialPriceCents && trialPriceCents > 0 ? trialPriceCents : null;
-  if (ageGroup === 'kid' && fromDb === 1700) return 1800; // legacy $17 -> $18
+  if (ageGroup === 'kid' && fromDb === 1700) return 1800;
   if (fromDb != null) return fromDb;
   return getDefaultTrialPrice(ageGroup);
 }
@@ -73,57 +74,38 @@ export default function TrialBookingPage() {
   });
   const [processing, setProcessing] = useState(false);
 
-  // Helper function to get initials from name
   const getInitials = (name: string | null): string => {
     if (!name) return "??";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+    return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
-  // Fetch instructor profiles
   useEffect(() => {
     const fetchInstructorProfiles = async () => {
       try {
-        // Get unique instructor IDs and names from classes
         const instructorIds = new Set<string>();
         const instructorNames = new Set<string>();
-        
         classes.forEach((cls) => {
           if (cls.instructor_id) instructorIds.add(cls.instructor_id);
           if (cls.instructor_name) {
-            const names = cls.instructor_name.split(',').map(n => n.trim());
-            names.forEach(name => instructorNames.add(name));
+            cls.instructor_name.split(',').map(n => n.trim()).forEach(name => instructorNames.add(name));
           }
         });
 
         if (instructorIds.size > 0 || instructorNames.size > 0) {
           const params = new URLSearchParams();
-          if (instructorIds.size > 0) {
-            params.append('ids', Array.from(instructorIds).join(','));
-          }
-          if (instructorNames.size > 0) {
-            params.append('names', Array.from(instructorNames).join(','));
-          }
+          if (instructorIds.size > 0) params.append('ids', Array.from(instructorIds).join(','));
+          if (instructorNames.size > 0) params.append('names', Array.from(instructorNames).join(','));
 
-          const response = await fetch(`/api/instructors/profiles?${params.toString()}`, { cache: "no-store", headers: { "Cache-Control": "no-cache" } });
+          const response = await fetch(`/api/instructors/profiles?${params.toString()}`, { cache: "no-store" });
           const result = await response.json();
 
           if (result.success && result.data) {
             const profiles: Record<string, InstructorProfile> = {};
             const requestedNames = Array.from(instructorNames);
             result.data.forEach((profile: any) => {
-              const profileData = {
-                id: profile.id,
-                name: profile.name,
-                avatar_url: profile.avatar_url ?? null,
-              };
+              const profileData = { id: profile.id, name: profile.name, avatar_url: profile.avatar_url ?? null };
               profiles[profile.id] = profileData;
               profiles[profile.name] = profileData;
-              // Store under each requested name that matches (so "Robert" finds profile "Robert Smith")
               const profileNameNorm = (profile.name || "").toLowerCase().trim().replace(/\s+/g, " ");
               requestedNames.forEach((name: string) => {
                 const nameNorm = name.toLowerCase().trim().replace(/\s+/g, " ");
@@ -140,38 +122,19 @@ export default function TrialBookingPage() {
         console.error("Error fetching instructor profiles:", error);
       }
     };
-
-    if (classes.length > 0) {
-      fetchInstructorProfiles();
-    }
+    if (classes.length > 0) fetchInstructorProfiles();
   }, [classes]);
 
-  // Fetch available classes
   useEffect(() => {
     const fetchClasses = async () => {
       try {
         const params = new URLSearchParams();
-        if (dateFilter) {
-          params.append('date', dateFilter);
-        }
-        
+        if (dateFilter) params.append('date', dateFilter);
         const response = await fetch(`/api/classes/public?${params.toString()}`);
         const result = await response.json();
-
         if (result.success && result.data) {
-          // Map classes with booked counts (already filtered by API)
-          const availableClasses = result.data.map((cls: any) => ({
-            ...cls,
-            booked_count: cls.booked_count || 0,
-          }));
-
-          // Sort by date and time
-          availableClasses.sort(
-            (a: Class, b: Class) =>
-              new Date(a.scheduled_at).getTime() -
-              new Date(b.scheduled_at).getTime()
-          );
-
+          const availableClasses = result.data.map((cls: any) => ({ ...cls, booked_count: cls.booked_count || 0 }));
+          availableClasses.sort((a: Class, b: Class) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
           setClasses(availableClasses);
         }
       } catch (error) {
@@ -181,201 +144,119 @@ export default function TrialBookingPage() {
         setLoading(false);
       }
     };
-
     fetchClasses();
-    // Reset to page 1 when date filter or age group filter changes
     setCurrentPage(1);
   }, [toast, dateFilter, ageGroupFilter]);
 
-  // Filter classes by age group
   const filteredClasses = classes.filter((cls) => {
     if (ageGroupFilter === 'all') return true;
     const ageGroup = cls.age_group || 'all';
-    if (ageGroupFilter === 'adult') {
-      return ageGroup === 'adult' || ageGroup === 'all';
-    }
-    if (ageGroupFilter === 'kid') {
-      return ageGroup === 'kid' || ageGroup === 'all';
-    }
+    if (ageGroupFilter === 'adult') return ageGroup === 'adult' || ageGroup === 'all';
+    if (ageGroupFilter === 'kid') return ageGroup === 'kid' || ageGroup === 'all';
     return true;
   });
 
-  // Pagination logic
   const totalPages = Math.ceil(filteredClasses.length / CLASSES_PER_PAGE);
-  const paginatedClasses = filteredClasses.slice(
-    (currentPage - 1) * CLASSES_PER_PAGE,
-    currentPage * CLASSES_PER_PAGE
-  );
+  const paginatedClasses = filteredClasses.slice((currentPage - 1) * CLASSES_PER_PAGE, currentPage * CLASSES_PER_PAGE);
 
   const handleClassSelect = (classItem: Class) => {
-    // Check availability
     const availableSpots = classItem.capacity - (classItem.booked_count || 0);
     if (availableSpots <= 0) {
       toast.error("This class is fully booked. Please select another class.");
       return;
     }
-
     setSelectedClass(classItem);
-    
-    // Reset guardian data when switching classes
-    const isKidsClass = classItem.age_group === 'kid';
-    if (!isKidsClass) {
-      setGuardianData({
-        guardianName: "",
-        guardianEmail: "",
-        guardianPhone: "",
-        guardianOnPremises: false,
-      });
+    if (classItem.age_group !== 'kid') {
+      setGuardianData({ guardianName: "", guardianEmail: "", guardianPhone: "", guardianOnPremises: false });
     }
-    
-    // On mobile, scroll to top to show the form panel
-    if (window.innerWidth < 1024) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    if (window.innerWidth < 1024) window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!selectedClass) {
       toast.error("Please select a class first");
       return;
     }
-
-    // Validate form
     if (!formData.guestName.trim()) {
       toast.error(selectedClass.age_group === 'kid' ? "Please enter kid's name" : "Please enter your name");
       return;
     }
-
-    // Email and phone validation - only required for adult classes
     const isKidsClass = selectedClass.age_group === 'kid';
     if (!isKidsClass) {
       if (!formData.guestEmail.trim() || !formData.guestEmail.includes("@")) {
         toast.error("Please enter a valid email address");
         return;
       }
-
       if (!formData.guestPhone.trim()) {
         toast.error("Please enter your phone number");
         return;
       }
     }
-
     if (!formData.dateOfBirth.trim()) {
       toast.error("Please enter date of birth");
       return;
     }
-
-    // Validate date of birth
     const dob = new Date(formData.dateOfBirth);
-    if (isNaN(dob.getTime())) {
+    if (isNaN(dob.getTime()) || dob > new Date()) {
       toast.error("Please enter a valid date of birth");
       return;
     }
-
-    // Check if date is in the future
-    if (dob > new Date()) {
-      toast.error("Date of birth cannot be in the future");
-      return;
-    }
-
-    // Check age (must be reasonable - at least 5 years old)
     const age = new Date().getFullYear() - dob.getFullYear();
     if (age < 5 || age > 120) {
       toast.error("Please enter a valid date of birth");
       return;
     }
-
-    // For kids classes, validate guardian data
     if (isKidsClass) {
-      if (!guardianData.guardianName.trim()) {
-        toast.error("Please enter guardian/parent name");
-        setProcessing(false);
-        return;
-      }
-      if (!guardianData.guardianEmail.trim() || !guardianData.guardianEmail.includes("@")) {
-        toast.error("Please enter a valid guardian/parent email address");
-        setProcessing(false);
-        return;
-      }
-      if (!guardianData.guardianPhone.trim()) {
-        toast.error("Please enter guardian/parent phone number");
-        setProcessing(false);
+      if (!guardianData.guardianName.trim() || !guardianData.guardianEmail.trim() || !guardianData.guardianEmail.includes("@") || !guardianData.guardianPhone.trim()) {
+        toast.error("Please fill in all guardian information");
         return;
       }
       if (!guardianData.guardianOnPremises) {
         toast.error("You must confirm that a parent/guardian will be on premises");
-        setProcessing(false);
         return;
       }
     }
 
     setProcessing(true);
-
     try {
       const requestBody: any = {
         classId: selectedClass.id,
         guestName: formData.guestName.trim(),
         dateOfBirth: formData.dateOfBirth.trim(),
       };
-
-      // For kids classes: use guardian email/phone, for adults: use guest email/phone
       if (isKidsClass) {
-        // Kids classes: use guardian contact info
         requestBody.guardianName = guardianData.guardianName.trim();
         requestBody.guardianEmail = guardianData.guardianEmail.trim().toLowerCase();
         requestBody.guardianPhone = guardianData.guardianPhone.trim();
         requestBody.guardianOnPremises = guardianData.guardianOnPremises;
-        // Use guardian email/phone as guest email/phone for booking record
         requestBody.guestEmail = guardianData.guardianEmail.trim().toLowerCase();
         requestBody.guestPhone = guardianData.guardianPhone.trim();
       } else {
-        // Adult classes: use guest contact info
         requestBody.guestEmail = formData.guestEmail.trim().toLowerCase();
         requestBody.guestPhone = formData.guestPhone.trim();
       }
 
       const response = await fetch("/api/trial-booking/payment", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
       });
-
       const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Failed to create payment");
-      }
-
-      // Redirect to HitPay
-      if (result.paymentUrl) {
-        window.location.href = result.paymentUrl;
-      } else {
-        throw new Error("Payment URL not received");
-      }
+      if (!response.ok || !result.success) throw new Error(result.message || "Failed to create payment");
+      if (result.paymentUrl) window.location.href = result.paymentUrl;
+      else throw new Error("Payment URL not received");
     } catch (error) {
       console.error("Error creating payment:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to process booking. Please try again."
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to process booking. Please try again.");
       setProcessing(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-dark">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">
-            Loading available classes...
-          </p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-[#f6f4ee] dark:bg-black">
+        <LoadingIcon size="md" showLabel />
       </div>
     );
   }
@@ -383,532 +264,386 @@ export default function TrialBookingPage() {
   return (
     <>
       <TrialBookingHero />
-      <div className="min-h-screen bg-white dark:bg-gray-dark py-12">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Class Selection */}
-          <div className="lg:col-span-2">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Available Classes
-                </h2>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-base text-gray-600 dark:text-gray-400">
-                    Trial class:
-                  </span>
-                  <span className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    ${ageGroupFilter === 'kid' 
-                      ? (getDefaultTrialPrice('kid') / 100).toFixed(2)
-                      : (getDefaultTrialPrice('adult') / 100).toFixed(2)}
-                  </span>
-                  {ageGroupFilter === 'all' && (
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      (Kids: ${(getDefaultTrialPrice('kid') / 100).toFixed(2)}, Adults: ${(getDefaultTrialPrice('adult') / 100).toFixed(2)})
+      <div className="min-h-screen bg-[#f6f4ee] dark:bg-black py-20 overflow-hidden relative">
+        {/* Background Accent */}
+        <div className="absolute top-1/2 right-0 -translate-y-1/2 w-1/3 h-full bg-lime-500/5 -skew-x-12 -z-10 pointer-events-none"></div>
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
+            
+            {/* Class Selection - 8 Columns */}
+            <div className="lg:col-span-8">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+                <div>
+                  <div className="text-lime-600 dark:text-lime-400 font-black text-sm uppercase tracking-[0.3em] mb-4">
+                    Step 1
+                  </div>
+                  <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter leading-none text-gray-900 dark:text-white">
+                    AVAILABLE <span className="text-lime-500">CLASSES</span>
+                  </h2>
+                  <div className="mt-6 flex items-baseline gap-3">
+                    <span className="text-3xl font-black text-lime-600 dark:text-lime-400">
+                      ${ageGroupFilter === 'kid' 
+                        ? (getDefaultTrialPrice('kid') / 100).toFixed(2)
+                        : (getDefaultTrialPrice('adult') / 100).toFixed(2)}
                     </span>
-                  )}
+                    <span className="text-sm font-black uppercase tracking-widest text-zinc-500">
+                      PER TRIAL SESSION
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <label htmlFor="dateFilter" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Filter by Date:
-                </label>
-                <input
-                  type="date"
-                  id="dateFilter"
-                  value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm"
-                />
-                {dateFilter && (
-                  <button
-                    onClick={() => {
-                      setDateFilter("");
-                      setCurrentPage(1);
-                    }}
-                    className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </div>
 
-            {/* Age Group Filter Tabs */}
-            <div className="mb-6">
-              <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={() => {
-                    setAgeGroupFilter('all');
-                    setCurrentPage(1);
-                  }}
-                  className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
-                    ageGroupFilter === 'all'
-                      ? 'border-green-600 text-green-600 dark:text-green-400'
-                      : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
-                  }`}
-                >
-                  All Classes
-                </button>
-                <button
-                  onClick={() => {
-                    setAgeGroupFilter('adult');
-                    setCurrentPage(1);
-                  }}
-                  className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
-                    ageGroupFilter === 'adult'
-                      ? 'border-green-600 text-green-600 dark:text-green-400'
-                      : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
-                  }`}
-                >
-                  Adults
-                </button>
-                <button
-                  onClick={() => {
-                    setAgeGroupFilter('kid');
-                    setCurrentPage(1);
-                  }}
-                  className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
-                    ageGroupFilter === 'kid'
-                      ? 'border-green-600 text-green-600 dark:text-green-400'
-                      : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
-                  }`}
-                >
-                  Kids
-                </button>
-              </div>
-            </div>
-
-            {filteredClasses.length === 0 ? (
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 text-center">
-                <p className="text-gray-600 dark:text-gray-400">
-                  {classes.length === 0
-                    ? "No classes available at the moment. Please check back later."
-                    : `No ${ageGroupFilter === 'adult' ? 'adult' : ageGroupFilter === 'kid' ? 'kids' : ''} classes available${dateFilter ? ' for the selected date' : ''}. Please try a different filter.`}
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="space-y-4">
-                  {paginatedClasses.map((classItem) => {
-                  const scheduledDate = new Date(classItem.scheduled_at);
-                  const availableSpots =
-                    classItem.capacity - (classItem.booked_count || 0);
-                  const isSelected = selectedClass?.id === classItem.id;
-
-                  // Get instructor avatar (try ID first, then name; name lookup works for "Robert" -> "Robert Smith")
-                  const instructorProfile =
-                    (classItem.instructor_id && instructorProfiles[classItem.instructor_id]) ||
-                    (classItem.instructor_name && instructorProfiles[classItem.instructor_name]) ||
-                    null;
-                  const instructorAvatar = instructorProfile?.avatar_url ?? classItem.instructor_avatar ?? null;
-                  const instructorInitials = getInitials(classItem.instructor_name);
-
-                  return (
-                    <div
-                      key={classItem.id}
-                      className={`border-2 rounded-lg p-6 cursor-pointer transition-all ${
-                        isSelected
-                          ? "border-green-600 bg-green-50 dark:bg-green-900/20"
-                          : "border-gray-200 dark:border-gray-700 hover:border-green-400"
-                      }`}
-                      onClick={() => handleClassSelect(classItem)}
-                    >
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                            {classItem.title}
-                          </h3>
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            <span>{formatDate(scheduledDate.toISOString())}</span>
-                            <span>{formatTime(scheduledDate.toISOString())}</span>
-                            <span>{classItem.duration_minutes} minutes</span>
-                            {classItem.instructor_name && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide shrink-0">Instructor</span>
-                                <div className="relative h-8 w-8 rounded-full border-2 border-white dark:border-gray-700 flex items-center justify-center text-xs font-semibold text-white bg-gradient-to-br from-green-600 to-green-700 shrink-0 overflow-hidden">
-                                  {instructorAvatar ? (
-                                    <img
-                                      src={instructorAvatar}
-                                      alt={classItem.instructor_name}
-                                      className="h-full w-full object-cover"
-                                      loading="lazy"
-                                      onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        target.style.display = 'none';
-                                        const parent = target.parentElement;
-                                        if (parent && !parent.querySelector('span')) {
-                                          const span = document.createElement('span');
-                                          span.textContent = instructorInitials;
-                                          parent.appendChild(span);
-                                        }
-                                      }}
-                                    />
-                                  ) : (
-                                    <span>{instructorInitials}</span>
-                                  )}
-                                </div>
-                                <span>{classItem.instructor_name}</span>
-                              </div>
-                            )}
-                            {classItem.location && (
-                              <span>{classItem.location}</span>
-                            )}
-                          </div>
-                          {classItem.description && (
-                            <p className="mt-2 text-gray-600 dark:text-gray-400 text-sm">
-                              {classItem.description}
-                            </p>
-                          )}
-                        </div>
-                        {isSelected && (
-                          <div className="flex items-center gap-2 text-green-600 dark:text-green-400 font-semibold text-sm shrink-0">
-                            <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                            Selected
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-                </div>
-                
-                {/* Pagination Controls */}
-                {totalPages > 1 && (
-                  <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Showing {(currentPage - 1) * CLASSES_PER_PAGE + 1} to {Math.min(currentPage * CLASSES_PER_PAGE, filteredClasses.length)} of {filteredClasses.length} classes
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setCurrentPage(prev => Math.max(1, prev - 1));
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        disabled={currentPage === 1}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        Previous
-                      </button>
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                          // Show first page, last page, current page, and pages around current
-                          if (
-                            page === 1 ||
-                            page === totalPages ||
-                            (page >= currentPage - 1 && page <= currentPage + 1)
-                          ) {
-                            return (
-                              <button
-                                key={page}
-                                onClick={() => {
-                                  setCurrentPage(page);
-                                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                                }}
-                                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                                  currentPage === page
-                                    ? "bg-green-600 text-white"
-                                    : "text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
-                                }`}
-                              >
-                                {page}
-                              </button>
-                            );
-                          } else if (
-                            page === currentPage - 2 ||
-                            page === currentPage + 2
-                          ) {
-                            return <span key={page} className="px-2 text-gray-500">...</span>;
-                          }
-                          return null;
-                        })}
-                      </div>
-                      <button
-                        onClick={() => {
-                          setCurrentPage(prev => Math.min(totalPages, prev + 1));
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        disabled={currentPage === totalPages}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        Next
-                      </button>
+                <div className="flex flex-col sm:flex-row items-stretch gap-4">
+                  <div className="space-y-2">
+                    <label htmlFor="dateFilter" className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                      Filter by Date
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="date"
+                        id="dateFilter"
+                        value={dateFilter}
+                        onChange={(e) => setDateFilter(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="w-full bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 px-6 py-3 text-sm font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
+                      />
                     </div>
                   </div>
-                )}
-              </>
-            )}
-          </div>
+                </div>
+              </div>
 
-          {/* Booking Form - Desktop Only */}
-          <div className="hidden lg:block lg:col-span-1">
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 sticky top-24">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-                Your Details
-              </h2>
+              {/* Age Group Filter Tabs */}
+              <div className="flex gap-2 mb-10 border-b border-black/10 dark:border-white/10 pb-6">
+                {(['all', 'adult', 'kid'] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => { setAgeGroupFilter(tab); setCurrentPage(1); }}
+                    className={`px-8 py-3 text-[10px] font-black uppercase tracking-widest transition-all duration-300 border ${
+                      ageGroupFilter === tab
+                        ? "bg-black text-white border-black dark:bg-lime-500 dark:text-black dark:border-lime-500"
+                        : "bg-white dark:bg-zinc-900 text-gray-500 dark:text-zinc-400 border-black/10 dark:border-white/10 hover:border-lime-500"
+                    }`}
+                  >
+                    {tab === 'all' ? 'All Classes' : tab === 'adult' ? 'Adults' : 'Kids'}
+                  </button>
+                ))}
+              </div>
 
-              {selectedClass ? (
-                <div className="mb-6 p-4 bg-white dark:bg-gray-900 rounded-lg border border-green-200 dark:border-green-800">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    Selected Class:
-                  </p>
-                  <p className="font-semibold text-gray-900 dark:text-white">
-                    {selectedClass.title}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {formatDate(selectedClass.scheduled_at)} at{" "}
-                    {formatTime(selectedClass.scheduled_at)}
-                  </p>
-                  <p className="text-lg font-bold text-green-600 dark:text-green-400 mt-2">
-                    $
-                    {(getTrialPriceCents(selectedClass.age_group, selectedClass.trial_price_cents) / 100).toFixed(2)}
+              {filteredClasses.length === 0 ? (
+                <div className="bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 p-20 text-center">
+                  <p className="text-xl font-black uppercase italic tracking-tighter text-zinc-400">
+                    No classes found for this selection.
                   </p>
                 </div>
               ) : (
-                <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                    Please select a class from the list to continue.
-                  </p>
+                <div className="space-y-4">
+                  {paginatedClasses.map((classItem) => {
+                    const scheduledDate = new Date(classItem.scheduled_at);
+                    const isSelected = selectedClass?.id === classItem.id;
+                    const instructorProfile = (classItem.instructor_id && instructorProfiles[classItem.instructor_id]) || (classItem.instructor_name && instructorProfiles[classItem.instructor_name]) || null;
+                    const instructorAvatar = instructorProfile?.avatar_url ?? classItem.instructor_avatar ?? null;
+                    const instructorInitials = getInitials(classItem.instructor_name);
+
+                    return (
+                      <motion.div
+                        key={classItem.id}
+                        layout
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`group border-2 p-6 md:p-8 cursor-pointer transition-all duration-300 relative overflow-hidden ${
+                          isSelected
+                            ? "border-lime-500 bg-white dark:bg-zinc-900 shadow-2xl"
+                            : "border-black/5 dark:border-white/5 bg-white/50 dark:bg-zinc-900/50 hover:border-lime-500/50"
+                        }`}
+                        onClick={() => handleClassSelect(classItem)}
+                      >
+                        {isSelected && (
+                          <div className="absolute top-0 right-0 bg-lime-500 text-black px-3 py-1 md:px-4 md:py-2 text-[8px] md:text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                            <Check className="w-3 h-3" /> SELECTED
+                          </div>
+                        )}
+                        
+                        <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-8">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-3 md:mb-4">
+                              <span className="w-6 md:w-8 h-[2px] bg-lime-500"></span>
+                              <span className="text-lime-600 dark:text-lime-400 font-black text-[10px] md:text-xs uppercase tracking-[0.2em]">
+                                {formatTime(scheduledDate.toISOString())} • {classItem.duration_minutes} MIN
+                              </span>
+                            </div>
+                            
+                            <h3 className="text-xl md:text-3xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white mb-4 md:mb-6 group-hover:text-lime-500 transition-colors">
+                              {classItem.title}
+                            </h3>
+
+                            <div className="flex flex-wrap items-center gap-4 md:gap-6">
+                              <div className="flex items-center gap-2 md:gap-3">
+                                <Calendar className="w-3 h-3 md:w-4 md:h-4 text-zinc-400" />
+                                <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-500">
+                                  {formatDate(scheduledDate.toISOString())}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 md:gap-3">
+                                <MapPin className="w-3 h-3 md:w-4 md:h-4 text-zinc-400" />
+                                <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-zinc-500">
+                                  {classItem.location || "Main Studio"}
+                                </span>
+                              </div>
+                              {classItem.instructor_name && (
+                                <div className="flex items-center gap-3">
+                                  <div className="w-6 h-6 bg-black dark:bg-zinc-800 border border-white/10 flex items-center justify-center text-[10px] font-black text-white overflow-hidden">
+                                    {instructorAvatar ? (
+                                      <img src={instructorAvatar} alt="" className="w-full h-full object-cover" />
+                                    ) : instructorInitials}
+                                  </div>
+                                  <span className="text-xs font-black uppercase tracking-widest text-zinc-500">
+                                    {classItem.instructor_name}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="shrink-0">
+                            <div className={`w-12 h-12 border-2 flex items-center justify-center transition-all duration-300 ${
+                              isSelected ? "bg-lime-500 border-lime-500 text-black" : "border-black/10 dark:border-white/10 text-zinc-300 group-hover:border-lime-500/50"
+                            }`}>
+                              <ArrowRight className={`w-6 h-6 ${isSelected ? "" : "group-hover:translate-x-1 transition-transform"}`} />
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="guestName"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    {selectedClass?.age_group === 'kid' ? "Kid's Name *" : "Full Name *"}
-                  </label>
-                  <input
-                    type="text"
-                    id="guestName"
-                    required
-                    value={formData.guestName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, guestName: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                    placeholder={selectedClass?.age_group === 'kid' ? "Kid's name" : "John Doe"}
-                  />
-                </div>
-
-                {/* Guardian Information Display (for kids classes) */}
-                {selectedClass?.age_group === 'kid' && guardianData.guardianName && (
-                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 space-y-2">
-                    <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">Guardian/Parent Information:</p>
-                    <p className="text-sm text-blue-800 dark:text-blue-300">
-                      <span className="font-medium">Name:</span> {guardianData.guardianName}
-                    </p>
-                    <p className="text-sm text-blue-800 dark:text-blue-300">
-                      <span className="font-medium">Email:</span> {guardianData.guardianEmail}
-                    </p>
-                    <p className="text-sm text-blue-800 dark:text-blue-300">
-                      <span className="font-medium">Phone:</span> {guardianData.guardianPhone}
-                    </p>
-                    <p className="text-sm text-blue-800 dark:text-blue-300 flex items-center gap-2">
-                      <span className="font-medium">On Premises:</span>
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${guardianData.guardianOnPremises ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
-                        {guardianData.guardianOnPremises ? 'Confirmed' : 'Not Confirmed'}
-                      </span>
-                    </p>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-8 border-t border-black/10 dark:border-white/10 pt-10">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                    Showing {(currentPage - 1) * CLASSES_PER_PAGE + 1} - {Math.min(currentPage * CLASSES_PER_PAGE, filteredClasses.length)} of {filteredClasses.length} classes
                   </div>
-                )}
-
-                {/* Email and Phone - Only show for adult classes */}
-                {selectedClass?.age_group !== 'kid' && (
-                  <>
-                    <div>
-                      <label
-                        htmlFor="guestEmail"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                      >
-                        Email Address *
-                      </label>
-                      <input
-                        type="email"
-                        id="guestEmail"
-                        required
-                        value={formData.guestEmail}
-                        onChange={(e) =>
-                          setFormData({ ...formData, guestEmail: e.target.value })
-                        }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                        placeholder="john@example.com"
-                      />
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => { setCurrentPage(prev => Math.max(1, prev - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      disabled={currentPage === 1}
+                      className="w-12 h-12 border border-black/10 dark:border-white/10 flex items-center justify-center hover:bg-lime-500 hover:text-black transition-all disabled:opacity-30"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <div className="flex gap-2">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <button
+                          key={page}
+                          onClick={() => { setCurrentPage(page); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                          className={`w-12 h-12 border font-black text-xs transition-all ${
+                            currentPage === page 
+                              ? "bg-black text-white border-black dark:bg-lime-500 dark:text-black dark:border-lime-500" 
+                              : "bg-white dark:bg-zinc-900 border-black/10 dark:border-white/10 hover:border-lime-500"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
                     </div>
-
-                    <div>
-                      <label
-                        htmlFor="guestPhone"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                      >
-                        Phone Number *
-                      </label>
-                      <input
-                        type="tel"
-                        id="guestPhone"
-                        required
-                        value={formData.guestPhone}
-                        onChange={(e) =>
-                          setFormData({ ...formData, guestPhone: e.target.value })
-                        }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                        placeholder="+65 1234 5678"
-                      />
-                    </div>
-                  </>
-                )}
-
-                <div>
-                  <label
-                    htmlFor="dateOfBirth"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    Date of Birth *
-                  </label>
-                  <input
-                    type="date"
-                    id="dateOfBirth"
-                    required
-                    value={formData.dateOfBirth}
-                    onChange={(e) =>
-                      setFormData({ ...formData, dateOfBirth: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 5)).toISOString().split('T')[0]}
-                    min={new Date(new Date().setFullYear(new Date().getFullYear() - 120)).toISOString().split('T')[0]}
-                  />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Required to ensure age-appropriate class selection
-                  </p>
+                    <button
+                      onClick={() => { setCurrentPage(prev => Math.min(totalPages, prev + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      disabled={currentPage === totalPages}
+                      className="w-12 h-12 border border-black/10 dark:border-white/10 flex items-center justify-center hover:bg-lime-500 hover:text-black transition-all disabled:opacity-30"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
+              )}
+            </div>
 
-                {/* Guardian Fields - Only show for kids classes */}
-                {selectedClass?.age_group === 'kid' && (
-                  <>
-                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                        Guardian/Parent Information
-                      </h3>
-                      <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                        <p className="text-sm text-blue-800 dark:text-blue-200">
-                          For kids classes, we require guardian/parent information and confirmation that a parent or guardian will be on premises during the class.
-                        </p>
+            {/* Booking Form - 4 Columns */}
+            <div className="lg:col-span-4">
+              <div className="sticky top-32">
+                <div className="bg-white dark:bg-zinc-950 border border-black/10 dark:border-white/10 p-8 md:p-12 shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-lime-500/5 -skew-x-12 -z-10"></div>
+                  
+                  <div className="text-lime-600 dark:text-lime-400 font-black text-sm uppercase tracking-[0.3em] mb-4">
+                    Step 2
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-black uppercase italic tracking-tighter leading-none text-gray-900 dark:text-white mb-10">
+                    YOUR <span className="text-lime-500">DETAILS</span>
+                  </h2>
+
+                  {selectedClass ? (
+                    <div className="mb-10 p-6 bg-[#f6f4ee] dark:bg-zinc-900 border-l-4 border-lime-500">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">Selected Session</p>
+                      <h4 className="text-xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white mb-2">{selectedClass.title}</h4>
+                      <p className="text-xs font-black uppercase tracking-widest text-lime-600 dark:text-lime-400">
+                        {formatDate(selectedClass.scheduled_at)} @ {formatTime(selectedClass.scheduled_at)}
+                      </p>
+                      <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5 flex justify-between items-center">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Total Price</span>
+                        <span className="text-2xl font-black text-gray-900 dark:text-white">
+                          ${(getTrialPriceCents(selectedClass.age_group, selectedClass.trial_price_cents) / 100).toFixed(2)}
+                        </span>
                       </div>
                     </div>
+                  ) : (
+                    <div className="mb-10 p-6 bg-zinc-50 dark:bg-zinc-900 border border-dashed border-black/10 dark:border-white/10 text-center">
+                      <p className="text-xs font-black uppercase tracking-widest text-zinc-400">
+                        Please select a class to continue
+                      </p>
+                    </div>
+                  )}
 
-                    <div>
-                      <label
-                        htmlFor="guardianName"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                      >
-                        Guardian/Parent Name *
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="space-y-2">
+                      <label htmlFor="guestName" className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                        {selectedClass?.age_group === 'kid' ? "Kid's Name *" : "Full Name *"}
                       </label>
                       <input
                         type="text"
-                        id="guardianName"
-                        required={selectedClass?.age_group === 'kid'}
-                        value={guardianData.guardianName}
-                        onChange={(e) =>
-                          setGuardianData({ ...guardianData, guardianName: e.target.value })
-                        }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                        placeholder="Parent/Guardian name"
+                        id="guestName"
+                        required
+                        value={formData.guestName}
+                        onChange={(e) => setFormData({ ...formData, guestName: e.target.value })}
+                        className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-3 text-sm font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
+                        placeholder={selectedClass?.age_group === 'kid' ? "KID'S NAME" : "YOUR FULL NAME"}
                       />
                     </div>
 
-                    <div>
-                      <label
-                        htmlFor="guardianEmail"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                      >
-                        Guardian/Parent Email *
+                    {selectedClass?.age_group !== 'kid' && (
+                      <>
+                        <div className="space-y-2">
+                          <label htmlFor="guestEmail" className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                            Email Address *
+                          </label>
+                          <input
+                            type="email"
+                            id="guestEmail"
+                            required
+                            value={formData.guestEmail}
+                            onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
+                            className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-3 text-sm font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
+                            placeholder="EMAIL@EXAMPLE.COM"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label htmlFor="guestPhone" className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                            Phone Number *
+                          </label>
+                          <input
+                            type="tel"
+                            id="guestPhone"
+                            required
+                            value={formData.guestPhone}
+                            onChange={(e) => setFormData({ ...formData, guestPhone: e.target.value })}
+                            className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-3 text-sm font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
+                            placeholder="+65"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <div className="space-y-2">
+                      <label htmlFor="dateOfBirth" className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                        Date of Birth *
                       </label>
                       <input
-                        type="email"
-                        id="guardianEmail"
-                        required={selectedClass?.age_group === 'kid'}
-                        value={guardianData.guardianEmail}
-                        onChange={(e) =>
-                          setGuardianData({ ...guardianData, guardianEmail: e.target.value })
-                        }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                        placeholder="parent@example.com"
+                        type="date"
+                        id="dateOfBirth"
+                        required
+                        value={formData.dateOfBirth}
+                        onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                        className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-3 text-sm font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
                       />
                     </div>
 
-                    <div>
-                      <label
-                        htmlFor="guardianPhone"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                      >
-                        Guardian/Parent Phone *
-                      </label>
-                      <input
-                        type="tel"
-                        id="guardianPhone"
-                        required={selectedClass?.age_group === 'kid'}
-                        value={guardianData.guardianPhone}
-                        onChange={(e) =>
-                          setGuardianData({ ...guardianData, guardianPhone: e.target.value })
-                        }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                        placeholder="+65 1234 5678"
-                      />
-                    </div>
+                    {selectedClass?.age_group === 'kid' && (
+                      <div className="space-y-6 pt-6 border-t border-black/10 dark:border-white/10">
+                        <h3 className="text-lg font-black uppercase italic tracking-tighter text-gray-900 dark:text-white">Guardian Info</h3>
+                        <div className="space-y-4">
+                          <input
+                            type="text"
+                            required
+                            value={guardianData.guardianName}
+                            onChange={(e) => setGuardianData({ ...guardianData, guardianName: e.target.value })}
+                            className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-3 text-sm font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
+                            placeholder="GUARDIAN NAME"
+                          />
+                          <input
+                            type="email"
+                            required
+                            value={guardianData.guardianEmail}
+                            onChange={(e) => setGuardianData({ ...guardianData, guardianEmail: e.target.value })}
+                            className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-3 text-sm font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
+                            placeholder="GUARDIAN EMAIL"
+                          />
+                          <input
+                            type="tel"
+                            required
+                            value={guardianData.guardianPhone}
+                            onChange={(e) => setGuardianData({ ...guardianData, guardianPhone: e.target.value })}
+                            className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-3 text-sm font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
+                            placeholder="GUARDIAN PHONE"
+                          />
+                          <div className="flex items-start gap-3 p-4 bg-lime-500/10 border border-lime-500/20">
+                            <input
+                              type="checkbox"
+                              id="guardianOnPremises"
+                              required
+                              checked={guardianData.guardianOnPremises}
+                              onChange={(e) => setGuardianData({ ...guardianData, guardianOnPremises: e.target.checked })}
+                              className="mt-1 w-5 h-5 accent-lime-500"
+                            />
+                            <label htmlFor="guardianOnPremises" className="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">
+                              I confirm a parent/guardian will be on premises *
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
-                    <div className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                      <input
-                        type="checkbox"
-                        id="guardianOnPremises"
-                        required={selectedClass?.age_group === 'kid'}
-                        checked={guardianData.guardianOnPremises}
-                        onChange={(e) =>
-                          setGuardianData({ ...guardianData, guardianOnPremises: e.target.checked })
-                        }
-                        className="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                      />
-                      <label htmlFor="guardianOnPremises" className="text-sm text-gray-700 dark:text-gray-300">
-                        I confirm that a parent or guardian will be on premises during the class *
-                      </label>
-                    </div>
-                  </>
-                )}
+                    <button
+                      type="submit"
+                      disabled={!selectedClass || processing}
+                      className="w-full py-6 bg-lime-500 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black text-black font-black uppercase tracking-[0.3em] transition-all duration-300 shadow-xl disabled:opacity-30 flex items-center justify-center gap-4"
+                    >
+                      {processing ? (
+                        <LoadingIcon size="sm" className="!flex-row gap-2 !mt-0" />
+                      ) : (
+                        <>
+                          PROCEED TO PAYMENT
+                          <ArrowRight className="w-5 h-5" />
+                        </>
+                      )}
+                    </button>
+                  </form>
 
-                <button
-                  type="submit"
-                  disabled={!selectedClass || processing}
-                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition-colors"
-                >
-                  {processing ? "Processing..." : "Proceed to Payment"}
-                </button>
-              </form>
-
-              <p className="mt-4 text-xs text-gray-500 dark:text-gray-400 text-center">
-                By proceeding, you agree to our terms and conditions.
-              </p>
+                  <p className="mt-6 text-[10px] font-black uppercase tracking-widest text-zinc-500 text-center">
+                    By proceeding, you agree to our <Link href="/terms" className="text-lime-600 dark:text-lime-400 hover:underline">Terms & Conditions</Link>.
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
+
           </div>
         </div>
       </div>
 
-      {/* Mobile Bottom Sheet - Booking Form */}
-      {selectedClass && (
-        <MobileBookingSheet
-          selectedClass={selectedClass}
-          formData={formData}
-          setFormData={setFormData}
-          guardianData={guardianData}
-          setGuardianData={setGuardianData}
-          onSubmit={handleSubmit}
-          processing={processing}
-          onClose={() => setSelectedClass(null)}
-        />
-      )}
-
+      {/* Mobile Bottom Sheet */}
+      <AnimatePresence>
+        {selectedClass && (
+          <MobileBookingSheet
+            selectedClass={selectedClass}
+            formData={formData}
+            setFormData={setFormData}
+            guardianData={guardianData}
+            setGuardianData={setGuardianData}
+            onSubmit={handleSubmit}
+            processing={processing}
+            onClose={() => setSelectedClass(null)}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }
@@ -916,347 +651,153 @@ export default function TrialBookingPage() {
 // Mobile Bottom Sheet Component
 interface MobileBookingSheetProps {
   selectedClass: Class;
-  formData: {
-    guestName: string;
-    guestEmail: string;
-    guestPhone: string;
-    dateOfBirth: string;
-  };
-  setFormData: React.Dispatch<React.SetStateAction<{
-    guestName: string;
-    guestEmail: string;
-    guestPhone: string;
-    dateOfBirth: string;
-  }>>;
-  guardianData: {
-    guardianName: string;
-    guardianEmail: string;
-    guardianPhone: string;
-    guardianOnPremises: boolean;
-  };
-  setGuardianData: React.Dispatch<React.SetStateAction<{
-    guardianName: string;
-    guardianEmail: string;
-    guardianPhone: string;
-    guardianOnPremises: boolean;
-  }>>;
+  formData: { guestName: string; guestEmail: string; guestPhone: string; dateOfBirth: string; };
+  setFormData: React.Dispatch<React.SetStateAction<{ guestName: string; guestEmail: string; guestPhone: string; dateOfBirth: string; }>>;
+  guardianData: { guardianName: string; guardianEmail: string; guardianPhone: string; guardianOnPremises: boolean; };
+  setGuardianData: React.Dispatch<React.SetStateAction<{ guardianName: string; guardianEmail: string; guardianPhone: string; guardianOnPremises: boolean; }>>;
   onSubmit: (e: React.FormEvent) => void;
   processing: boolean;
   onClose: () => void;
 }
 
-function MobileBookingSheet({
-  selectedClass,
-  formData,
-  setFormData,
-  guardianData,
-  setGuardianData,
-  onSubmit,
-  processing,
-  onClose,
-}: MobileBookingSheetProps) {
-  const sheetRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startY, setStartY] = useState(0);
-  const [currentY, setCurrentY] = useState(0);
-
-  // Lock body scroll when open
+function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData, setGuardianData, onSubmit, processing, onClose }: MobileBookingSheetProps) {
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    return () => { document.body.style.overflow = ""; };
   }, []);
 
-  // Handle drag to close
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setIsDragging(true);
-    setStartY(e.touches[0].clientY);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
-    const currentYPos = e.touches[0].clientY;
-    const diff = currentYPos - startY;
-    
-    if (diff > 0) {
-      setCurrentY(diff);
-      if (sheetRef.current) {
-        sheetRef.current.style.transform = `translateY(${diff}px)`;
-      }
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (currentY > 100) {
-      onClose();
-    } else {
-      if (sheetRef.current) {
-        sheetRef.current.style.transform = "translateY(0)";
-      }
-    }
-    setIsDragging(false);
-    setCurrentY(0);
-  };
-
-  // Get price: $18 for kids (treat DB 1700 as legacy), $23 for adults
-  const priceCents = getTrialPriceCents(selectedClass.age_group, selectedClass.trial_price_cents);
-  const price = (priceCents / 100).toFixed(2);
+  const price = (getTrialPriceCents(selectedClass.age_group, selectedClass.trial_price_cents) / 100).toFixed(2);
 
   return (
-    <div className="lg:hidden fixed inset-0 z-[9999]">
-      {/* Overlay */}
-      <div
-        className="absolute inset-0 bg-black/50 transition-opacity"
-        onClick={onClose}
-      />
-
-      {/* Bottom Sheet */}
-      <div
-        ref={sheetRef}
-        className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col transition-transform duration-300"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+    <div className="lg:hidden fixed inset-0 z-[100]">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={onClose} />
+      <motion.div
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        className="absolute bottom-0 left-0 right-0 bg-white dark:bg-zinc-950 border-t border-white/10 p-8 max-h-[90vh] overflow-y-auto"
       >
-        {/* Drag Handle */}
-        <div className="flex justify-center pt-3 pb-2">
-          <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+        <div className="flex items-center justify-between mb-10">
+          <h2 className="text-3xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white">BOOKING</h2>
+          <button onClick={onClose} className="w-12 h-12 border border-black/10 dark:border-white/10 flex items-center justify-center"><X className="w-6 h-6" /></button>
         </div>
 
-        {/* Header */}
-        <div className="px-6 pb-4 border-b border-gray-200 dark:border-gray-800">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                Book Your Trial Class
-              </h2>
-              <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  Selected Class:
-                </p>
-                <p className="font-semibold text-gray-900 dark:text-white">
-                  {selectedClass.title}
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {formatDate(selectedClass.scheduled_at)} at{" "}
-                  {formatTime(selectedClass.scheduled_at)}
-                </p>
-                <p className="text-lg font-bold text-green-600 dark:text-green-400 mt-2">
-                  ${price}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="ml-4 p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              aria-label="Close"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="mobile-guestName"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                {selectedClass.age_group === 'kid' ? "Kid's Name *" : "Full Name *"}
-              </label>
-              <input
-                type="text"
-                id="mobile-guestName"
-                required
-                value={formData.guestName}
-                onChange={(e) =>
-                  setFormData({ ...formData, guestName: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                placeholder={selectedClass.age_group === 'kid' ? "Kid's name" : "John Doe"}
-              />
-            </div>
-
-            {/* Email and Phone - Only show for adult classes */}
-            {selectedClass.age_group !== 'kid' && (
-              <>
-                <div>
-                  <label
-                    htmlFor="mobile-guestEmail"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    id="mobile-guestEmail"
-                    required
-                    value={formData.guestEmail}
-                    onChange={(e) =>
-                      setFormData({ ...formData, guestEmail: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    placeholder="john@example.com"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="mobile-guestPhone"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    Phone Number *
-                  </label>
-                  <input
-                    type="tel"
-                    id="mobile-guestPhone"
-                    required
-                    value={formData.guestPhone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, guestPhone: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    placeholder="+65 1234 5678"
-                  />
-                </div>
-              </>
-            )}
-
-            <div>
-              <label
-                htmlFor="mobile-dateOfBirth"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Date of Birth *
-              </label>
-              <input
-                type="date"
-                id="mobile-dateOfBirth"
-                required
-                value={formData.dateOfBirth}
-                onChange={(e) =>
-                  setFormData({ ...formData, dateOfBirth: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                max={new Date(new Date().setFullYear(new Date().getFullYear() - 5)).toISOString().split('T')[0]}
-                min={new Date(new Date().setFullYear(new Date().getFullYear() - 120)).toISOString().split('T')[0]}
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Required to ensure age-appropriate class selection
-              </p>
-            </div>
-
-            {/* Guardian Fields - Only show for kids classes */}
-            {selectedClass.age_group === 'kid' && (
-              <>
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    Guardian/Parent Information
-                  </h3>
-                  <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <p className="text-sm text-blue-800 dark:text-blue-200">
-                      For kids classes, we require guardian/parent information and confirmation that a parent or guardian will be on premises during the class.
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="mobile-guardianName"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    Guardian/Parent Name *
-                  </label>
-                  <input
-                    type="text"
-                    id="mobile-guardianName"
-                    required
-                    value={guardianData.guardianName}
-                    onChange={(e) =>
-                      setGuardianData({ ...guardianData, guardianName: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    placeholder="Parent/Guardian name"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="mobile-guardianEmail"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    Guardian/Parent Email *
-                  </label>
-                  <input
-                    type="email"
-                    id="mobile-guardianEmail"
-                    required
-                    value={guardianData.guardianEmail}
-                    onChange={(e) =>
-                      setGuardianData({ ...guardianData, guardianEmail: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    placeholder="parent@example.com"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="mobile-guardianPhone"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    Guardian/Parent Phone *
-                  </label>
-                  <input
-                    type="tel"
-                    id="mobile-guardianPhone"
-                    required
-                    value={guardianData.guardianPhone}
-                    onChange={(e) =>
-                      setGuardianData({ ...guardianData, guardianPhone: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    placeholder="+65 1234 5678"
-                  />
-                </div>
-
-                <div className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <input
-                    type="checkbox"
-                    id="mobile-guardianOnPremises"
-                    required
-                    checked={guardianData.guardianOnPremises}
-                    onChange={(e) =>
-                      setGuardianData({ ...guardianData, guardianOnPremises: e.target.checked })
-                    }
-                    className="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="mobile-guardianOnPremises" className="text-sm text-gray-700 dark:text-gray-300">
-                    I confirm that a parent or guardian will be on premises during the class *
-                  </label>
-                </div>
-              </>
-            )}
-
-            <button
-              type="submit"
-              disabled={processing}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition-colors mt-6"
-            >
-              {processing ? "Processing..." : "Proceed to Payment"}
-            </button>
-          </form>
-
-          <p className="mt-4 text-xs text-gray-500 dark:text-gray-400 text-center">
-            By proceeding, you agree to our terms and conditions.
+        <div className="mb-10 p-6 bg-[#f6f4ee] dark:bg-zinc-900 border-l-4 border-lime-500">
+          <h4 className="text-xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white mb-2">{selectedClass.title}</h4>
+          <p className="text-xs font-black uppercase tracking-widest text-lime-600 dark:text-lime-400">
+            {formatDate(selectedClass.scheduled_at)} @ {formatTime(selectedClass.scheduled_at)} — ${price}
           </p>
         </div>
-      </div>
+
+        <form onSubmit={onSubmit} className="space-y-6 pb-12">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+              {selectedClass.age_group === 'kid' ? "Kid's Name *" : "Full Name *"}
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.guestName}
+              onChange={(e) => setFormData({ ...formData, guestName: e.target.value })}
+              className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-gray-900 dark:text-white font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
+              placeholder="NAME"
+            />
+          </div>
+
+          {selectedClass.age_group !== 'kid' && (
+            <>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  value={formData.guestEmail}
+                  onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
+                  className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-gray-900 dark:text-white font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
+                  placeholder="EMAIL"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Phone Number *</label>
+                <input
+                  type="tel"
+                  required
+                  value={formData.guestPhone}
+                  onChange={(e) => setFormData({ ...formData, guestPhone: e.target.value })}
+                  className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-gray-900 dark:text-white font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
+                  placeholder="PHONE"
+                />
+              </div>
+            </>
+          )}
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Date of Birth *</label>
+            <input
+              type="date"
+              required
+              value={formData.dateOfBirth}
+              onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+              className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-gray-900 dark:text-white font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
+            />
+          </div>
+
+          {selectedClass.age_group === 'kid' && (
+            <div className="space-y-6 pt-6 border-t border-black/10 dark:border-white/10">
+              <h3 className="text-xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white">Guardian Info</h3>
+              <input
+                type="text"
+                required
+                value={guardianData.guardianName}
+                onChange={(e) => setGuardianData({ ...guardianData, guardianName: e.target.value })}
+                className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-gray-900 dark:text-white font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
+                placeholder="GUARDIAN NAME"
+              />
+              <input
+                type="email"
+                required
+                value={guardianData.guardianEmail}
+                onChange={(e) => setGuardianData({ ...guardianData, guardianEmail: e.target.value })}
+                className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-gray-900 dark:text-white font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
+                placeholder="GUARDIAN EMAIL"
+              />
+              <input
+                type="tel"
+                required
+                value={guardianData.guardianPhone}
+                onChange={(e) => setGuardianData({ ...guardianData, guardianPhone: e.target.value })}
+                className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-gray-900 dark:text-white font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
+                placeholder="GUARDIAN PHONE"
+              />
+              <div className="flex items-start gap-4 p-6 bg-lime-500/10 border border-lime-500/20">
+                <input
+                  type="checkbox"
+                  required
+                  checked={guardianData.guardianOnPremises}
+                  onChange={(e) => setGuardianData({ ...guardianData, guardianOnPremises: e.target.checked })}
+                  className="mt-1 w-6 h-6 accent-lime-500"
+                />
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  I confirm a parent/guardian will be on premises *
+                </label>
+              </div>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={processing}
+            className="w-full py-6 bg-lime-500 text-black font-black uppercase tracking-[0.3em] shadow-2xl disabled:opacity-30 flex items-center justify-center gap-4"
+          >
+            {processing ? (
+              <LoadingIcon size="sm" className="!flex-row gap-2 !mt-0" />
+            ) : (
+              <>PAY & BOOK TRIAL <ArrowRight className="w-5 h-5" /></>
+            )}
+          </button>
+        </form>
+      </motion.div>
     </div>
   );
 }

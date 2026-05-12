@@ -2,9 +2,12 @@
 
 import { useAvailablePackages } from "@/hooks/usePackages";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
 import { useRouter } from "next/navigation";
+import { useRef } from "react";
+import { CheckCircle2 } from "lucide-react";
+import LoadingIcon from "@/components/Common/LoadingIcon";
 
 const PricingContent = () => {
   const router = useRouter();
@@ -13,18 +16,14 @@ const PricingContent = () => {
   const { data: kidsPackages = [], isLoading: isLoadingKids, error: errorKids } = useAvailablePackages('kids');
   const isLoading = isLoadingAdults || isLoadingKids;
   
-  // Debug logging
-  if (process.env.NODE_ENV === 'development') {
-    console.log('PricingContent - Adult packages:', adultPackages);
-    console.log('PricingContent - Kids packages:', kidsPackages);
-    if (errorAdults) console.error('Error loading adult packages:', errorAdults);
-    if (errorKids) console.error('Error loading kids packages:', errorKids);
-  }
+  const sectionRef = useRef(null);
+  const isInView = useInView(sectionRef, { once: true, amount: 0.1 });
 
   const formatPrice = (priceCents: number, currency: string) => {
     return new Intl.NumberFormat("en-SG", {
       style: "currency",
       currency: currency || "SGD",
+      maximumFractionDigits: 0,
     }).format(priceCents / 100);
   };
 
@@ -41,119 +40,108 @@ const PricingContent = () => {
   };
 
   return (
-    <section className="py-16 md:py-20 lg:py-28 bg-white dark:bg-gray-900">
-      <div className="container px-3 sm:px-4">
+    <section ref={sectionRef} className="py-20 md:py-32 bg-[#f6f4ee] dark:bg-black overflow-hidden">
+      <div className="container px-4 sm:px-6 lg:px-8">
+        
         {/* Adults Packages Section */}
-        <div className="mb-16 md:mb-20">
+        <div className="mb-32">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-10 md:mb-12"
+            initial={{ opacity: 0, y: 10 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+            transition={{ duration: 0.4 }}
+            className="mb-16 md:mb-24"
           >
-            <span className="inline-block px-4 py-1 bg-green-100 dark:bg-green-600/20 text-green-600 dark:text-green-400 rounded-full text-sm font-semibold mb-4">
+            <div className="text-lime-600 dark:text-lime-400 font-black text-xs md:text-sm uppercase tracking-[0.3em] mb-6">
               Adults Packages
-            </span>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-              Packages for Everyone
+            </div>
+            <h2 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter leading-[0.85] mb-8">
+              PACKAGES FOR <br />
+              <span className="text-lime-500">EVERYONE</span>
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-lg">
+            <p className="max-w-2xl text-gray-600 dark:text-zinc-400 text-lg md:text-xl font-medium uppercase tracking-tight">
               Find a dance fitness class that feels like your own. Beginner-friendly, feel-good classes for all.
             </p>
           </motion.div>
 
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
+            <div className="flex items-center justify-center py-20">
+              <LoadingIcon size="md" showLabel />
             </div>
           ) : errorAdults ? (
-            <div className="bg-red-50 dark:bg-red-900/20 rounded-2xl p-12 text-center">
-              <p className="text-red-600 dark:text-red-400 text-lg">Error loading packages. Please try again later.</p>
-              {process.env.NODE_ENV === 'development' && (
-                <p className="text-red-500 text-sm mt-2">{String(errorAdults)}</p>
-              )}
+            <div className="bg-white dark:bg-zinc-950 border border-black/10 dark:border-white/10 p-12 text-center">
+              <p className="text-red-600 dark:text-red-400 font-black uppercase tracking-widest">Error loading packages. Please try again later.</p>
             </div>
           ) : adultPackages.length === 0 ? (
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-12 text-center">
-              <p className="text-gray-600 dark:text-gray-400 text-lg">No adult packages available at the moment</p>
+            <div className="bg-white dark:bg-zinc-950 border border-black/10 dark:border-white/10 p-12 text-center">
+              <p className="text-gray-600 dark:text-zinc-400 font-black uppercase tracking-widest">No adult packages available at the moment</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 border border-black/10 dark:border-white/10">
               {adultPackages.map((pkg, index) => {
                 const isPopular = index === Math.floor(adultPackages.length / 2);
                 return (
                   <motion.div
                     key={pkg.id}
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: index * 0.1 }}
-                    className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all border-2 ${
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                    transition={{ duration: 0.4, delay: index * 0.05 }}
+                    className={`group relative flex flex-col p-10 md:p-12 transition-all duration-500 border-b md:border-b-0 md:border-r border-black/10 dark:border-white/10 last:border-r-0 ${
                       isPopular
-                        ? "border-green-600 dark:border-green-500 scale-105 md:scale-105"
-                        : "border-gray-200 dark:border-gray-700"
+                        ? "bg-lime-500 text-black"
+                        : "bg-white dark:bg-zinc-950 text-gray-900 dark:text-white hover:bg-lime-500/5"
                     }`}
                   >
                     {isPopular && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-green-600 dark:bg-green-500 text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg z-10">
+                      <div className="absolute top-0 left-0 bg-black text-lime-500 text-[10px] font-black px-6 py-2 uppercase tracking-[0.2em] z-10">
                         Most Popular
                       </div>
                     )}
-                    <div className="p-6 md:p-8">
-                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{pkg.name}</h3>
-                      <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm">{pkg.description || (pkg.is_unlimited ? "Unlimited class access" : `${pkg.token_count} class tokens`)}</p>
-                      
-                      <div className="mb-6">
-                        <div className="flex items-baseline gap-2 mb-2">
-                          <span className="text-4xl md:text-5xl font-bold text-green-600 dark:text-green-400">
-                            {formatPrice(pkg.price_cents, pkg.currency)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {pkg.is_unlimited ? 'Unlimited tokens' : `${pkg.token_count} ${pkg.token_count === 1 ? 'token' : 'tokens'}`} • Valid for {formatValidity(pkg.validity_days)}
-                        </p>
+                    
+                    <div className="mb-10">
+                      <h3 className={`text-2xl font-black uppercase italic tracking-tight mb-6 transition-colors ${isPopular ? "text-black" : "text-gray-900 dark:text-white"}`}>
+                        {pkg.name}
+                      </h3>
+                      <div className={`flex items-baseline gap-1 mb-6 transition-colors ${isPopular ? "text-black" : "text-gray-900 dark:text-white"}`}>
+                        <span className="text-5xl font-black italic tracking-tighter">
+                          {formatPrice(pkg.price_cents, pkg.currency)}
+                        </span>
+                        <span className={`font-black text-sm uppercase ${isPopular ? "text-black/40" : "text-gray-400"}`}>
+                          /pack
+                        </span>
                       </div>
-
-                      <ul className="space-y-3 mb-8">
-                        <li className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                          <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>{pkg.is_unlimited ? 'Unlimited class bookings' : `${pkg.token_count} class ${pkg.token_count === 1 ? 'token' : 'tokens'}`}</span>
-                        </li>
-                        <li className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                          <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>Valid for {formatValidity(pkg.validity_days)}</span>
-                        </li>
-                        <li className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                          <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>All class types included</span>
-                        </li>
-                        <li className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                          <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>Easy online booking</span>
-                        </li>
-                      </ul>
-
-                      <button
-                        type="button"
-                        onClick={goToSignupForPackages}
-                        className={`block w-full text-center py-3 px-6 rounded-lg font-bold transition-all ${
-                          isPopular
-                            ? "bg-green-600 hover:bg-green-700 text-white"
-                            : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
-                        }`}
-                      >
-                        Purchase Package
-                      </button>
+                      <p className={`font-medium leading-relaxed uppercase tracking-tight text-sm mb-4 ${isPopular ? "text-black/70" : "text-gray-600 dark:text-zinc-400"}`}>
+                        {pkg.description || (pkg.is_unlimited ? "Unlimited class access" : `${pkg.token_count} class tokens`)}
+                      </p>
+                      <p className={`text-[10px] font-black uppercase tracking-widest ${isPopular ? "text-black/40" : "text-gray-500 dark:text-zinc-500"}`}>
+                        {pkg.is_unlimited ? 'Unlimited tokens' : `${pkg.token_count} ${pkg.token_count === 1 ? 'token' : 'tokens'}`} • Valid for {formatValidity(pkg.validity_days)}
+                      </p>
                     </div>
+
+                    <ul className="flex-1 space-y-4 mb-12">
+                      {[
+                        pkg.is_unlimited ? 'Unlimited class bookings' : `${pkg.token_count} class ${pkg.token_count === 1 ? 'token' : 'tokens'}`,
+                        `Valid for ${formatValidity(pkg.validity_days)}`,
+                        'All class types included',
+                        'Easy online booking'
+                      ].map((feature, fIdx) => (
+                        <li key={fIdx} className={`flex items-start gap-3 text-xs font-black uppercase tracking-widest transition-colors ${isPopular ? "text-black" : "text-gray-700 dark:text-zinc-300"}`}>
+                          <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isPopular ? "text-black" : "text-lime-500"}`} />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <button
+                      type="button"
+                      onClick={goToSignupForPackages}
+                      className={`w-full py-5 text-center font-black transition-all uppercase tracking-[0.2em] text-xs ${
+                        isPopular
+                          ? "bg-black text-white hover:bg-zinc-900"
+                          : "bg-black dark:bg-white text-white dark:text-black hover:bg-lime-500 hover:text-black dark:hover:bg-lime-500"
+                      }`}
+                    >
+                      Purchase Package
+                    </button>
                   </motion.div>
                 );
               })}
@@ -163,105 +151,93 @@ const PricingContent = () => {
 
         {/* Kids Packages Section */}
         {kidsPackages.length > 0 && (
-          <div className="mb-16 md:mb-20">
+          <div className="mb-32">
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="text-center mb-10 md:mb-12"
+              initial={{ opacity: 0, y: 10 }}
+              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+              transition={{ duration: 0.4 }}
+              className="mb-16 md:mb-24"
             >
-              <span className="inline-block px-4 py-1 bg-orange-100 dark:bg-orange-600/20 text-orange-600 dark:text-orange-400 rounded-full text-sm font-semibold mb-4">
+              <div className="text-lime-600 dark:text-lime-400 font-black text-xs md:text-sm uppercase tracking-[0.3em] mb-6">
                 Kids Packages
-              </span>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-                Packages for Kids (5-12 years)
+              </div>
+              <h2 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter leading-[0.85] mb-8">
+                PACKAGES FOR <br />
+                <span className="text-lime-500">KIDS</span>
               </h2>
-              <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-lg">
-                Must be accompanied by a parent/guardian
+              <p className="max-w-2xl text-gray-600 dark:text-zinc-400 text-lg md:text-xl font-medium uppercase tracking-tight">
+                Must be accompanied by a parent/guardian. Ages 5-12 years.
               </p>
             </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 border border-black/10 dark:border-white/10">
               {kidsPackages.map((pkg, index) => {
                 const isPopular = index === Math.floor(kidsPackages.length / 2);
                 return (
                   <motion.div
                     key={pkg.id}
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: index * 0.1 }}
-                    className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all border-2 ${
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                    transition={{ duration: 0.4, delay: index * 0.05 }}
+                    className={`group relative flex flex-col p-10 md:p-12 transition-all duration-500 border-b md:border-b-0 md:border-r border-black/10 dark:border-white/10 last:border-r-0 ${
                       isPopular
-                        ? "border-orange-500 dark:border-orange-400 scale-105 md:scale-105"
-                        : "border-gray-200 dark:border-gray-700"
+                        ? "bg-lime-500 text-black"
+                        : "bg-white dark:bg-zinc-950 text-gray-900 dark:text-white hover:bg-lime-500/5"
                     }`}
                   >
                     {isPopular && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-orange-500 dark:bg-orange-400 text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg z-10">
+                      <div className="absolute top-0 left-0 bg-black text-lime-500 text-[10px] font-black px-6 py-2 uppercase tracking-[0.2em] z-10">
                         Most Popular
                       </div>
                     )}
-                    <div className="p-6 md:p-8">
-                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{pkg.name}</h3>
-                      <p className="text-gray-600 dark:text-gray-400 mb-2 text-sm">{pkg.description || (pkg.is_unlimited ? "Unlimited class access" : `${pkg.token_count} class tokens`)}</p>
+                    
+                    <div className="mb-10">
+                      <h3 className={`text-2xl font-black uppercase italic tracking-tight mb-6 transition-colors ${isPopular ? "text-black" : "text-gray-900 dark:text-white"}`}>
+                        {pkg.name}
+                      </h3>
+                      <div className={`flex items-baseline gap-1 mb-6 transition-colors ${isPopular ? "text-black" : "text-gray-900 dark:text-white"}`}>
+                        <span className="text-5xl font-black italic tracking-tighter">
+                          {formatPrice(pkg.price_cents, pkg.currency)}
+                        </span>
+                        <span className={`font-black text-sm uppercase ${isPopular ? "text-black/40" : "text-gray-400"}`}>
+                          /pack
+                        </span>
+                      </div>
+                      <p className={`font-medium leading-relaxed uppercase tracking-tight text-sm mb-4 ${isPopular ? "text-black/70" : "text-gray-600 dark:text-zinc-400"}`}>
+                        {pkg.description || (pkg.is_unlimited ? "Unlimited class access" : `${pkg.token_count} class tokens`)}
+                      </p>
                       {pkg.age_requirement && (
-                        <p className="text-orange-600 dark:text-orange-400 text-xs font-semibold mb-4 italic">
+                        <p className={`text-[10px] font-black uppercase tracking-widest mb-4 italic ${isPopular ? "text-black/60" : "text-lime-600 dark:text-lime-400"}`}>
                           {pkg.age_requirement}
                         </p>
                       )}
-                      
-                      <div className="mb-6">
-                        <div className="flex items-baseline gap-2 mb-2">
-                          <span className="text-4xl md:text-5xl font-bold text-orange-600 dark:text-orange-400">
-                            {formatPrice(pkg.price_cents, pkg.currency)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {pkg.is_unlimited ? 'Unlimited tokens' : `${pkg.token_count} ${pkg.token_count === 1 ? 'token' : 'tokens'}`} • Valid for {formatValidity(pkg.validity_days)}
-                        </p>
-                      </div>
-
-                      <ul className="space-y-3 mb-8">
-                        <li className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                          <svg className="w-5 h-5 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>{pkg.is_unlimited ? 'Unlimited class bookings' : `${pkg.token_count} class ${pkg.token_count === 1 ? 'token' : 'tokens'}`}</span>
-                        </li>
-                        <li className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                          <svg className="w-5 h-5 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>Valid for {formatValidity(pkg.validity_days)}</span>
-                        </li>
-                        <li className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                          <svg className="w-5 h-5 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>Parent/guardian required</span>
-                        </li>
-                        <li className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                          <svg className="w-5 h-5 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>All class types included</span>
-                        </li>
-                      </ul>
-
-                      <button
-                        type="button"
-                        onClick={goToSignupForPackages}
-                        className={`block w-full text-center py-3 px-6 rounded-lg font-bold transition-all ${
-                          isPopular
-                            ? "bg-orange-500 hover:bg-orange-600 text-white"
-                            : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
-                        }`}
-                      >
-                        Purchase Package
-                      </button>
                     </div>
+
+                    <ul className="flex-1 space-y-4 mb-12">
+                      {[
+                        pkg.is_unlimited ? 'Unlimited class bookings' : `${pkg.token_count} class ${pkg.token_count === 1 ? 'token' : 'tokens'}`,
+                        `Valid for ${formatValidity(pkg.validity_days)}`,
+                        'Parent/guardian required',
+                        'All class types included'
+                      ].map((feature, fIdx) => (
+                        <li key={fIdx} className={`flex items-start gap-3 text-xs font-black uppercase tracking-widest transition-colors ${isPopular ? "text-black" : "text-gray-700 dark:text-zinc-300"}`}>
+                          <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isPopular ? "text-black" : "text-lime-500"}`} />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <button
+                      type="button"
+                      onClick={goToSignupForPackages}
+                      className={`w-full py-5 text-center font-black transition-all uppercase tracking-[0.2em] text-xs ${
+                        isPopular
+                          ? "bg-black text-white hover:bg-zinc-900"
+                          : "bg-black dark:bg-white text-white dark:text-black hover:bg-lime-500 hover:text-black dark:hover:bg-lime-500"
+                      }`}
+                    >
+                      Purchase Package
+                    </button>
                   </motion.div>
                 );
               })}
@@ -271,27 +247,33 @@ const PricingContent = () => {
 
         {/* CTA Section */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="bg-gradient-to-br from-green-600 to-green-700 dark:from-green-700 dark:to-green-800 rounded-2xl p-8 md:p-12 text-center text-white"
+          initial={{ opacity: 0, y: 10 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+          transition={{ duration: 0.4 }}
+          className="p-10 md:p-20 bg-lime-500 text-black flex flex-col lg:flex-row items-center justify-between gap-12 shadow-2xl relative overflow-hidden"
         >
-          <h3 className="text-2xl md:text-3xl font-bold mb-4">Ready to Start Dancing?</h3>
-          <p className="text-white/90 mb-6 max-w-2xl mx-auto text-lg">
-            Join our community and find your dance fitness class. One beat. One step. One happy you.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="absolute top-0 right-0 w-1/3 h-full bg-black/5 -skew-x-12 translate-x-1/4"></div>
+          
+          <div className="text-center lg:text-left relative z-10 max-w-2xl">
+            <h3 className="text-4xl md:text-6xl font-black mb-6 uppercase italic tracking-tighter leading-[0.9]">
+              READY TO <br />
+              <span className="bg-black text-lime-500 px-4 py-1 inline-block">START</span> DANCING?
+            </h3>
+            <p className="text-black/70 text-lg md:text-xl font-bold uppercase tracking-tight">
+              Join our community and find your dance fitness class. One beat. One step. One happy you.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full lg:w-auto">
             <button
               type="button"
               onClick={openWhatsAppModal}
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-green-600 font-bold rounded-lg hover:bg-gray-100 transition-all"
+              className="px-12 py-6 bg-black text-white font-black hover:bg-zinc-900 transition-all shadow-2xl uppercase tracking-[0.2em] text-sm text-center"
             >
               Sign Up Now
             </button>
             <Link
               href="/schedule"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-lg border-2 border-white/30 transition-all"
+              className="px-12 py-6 bg-transparent border-2 border-black text-black font-black hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] text-sm text-center"
             >
               View Schedule
             </Link>
@@ -303,4 +285,3 @@ const PricingContent = () => {
 };
 
 export default PricingContent;
-

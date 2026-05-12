@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef } from "react";
+import { Plus, Minus, ArrowRight } from "lucide-react";
 
 // FAQ Data
 const faqCategories = [
@@ -80,44 +81,37 @@ const FAQSection = () => {
   const [activeCategory, setActiveCategory] = useState("signups");
   const [openQuestion, setOpenQuestion] = useState<string | null>(null);
   const sectionRef = useRef(null);
-  const isInView = useInView(sectionRef, { once: true, margin: "-50px" });
+  const isInView = useInView(sectionRef, { once: true, amount: 0.1 });
 
   const activeQuestions = faqCategories.find(c => c.id === activeCategory)?.questions || [];
 
   return (
-    <section ref={sectionRef} className="py-12 sm:py-16 md:py-20 lg:py-28 bg-gray-50 dark:bg-gray-900 relative overflow-hidden">
-      {/* Decorative background elements */}
-      <div className="absolute top-0 left-0 w-72 h-72 bg-green-500/10 dark:bg-green-500/5 rounded-full blur-3xl -z-10"></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-green-500/5 dark:bg-green-500/3 rounded-full blur-3xl -z-10"></div>
-      
-      <div className="container relative z-10 px-3 sm:px-4">
-        {/* Section Header */}
+    <section ref={sectionRef} className="py-20 md:py-32 bg-[#f6f4ee] dark:bg-black relative overflow-hidden">
+      <div className="container relative z-10 px-4 sm:px-6 lg:px-8">
+        
+        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12 md:mb-16 max-w-3xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.5 }}
+          className="mb-20"
         >
-          <span className="inline-block px-3 sm:px-4 py-1.5 bg-green-100 dark:bg-green-600/20 text-green-600 dark:text-green-400 rounded-full text-xs sm:text-sm font-semibold mb-3 sm:mb-4">
+          <div className="text-lime-600 dark:text-lime-400 font-black text-sm md:text-base uppercase tracking-[0.3em] mb-6">
             FAQ
-          </span>
-          <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
-            Everything You Need to Know About{" "}
-            <span className="text-green-600 dark:text-green-400">One Step Fitness</span>
+          </div>
+          <h2 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter leading-[0.85] mb-8">
+            EVERYTHING YOU <br />
+            <span className="text-lime-500 underline decoration-4 underline-offset-8">NEED TO KNOW</span>
           </h2>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-white/70">
+          <p className="max-w-2xl text-gray-600 dark:text-zinc-400 text-lg md:text-xl font-medium uppercase tracking-tight">
             Have questions about our token packages, classes, or account? Find answers here or reach out to our support team.
           </p>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="max-w-4xl mx-auto"
-        >
-          {/* Category Tabs */}
-          <div className="flex flex-wrap justify-center gap-3 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
+          
+          {/* Category Tabs - 4 Columns */}
+          <div className="lg:col-span-4 space-y-4">
             {faqCategories.map((category) => (
               <button
                 key={category.id}
@@ -125,65 +119,65 @@ const FAQSection = () => {
                   setActiveCategory(category.id);
                   setOpenQuestion(null);
                 }}
-                className={`px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 ${
+                className={`w-full text-left px-8 py-6 rounded-none font-black text-sm uppercase tracking-[0.2em] transition-all duration-300 border ${
                   activeCategory === category.id
-                    ? "bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/40" 
-                    : "bg-white dark:bg-gray-800/50 text-gray-700 dark:text-white/80 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-white/20"
+                    ? "bg-black text-white border-black dark:bg-lime-500 dark:text-black dark:border-lime-500 shadow-xl" 
+                    : "bg-white dark:bg-zinc-900 text-gray-700 dark:text-white border-black/10 dark:border-white/10 hover:border-lime-500"
                 }`}
               >
                 {category.name}
               </button>
             ))}
-          </div>
-
-          {/* Questions Accordion */}
-          <div className="space-y-3 sm:space-y-4">
-            {activeQuestions.map((item, index) => (
-              <FAQItem
-                key={index}
-                question={item.q}
-                answer={item.a}
-                isOpen={openQuestion === `${activeCategory}-${index}`}
-                onClick={() => setOpenQuestion(
-                  openQuestion === `${activeCategory}-${index}` ? null : `${activeCategory}-${index}`
-                )}
-                index={index}
-              />
-            ))}
-          </div>
-
-          {/* Still have questions CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="mt-16 p-8 sm:p-10 md:p-12 bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-white/20 text-center shadow-lg dark:shadow-xl hover:shadow-xl dark:hover:shadow-2xl transition-shadow duration-300"
-          >
-            <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
+            
+            {/* Still have questions CTA embedded in sidebar */}
+            <div className="mt-12 p-8 bg-lime-500 text-black rounded-none border border-black/10 shadow-2xl">
+              <h3 className="text-2xl font-black uppercase italic tracking-tighter mb-4">
+                STILL HAVE <br /> QUESTIONS?
+              </h3>
+              <p className="text-sm font-bold uppercase tracking-tight mb-8 opacity-80">
+                Can't find what you're looking for? Our support team is here to help!
+              </p>
+              <a
+                href="/contact"
+                className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest border-b-2 border-black pb-1 hover:opacity-70 transition-opacity"
+              >
+                GET HELP NOW
+                <ArrowRight className="w-4 h-4" />
+              </a>
             </div>
-            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-3">
-              Still have questions?
-            </h3>
-            <p className="text-gray-600 dark:text-white/70 mb-8 max-w-2xl mx-auto text-sm sm:text-base">
-              Can&apos;t find what you&apos;re looking for? Our support team is here to help you get started on your fitness journey!
-            </p>
-            <a
-              href="/contact"
-              className="inline-flex items-center gap-2 px-8 py-3.5 sm:py-4 bg-gradient-to-r from-green-600 to-green-600 hover:from-green-700 hover:to-green-700 text-white font-semibold rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-green-600/40 hover:scale-105 shadow-md"
-            >
-              Get Help Now
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </a>
-          </motion.div>
-        </motion.div>
+          </div>
+
+          {/* Questions Accordion - 8 Columns */}
+          <div className="lg:col-span-8 space-y-4">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeCategory}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.4 }}
+                className="space-y-4"
+              >
+                {activeQuestions.map((item, index) => (
+                  <FAQItem
+                    key={`${activeCategory}-${index}`}
+                    question={item.q}
+                    answer={item.a}
+                    isOpen={openQuestion === `${activeCategory}-${index}`}
+                    onClick={() => setOpenQuestion(
+                      openQuestion === `${activeCategory}-${index}` ? null : `${activeCategory}-${index}`
+                    )}
+                    index={index}
+                  />
+                ))}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
+
+      {/* Background Decorative Element */}
+      <div className="absolute top-0 right-0 w-1/3 h-full bg-lime-500/5 -skew-x-12 -z-10 pointer-events-none"></div>
     </section>
   );
 };
@@ -197,34 +191,23 @@ interface FAQItemProps {
 }
 
 const FAQItem = ({ question, answer, isOpen, onClick, index }: FAQItemProps) => {
-  const itemRef = useRef(null);
-  const isInView = useInView(itemRef, { once: true, margin: "-50px" });
-
   return (
     <motion.div
-      ref={itemRef}
-      initial={{ opacity: 0, y: 20 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-      transition={{ duration: 0.4, delay: index * 0.1 }}
-      className="bg-white dark:bg-gray-800/50 rounded-xl sm:rounded-2xl overflow-hidden shadow-md hover:shadow-xl dark:shadow-lg dark:hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-white/20"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      className="bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 rounded-none overflow-hidden hover:border-lime-500 transition-colors duration-300"
     >
       <button
         onClick={onClick}
-        className={`w-full flex items-center justify-between p-5 sm:p-6 md:p-7 text-left transition-all duration-300 ${
-          isOpen 
-            ? "bg-gradient-to-r from-green-600 to-green-600 hover:from-green-700 hover:to-green-700 text-white shadow-lg" 
-            : "bg-white dark:bg-gray-800/50 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800/70"
+        className={`w-full flex items-center justify-between p-8 text-left transition-all duration-300 ${
+          isOpen ? "bg-black text-white dark:bg-zinc-800" : "text-gray-900 dark:text-white"
         }`}
       >
-        <span className={`font-semibold text-sm sm:text-base pr-4 ${isOpen ? "text-white" : ""}`}>{question}</span>
-        <svg 
-          className={`w-5 h-5 sm:w-6 sm:h-6 shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} 
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <span className="font-black text-lg md:text-xl uppercase italic tracking-tighter pr-8">{question}</span>
+        <div className={`shrink-0 w-8 h-8 flex items-center justify-center border ${isOpen ? "border-lime-500 bg-lime-500 text-black" : "border-black/10 dark:border-white/10"}`}>
+          {isOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+        </div>
       </button>
       
       <AnimatePresence>
@@ -233,11 +216,13 @@ const FAQItem = ({ question, answer, isOpen, onClick, index }: FAQItemProps) => 
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
             className="overflow-hidden"
           >
-            <div className="p-5 sm:p-6 md:p-7 bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-white/80 text-sm sm:text-base leading-relaxed border-t border-gray-200 dark:border-white/15">
-              {answer}
+            <div className="p-8 pt-0 bg-white dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 text-base md:text-lg font-medium leading-relaxed">
+              <div className="pt-8 border-t border-black/5 dark:border-white/5">
+                {answer}
+              </div>
             </div>
           </motion.div>
         )}
