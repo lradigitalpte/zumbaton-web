@@ -6,27 +6,27 @@ import { motion } from "framer-motion";
 const CallToActionV2 = () => {
   return (
     <section
-      className="py-32 relative overflow-hidden bg-black text-white"
+      className="py-32 relative overflow-hidden bg-white dark:bg-black text-gray-900 dark:text-white"
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-lime-500/5 to-transparent dark:via-lime-950/20 pointer-events-none" />
+      <div className="absolute inset-0 pointer-events-none" />
       
       <div className="container mx-auto px-4 relative z-10 text-center">
         <motion.h2
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-5xl md:text-7xl font-black text-gray-900 dark:text-white mb-8 tracking-tight"
+          className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 dark:text-white mb-8 tracking-tight leading-tight"
         >
-          Ready to <span className="text-lime-500">Sweat?</span>
+          Ready to <span className="text-lime-500 block mt-3">Sweat?</span>
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          className="text-xl md:text-2xl text-zinc-400 mb-12 max-w-2xl mx-auto font-bold"
+          className="text-lg md:text-2xl text-gray-600 dark:text-zinc-400 mb-12 max-w-3xl mx-auto font-medium leading-relaxed"
         >
-          Your first class is the start of something amazing. Join the One Step Fitness family today.
+          Your first class is the start of something amazing. Join the One Step Fitness family and experience the difference.
         </motion.p>
         
         <motion.div
@@ -37,9 +37,9 @@ const CallToActionV2 = () => {
         >
           <Link
             href="/trial-booking"
-            className="inline-block px-12 py-6 bg-lime-500 hover:bg-yellow-400 text-black font-black text-xl rounded-full transition-all hover:scale-105 shadow-[0_10px_30px_rgba(132,204,22,0.3)] hover:shadow-[0_15px_40px_rgba(250,204,21,0.4)]"
+            className="group relative inline-block px-10 md:px-14 py-5 md:py-6 bg-lime-500 hover:bg-lime-600 text-black font-black text-lg md:text-xl rounded-full transition-all hover:scale-[1.03] active:scale-[0.97] shadow-lg hover:shadow-xl overflow-hidden"
           >
-            Book Your Trial Class
+            <span className="relative z-10">Book Your Trial Class</span>
           </Link>
         </motion.div>
       </div>

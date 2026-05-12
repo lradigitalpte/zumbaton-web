@@ -2,6 +2,8 @@
 import PackagesClient from './PackagesClient'
 import { cookies } from 'next/headers'
 
+export const dynamic = 'force-dynamic'
+
 async function fetchPromoWithCookies() {
   try {
     const cookieStore = await cookies()

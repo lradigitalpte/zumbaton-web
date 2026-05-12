@@ -33,6 +33,7 @@ const Header = () => {
   const usePathName = usePathname();
   const lightBackgroundPages = ['/signin', '/signup', '/forgot-password', '/schedule', '/packages'];
   const isLightBackgroundPage = lightBackgroundPages.some(path => usePathName?.startsWith(path));
+  const isSigninPage = usePathName === '/signin';
   
   // Header is now ALWAYS dark when it needs a background
   const needsBackground = sticky || isLightBackgroundPage;
@@ -42,7 +43,7 @@ const Header = () => {
       <header
         className={`header top-0 left-0 z-40 w-full flex flex-col transition-all duration-300 ${
           needsBackground
-            ? "bg-black/95 shadow-2xl fixed z-[9999] backdrop-blur-md border-b border-zinc-800"
+            ? "bg-black/95 shadow-2xl fixed z-9999 backdrop-blur-md border-b border-zinc-800"
             : "absolute bg-transparent pb-2 sm:pb-4"
         }`}
       >
@@ -51,7 +52,7 @@ const Header = () => {
           <div className="relative flex items-center justify-between w-full h-16 sm:h-20 md:h-24 lg:h-28">
             
             {/* LOGO - Left Aligned */}
-            <div className="w-auto lg:w-1/4 flex items-center justify-start flex-shrink-0">
+            <div className="w-auto lg:w-1/4 flex items-center justify-start shrink-0">
               <Link href="/explore" className="flex items-center">
                 <span className="inline-flex items-center justify-center">
                   <Image
@@ -74,21 +75,32 @@ const Header = () => {
             <div className={`fixed inset-0 z-40 lg:static lg:flex lg:flex-1 lg:justify-center lg:items-center ${navbarOpen ? "block" : "hidden lg:flex"}`}>
               {/* Mobile Overlay */}
               <div 
-                className="fixed inset-0 bg-black/80 backdrop-blur-sm lg:hidden" 
+                className="fixed inset-0 bg-black/55 backdrop-blur-sm lg:hidden" 
                 onClick={navbarToggleHandler}
                 aria-hidden="true"
               />
               
-              <nav className={`absolute right-0 top-0 h-screen w-80 max-w-[85vw] bg-gray-900 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out lg:relative lg:h-auto lg:w-auto lg:max-h-none lg:bg-transparent lg:shadow-none lg:transform-none lg:flex-row lg:items-center ${navbarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"}`}>
+              <nav className={`absolute right-0 top-0 h-screen w-80 max-w-[85vw] bg-white dark:bg-gray-900 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out border-l border-gray-200 dark:border-gray-800 lg:relative lg:h-auto lg:w-auto lg:max-h-none lg:bg-transparent lg:border-l-0 lg:shadow-none lg:transform-none lg:flex-row lg:items-center ${navbarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"}`}>
                 
                 {/* Mobile Menu Header */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-800 lg:hidden">
-                  <h2 className="text-lg font-bold text-white tracking-wide">Menu</h2>
-                  <div className="flex items-center gap-2">
-                    <ThemeToggler />
-                    <button onClick={navbarToggleHandler} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
+                <div className="border-b border-gray-200 dark:border-gray-800 lg:hidden">
+                  <div className="flex items-center justify-between p-4">
+                    <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-wide">Menu</h2>
+                    <div className="flex items-center gap-2">
+                      <button onClick={navbarToggleHandler} className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="px-4 pb-4 grid grid-cols-1 gap-3">
+                    <Link
+                      href="/signin"
+                      className="flex items-center justify-center rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-4 py-3 text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
+                      onClick={() => setNavbarOpen(false)}
+                    >
+                      Sign In
+                    </Link>
+                    <ThemeToggler showLabel />
                   </div>
                 </div>
 
@@ -102,8 +114,8 @@ const Header = () => {
                             href={menuItem.path}
                             className={`flex items-center py-3 px-4 lg:py-2 lg:px-0 rounded-lg lg:rounded-none text-base font-medium transition-all relative ${
                               usePathName === menuItem.path
-                                ? "text-lime-400 bg-gray-800 lg:bg-transparent lg:after:absolute lg:after:-bottom-2 lg:after:left-0 lg:after:w-full lg:after:h-[2px] lg:after:bg-lime-400 lg:after:rounded-full"
-                                : "text-gray-300 hover:text-white hover:bg-gray-800 lg:hover:bg-transparent lg:hover:text-lime-400"
+                                ? "text-lime-600 dark:text-lime-400 bg-lime-50 dark:bg-gray-800 lg:bg-transparent lg:after:absolute lg:after:-bottom-2 lg:after:left-0 lg:after:w-full lg:after:h-0.5 lg:after:bg-lime-400 lg:after:rounded-full"
+                                : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 lg:hover:bg-transparent lg:hover:text-lime-400"
                             }`}
                             onClick={() => setNavbarOpen(false)}
                           >
@@ -113,18 +125,18 @@ const Header = () => {
                           <>
                             <button
                               onClick={() => handleSubmenu(index)}
-                              className="w-full flex items-center justify-between py-3 px-4 lg:py-2 lg:px-0 rounded-lg lg:rounded-none text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800 lg:hover:bg-transparent lg:hover:text-lime-400 transition-all"
+                              className="w-full flex items-center justify-between py-3 px-4 lg:py-2 lg:px-0 rounded-lg lg:rounded-none text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 lg:hover:bg-transparent lg:hover:text-lime-400 transition-all"
                             >
                               <span className="inline-flex items-center gap-1.5">{menuItem.title}</span>
                               <svg className={`w-4 h-4 transition-transform duration-300 ${openIndex === index ? "rotate-180" : "lg:group-hover:rotate-180"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             </button>
-                            <div className={`overflow-hidden transition-all duration-300 lg:absolute lg:top-full lg:left-1/2 lg:-translate-x-1/2 lg:mt-4 lg:w-56 lg:bg-gray-900 lg:rounded-xl lg:shadow-2xl lg:border lg:border-gray-800 lg:opacity-0 lg:invisible lg:group-hover:opacity-100 lg:group-hover:visible lg:group-hover:mt-2 ${openIndex === index ? "max-h-96 lg:max-h-none" : "max-h-0 lg:max-h-none"}`}>
+                            <div className={`overflow-hidden transition-all duration-300 lg:absolute lg:top-full lg:left-1/2 lg:-translate-x-1/2 lg:mt-4 lg:w-56 lg:bg-white dark:lg:bg-gray-900 lg:rounded-xl lg:shadow-2xl lg:border lg:border-gray-200 dark:lg:border-gray-800 lg:opacity-0 lg:invisible lg:group-hover:opacity-100 lg:group-hover:visible lg:group-hover:mt-2 ${openIndex === index ? "max-h-96 lg:max-h-none" : "max-h-0 lg:max-h-none"}`}>
                               <div className="pl-4 lg:pl-0 lg:p-2 space-y-1">
                                 {menuItem.submenu?.map((submenuItem, subIndex) => (
                                   <Link
                                     href={submenuItem.path}
                                     key={subIndex}
-                                    className="block py-2.5 px-4 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition-all"
+                                    className="block py-2.5 px-4 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
                                     onClick={() => setNavbarOpen(false)}
                                   >
                                     {submenuItem.title}
@@ -142,7 +154,7 @@ const Header = () => {
             </div>
 
             {/* BUTTONS - Right Aligned */}
-            <div className="w-auto lg:w-1/4 flex items-center justify-end gap-3 sm:gap-4 flex-shrink-0 z-50">
+            <div className="w-auto lg:w-1/4 flex items-center justify-end gap-3 sm:gap-4 shrink-0 z-50">
               <Link
                 href="/signin"
                 className="hidden sm:inline-flex px-4 py-2 text-sm font-black text-zinc-400 hover:text-lime-500 transition-colors uppercase tracking-widest"

@@ -42,12 +42,6 @@ const menuData: Menu[] = [
         path: "/zt-fiesta",
         newTab: false,
       },
-      {
-        id: 44,
-        title: "Mother's Day Promo",
-        path: "/mothers-day",
-        newTab: false,
-      },
     ],
   },
   {

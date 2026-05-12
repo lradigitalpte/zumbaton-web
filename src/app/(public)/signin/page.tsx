@@ -181,7 +181,7 @@ function SigninPageContent() {
                 {/* Left Side - Sign In Form */}
                 <div className="w-full lg:w-1/2 p-8 sm:p-10 lg:p-12">
                   <h3 className="mb-6 text-3xl font-bold text-gray-900 sm:text-4xl dark:text-white">
-                    Signin
+                      SIGN IN
                   </h3>
 
                   <form onSubmit={handleSubmit}>
@@ -294,8 +294,8 @@ function SigninPageContent() {
                   </form>
                 </div>
 
-                {/* Right Side - Welcome Section with Gradient */}
-                <div className="w-full lg:w-1/2 relative bg-gradient-to-br from-green-600 via-green-500 to-teal-400 p-8 sm:p-10 lg:p-12 flex flex-col justify-center items-center text-center">
+                {/* Right Side - Welcome Section */}
+                <div className="hidden lg:flex lg:w-1/2 relative bg-green-600 p-8 sm:p-10 lg:p-12 flex-col justify-center items-center text-center">
                   <div className="relative z-10 text-white">
                     <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
                       Welcome back!
