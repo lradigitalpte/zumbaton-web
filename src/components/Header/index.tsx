@@ -37,6 +37,9 @@ const Header = () => {
   
   // Header is now ALWAYS dark when it needs a background
   const needsBackground = sticky || isLightBackgroundPage;
+  const desktopIdleText = needsBackground ? "lg:text-gray-300" : "lg:text-white/85";
+  const desktopHoverText = needsBackground ? "lg:hover:text-lime-400" : "lg:hover:text-white";
+  const desktopActiveText = needsBackground ? "lg:text-lime-400" : "lg:text-lime-400";
 
   return (
     <>
@@ -114,8 +117,8 @@ const Header = () => {
                             href={menuItem.path}
                             className={`flex items-center py-3 px-4 lg:py-2 lg:px-0 rounded-lg lg:rounded-none text-base font-medium transition-all relative ${
                               usePathName === menuItem.path
-                                ? "text-lime-600 dark:text-lime-400 bg-lime-50 dark:bg-gray-800 lg:bg-transparent lg:after:absolute lg:after:-bottom-2 lg:after:left-0 lg:after:w-full lg:after:h-0.5 lg:after:bg-lime-400 lg:after:rounded-full"
-                                : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 lg:hover:bg-transparent lg:hover:text-lime-400"
+                                ? `text-lime-600 dark:text-lime-400 bg-lime-50 dark:bg-gray-800 lg:bg-transparent ${desktopActiveText} lg:after:absolute lg:after:-bottom-2 lg:after:left-0 lg:after:w-full lg:after:h-0.5 lg:after:bg-lime-400 lg:after:rounded-full`
+                                : `text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 lg:hover:bg-transparent ${desktopIdleText} ${desktopHoverText}`
                             }`}
                             onClick={() => setNavbarOpen(false)}
                           >
@@ -125,7 +128,7 @@ const Header = () => {
                           <>
                             <button
                               onClick={() => handleSubmenu(index)}
-                              className="w-full flex items-center justify-between py-3 px-4 lg:py-2 lg:px-0 rounded-lg lg:rounded-none text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 lg:hover:bg-transparent lg:hover:text-lime-400 transition-all"
+                              className={`w-full flex items-center justify-between py-3 px-4 lg:py-2 lg:px-0 rounded-lg lg:rounded-none text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 lg:hover:bg-transparent ${desktopIdleText} ${desktopHoverText} transition-all`}
                             >
                               <span className="inline-flex items-center gap-1.5">{menuItem.title}</span>
                               <svg className={`w-4 h-4 transition-transform duration-300 ${openIndex === index ? "rotate-180" : "lg:group-hover:rotate-180"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
@@ -157,7 +160,7 @@ const Header = () => {
             <div className="w-auto lg:w-1/4 flex items-center justify-end gap-3 sm:gap-4 shrink-0 z-50">
               <Link
                 href="/signin"
-                className="hidden sm:inline-flex px-4 py-2 text-sm font-black text-zinc-400 hover:text-lime-500 transition-colors uppercase tracking-widest"
+                className={`hidden sm:inline-flex px-4 py-2 text-sm font-black transition-colors uppercase tracking-widest ${needsBackground ? "text-zinc-300 hover:text-lime-500" : "text-white/85 hover:text-white"}`}
               >
                 Sign In
               </Link>
