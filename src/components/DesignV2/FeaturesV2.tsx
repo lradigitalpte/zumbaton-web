@@ -32,75 +32,79 @@ const features = [
 
 const FeaturesV2 = () => {
   return (
-    <section className="py-16 sm:py-24 bg-[#f6f4ee] dark:bg-black text-gray-900 dark:text-white">
+    <section className="bg-[#f6f4ee] py-12 text-gray-900 dark:bg-black dark:text-white sm:py-16">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="mb-12 flex flex-col gap-6 md:mb-20 md:flex-row md:items-end md:justify-between">
-          <div className="max-w-3xl">
-            <span className="mb-5 inline-flex rounded-full border border-gray-300 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-gray-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
-              Why One Step Works
-            </span>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-              className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black uppercase italic tracking-tighter leading-[0.95]"
-          >
-              More Than Just <span className="text-lime-500 block mt-2">Dance.</span>
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-              className="mt-4 sm:mt-6 text-base sm:text-lg md:text-2xl text-gray-600 dark:text-zinc-400 font-medium leading-relaxed"
-          >
-              We are building a movement where fitness meets happiness. Discover what makes One Step Fitness different.
-          </motion.p>
-          </div>
+            <div className="max-w-3xl">
+              <span className="mb-5 inline-flex border border-black/10 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.3em] text-gray-800 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200">
+                The Edge
+              </span>
+              <motion.h2
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.36, ease: "easeOut" }}
+                className="text-3xl font-black uppercase italic leading-[0.85] tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl"
+              >
+                More Than Just <span className="mt-2 block text-lime-500">Movement.</span>
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.36, delay: 0.08, ease: "easeOut" }}
+                className="mt-4 text-base font-medium leading-relaxed text-gray-600 sm:mt-6 sm:text-lg md:text-xl dark:text-zinc-400"
+              >
+                We&apos;re building a movement where fitness meets happiness. No distractions, just smart movement and a community that has your back.
+              </motion.p>
+            </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.25 }}
-            className="grid grid-cols-2 gap-3 sm:gap-4 md:max-w-sm"
-          >
-            <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3.5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:px-5 sm:py-4">
-              <div className="text-2xl font-black text-lime-600 dark:text-lime-400">4</div>
-              <div className="mt-1 text-sm font-semibold text-gray-600 dark:text-zinc-400">Core programs</div>
-            </div>
-            <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3.5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:px-5 sm:py-4">
-              <div className="text-2xl font-black text-lime-600 dark:text-lime-400">100%</div>
-              <div className="mt-1 text-sm font-semibold text-gray-600 dark:text-zinc-400">Community energy</div>
-            </div>
-          </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.36, delay: 0.12, ease: "easeOut" }}
+              className="grid grid-cols-2 gap-3 sm:gap-4 md:max-w-sm"
+            >
+              <div className="border border-black/10 bg-white px-4 py-3.5 dark:border-white/10 dark:bg-zinc-900 sm:px-5 sm:py-4">
+                <div className="text-2xl font-black text-lime-600 dark:text-lime-400">5</div>
+                <div className="mt-1 text-sm font-semibold text-gray-600 dark:text-zinc-400">Structured Sessions</div>
+              </div>
+              <div className="border border-black/10 bg-white px-4 py-3.5 dark:border-white/10 dark:bg-zinc-900 sm:px-5 sm:py-4">
+                <div className="text-2xl font-black text-lime-600 dark:text-lime-400">100%</div>
+                <div className="mt-1 text-sm font-semibold text-gray-600 dark:text-zinc-400">Pure Energy</div>
+              </div>
+            </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 md:gap-6">
           {features.map((feature, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.12 }}
-              className={`relative group overflow-hidden rounded-[24px] h-[280px] sm:h-[340px] md:h-[420px] border border-black/5 shadow-lg hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 ${feature.colSpan}`}
+              transition={{ duration: 0.36, delay: index * 0.06, ease: "easeOut" }}
+              className={`group relative h-[280px] overflow-hidden border border-black/10 sm:h-[340px] md:h-[420px] dark:border-white/10 ${feature.colSpan}`}
             >
               <Image
                 src={feature.image}
                 alt={feature.title}
                 fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className="object-cover transition-[filter,transform] duration-300 md:grayscale md:group-hover:grayscale-0 md:group-hover:scale-[1.02]"
               />
-              <div className="absolute inset-0 bg-black/40" />
+              <div className="absolute inset-0 bg-black/30 md:bg-black/40" />
               <div className="absolute left-0 right-0 top-0 p-4 sm:p-8">
-                <span className="inline-flex rounded-full border border-white/20 bg-black/20 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-white/80 backdrop-blur-sm">
+                <span className="inline-flex border border-white/20 bg-black/40 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.24em] text-white/90">
                   Signature Edge
                 </span>
               </div>
               <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-10">
-                <h3 className="text-xl sm:text-3xl font-black mb-2 sm:mb-3 text-white group-hover:text-lime-300 transition-colors duration-300">{feature.title}</h3>
-                <p className="max-w-md text-white/85 text-sm sm:text-lg leading-relaxed transform translate-y-3 opacity-100 sm:opacity-0 group-hover:translate-y-0 sm:group-hover:opacity-100 transition-all duration-500">
+                <h3 className="mb-2 text-xl font-black text-white transition-colors duration-300 group-hover:text-lime-300 sm:mb-3 sm:text-3xl">
+                  {feature.title}
+                </h3>
+                <p className="max-w-md translate-y-0 text-sm leading-relaxed text-white/90 opacity-100 sm:text-lg sm:opacity-90 sm:transition-opacity sm:duration-300 sm:group-hover:opacity-100">
                   {feature.description}
                 </p>
               </div>

@@ -130,7 +130,7 @@ const HomeContact = () => {
                   </div>
                   <div>
                     <h4 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-1">Business Hours</h4>
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Mon - Sun: 9AM - 9PM</p>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Mon - Sun: 8AM - 9PM</p>
                   </div>
                 </div>
               </div>

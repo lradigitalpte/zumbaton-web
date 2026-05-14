@@ -32,18 +32,18 @@ const AboutSectionTwo = () => {
               <div className="space-y-12">
                 <FeatureItem 
                   number="01"
-                  title="Supportive Instructors"
-                  desc="Experienced instructors providing guidance for all fitness levels. Move at your own pace and achieve your fitness goals."
+                  title="The Squad"
+                  desc="The best in the game. Our coaches bring raw energy and expertise to every session, pushing you to your peak."
                 />
                 <FeatureItem 
                   number="02"
-                  title="Workouts for Everyone"
-                  desc="A variety of aerobic and step classes designed for all stages. We focus on effective movement and structured routines."
+                  title="Sessions for All"
+                  desc="From Zumbaton to Thunderbolt, we have a session for every stage. Pure movement, no judgment."
                 />
                 <FeatureItem 
                   number="03"
-                  title="Goal-Oriented Community"
-                  desc="Join a community focused on fitness through structured movement. Achieve your health goals in a welcoming environment."
+                  title="The Tribe"
+                  desc="Join a community that hits different. We move together, progress together, and celebrate every win."
                 />
               </div>
             </motion.div>
@@ -67,6 +67,7 @@ const AboutSectionTwo = () => {
                   alt="Training Session"
                   fill
                   className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                 />
               </motion.div>
 
@@ -82,6 +83,7 @@ const AboutSectionTwo = () => {
                   alt="Personal Coaching"
                   fill
                   className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 33vw"
                 />
               </motion.div>
 

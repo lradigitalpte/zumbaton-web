@@ -49,22 +49,23 @@ const Header = () => {
       >
         {!sticky && <TickerStrip />}
         
-        <div className="w-full px-3 sm:px-6 lg:px-12">
-          <div className="relative flex min-h-[4rem] w-full items-center justify-between gap-2 py-2 sm:h-20 sm:min-h-0 sm:py-0 lg:h-32">
+        <div className="w-full px-3 sm:px-6 lg:px-10">
+          <div className="relative flex min-h-[3.5rem] w-full items-center justify-between gap-2 py-1.5 sm:h-16 sm:min-h-0 sm:py-0 lg:h-20">
             
-            {/* LOGO — larger on small screens; width cap keeps room for actions */}
+            {/* LOGO — width cap keeps room for actions */}
             <div className="flex min-w-0 flex-1 items-center sm:flex-initial sm:min-w-0">
-              <Link href="/explore" className="group flex max-w-[8.75rem] items-center sm:max-w-[11rem] md:max-w-none">
+              <Link href="/explore" className="group flex max-w-[7.5rem] items-center sm:max-w-[9rem] md:max-w-none">
                 <div className="relative w-full">
                   <Image
                     src="/logo/One step fitness logo.png"
                     alt="One Step Fitness Logo"
-                    width={200}
-                    height={66}
-                    className={`h-8 w-auto max-h-8 max-w-full object-contain object-left transition-all duration-500 sm:h-10 sm:max-h-none md:h-12 lg:h-16 ${
+                    width={160}
+                    height={53}
+                    className={`h-7 w-auto max-h-7 max-w-full object-contain object-left transition-all duration-500 sm:h-8 sm:max-h-none md:h-9 lg:h-10 ${
                       needsBackground ? "brightness-110" : ""
                     }`}
                     priority
+                    loading="eager"
                   />
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-lime-500 transition-all duration-500 group-hover:w-full" />
                 </div>
@@ -97,9 +98,15 @@ const Header = () => {
                       <div className="relative group">
                         <button
                           onClick={() => handleSubmenu(index)}
-                          className="flex items-center gap-1.5 px-3 xl:px-4 py-2 text-sm xl:text-base font-black uppercase tracking-wider text-white/70 hover:text-white transition-all duration-300"
+                          className="flex items-center gap-1.5 px-3 xl:px-4 py-2 text-sm xl:text-base font-black uppercase tracking-wider text-white/70 hover:text-white transition-all duration-300 relative"
                         >
                           {menuItem.title}
+                          {menuItem.isNew && (
+                            <span className="absolute -top-1.5 -right-2 flex h-5 w-10 items-center justify-center bg-red-600 text-[9px] font-black text-white rounded-none tracking-tighter shadow-lg">
+                              NEW
+                              <span className="absolute inset-0 bg-red-600 animate-ping opacity-40"></span>
+                            </span>
+                          )}
                           <ChevronDown className="w-3 h-3 transition-transform duration-300 group-hover:rotate-180" />
                         </button>
                         
@@ -110,10 +117,15 @@ const Header = () => {
                               <Link
                                 href={submenuItem.path}
                                 key={subIndex}
-                                className="flex items-center justify-between px-4 py-3 text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-black hover:bg-lime-500 transition-all duration-300"
+                                className="flex items-center justify-between px-4 py-3 text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-black hover:bg-lime-500 transition-all duration-300 relative group/sub"
                               >
-                                {submenuItem.title}
-                                <ArrowRight className="w-3 h-3 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                                <div className="flex items-center gap-2">
+                                  {submenuItem.title}
+                                  {submenuItem.isNew && (
+                                    <span className="bg-red-600 text-white text-[7px] px-1 py-0.5 leading-none">NEW</span>
+                                  )}
+                                </div>
+                                <ArrowRight className="w-3 h-3 opacity-0 -translate-x-2 group-hover/sub:opacity-100 group-hover/sub:translate-x-0 transition-all" />
                               </Link>
                             ))}
                           </div>
@@ -198,20 +210,34 @@ const Header = () => {
                       {menuItem.path ? (
                         <Link
                           href={menuItem.path}
-                          className={`block text-2xl sm:text-4xl font-black uppercase italic tracking-tighter transition-colors ${
+                          className={`flex items-center gap-3 text-2xl sm:text-4xl font-black uppercase italic tracking-tighter transition-colors relative ${
                             usePathName === menuItem.path ? "text-lime-500" : "text-white hover:text-lime-500"
                           }`}
                           onClick={() => setNavbarOpen(false)}
                         >
                           {menuItem.title}
+                          {menuItem.isNew && (
+                            <span className="bg-red-600 text-white text-[10px] px-2 py-1 leading-none not-italic tracking-normal relative">
+                              NEW
+                              <span className="absolute inset-0 bg-red-600 animate-ping opacity-40"></span>
+                            </span>
+                          )}
                         </Link>
                       ) : (
                         <div className="space-y-4">
                           <button
                             onClick={() => handleSubmenu(index)}
-                            className="flex items-center justify-between w-full text-2xl sm:text-4xl font-black uppercase italic tracking-tighter text-white"
+                            className="flex items-center justify-between w-full text-2xl sm:text-4xl font-black uppercase italic tracking-tighter text-white relative"
                           >
-                            {menuItem.title}
+                            <div className="flex items-center gap-3">
+                              {menuItem.title}
+                              {menuItem.isNew && (
+                                <span className="bg-red-600 text-white text-[10px] px-2 py-1 leading-none not-italic tracking-normal relative">
+                                  NEW
+                                  <span className="absolute inset-0 bg-red-600 animate-ping opacity-40"></span>
+                                </span>
+                              )}
+                            </div>
                             <ChevronDown className={`w-6 h-6 sm:w-8 sm:h-8 transition-transform ${openIndex === index ? "rotate-180" : ""}`} />
                           </button>
                           <AnimatePresence>
@@ -229,7 +255,12 @@ const Header = () => {
                                     className="block text-lg sm:text-xl font-black uppercase italic tracking-tighter text-zinc-500 hover:text-lime-500"
                                     onClick={() => setNavbarOpen(false)}
                                   >
-                                    {sub.title}
+                                    <div className="flex items-center gap-2">
+                                      {sub.title}
+                                      {sub.isNew && (
+                                        <span className="bg-red-600 text-white text-[10px] px-1.5 py-0.5 leading-none not-italic tracking-normal">NEW</span>
+                                      )}
+                                    </div>
                                   </Link>
                                 ))}
                               </motion.div>

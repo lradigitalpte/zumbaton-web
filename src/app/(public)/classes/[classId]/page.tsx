@@ -8,6 +8,7 @@ import { useParams } from "next/navigation";
 import { zumbaClasses, getClassBySlug, ZumbaClass } from "@/data/classes";
 import { ClassesHero } from "@/components/Classes";
 import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
+import { LightningRating } from "@/components/Common/LightningRating";
 
 export default function ClassDetailPage() {
   const params = useParams();
@@ -49,7 +50,7 @@ const ClassDetailContent = ({ classData }: { classData: ZumbaClass }) => {
   const isInView = useInView(contentRef, { once: true, margin: "-50px" });
 
   return (
-    <section className="py-16 md:py-20 lg:py-28 bg-white dark:bg-gray-dark">
+    <section className="py-10 md:py-12 lg:py-16 bg-white dark:bg-gray-dark">
       <div className="container">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
           {/* Sidebar - Class List */}
@@ -92,7 +93,7 @@ const ClassDetailContent = ({ classData }: { classData: ZumbaClass }) => {
             className="lg:w-3/4"
           >
             {/* Main Image - Zumbuddies uses kids1, positioned so people (not walls) are in frame */}
-            <div className="relative h-64 md:h-96 rounded-xl overflow-hidden mb-8 bg-gray-200 dark:bg-gray-700">
+            <div className="relative h-56 md:h-80 rounded-xl overflow-hidden mb-8 bg-gray-200 dark:bg-gray-700">
               <Image
                 src={classData.slug === "lil-steppers" ? "/images/hero/kids1.png" : classData.image}
                 alt={classData.name}
@@ -106,26 +107,35 @@ const ClassDetailContent = ({ classData }: { classData: ZumbaClass }) => {
               
               {/* Quick Stats Overlay */}
               <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-4">
-                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20 dark:border-gray-700/50">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Intensity</span>
-                  <p className="font-bold text-gray-900 dark:text-white">{classData.intensity}</p>
+                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-5 py-3 rounded-lg border border-white/20 dark:border-gray-700/50 flex items-center gap-6">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 block mb-1">
+                      {classData.energy >= 4 ? "Difficulty" : "Intensity"}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <LightningRating filled={classData.energy} size="md" />
+                      <span className="font-black uppercase italic tracking-tighter text-gray-900 dark:text-white text-lg">
+                        Level {classData.energy} / 5
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Description */}
-            <div className="mb-12">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
+            <div className="mb-10">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-4">
                 About {classData.name}
               </h2>
-              <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
+              <p className="text-gray-600 dark:text-gray-400 text-base leading-relaxed">
                 {classData.fullDescription}
               </p>
             </div>
 
             {/* Program Highlights */}
-            <div className="mb-12">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-8">
+            <div className="mb-10">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-6">
                 Program Highlights
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -137,7 +147,7 @@ const ClassDetailContent = ({ classData }: { classData: ZumbaClass }) => {
 
             {/* Schedule */}
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-4">
                 Class Schedule
               </h2>
               <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
@@ -183,8 +193,8 @@ const HighlightCard = ({ highlight, index }: HighlightCardProps) => {
       className="flex gap-4"
     >
       <div className="shrink-0">
-        <div className="w-14 h-14 bg-green-600 rounded-lg flex items-center justify-center">
-          <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
@@ -209,7 +219,7 @@ const ClassDetailCTA = () => {
   return (
     <section 
       ref={sectionRef}
-      className="bg-green-600 dark:bg-green-700 py-12 md:py-16"
+      className="bg-green-600 dark:bg-green-700 py-10 md:py-12"
     >
       <div className="container">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -233,27 +243,27 @@ const ClassDetailCTA = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex flex-col sm:flex-row gap-4"
           >
-            <button
-              type="button"
-              onClick={openWhatsAppModal}
+            <Link
+              href="/trial-booking"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-bold text-green-600 bg-white hover:bg-gray-100 transition-all duration-300 rounded-lg shadow-lg hover:shadow-xl group"
             >
-              <span>Join Now</span>
+              <span>Book Trial Class</span>
               <svg 
                 className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300" 
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-            </button>
-            <Link
-              href="/classes"
+            </Link>
+            <button
+              type="button"
+              onClick={openWhatsAppModal}
               className="inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-bold text-white border-2 border-white hover:bg-white hover:text-green-600 transition-all duration-300 rounded-lg"
             >
-              <span>View All Classes</span>
-            </Link>
+              <span>WhatsApp Us</span>
+            </button>
           </motion.div>
         </div>
       </div>

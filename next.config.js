@@ -1,5 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/classes/thunderbolt-full-body-workout",
+        destination: "/classes/thunderbolt-bodyweight-steppers",
+        permanent: true,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

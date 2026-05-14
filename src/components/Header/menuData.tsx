@@ -17,6 +17,7 @@ const menuData: Menu[] = [
     id: 3,
     title: "Classes",
     newTab: false,
+    isNew: true,
     submenu: [
       {
         id: 31,
@@ -36,13 +37,34 @@ const menuData: Menu[] = [
         path: "/zt-fiesta",
         newTab: false,
       },
+      {
+        id: 34,
+        title: "What's New",
+        path: "/promos",
+        newTab: false,
+        isNew: true,
+      },
     ],
   },
   {
     id: 4,
     title: "Pricing",
-    path: "/pricing",
     newTab: false,
+    submenu: [
+      {
+        id: 41,
+        title: "Packages",
+        path: "/pricing",
+        newTab: false,
+      },
+      {
+        id: 42,
+        title: "What's New",
+        path: "/promos",
+        newTab: false,
+        isNew: true,
+      },
+    ],
   },
   {
     id: 5,

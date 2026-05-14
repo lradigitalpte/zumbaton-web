@@ -16,10 +16,12 @@ export default function PublicLayout({
   
   return (
     <WhatsAppModalProvider>
-      <Header />
-      {children}
-      {!isAuthPage && <Footer />}
-      <ScrollToTop />
+      <div className="min-h-0 min-w-0 max-w-full overflow-x-clip">
+        <Header />
+        {children}
+        {!isAuthPage && <Footer />}
+        <ScrollToTop />
+      </div>
     </WhatsAppModalProvider>
   );
 }

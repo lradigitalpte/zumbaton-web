@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function DesignV2Page() {
   return (
-    <main className="bg-white dark:bg-black min-h-screen text-gray-900 dark:text-white selection:bg-green-500 selection:text-black">
+    <main className="min-h-screen bg-[#f6f4ee] text-gray-900 selection:bg-lime-500 selection:text-black dark:bg-black dark:text-white">
       <ScrollUp />
       <HeroV2 />
       <FeaturesV2 />

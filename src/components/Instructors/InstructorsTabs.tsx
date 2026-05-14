@@ -30,6 +30,13 @@ const instructors: Instructor[] = [
     image: "/images/robert.jfif",
     specialties: ["Certified Professional", "Self-Expression", "Community Building"],
   },
+  {
+    id: "3",
+    name: "Fizah",
+    role: "Piloxing & Zumba Lift Instructor",
+    bio: "Fizah leads Piloxing—an athletic blend of Pilates, boxing, and dance for cardio, core strength, and stress relief—and Zumba Lift, where Latin-inspired dance cardio meets structured resistance using bands and light weights.\n\nShe also coaches our Thunderbolt resistance format (bands-focused, no steppers), alongside our step-and-bodyweight Thunderbolt sessions. Her sessions are clear, challenging, and built so you leave feeling stronger—whether you are new to resistance work or ready to level up.",
+    specialties: ["Piloxing", "Zumba Lift", "Thunderbolt (Resistance)"],
+  },
 ];
 
 const InstructorsTabs = () => {
@@ -40,11 +47,15 @@ const InstructorsTabs = () => {
   const activeInstructor = instructors.find((i) => i.id === activeTab) || instructors[0];
 
   return (
-    <section 
-      ref={sectionRef} 
-      className="py-20 md:py-32 bg-[#f6f4ee] dark:bg-black overflow-hidden min-h-[800px]"
+    <section
+      ref={sectionRef}
+      className="relative min-h-[800px] overflow-x-clip bg-[#f6f4ee] py-20 dark:bg-black md:py-32"
     >
-      <div className="container px-4 sm:px-6 lg:px-8">
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden>
+        <div className="absolute -right-[10%] top-0 h-full w-[55%] max-w-[min(520px,85vw)] bg-lime-500/5 -skew-x-12" />
+      </div>
+
+      <div className="container relative z-10 mx-auto max-w-full min-w-0 px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
         <motion.div
@@ -63,12 +74,13 @@ const InstructorsTabs = () => {
         </motion.div>
 
         {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-4 mb-16 border-b border-black/10 dark:border-white/10 pb-8">
+        <div className="mb-16 flex flex-col gap-3 border-b border-black/10 pb-8 dark:border-white/10 sm:flex-row sm:flex-wrap sm:gap-4">
           {instructors.map((instructor) => (
             <button
               key={instructor.id}
+              type="button"
               onClick={() => setActiveTab(instructor.id)}
-              className={`relative px-8 py-4 text-sm md:text-base font-black uppercase tracking-widest transition-all duration-300 rounded-none ${
+              className={`relative max-w-full whitespace-normal rounded-none px-4 py-3 text-left text-xs font-black uppercase tracking-widest transition-all duration-300 sm:px-8 sm:py-4 sm:text-sm md:text-base ${
                 activeTab === instructor.id
                   ? "bg-black text-white dark:bg-lime-500 dark:text-black"
                   : "bg-white text-black hover:bg-lime-500/10 dark:bg-zinc-900 dark:text-white"
@@ -93,10 +105,10 @@ const InstructorsTabs = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start"
+            className="grid grid-cols-1 items-start gap-12 lg:grid-cols-12 lg:gap-20"
           >
             {/* Image Section - 5 Columns */}
-            <div className="lg:col-span-5 relative group">
+            <div className="relative min-w-0 group lg:col-span-5">
               <div className="relative aspect-[4/5] overflow-hidden border border-black/10 dark:border-white/10 bg-zinc-200 dark:bg-zinc-900">
                 {activeInstructor.image ? (
                   <Image
@@ -125,7 +137,7 @@ const InstructorsTabs = () => {
             </div>
 
             {/* Content Section - 7 Columns */}
-            <div className="lg:col-span-7 pt-4">
+            <div className="min-w-0 pt-4 lg:col-span-7">
               <div className="flex items-center gap-4 mb-6">
                 <span className="w-12 h-[2px] bg-lime-500"></span>
                 <span className="text-lime-600 dark:text-lime-400 font-black text-sm uppercase tracking-[0.3em]">
@@ -133,7 +145,7 @@ const InstructorsTabs = () => {
                 </span>
               </div>
               
-              <h3 className="text-5xl md:text-7xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter mb-10 leading-none">
+              <h3 className="mb-10 break-words text-4xl font-black uppercase italic leading-none tracking-tighter text-gray-900 dark:text-white sm:text-5xl md:text-7xl">
                 {activeInstructor.name}
               </h3>
               
@@ -158,18 +170,18 @@ const InstructorsTabs = () => {
               </div>
 
               {/* CTA for this Instructor */}
-              <div className="mt-12">
-                <button className="bg-lime-500 text-black px-10 py-5 font-black uppercase tracking-[0.2em] hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all duration-300 shadow-xl">
-                  Book a Class with {activeInstructor.name.split(' ')[0]}
+              <div className="mt-12 max-w-full">
+                <button
+                  type="button"
+                  className="w-full max-w-full whitespace-normal bg-lime-500 px-4 py-4 text-center text-sm font-black uppercase tracking-[0.2em] text-black shadow-xl transition-all duration-300 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black sm:w-auto sm:px-10 sm:py-5 sm:text-base"
+                >
+                  Book a Class with {activeInstructor.name.split(" ")[0]}
                 </button>
               </div>
             </div>
           </motion.div>
         </AnimatePresence>
       </div>
-
-      {/* Background Decorative Element */}
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-lime-500/5 -skew-x-12 -z-10 pointer-events-none"></div>
     </section>
   );
 };

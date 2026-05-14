@@ -3,96 +3,130 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { LightningRating } from "@/components/Common/LightningRating";
+import { CLASS_ENERGY } from "@/data/classes";
 
 const classes = [
   {
     title: "Groove Stepper",
-    description: "Step up your game with rhythmic cardio.",
+    description: "Structured step choreography with serious groove. Master the moves.",
     accent: "bg-lime-500",
     slug: "groove-stepper",
   },
   {
-    title: "Zumba Step",
-    description: "Our signature high-energy dance workout.",
-    accent: "bg-yellow-400",
+    title: "Zumbaton",
+    description: "High-energy step cardio that hits like a party. Pure energy.",
+    accent: "bg-lime-400",
     slug: "zumbaton",
   },
   {
-    title: "ThunderBolt Full Body Workout",
-    description: "High-intensity Tabata intervals for maximum burn.",
+    title: "Thunderbolt · Bodyweight",
+    description: "Tabata-style power on the step. Raw intensity with Coach Robert.",
+    accent: "bg-lime-500",
+    slug: "thunderbolt-bodyweight-steppers",
+  },
+  {
+    title: "Thunderbolt · Resistance",
+    description: "Bands and dance-led cardio. No steppers, just results with Coach Fizah.",
     accent: "bg-lime-400",
-    slug: "thunderbolt-full-body-workout",
+    slug: "thunderbolt-resistance-dance",
+  },
+  {
+    title: "Piloxing",
+    description: "HIIT fusion of Pilates, boxing, and dance. Find your power.",
+    accent: "bg-lime-500",
+    slug: "piloxing",
   },
 ];
 
 const ClassesV2 = () => {
   return (
-    <section className="py-16 sm:py-24 bg-white dark:bg-black text-gray-900 dark:text-white overflow-hidden">
+    <section className="overflow-hidden bg-white py-16 text-gray-900 dark:bg-black dark:text-white sm:py-24">
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="mb-12 md:mb-20 rounded-[28px] border border-gray-200 bg-[#fbfaf6] p-5 sm:p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 md:p-10">
+        <div className="mb-12 border border-black/10 bg-[#f6f4ee] p-5 shadow-none dark:border-white/10 dark:bg-zinc-950 sm:p-8 md:mb-20 md:p-10">
           <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
             <div className="max-w-3xl">
-              <span className="mb-5 inline-flex rounded-full border border-gray-300 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-gray-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
-                Adult Programs
+              <span className="mb-5 inline-flex border border-black/10 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.3em] text-gray-800 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200">
+                The Lineup
               </span>
-              <h2 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black mb-4 sm:mb-5 tracking-tighter uppercase italic leading-[0.95]">Our <span className="text-lime-500">Classes</span></h2>
-              <p className="text-base sm:text-lg md:text-2xl text-zinc-600 dark:text-zinc-400 font-medium leading-relaxed">Structured step sessions, party-energy cardio, and powerful full-body conditioning for adults who want consistency with fun.</p>
+              <h2 className="mb-4 text-4xl font-black uppercase italic leading-[0.85] tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl">
+                Zumbaton <span className="text-lime-500">& Studio.</span>
+              </h2>
+              <p className="text-base font-medium leading-relaxed text-zinc-600 sm:text-lg md:text-2xl dark:text-zinc-400">
+                High-energy step, party energy, and structured conditioning. No fluff, just the best 1-hour sessions in town.
+              </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:gap-4 w-full md:w-auto">
-              <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3.5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:px-5 sm:py-4">
-                <div className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Formats</div>
-                <div className="mt-1 text-2xl font-black">3</div>
+            <div className="grid w-full grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:gap-4 md:w-auto">
+              <div className="border border-black/10 bg-white px-4 py-3.5 dark:border-white/10 dark:bg-zinc-900 sm:px-5 sm:py-4">
+                <div className="text-sm font-black uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+                  Sessions
+                </div>
+                <div className="mt-1 text-2xl font-black">5</div>
               </div>
-              <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3.5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:px-5 sm:py-4">
-                <div className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Intensity</div>
-                <div className="mt-1 text-2xl font-black">Mixed</div>
+              <div className="border border-black/10 bg-white px-4 py-3.5 dark:border-white/10 dark:bg-zinc-900 sm:px-5 sm:py-4">
+                <div className="text-sm font-black uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+                  Intensity
+                </div>
+                <div className="mt-1 text-2xl font-black">High</div>
               </div>
             </div>
           </div>
           <Link
             href="/schedule"
-            className="mt-8 inline-flex items-center gap-3 text-lime-600 dark:text-lime-400 hover:text-black dark:hover:text-white transition-colors text-sm sm:text-base font-black uppercase tracking-[0.2em]"
+            className="mt-8 inline-flex items-center gap-3 text-sm font-black uppercase tracking-[0.2em] text-lime-600 transition-colors hover:text-black dark:text-lime-400 dark:hover:text-white sm:text-base"
           >
-            View Full Schedule <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+            View Full Schedule <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-          {classes.map((cls, index) => (
-            <Link key={index} href={`/classes/${cls.slug}`} className="block h-full group">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="relative h-full rounded-[28px] border border-gray-200 bg-white transition-all duration-500 hover:-translate-y-1 hover:border-lime-300 hover:shadow-2xl dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-lime-500/40"
-              >
-                <div className="flex h-full flex-col justify-between p-5 sm:p-7 md:p-9">
-                  <div>
-                    <div className={`mb-5 inline-flex rounded-full px-3 py-1.5 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] sm:tracking-[0.24em] text-black ${cls.accent}`}>
-                      Featured Class
+        <div className="relative -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
+          <div className="flex gap-6 overflow-x-auto pb-12 scrollbar-hide snap-x snap-mandatory">
+            {classes.map((cls, index) => (
+              <div key={index} className="w-[300px] flex-shrink-0 snap-start sm:w-[360px] md:w-[400px]">
+                <div className="group relative h-full border-2 border-black/10 bg-white transition-all duration-500 hover:-translate-y-2 hover:border-lime-500 hover:shadow-2xl dark:border-white/10 dark:bg-zinc-950 dark:hover:border-lime-500/60">
+                  {/* Main Clickable Area */}
+                  <Link href={`/classes/${cls.slug}`} className="absolute inset-0 z-0" aria-label={`View details for ${cls.title}`} />
+                  
+                  <div className="flex h-full flex-col justify-between p-8 sm:p-10">
+                    <div>
+                      <div
+                        className={`mb-6 inline-flex px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-black sm:text-[11px] shadow-sm ${cls.accent}`}
+                      >
+                        Featured Class
+                      </div>
+                      <div className="flex items-start justify-between gap-4 mb-4">
+                        <h3 className="text-2xl font-black uppercase italic leading-[0.9] tracking-tighter text-gray-900 transition-colors duration-300 group-hover:text-lime-500 dark:text-white sm:text-4xl">
+                          {cls.title}
+                        </h3>
+                        <LightningRating filled={CLASS_ENERGY[cls.slug] ?? 4} size="md" className="shrink-0" />
+                      </div>
+                      <p className="line-clamp-3 text-base font-medium leading-relaxed text-gray-700 transition-colors duration-300 dark:text-zinc-400 sm:text-lg">
+                        {cls.description}
+                      </p>
                     </div>
-                    <h3 className="text-xl sm:text-2xl md:text-3xl font-black mb-3 sm:mb-4 text-gray-900 dark:text-white group-hover:text-lime-500 transition-colors duration-300 uppercase italic tracking-tight leading-tight">
-                      {cls.title}
-                    </h3>
-                    <p className="text-gray-700 dark:text-zinc-400 leading-relaxed text-sm sm:text-base md:text-lg transition-colors duration-300 font-medium">
-                      {cls.description}
-                    </p>
-                  </div>
 
-                  <div className="mt-8 sm:mt-12 flex items-center justify-between border-t border-gray-200 pt-5 sm:pt-6 dark:border-zinc-800">
-                    <span className="text-xs sm:text-sm font-black text-lime-600 dark:text-lime-500 uppercase tracking-[0.16em] sm:tracking-[0.2em] transition-colors duration-300">
-                      View Details
-                    </span>
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-gray-50 text-gray-900 transition-all duration-300 group-hover:border-lime-400 group-hover:bg-lime-500 group-hover:text-black dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:group-hover:border-lime-400 dark:group-hover:bg-lime-500 dark:group-hover:text-black">
-                      <ArrowRight className="w-5 h-5 transform group-hover:translate-x-0.5 transition-transform" />
+                    <div className="relative z-10 mt-10 flex items-center justify-between border-t-2 border-black/5 pt-8 dark:border-white/5 sm:mt-12">
+                      <div className="flex items-center gap-6">
+                        <span className="text-xs font-black uppercase tracking-[0.2em] text-lime-600 transition-colors duration-300 dark:text-lime-500 sm:text-sm">
+                          View Details
+                        </span>
+                        <Link 
+                          href="/trial-booking" 
+                          className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-lime-500 transition-colors"
+                        >
+                          Book Trial
+                        </Link>
+                      </div>
+                      <div className="flex h-12 w-12 items-center justify-center border-2 border-black/10 bg-[#f6f4ee] text-gray-900 transition-all duration-300 group-hover:border-lime-500 group-hover:bg-lime-500 group-hover:text-black dark:border-white/10 dark:bg-zinc-900 dark:text-white dark:group-hover:border-lime-400 dark:group-hover:bg-lime-500 dark:group-hover:text-black">
+                        <ArrowRight className="h-6 w-6 transform transition-transform group-hover:translate-x-1" />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            </Link>
-          ))}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

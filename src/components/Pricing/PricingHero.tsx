@@ -4,6 +4,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Zap } from "lucide-react";
 
 const PricingHero = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -12,7 +13,7 @@ const PricingHero = () => {
   return (
     <section 
       ref={sectionRef}
-      className="relative min-h-[60vh] md:h-[70vh] flex items-center overflow-hidden bg-black pt-32 sm:pt-40 lg:pt-48 pb-12 md:pb-0"
+      className="relative min-h-[40vh] md:h-[50vh] flex items-center overflow-hidden bg-black pt-24 sm:pt-32 lg:pt-36 pb-12 md:pb-0"
     >
       {/* Dual Image Background Layout - Simplified for mobile */}
       <div className="absolute inset-0 -z-10 flex flex-col md:flex-row">
@@ -51,24 +52,33 @@ const PricingHero = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="text-lime-500 font-black text-xs md:text-base uppercase tracking-[0.3em] mb-4 md:mb-6 flex items-center gap-4">
+            <div className="text-lime-500 font-black text-xs md:text-sm uppercase tracking-[0.3em] mb-4 md:mb-6 flex items-center gap-4">
               <span className="w-8 md:w-12 h-[2px] bg-lime-500"></span>
               Flexible Options for You
             </div>
             
-            <h1 className="text-3xl sm:text-6xl md:text-8xl lg:text-[10rem] font-black text-white uppercase italic tracking-tighter leading-[0.85] mb-6 md:mb-12 drop-shadow-2xl">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white uppercase italic tracking-tighter leading-[0.85] mb-6 md:mb-10 drop-shadow-2xl">
               PRICING & <br />
               <span className="text-lime-500">PACKAGES</span>
             </h1>
 
-            <div className="flex flex-col md:flex-row md:items-end gap-4 md:gap-10">
-              <nav className="flex items-center gap-3 text-[10px] md:text-sm font-bold uppercase tracking-widest bg-lime-500 text-black px-3 py-1.5 md:px-8 md:py-4 self-start shadow-2xl">
-                <Link href="/explore" className="hover:opacity-70 transition-opacity">Home</Link>
-                <span className="opacity-30">/</span>
-                <span>Pricing</span>
-              </nav>
+            <div className="flex flex-col md:flex-row md:items-end gap-4 md:gap-8">
+              <div className="flex flex-col gap-4">
+                <nav className="flex items-center gap-3 text-[10px] md:text-xs font-bold uppercase tracking-widest bg-lime-500 text-black px-3 py-1.5 md:px-6 md:py-3 self-start shadow-2xl">
+                  <Link href="/explore" className="hover:opacity-70 transition-opacity">Home</Link>
+                  <span className="opacity-30">/</span>
+                  <span>Pricing</span>
+                </nav>
+                <Link 
+                  href="/promos" 
+                  className="group flex items-center gap-3 text-[10px] md:text-xs font-black uppercase tracking-[0.2em] bg-black text-white px-3 py-2 md:px-6 md:py-3 self-start border border-white/10 hover:bg-lime-500 hover:text-black transition-all"
+                >
+                  <Zap className="w-3 h-3 md:w-4 md:h-4 text-lime-500 group-hover:text-black" />
+                  View Trial Promos
+                </Link>
+              </div>
               
-              <p className="max-w-md text-white font-bold text-xs md:text-base leading-relaxed border-l-4 border-lime-500 pl-6 md:pl-8 uppercase tracking-wider">
+              <p className="max-w-md text-white font-bold text-xs md:text-sm leading-relaxed border-l-4 border-lime-500 pl-6 md:pl-8 uppercase tracking-wider">
                 Choose the perfect package that fits your schedule. Your pace. 
                 Your class. Your One Step Fitness journey.
               </p>

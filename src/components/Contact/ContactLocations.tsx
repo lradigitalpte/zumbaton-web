@@ -10,7 +10,7 @@ const locations = [
     address: "2 JALAN KLAPA, #2-A, SINGAPORE 199314",
     phone: "+65 8492 7347",
     email: "hello@onestepfitness.sg",
-    hours: "Mon - Sun: 9AM - 9PM",
+    hours: "Mon - Sun: 8AM - 9PM",
   }
 ];
 

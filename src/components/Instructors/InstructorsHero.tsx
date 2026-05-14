@@ -15,12 +15,12 @@ const InstructorsHero = () => {
       className="relative min-h-[60vh] md:h-[70vh] flex items-center overflow-hidden bg-black pt-32 sm:pt-40 lg:pt-48 pb-12 md:pb-0"
     >
       {/* High-Impact Single Image Background */}
-      <div className="absolute inset-0 -z-10">
-        <Image 
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <Image
           src="/images/hero/hero.jpeg"
           alt="One Step Fitness Instructors"
           fill
-          className="object-cover scale-105 transition-transform duration-[2000ms]"
+          className="scale-105 object-cover transition-transform duration-[2000ms]"
           priority
         />
         {/* Lighter, more sophisticated overlay - Darker at top for menu visibility */}

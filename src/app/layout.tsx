@@ -49,14 +49,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html suppressHydrationWarning lang="en">
+    <html suppressHydrationWarning lang="en" className="overflow-x-clip">
       <head>
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=20260501" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png?v=20260501" />
         <link rel="shortcut icon" href="/favicon.png?v=20260501" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20260501" />
       </head>
-      <body className="bg-[#FCFCFC] dark:bg-black font-sans">
+      <body className="overflow-x-clip bg-[#FCFCFC] font-sans dark:bg-black">
         {/* Google Tag Manager */}
         <Script
           id="gtm-script"

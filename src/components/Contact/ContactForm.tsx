@@ -80,7 +80,7 @@ const ContactForm = () => {
               {[
                 { icon: Phone, label: "Call Us", value: "+65 8492 7347", href: "tel:+6584927347" },
                 { icon: Mail, label: "Email Us", value: "hello@onestepfitness.sg", href: "mailto:hello@onestepfitness.sg" },
-                { icon: Clock, label: "Business Hours", value: "Mon - Sun: 9AM - 9PM" }
+                { icon: Clock, label: "Business Hours", value: "Mon - Sun: 8AM - 9PM" }
               ].map((info, idx) => (
                 <div key={idx} className="bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 p-6 flex items-center gap-6 group hover:border-lime-500 transition-colors duration-300">
                   <div className="w-12 h-12 bg-black dark:bg-zinc-800 flex items-center justify-center text-lime-500 group-hover:bg-lime-500 group-hover:text-black transition-colors duration-300">

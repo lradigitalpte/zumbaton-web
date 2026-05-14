@@ -158,7 +158,7 @@ function SigninPageContent() {
                       <label htmlFor="password" className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
                         Password
                       </label>
-                      <Link href="/forgot-password" size="sm" className="text-[10px] font-black uppercase tracking-widest text-lime-600 dark:text-lime-400 hover:text-black dark:hover:text-white transition-colors">
+                      <Link href="/forgot-password" className="text-[10px] font-black uppercase tracking-widest text-lime-600 dark:text-lime-400 hover:text-black dark:hover:text-white transition-colors">
                         Forgot?
                       </Link>
                     </div>

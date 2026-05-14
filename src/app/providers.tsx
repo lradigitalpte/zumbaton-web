@@ -5,7 +5,22 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
 import { ToastProvider } from "@/components/Toast";
 // import { MothersDayPromoBanner } from "@/components/Promo/MothersDayPromoBanner"; // Disabled after Mother's Day
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+// Suppress React 19 script tag warning from next-themes
+// This is a known issue: https://github.com/pacocoursey/next-themes/issues/385
+if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+  const consoleError = console.error;
+  console.error = (...args) => {
+    if (
+      typeof args[0] === "string" &&
+      args[0].includes("Encountered a script tag while rendering React component")
+    ) {
+      return;
+    }
+    consoleError.apply(console, args);
+  };
+}
 
 // Create a client with timeout protection
 export const QUERY_TIMEOUT = 10000 // 10 seconds max for any query

@@ -13,50 +13,56 @@ const trustBadges = [
 
 const TestimonialsV2 = () => {
   return (
-    <section className="py-16 md:py-28 bg-white dark:bg-zinc-950 overflow-hidden">
+    <section className="overflow-hidden bg-white py-16 dark:bg-zinc-950 md:py-28">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-start lg:gap-14">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="rounded-[28px] border border-gray-200 bg-[#fbfaf6] p-5 sm:p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 md:p-10"
+            transition={{ duration: 0.36, ease: "easeOut" }}
+            className="border border-black/10 bg-[#fbfaf6] p-5 dark:border-white/10 dark:bg-zinc-900 sm:p-8 md:p-10"
           >
-            <span className="mb-5 inline-flex rounded-full border border-gray-300 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-gray-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+            <span className="mb-5 inline-flex border border-black/10 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.3em] text-gray-800 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-200">
               Community Love
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white tracking-tight uppercase italic leading-[0.96]">
-              Real energy. <span className="text-lime-500 block mt-2">Real consistency.</span>
+            <h2 className="text-4xl font-black uppercase italic leading-[0.85] tracking-tight text-gray-900 dark:text-white sm:text-5xl md:text-6xl lg:leading-[0.85]">
+              Real energy. <span className="mt-2 block text-lime-500">Real consistency.</span>
             </h2>
-            <p className="mt-4 sm:mt-6 max-w-2xl text-base sm:text-lg md:text-xl leading-relaxed font-medium text-gray-600 dark:text-zinc-400">
-              Members stay because the classes are fun, the coaching feels human, and the environment helps people keep showing up.
+            <p className="mt-4 max-w-2xl text-base font-medium leading-relaxed text-gray-600 sm:mt-6 sm:text-lg md:text-xl dark:text-zinc-400">
+              Members stay because the classes are fun, the coaching feels human, and the environment helps people keep
+              showing up.
             </p>
-            <div className="mt-6 sm:mt-8 grid grid-cols-2 gap-3 sm:gap-4 sm:max-w-md">
-              <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3.5 dark:border-zinc-800 dark:bg-zinc-950 sm:px-5 sm:py-4">
-                <div className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Vibe</div>
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 sm:max-w-md sm:gap-4">
+              <div className="border border-black/10 bg-white px-4 py-3.5 dark:border-white/10 dark:bg-zinc-950 sm:px-5 sm:py-4">
+                <div className="text-sm font-black uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Vibe</div>
                 <div className="mt-1 text-2xl font-black">Welcoming</div>
               </div>
-              <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3.5 dark:border-zinc-800 dark:bg-zinc-950 sm:px-5 sm:py-4">
-                <div className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Focus</div>
+              <div className="border border-black/10 bg-white px-4 py-3.5 dark:border-white/10 dark:bg-zinc-950 sm:px-5 sm:py-4">
+                <div className="text-sm font-black uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+                  Focus
+                </div>
                 <div className="mt-1 text-2xl font-black">Progress</div>
               </div>
             </div>
           </motion.div>
 
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          {trustBadges.map((badge, i) => (
-            <motion.div
-              key={badge.label}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.08 }}
-              className="flex min-h-[88px] sm:min-h-[96px] items-center gap-3 rounded-[20px] sm:rounded-[24px] border border-gray-200 bg-[#fbfaf6] px-4 sm:px-6 py-4 sm:py-5 text-gray-800 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
-            >
-              <span className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full bg-lime-500 text-base sm:text-lg font-black text-black">{badge.icon}</span>
-              <span className="text-xs sm:text-sm md:text-base font-semibold leading-snug">{badge.label}</span>
-            </motion.div>
-          ))}
+            {trustBadges.map((badge, i) => (
+              <motion.div
+                key={badge.label}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.32, delay: i * 0.05, ease: "easeOut" }}
+                className="flex min-h-[88px] items-center gap-3 border border-black/10 bg-[#fbfaf6] px-4 py-4 text-gray-800 transition-colors duration-300 hover:border-lime-500/50 dark:border-white/10 dark:bg-zinc-900 dark:text-white sm:min-h-[96px] sm:px-6 sm:py-5"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-lime-500 text-base font-black text-black sm:h-11 sm:w-11 sm:text-lg">
+                  {badge.icon}
+                </span>
+                <span className="text-xs font-semibold leading-snug sm:text-sm md:text-base">{badge.label}</span>
+              </motion.div>
+            ))}
           </div>
         </div>
       </div>

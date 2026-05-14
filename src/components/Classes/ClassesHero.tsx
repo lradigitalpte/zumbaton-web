@@ -33,7 +33,7 @@ const ClassesHero = ({
   return (
     <section 
       ref={sectionRef}
-      className="relative min-h-[60vh] md:h-[70vh] flex items-center overflow-hidden bg-black pt-32 sm:pt-40 lg:pt-48 pb-12 md:pb-0"
+      className="relative min-h-[30vh] md:h-[40vh] flex items-center overflow-hidden bg-black pt-20 sm:pt-24 lg:pt-28 pb-10 md:pb-0"
     >
       {/* Dual Image Background Layout - Simplified for mobile */}
       <div className="absolute inset-0 -z-10 flex flex-col md:flex-row">
@@ -77,7 +77,7 @@ const ClassesHero = ({
               One Step Fitness
             </div>
             
-            <h1 className="text-3xl sm:text-6xl md:text-8xl lg:text-[10rem] font-black text-white uppercase italic tracking-tighter leading-[0.85] mb-6 md:mb-12 drop-shadow-2xl">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white uppercase italic tracking-tighter leading-[0.85] mb-4 md:mb-8 drop-shadow-2xl">
               {title === "Classes" ? (
                 <>
                   THE <br />
@@ -93,8 +93,8 @@ const ClassesHero = ({
               )}
             </h1>
 
-            <div className="flex flex-col md:flex-row md:items-end gap-4 md:gap-10">
-              <nav className="flex items-center gap-3 text-[10px] md:text-sm font-bold uppercase tracking-widest bg-lime-500 text-black px-3 py-1.5 md:px-8 md:py-4 self-start shadow-2xl">
+            <div className="flex flex-col md:flex-row md:items-end gap-4 md:gap-8">
+              <nav className="flex items-center gap-3 text-[10px] md:text-xs font-bold uppercase tracking-widest bg-lime-500 text-black px-3 py-1.5 md:px-6 md:py-3 self-start shadow-2xl">
                 {items.map((item, i) => (
                   <span key={i} className="flex items-center gap-3">
                     {i > 0 && <span className="opacity-30">/</span>}
@@ -109,7 +109,7 @@ const ClassesHero = ({
                 ))}
               </nav>
               
-              <p className="max-w-md text-white font-bold text-xs md:text-base leading-relaxed border-l-4 border-lime-500 pl-6 md:pl-8 uppercase tracking-wider">
+              <p className="max-w-md text-white font-bold text-xs md:text-sm leading-relaxed border-l-4 border-lime-500 pl-6 md:pl-8 uppercase tracking-wider">
                 {description}
               </p>
             </div>

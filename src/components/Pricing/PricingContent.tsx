@@ -40,8 +40,37 @@ const PricingContent = () => {
   };
 
   return (
-    <section ref={sectionRef} className="py-20 md:py-32 bg-[#f6f4ee] dark:bg-black overflow-hidden">
+    <section ref={sectionRef} className="py-16 md:py-24 bg-[#f6f4ee] dark:bg-black overflow-hidden">
       <div className="container px-4 sm:px-6 lg:px-8">
+        
+        {/* Promo Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+          transition={{ duration: 0.5 }}
+          className="mb-20 relative group"
+        >
+          <div className="absolute inset-0 bg-lime-500 -skew-y-1 transform origin-left transition-transform group-hover:skew-y-0"></div>
+          <div className="relative bg-black p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 border border-white/10">
+            <div className="text-center md:text-left">
+              <div className="inline-block bg-lime-500 text-black px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
+                Limited Time Offer
+              </div>
+              <h3 className="text-3xl md:text-5xl font-black text-white uppercase italic tracking-tighter leading-none mb-4">
+                1-FOR-1 <span className="text-lime-500">TRIAL SPECIALS</span>
+              </h3>
+              <p className="text-white/70 font-bold uppercase tracking-widest text-xs md:text-sm">
+                Bring a friend. Pay for one. No hidden referral fees.
+              </p>
+            </div>
+            <Link 
+              href="/promos" 
+              className="px-10 py-5 bg-lime-500 text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-white transition-all shadow-xl whitespace-nowrap"
+            >
+              View Promos
+            </Link>
+          </div>
+        </motion.div>
         
         {/* Adults Packages Section */}
         <div className="mb-32">
@@ -49,16 +78,16 @@ const PricingContent = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
             transition={{ duration: 0.4 }}
-            className="mb-16 md:mb-24"
+            className="mb-12 md:mb-16"
           >
-            <div className="text-lime-600 dark:text-lime-400 font-black text-xs md:text-sm uppercase tracking-[0.3em] mb-6">
+            <div className="text-lime-600 dark:text-lime-400 font-black text-xs md:text-sm uppercase tracking-[0.3em] mb-4">
               Adults Packages
             </div>
-            <h2 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter leading-[0.85] mb-8">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter leading-[0.85] mb-6">
               PACKAGES FOR <br />
               <span className="text-lime-500">EVERYONE</span>
             </h2>
-            <p className="max-w-2xl text-gray-600 dark:text-zinc-400 text-lg md:text-xl font-medium uppercase tracking-tight">
+            <p className="max-w-xl text-gray-600 dark:text-zinc-400 text-base md:text-lg font-medium uppercase tracking-tight">
               Find a dance fitness class that feels like your own. Beginner-friendly, feel-good classes for all.
             </p>
           </motion.div>
@@ -151,21 +180,21 @@ const PricingContent = () => {
 
         {/* Kids Packages Section */}
         {kidsPackages.length > 0 && (
-          <div className="mb-32">
+          <div className="mb-24">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
               transition={{ duration: 0.4 }}
-              className="mb-16 md:mb-24"
+              className="mb-12 md:mb-16"
             >
-              <div className="text-lime-600 dark:text-lime-400 font-black text-xs md:text-sm uppercase tracking-[0.3em] mb-6">
+              <div className="text-lime-600 dark:text-lime-400 font-black text-xs md:text-sm uppercase tracking-[0.3em] mb-4">
                 Kids Packages
               </div>
-              <h2 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter leading-[0.85] mb-8">
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter leading-[0.85] mb-6">
                 PACKAGES FOR <br />
                 <span className="text-lime-500">KIDS</span>
               </h2>
-              <p className="max-w-2xl text-gray-600 dark:text-zinc-400 text-lg md:text-xl font-medium uppercase tracking-tight">
+              <p className="max-w-xl text-gray-600 dark:text-zinc-400 text-base md:text-lg font-medium uppercase tracking-tight">
                 Must be accompanied by a parent/guardian. Ages 5-12 years.
               </p>
             </motion.div>
