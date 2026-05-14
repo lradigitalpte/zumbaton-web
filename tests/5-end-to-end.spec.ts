@@ -210,7 +210,7 @@ test.describe('End-to-End User Journey', () => {
     }
   });
 
-  test('authentication flow: signout -> protected route redirect -> signin -> dashboard', async ({ page }) => {
+  test('authentication flow: signout -> protected route redirect -> signin -> dashboard', async ({ page, baseURL }) => {
     const testEmail = process.env.TEST_USER_EMAIL || 'test@example.com';
     const testPassword = process.env.TEST_USER_PASSWORD || 'TestPassword123!';
     
@@ -231,7 +231,9 @@ test.describe('End-to-End User Journey', () => {
         
         // Should redirect to signin or homepage
         const url = page.url();
-        expect(url.includes('/signin') || url.includes('/signup') || url === page.context().baseURL || url === page.context().baseURL + '/').toBeTruthy();
+        const base = (baseURL ?? '').replace(/\/$/, '');
+        const atRoot = base !== '' && (url === base || url === `${base}/`);
+        expect(url.includes('/signin') || url.includes('/signup') || atRoot).toBeTruthy();
       } else {
         // Manual signout via clearing cookies
         await page.context().clearCookies();

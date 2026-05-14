@@ -44,7 +44,7 @@ const ScheduleCTA = () => {
               onClick={openWhatsAppModal}
               className="inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-bold text-green-600 bg-white hover:bg-gray-100 transition-all duration-300 rounded-lg shadow-lg hover:shadow-xl group"
             >
-              <span>Join Now</span>
+              <span>Try Now!</span>
               <svg 
                 className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300" 
                 fill="none" 

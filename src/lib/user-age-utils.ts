@@ -5,6 +5,30 @@
  */
 
 /**
+ * Build an ISO date string (YYYY-MM-DD) that yields the given whole-years age
+ * when evaluated with {@link calculateAge} as of today. Used when forms only collect age.
+ */
+export function dateOfBirthFromAge(ageYears: number): string {
+  if (!Number.isFinite(ageYears)) return ''
+  const n = Math.floor(ageYears)
+  if (n < 0 || n > 120) return ''
+  const d = new Date()
+  d.setFullYear(d.getFullYear() - n)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+/** Whole years 1–120 from a form field; invalid input returns null. */
+export function parseAgeYearsInput(value: string): number | null {
+  if (value == null || String(value).trim() === '') return null
+  const n = parseInt(String(value).trim(), 10)
+  if (!Number.isFinite(n) || n < 1 || n > 120) return null
+  return n
+}
+
+/**
  * Calculate user age from date of birth
  * Returns age in years, or null if date_of_birth is not available
  */

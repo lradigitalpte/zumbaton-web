@@ -13,7 +13,7 @@ const testimonials = [
   },
   {
     id: 2,
-    quote: "Dance first, fitness follows — that's exactly what I needed. The community here is transforming my life one dance step at a time.",
+    quote: "Dance first, fitness follows. That's exactly what I needed. The community here is transforming my life one dance step at a time.",
     author: "Michael H.",
     location: "Toronto",
   },
@@ -25,7 +25,7 @@ const testimonials = [
   },
   {
     id: 4,
-    quote: "One beat, one step, one happy me! This is not about perfection — it's about moving, dancing, and feeling alive.",
+    quote: "One beat, one step, one happy me! This is not about perfection; it's about moving, dancing, and feeling alive.",
     author: "Tom S.",
     location: "Los Angeles",
   },
@@ -37,7 +37,7 @@ const testimonials = [
   },
   {
     id: 6,
-    quote: "Fitness is a happy side effect! I dance happy and get fit naturally. Not fitness pressure — fitness pleasure.",
+    quote: "Fitness is a happy side effect! I dance happy and get fit naturally. Not fitness pressure, fitness pleasure.",
     author: "David M.",
     location: "Singapore",
   },

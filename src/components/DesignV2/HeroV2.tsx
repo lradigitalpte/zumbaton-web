@@ -58,7 +58,7 @@ const HeroV2 = () => {
           >
             <Image
               src={active.image}
-              alt={`${active.title} ${active.highlight} — One Step Fitness hero`}
+              alt={`${active.title} ${active.highlight}, One Step Fitness hero`}
               fill
               sizes="100vw"
               className="object-cover"

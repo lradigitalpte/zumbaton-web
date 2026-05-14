@@ -34,7 +34,7 @@ export function isThunderboltClassSlug(slug: string): boolean {
 
 export const CLASS_ENERGY: Record<string, number> = {
   "groove-stepper": 1.5,
-  zumbaton: 2.5,
+  "zumba-step": 2.5,
   "lil-steppers": 1,
   "thunderbolt-bodyweight-steppers": 4,
   "thunderbolt-resistance-dance": 4,
@@ -87,8 +87,8 @@ export const zumbaClasses: ZumbaClass[] = [
   },
   {
     id: "2",
-    slug: "zumbaton",
-    name: "Zumbaton",
+    slug: "zumba-step",
+    name: "Zumba Step",
     shortDescription: "High-energy step cardio that hits like a party. Pure energy, maximum movement.",
     fullDescription: "A high-energy step aerobics workout elevated for added intensity and calorie burn. This class blends fun, easy-to-follow dance choreography with step movements, delivering a full-body workout that feels more like a party than exercise.",
     image: "/images/hero/hero2.jpeg",

@@ -105,15 +105,17 @@ export async function signOutUser(page: Page) {
 
 /**
  * Wait for toast notification
+ * @param message Substring match (case-insensitive) or full RegExp for toast text
  */
-export async function waitForToast(page: Page, message?: string, timeout: number = 5000) {
+export async function waitForToast(page: Page, message?: string | RegExp, timeout: number = 5000) {
   // Wait for toast to appear - filter out devtools indicator and route announcer
   const toastSelector = 'div[role="alert"]:not(#devtools-indicator):not(#__next-route-announcer__)';
   
-  if (message) {
+  if (message !== undefined && message !== '') {
     // Wait for toast with specific message
     await page.waitForSelector(toastSelector, { timeout });
-    const toast = page.locator(toastSelector).filter({ hasText: new RegExp(message, 'i') });
+    const pattern = typeof message === 'string' ? new RegExp(message, 'i') : message;
+    const toast = page.locator(toastSelector).filter({ hasText: pattern });
     await expect(toast.first()).toBeVisible({ timeout });
   } else {
     // Just wait for any toast

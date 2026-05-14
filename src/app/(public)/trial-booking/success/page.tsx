@@ -146,6 +146,30 @@ function TrialBookingSuccessContent() {
                 Booking Details
               </h2>
               <div className="space-y-3">
+                {bookingData.isDuoTrial ? (
+                  <>
+                    <div>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        Participants:
+                      </span>
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        1. {bookingData.participant1?.name}
+                      </p>
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        2. {bookingData.participant2?.name}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Guest:
+                    </span>
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {bookingData.guestName}
+                    </p>
+                  </div>
+                )}
                 <div>
                   <span className="text-sm text-gray-600 dark:text-gray-400">
                     Class:

@@ -131,7 +131,7 @@ const ClassesGrid = () => {
                     </h3>
                     <p className="mt-5 max-w-3xl text-sm font-medium uppercase leading-relaxed tracking-tight text-gray-600 dark:text-zinc-400 md:text-base md:normal-case md:tracking-normal">
                       {highlightCoachInText(
-                        "High-intensity Tabata-style rounds in two coached formats—power and stamina on the step with Coach Robert, or resistance bands and dance-led cardio with Coach Fizah. Choose the session that fits how you like to train."
+                        "High-intensity Tabata-style rounds in two coached formats: power and stamina on the step with Coach Robert, or resistance bands and dance-led cardio with Coach Fizah. Choose the session that fits how you like to train."
                       )}
                     </p>
                   </div>

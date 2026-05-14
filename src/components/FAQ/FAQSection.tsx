@@ -17,7 +17,7 @@ const faqCategories = [
       },
       {
         q: "Do I need dance experience to join?",
-        a: "Not at all! One Step Fitness classes are designed for everyone — beginners to experienced dancers. Just follow along and move at your own pace."
+        a: "Not at all! One Step Fitness classes are designed for everyone, from beginners to experienced dancers. Just follow along and move at your own pace."
       },
       {
         q: "What kind of music is used in ZT classes?",
@@ -49,11 +49,11 @@ const faqCategories = [
     questions: [
       {
         q: "How do I sign up for classes?",
-        a: "Click “Join Now” in the navigation or on our homepage, pricing, or schedule pages to get started via WhatsApp. You can also browse class schedules and booking info on our website."
+        a: "Click “Try Now!” in the navigation or on our homepage, pricing, or schedule pages to get started via WhatsApp. You can also browse class schedules and booking info on our website."
       },
       {
         q: "Are there packages available?",
-        a: "Yes. We offer single-class passes and multi-class token packages. Check our Pricing page or Instagram for details. Use “Join Now” to get started via WhatsApp."
+        a: "Yes. We offer single-class passes and multi-class token packages. Check our Pricing page or Instagram for details. Use “Try Now!” to get started via WhatsApp."
       },
       {
         q: "Can I cancel or reschedule a class?",

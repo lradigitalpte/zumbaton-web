@@ -9,7 +9,7 @@ import ScrollUp from "@/components/Common/ScrollUp";
 
 export const metadata: Metadata = {
   title: "One Step Fitness - Dance Happy, Get Fit Naturally",
-  description: "Fun into fitness with One Step Fitness! Not hardcore training — just joyful movement with good energy. Join our community transforming lives one dance step at a time.",
+  description: "Fun into fitness with One Step Fitness! Not hardcore training, just joyful movement with good energy. Join our community transforming lives one dance step at a time.",
 };
 
 export default function HomePage() {

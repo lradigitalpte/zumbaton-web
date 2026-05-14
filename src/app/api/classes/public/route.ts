@@ -12,7 +12,11 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const dateFilter = searchParams.get('date')
-    
+    const fromParam = searchParams.get('from')
+    const toParam = searchParams.get('to')
+
+    const ymd = /^\d{4}-\d{2}-\d{2}$/
+
     const supabase = getSupabaseAdminClient()
 
     // Build query
@@ -37,18 +41,34 @@ export async function GET(request: NextRequest) {
         status,
         rooms (
           id,
-          name
+          name,
+          room_type
         )
       `)
       .eq('status', 'scheduled')
 
-    // Apply date filter if provided
-    if (dateFilter) {
+    // Inclusive calendar range (from/to) takes priority over single day
+    if (fromParam && toParam && ymd.test(fromParam) && ymd.test(toParam)) {
+      let rangeStart = new Date(fromParam)
+      rangeStart.setHours(0, 0, 0, 0)
+      let rangeEnd = new Date(toParam)
+      rangeEnd.setHours(23, 59, 59, 999)
+      if (rangeStart.getTime() > rangeEnd.getTime()) {
+        const t = rangeStart
+        rangeStart = rangeEnd
+        rangeEnd = t
+        rangeStart.setHours(0, 0, 0, 0)
+        rangeEnd.setHours(23, 59, 59, 999)
+      }
+      query = query
+        .gte('scheduled_at', rangeStart.toISOString())
+        .lte('scheduled_at', rangeEnd.toISOString())
+    } else if (dateFilter && ymd.test(dateFilter)) {
       const startOfDay = new Date(dateFilter)
       startOfDay.setHours(0, 0, 0, 0)
       const endOfDay = new Date(dateFilter)
       endOfDay.setHours(23, 59, 59, 999)
-      
+
       query = query
         .gte('scheduled_at', startOfDay.toISOString())
         .lte('scheduled_at', endOfDay.toISOString())
@@ -91,6 +111,7 @@ export async function GET(request: NextRequest) {
       ...cls,
       booked_count: bookingCounts[cls.id] || 0,
       room_name: (cls.rooms as any)?.name || null,
+      room_type: (cls.rooms as any)?.room_type || 'studio',
     }))
 
     return NextResponse.json({

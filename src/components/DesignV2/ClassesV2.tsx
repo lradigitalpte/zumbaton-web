@@ -14,10 +14,10 @@ const classes = [
     slug: "groove-stepper",
   },
   {
-    title: "Zumbaton",
+    title: "Zumba Step",
     description: "High-energy step cardio that hits like a party. Pure energy.",
     accent: "bg-lime-400",
-    slug: "zumbaton",
+    slug: "zumba-step",
   },
   {
     title: "Thunderbolt · Bodyweight",
@@ -50,7 +50,7 @@ const ClassesV2 = () => {
                 The Lineup
               </span>
               <h2 className="mb-4 text-4xl font-black uppercase italic leading-[0.85] tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl">
-                Zumbaton <span className="text-lime-500">& Studio.</span>
+                Zumba Step <span className="text-lime-500">& Studio.</span>
               </h2>
               <p className="text-base font-medium leading-relaxed text-zinc-600 sm:text-lg md:text-2xl dark:text-zinc-400">
                 High-energy step, party energy, and structured conditioning. No fluff, just the best 1-hour sessions in town.

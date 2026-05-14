@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
+import { placeholderGuestEmailFromPhone } from "@/lib/guest-email-placeholder";
 
 export const dynamic = "force-dynamic";
 
@@ -32,11 +33,14 @@ const ZumFamiliaSchema = z.object({
   customSchedule: z.string().optional(),
   packageOption: z.enum(["1c1a", "1c2a", "2c1a", "2c2a", "test"]),
   parentName: z.string().min(1).max(200),
-  parentEmail: z.string().email(),
+  parentEmail: z.string().max(200).optional(),
   parentPhone: z.string().min(1).max(50),
   childName: z.string().min(1).max(200),
   childDateOfBirth: z.string().min(1),
   notes: z.string().max(1000).optional(),
+  nricLast4: z.string().length(4, "NRIC last 4 characters required"),
+  signature: z.string().min(1, "Signature is required"),
+  waiverAgreed: z.literal(true, { errorMap: () => ({ message: "Waiver must be accepted" }) }),
 });
 
 const PRICE_MAP = {
@@ -60,6 +64,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const body = parsed.data;
+    const parentEmailRaw = (body.parentEmail || "").trim();
+    const parentEmail =
+      parentEmailRaw.includes("@") && !parentEmailRaw.includes(" ")
+        ? parentEmailRaw.toLowerCase()
+        : placeholderGuestEmailFromPhone(body.parentPhone);
     const pricing = PRICE_MAP[body.packageOption];
 
     let classTitle = "Custom Schedule: " + (body.customSchedule || "TBD");
@@ -111,14 +120,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .insert({
         class_id: actualClassId,
         guest_name: body.childName,
-        guest_email: body.parentEmail.toLowerCase(),
+        guest_email: parentEmail,
         guest_phone: body.parentPhone,
         guest_date_of_birth: body.childDateOfBirth,
         status: "draft",
         is_trial_booking: true,
         tokens_used: 0,
         booked_at: new Date().toISOString(),
-        cancellation_reason: body.notes || (body.customSchedule ? `Requested Schedule: ${body.customSchedule}` : null),
+        cancellation_reason: [
+          body.notes || (body.customSchedule ? `Requested Schedule: ${body.customSchedule}` : null),
+          `Parent: ${body.parentName} | NRIC: ${body.nricLast4} | Sign: ${body.signature}`,
+        ]
+          .filter(Boolean)
+          .join(" | "),
       })
       .select()
       .single();
@@ -142,13 +156,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           package_option: body.packageOption,
           package_label: pricing.label,
           parent_name: body.parentName,
-          parent_email: body.parentEmail.toLowerCase(),
+          parent_email: parentEmail,
           parent_phone: body.parentPhone,
           child_name: body.childName,
           child_date_of_birth: body.childDateOfBirth,
           custom_schedule: body.customSchedule || null,
           notes: body.notes || "",
           class_title: classTitle,
+          nric_last_4: body.nricLast4,
+          signature: body.signature,
+          waiver_agreed: body.waiverAgreed,
         },
       })
       .select()
@@ -174,7 +191,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const hitpayPayload: Record<string, unknown> = {
       amount: (pricing.priceCents / 100).toFixed(2),
       currency: "SGD",
-      email: body.parentEmail.toLowerCase(),
+      email: parentEmail,
       name: body.parentName,
       purpose: `ZumFamilia: ${pricing.label}`,
       reference_number: referenceNumber,
@@ -213,7 +230,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           amount: paymentRecord.amount_cents / 100,
           currency: paymentRecord.currency,
           guestName: body.childName,
-          guestEmail: body.parentEmail.toLowerCase(),
+          guestEmail: parentEmail,
           className: classTitle,
           failureReason: (hitpayData?.message || hitpayData?.error || "HitPay request failed") as string,
         });
@@ -243,7 +260,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         amount: paymentRecord.amount_cents / 100,
         currency: paymentRecord.currency,
         guestName: body.childName,
-        guestEmail: body.parentEmail.toLowerCase(),
+        guestEmail: parentEmail,
         className: classTitle,
       });
     }).catch((alertErr: unknown) => {

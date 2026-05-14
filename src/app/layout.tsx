@@ -55,6 +55,7 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png?v=20260501" />
         <link rel="shortcut icon" href="/favicon.png?v=20260501" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20260501" />
+        <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body className="overflow-x-clip bg-[#FCFCFC] font-sans dark:bg-black">
         {/* Google Tag Manager */}

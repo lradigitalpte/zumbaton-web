@@ -77,20 +77,30 @@ export async function GET(request: NextRequest) {
             })
             .eq('id', payment.id)
 
-          // Find and confirm draft booking (by payment_id or metadata.draft_booking_id)
+          // Find and confirm draft bookings (by payment_id or metadata.draft_booking_id)
           const metadata = (payment.metadata as Record<string, unknown>) || {}
-          let draftId = metadata.draft_booking_id as string | undefined
-          if (!draftId) {
-            const { data: byPayment } = await supabaseAdmin
-              .from('bookings')
-              .select('id')
-              .eq('payment_id', payment.id)
-              .eq('status', 'draft')
-              .eq('is_trial_booking', true)
-              .maybeSingle()
-            draftId = byPayment?.id
+          let draftIds: string[] = []
+          if (metadata.draft_booking_id) {
+            draftIds = [metadata.draft_booking_id as string]
           }
-          if (draftId) {
+          if (metadata.draft_booking_ids && Array.isArray(metadata.draft_booking_ids)) {
+            draftIds = Array.from(new Set([...draftIds, ...metadata.draft_booking_ids]))
+          }
+          
+          // Also look for any other draft bookings linked to this payment
+          const { data: byPayment } = await supabaseAdmin
+            .from('bookings')
+            .select('id')
+            .eq('payment_id', payment.id)
+            .eq('status', 'draft')
+            .eq('is_trial_booking', true)
+          
+          if (byPayment && byPayment.length > 0) {
+            const foundIds = byPayment.map(b => b.id)
+            draftIds = Array.from(new Set([...draftIds, ...foundIds]))
+          }
+
+          if (draftIds.length > 0) {
             await supabaseAdmin
               .from('bookings')
               .update({
@@ -98,7 +108,7 @@ export async function GET(request: NextRequest) {
                 payment_id: payment.id,
                 booked_at: new Date().toISOString(),
               })
-              .eq('id', draftId)
+              .in('id', draftIds)
           }
 
           // Re-fetch payment so response has updated status
@@ -134,12 +144,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Get booking details (may have been updated by sync above)
-    const { data: booking } = await supabaseAdmin
+    const { data: bookings } = await supabaseAdmin
       .from('bookings')
       .select('*')
       .eq('payment_id', paymentId)
-      .single()
 
+    const booking = bookings && bookings.length > 0 ? bookings[0] : null
     const classData = payment.classes as any
 
     return NextResponse.json({
@@ -167,6 +177,9 @@ export async function GET(request: NextRequest) {
         instructorName: classData?.instructor_name || null,
         guestName: booking?.guest_name || payment.metadata?.guest_name || '',
         guestEmail: booking?.guest_email || payment.metadata?.guest_email || '',
+        isDuoTrial: payment.metadata?.flow_type === 'duo_trial',
+        participant1: payment.metadata?.participant1,
+        participant2: payment.metadata?.participant2,
         amount: payment.amount_cents / 100,
         currency: payment.currency,
         status: payment.status,

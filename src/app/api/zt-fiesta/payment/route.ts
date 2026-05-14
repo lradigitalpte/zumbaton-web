@@ -38,6 +38,9 @@ const FiestaPaymentSchema = z.object({
   preferredDate: z.string().min(1),
   preferredTime: z.string().min(1),
   notes: z.string().max(1000).optional(),
+  nricLast4: z.string().length(4, "NRIC last 4 characters required"),
+  signature: z.string().min(1, "Signature is required"),
+  waiverAgreed: z.literal(true, { errorMap: () => ({ message: "Waiver must be accepted" }) }),
 });
 
 const PACKAGE_MAP = {
@@ -113,6 +116,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           `DOB: ${body.dateOfBirth}`,
           `Gender: ${body.gender}`,
           `Preferred: ${body.preferredDate} ${body.preferredTime}`,
+          `NRIC: ${body.nricLast4}`,
+          `Signature: ${body.signature}`,
           body.notes?.trim() ? `Notes: ${body.notes.trim()}` : null,
         ]
           .filter(Boolean)
@@ -148,6 +153,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           guest_gender: body.gender,
           preferred_date: body.preferredDate,
           preferred_time: body.preferredTime,
+          nric_last_4: body.nricLast4,
+          signature: body.signature,
+          waiver_agreed: true,
           notes: body.notes || "",
           class_title: "ZumFiesta",
         },

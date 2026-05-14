@@ -12,6 +12,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
+import { placeholderGuestEmailFromPhone } from '@/lib/guest-email-placeholder'
+import { getTrialBookingEffectiveAgeGroup } from '@/lib/trial-booking-display'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,8 +38,9 @@ const supabaseAdmin = createClient(
 const TrialBookingPaymentSchema = z.object({
   classId: z.string().uuid('Invalid class ID'),
   guestName: z.string().min(1, 'Name is required').max(200),
-  guestEmail: z.string().email('Invalid email address'), // Always required (from guest or guardian)
-  guestPhone: z.string().min(1, 'Phone number is required').max(50), // Always required (from guest or guardian)
+  /** Optional; if omitted or invalid, a phone-based placeholder is used for HitPay/DB */
+  guestEmail: z.string().max(200).optional(),
+  guestPhone: z.string().min(1, 'Phone number is required').max(50),
   dateOfBirth: z.string().min(1, 'Date of birth is required').refine(
     (date) => {
       const dob = new Date(date)
@@ -45,11 +48,15 @@ const TrialBookingPaymentSchema = z.object({
     },
     { message: 'Invalid date of birth' }
   ),
+  gender: z.enum(['male', 'female', 'other', 'prefer_not_to_say']),
+  nricLast4: z.string().length(4, 'NRIC last 4 characters required'),
+  signature: z.string().min(1, 'Signature is required'),
   // Guardian fields (required for kids classes)
   guardianName: z.string().min(1, 'Guardian name is required').max(200).optional(),
-  guardianEmail: z.string().email('Invalid guardian email address').optional(),
+  guardianEmail: z.string().max(200).optional(),
   guardianPhone: z.string().min(1, 'Guardian phone number is required').max(50).optional(),
   guardianOnPremises: z.boolean().optional(),
+  guardianSignature: z.string().min(1, 'Guardian signature is required').optional(),
 })
 
 /**
@@ -77,7 +84,34 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    const { classId, guestName, guestEmail, guestPhone, dateOfBirth, guardianName, guardianEmail, guardianPhone, guardianOnPremises } = validationResult.data
+    const d = validationResult.data
+    const guestEmailRaw = (d.guestEmail || '').trim()
+    const guestEmail =
+      guestEmailRaw.includes('@') && !guestEmailRaw.includes(' ')
+        ? guestEmailRaw.toLowerCase()
+        : placeholderGuestEmailFromPhone(d.guestPhone)
+
+    const guardianEmailRaw = (d.guardianEmail || '').trim()
+    const guardianEmailResolved =
+      guardianEmailRaw.includes('@') && !guardianEmailRaw.includes(' ')
+        ? guardianEmailRaw.toLowerCase()
+        : d.guardianPhone
+          ? placeholderGuestEmailFromPhone(d.guardianPhone)
+          : ''
+
+    const {
+      classId,
+      guestName,
+      guestPhone,
+      dateOfBirth,
+      gender,
+      nricLast4,
+      signature,
+      guardianName,
+      guardianPhone,
+      guardianOnPremises,
+      guardianSignature,
+    } = d
 
     // 1. Get class details and validate availability
     const { data: classData, error: classError } = await supabaseAdmin
@@ -97,11 +131,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Validate age restrictions
     const { getUserType, isClassTypeCompatible } = await import('@/lib/user-age-utils')
     const userType = getUserType(dateOfBirth)
-    const classAgeGroup = classData.age_group || 'all'
+    const rawAgeGroup = classData.age_group || 'all'
+    const effectiveAgeGroup = getTrialBookingEffectiveAgeGroup(classData.title, classData.age_group)
 
-    if (!isClassTypeCompatible(classAgeGroup, userType)) {
+    if (!isClassTypeCompatible(rawAgeGroup, userType)) {
       const userTypeLabel = userType === 'adult' ? 'adults' : 'children'
-      const classTypeLabel = classAgeGroup === 'adult' ? 'adult' : classAgeGroup === 'kid' ? 'kids' : 'all'
+      const classTypeLabel = rawAgeGroup === 'adult' ? 'adult' : rawAgeGroup === 'kid' ? 'kids' : 'all'
       
       return NextResponse.json(
         { 
@@ -112,13 +147,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    // Validate guardian information for kids classes
-    if (classAgeGroup === 'kid') {
-      if (!guardianName || !guardianEmail || !guardianPhone) {
+    // Validate guardian information for kids sessions (includes One Familia + Lil Steppers)
+    if (effectiveAgeGroup === 'kid') {
+      if (!guardianName || !guardianPhone) {
         return NextResponse.json(
           { 
             error: 'Guardian Information Required', 
-            message: 'Guardian/parent information is required for kids classes' 
+            message: 'Guardian/parent name and phone are required for kids classes' 
           },
           { status: 400 }
         )
@@ -136,9 +171,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Calculate price: use trial_price_cents from DB if set, otherwise fallback based on age group
     // Kids: $18 (1800 cents), Adults: $23 (2300 cents). Treat kids DB value 1700 as legacy -> use 1800.
-    const DEFAULT_TRIAL_CENTS = classAgeGroup === 'kid' ? 1800 : 2300
+    const DEFAULT_TRIAL_CENTS = effectiveAgeGroup === 'kid' ? 1800 : 2300
     const fromDb = classData.trial_price_cents && classData.trial_price_cents > 0 ? classData.trial_price_cents : null
-    const amountCents = classAgeGroup === 'kid' && fromDb === 1700
+    const amountCents = effectiveAgeGroup === 'kid' && fromDb === 1700
       ? 1800
       : (fromDb ?? DEFAULT_TRIAL_CENTS)
 
@@ -192,12 +227,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       status: 'draft', // Draft status for incomplete bookings
       tokens_used: 0,
       booked_at: new Date().toISOString(),
+      // Store waiver details and gender in cancellation_reason for easy admin visibility
+      cancellation_reason: `NRIC: ${nricLast4} | Sign: ${signature} | Gender: ${gender}${guardianSignature ? ` | Guardian Sign: ${guardianSignature}` : ''}`,
     }
 
-    // Add guardian information for kids classes
-    if (classAgeGroup === 'kid' && guardianName && guardianEmail && guardianPhone) {
+    // Add guardian information for kids sessions
+    if (effectiveAgeGroup === 'kid' && guardianName && guardianPhone) {
       bookingData.guardian_name = guardianName
-      bookingData.guardian_email = guardianEmail
+      bookingData.guardian_email = guardianEmailResolved || placeholderGuestEmailFromPhone(guardianPhone)
       bookingData.guardian_phone = guardianPhone
       bookingData.guardian_on_premises = guardianOnPremises === true
     }
@@ -241,6 +278,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           guest_email: guestEmail,
           guest_phone: guestPhone,
           guest_date_of_birth: dateOfBirth,
+          gender: gender,
+          nric_last_4: nricLast4,
+          signature: signature,
+          guardian_name: guardianName,
+          guardian_signature: guardianSignature,
           class_title: classData.title,
           class_scheduled_at: classData.scheduled_at,
           draft_booking_id: draftBooking.id, // Link to draft booking

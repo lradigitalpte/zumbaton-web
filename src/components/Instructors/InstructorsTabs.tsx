@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
 
 interface Instructor {
   id: string;
@@ -11,6 +12,7 @@ interface Instructor {
   bio: string;
   image?: string;
   specialties: string[];
+  certifications?: string[];
 }
 
 const instructors: Instructor[] = [
@@ -26,15 +28,16 @@ const instructors: Instructor[] = [
     id: "2",
     name: "Robert",
     role: "Certified Dance Fitness Instructor",
-    bio: "Robert is a 30-year-old certified dance fitness instructor, registered both in Singapore and internationally. He has been part of the dance fitness community for over a year and has had the opportunity to teach in the Philippines.\n\nNow continuing his journey in Singapore, Robert invites you to join him at One Step Fitness. Don't be fooled by his size or appearance—dance fitness is his forte and a true passion. To him, dance fitness is more than just a workout; it's about self-expression, embracing who you are, and moving freely without judgment—from others or even yourself.\n\nWhat Robert loves most about dance fitness is the sense of freedom, joy, and community it creates, and he is excited to share that experience with others. Join him at One Step Fitness, take that step forward, and move together.",
+    bio: "Robert is a 30-year-old certified dance fitness instructor, registered both in Singapore and internationally. He has been part of the dance fitness community for over a year and has had the opportunity to teach in the Philippines.\n\nNow continuing his journey in Singapore, Robert invites you to join him at One Step Fitness. Don't be fooled by his size or appearance. Dance fitness is his forte and a true passion. To him, dance fitness is more than just a workout; it's about self-expression, embracing who you are, and moving freely without judgment from others or even yourself.\n\nWhat Robert loves most about dance fitness is the sense of freedom, joy, and community it creates, and he is excited to share that experience with others. Join him at One Step Fitness, take that step forward, and move together.",
     image: "/images/robert.jfif",
     specialties: ["Certified Professional", "Self-Expression", "Community Building"],
+    certifications: ["/images/zumba.png"],
   },
   {
     id: "3",
     name: "Fizah",
     role: "Piloxing & Zumba Lift Instructor",
-    bio: "Fizah leads Piloxing—an athletic blend of Pilates, boxing, and dance for cardio, core strength, and stress relief—and Zumba Lift, where Latin-inspired dance cardio meets structured resistance using bands and light weights.\n\nShe also coaches our Thunderbolt resistance format (bands-focused, no steppers), alongside our step-and-bodyweight Thunderbolt sessions. Her sessions are clear, challenging, and built so you leave feeling stronger—whether you are new to resistance work or ready to level up.",
+    bio: "Fizah leads Piloxing, an athletic blend of Pilates, boxing, and dance for cardio, core strength, and stress relief, and Zumba Lift, where Latin-inspired dance cardio meets structured resistance using bands and light weights.\n\nShe also coaches our Thunderbolt resistance format (bands-focused, no steppers), alongside our step-and-bodyweight Thunderbolt sessions. Her sessions are clear, challenging, and built so you leave feeling stronger, whether you are new to resistance work or ready to level up.",
     specialties: ["Piloxing", "Zumba Lift", "Thunderbolt (Resistance)"],
   },
 ];
@@ -169,14 +172,35 @@ const InstructorsTabs = () => {
                 ))}
               </div>
 
+              {/* Certifications */}
+              {activeInstructor.certifications && activeInstructor.certifications.length > 0 && (
+                <div className="mt-10 space-y-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-lime-600 dark:text-lime-400">
+                    Certifications
+                  </p>
+                  <div className="flex flex-wrap gap-6">
+                    {activeInstructor.certifications.map((cert, idx) => (
+                      <div key={idx} className="relative w-32 h-32 border border-black/10 dark:border-white/10 bg-white dark:bg-zinc-900 p-2 shadow-xl">
+                        <Image
+                          src={cert}
+                          alt="Certification"
+                          fill
+                          className="object-contain p-2"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* CTA for this Instructor */}
               <div className="mt-12 max-w-full">
-                <button
-                  type="button"
-                  className="w-full max-w-full whitespace-normal bg-lime-500 px-4 py-4 text-center text-sm font-black uppercase tracking-[0.2em] text-black shadow-xl transition-all duration-300 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black sm:w-auto sm:px-10 sm:py-5 sm:text-base"
+                <Link
+                  href="/trial-booking"
+                  className="inline-flex w-full max-w-full items-center justify-center whitespace-normal bg-lime-500 px-4 py-4 text-center text-sm font-black uppercase tracking-[0.2em] text-black shadow-xl transition-all duration-300 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black sm:w-auto sm:px-10 sm:py-5 sm:text-base"
                 >
                   Book a Class with {activeInstructor.name.split(" ")[0]}
-                </button>
+                </Link>
               </div>
             </div>
           </motion.div>

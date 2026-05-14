@@ -10,7 +10,7 @@ const Footer = () => {
   const footerLinks = {
     classes: [
       { name: "Groove Stepper", href: "/classes/groove-stepper" },
-      { name: "Zumba Step", href: "/classes/zumbaton" },
+      { name: "Zumba Step", href: "/classes/zumba-step" },
       { name: "Lil Steppers", href: "/classes/lil-steppers" },
       { name: "Thunderbolt", href: "/classes#thunderbolt-series" },
       { name: "View Schedule", href: "/schedule" },

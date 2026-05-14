@@ -295,85 +295,73 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           return NextResponse.json({ received: true, error: 'Failed to update payment' })
         }
 
-        // Check if draft booking exists: metadata.draft_booking_id or booking linked by payment_id
-        let draftBookingId = metadata?.draft_booking_id
-        if (!draftBookingId) {
-          const { data: byPayment } = await supabase
-            .from('bookings')
-            .select('id')
-            .eq('payment_id', payment.id)
-            .eq('status', 'draft')
-            .eq('is_trial_booking', true)
-            .maybeSingle()
-          if (byPayment?.id) draftBookingId = byPayment.id
+        // Check if draft bookings exist: metadata.draft_booking_id or bookings linked by payment_id
+        let draftBookingIds: string[] = []
+        if (metadata?.draft_booking_id) {
+          draftBookingIds = [metadata.draft_booking_id]
+        }
+        
+        // Also look for any other draft bookings linked to this payment
+        const { data: byPayment } = await supabase
+          .from('bookings')
+          .select('id')
+          .eq('payment_id', payment.id)
+          .eq('status', 'draft')
+          .eq('is_trial_booking', true)
+        
+        if (byPayment && byPayment.length > 0) {
+          const foundIds = byPayment.map(b => b.id)
+          // Merge and remove duplicates
+          draftBookingIds = Array.from(new Set([...draftBookingIds, ...foundIds]))
         }
 
-        let booking
+        let firstBooking
         let bookingError
 
-        if (draftBookingId) {
-          const { data: updatedBooking, error: updateError } = await supabase
+        if (draftBookingIds.length > 0) {
+          const { data: updatedBookings, error: updateError } = await supabase
             .from('bookings')
             .update({
               status: 'confirmed',
               payment_id: payment.id,
               booked_at: new Date().toISOString(),
             })
-            .eq('id', draftBookingId)
+            .in('id', draftBookingIds)
             .select()
-            .single()
 
-          booking = updatedBooking
+          if (updatedBookings && updatedBookings.length > 0) {
+            firstBooking = updatedBookings[0]
+            console.log(`[Webhook] Updated ${updatedBookings.length} draft booking(s) to confirmed for payment:`, payment.id)
+          }
           bookingError = updateError
 
           if (bookingError) {
-            console.error('[Webhook] Failed to update draft booking:', bookingError)
-          } else {
-            console.log('[Webhook] Updated draft booking to confirmed:', booking.id)
+            console.error('[Webhook] Failed to update draft bookings:', bookingError)
           }
         }
 
-        // If no draft booking or update failed, check for existing confirmed booking
-        if (!booking) {
-          const { data: existingBooking } = await supabase
+        // If no draft bookings or update failed, check for existing confirmed bookings
+        if (!firstBooking) {
+          const { data: existingBookings } = await supabase
             .from('bookings')
-            .select('id, status')
+            .select('id, status, guest_name, guest_email')
             .eq('class_id', payment.class_id)
-            .eq('guest_email', guestEmail)
             .in('status', ['confirmed', 'attended', 'draft'])
+            // We can't easily filter by guest_email here if there are multiple, 
+            // but we can check if any are already confirmed for this payment
+            .eq('payment_id', payment.id)
 
-          if (existingBooking && existingBooking.length > 0) {
-            const existing = existingBooking[0]
-            if (existing.status === 'confirmed' || existing.status === 'attended') {
-              console.log('[Webhook] Booking already confirmed for trial:', payment.id)
-              return NextResponse.json({ received: true, message: 'Booking already confirmed' })
-            } else if (existing.status === 'draft') {
-              // Update draft to confirmed
-              const { data: updatedBooking, error: updateError } = await supabase
-                .from('bookings')
-                .update({
-                  status: 'confirmed',
-                  payment_id: payment.id,
-                  booked_at: new Date().toISOString(),
-                })
-                .eq('id', existing.id)
-                .select()
-                .single()
-
-              booking = updatedBooking
-              bookingError = updateError
-
-              if (bookingError) {
-                console.error('[Webhook] Failed to update draft booking:', bookingError)
-              } else {
-                console.log('[Webhook] Updated draft booking to confirmed:', booking.id)
-              }
+          if (existingBookings && existingBookings.length > 0) {
+            const confirmed = existingBookings.filter(b => b.status === 'confirmed' || b.status === 'attended')
+            if (confirmed.length > 0) {
+              firstBooking = confirmed[0]
+              console.log('[Webhook] Bookings already confirmed for trial:', payment.id)
+              return NextResponse.json({ received: true, message: 'Bookings already confirmed' })
             }
           }
         }
 
-        // If still no booking, create new one (backward compatibility)
-        if (!booking) {
+        if (!firstBooking) {
           const { data: newBooking, error: createError } = await supabase
             .from('bookings')
             .insert({
@@ -391,7 +379,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             .select()
             .single()
 
-          booking = newBooking
+          firstBooking = newBooking
           bookingError = createError
 
           if (bookingError) {
@@ -403,10 +391,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             })
           }
 
-          console.log('[Webhook] Created new trial booking:', booking.id)
+          console.log('[Webhook] Created new trial booking:', firstBooking.id)
         }
 
-        if (!booking) {
+        if (!firstBooking) {
           console.error('[Webhook] No booking found or created')
           return NextResponse.json({ 
             received: true, 
@@ -481,7 +469,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 instructorName: classData.instructor_name || undefined,
                 amount: payment.amount_cents / 100,
                 currency: payment.currency,
-                bookingId: booking.id,
+                bookingId: firstBooking.id,
               })
               console.log('[Webhook] Trial booking admin notification sent to:', adminEmails.length, 'admins')
             }
@@ -508,7 +496,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               status: 'sent',
               sent_at: new Date().toISOString(),
               data: {
-                booking_id: booking.id,
+                booking_id: firstBooking.id,
                 class_id: payment.class_id,
                 guest_name: guestName,
                 guest_email: guestEmail,
@@ -531,11 +519,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         console.log('[Webhook] Trial booking completed successfully:', payment.id)
 
         // Fire-and-forget: log a token transaction for reporting — never blocks or breaks booking
-        if (booking) {
+        if (firstBooking) {
           void Promise.resolve(
             supabase.from('token_transactions').insert({
               user_id: null,
-              booking_id: booking.id,
+              booking_id: firstBooking.id,
               transaction_type: 'trial-booking-purchase',
               tokens_change: 1,
               tokens_before: 0,
@@ -543,7 +531,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               description: `Trial class: ${classData.title} (${guestName})`,
             })
           ).then(() => {
-            console.log('[Webhook] Created trial token transaction for booking:', booking.id)
+            console.log('[Webhook] Created trial token transaction for booking:', firstBooking.id)
           }).catch((err: unknown) => {
             console.error('[Webhook] Non-critical: failed to create trial token transaction:', err)
           })

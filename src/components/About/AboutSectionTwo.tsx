@@ -38,7 +38,7 @@ const AboutSectionTwo = () => {
                 <FeatureItem 
                   number="02"
                   title="Sessions for All"
-                  desc="From Zumbaton to Thunderbolt, we have a session for every stage. Pure movement, no judgment."
+                  desc="From Zumba Step to Thunderbolt, we have a session for every stage. Pure movement, no judgment."
                 />
                 <FeatureItem 
                   number="03"

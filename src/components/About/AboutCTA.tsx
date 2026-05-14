@@ -41,7 +41,7 @@ const AboutCTA = () => {
               onClick={openWhatsAppModal}
               className="w-full md:w-auto inline-flex items-center justify-center gap-3 px-10 py-5 text-xl font-black text-white bg-black hover:bg-zinc-900 transition-all duration-300 rounded-none shadow-2xl uppercase tracking-widest group"
             >
-              <span>Join Now</span>
+              <span>Try Now!</span>
               <svg 
                 className="w-6 h-6 transform group-hover:translate-x-1 transition-transform duration-300" 
                 fill="none" 

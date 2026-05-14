@@ -150,7 +150,7 @@ const Header = () => {
                 href="/trial-booking"
                 className="bg-lime-500 px-3 py-2 text-center text-[11px] font-black uppercase leading-tight tracking-wide text-black shadow-xl transition-all hover:bg-white sm:px-4 sm:py-2.5 sm:text-xs lg:px-8 lg:py-4 lg:text-sm"
               >
-                Join Now
+                Try Now!
               </Link>
 
               <div className="hidden sm:block">
@@ -286,7 +286,7 @@ const Header = () => {
                   className="block bg-lime-500 py-4 text-center text-sm font-black uppercase tracking-[0.2em] text-black shadow-2xl transition-all hover:bg-white active:scale-[0.99] sm:py-5"
                   onClick={() => setNavbarOpen(false)}
                 >
-                  Join Now
+                  Try Now!
                 </Link>
                 <div className="flex justify-center">
                   <ThemeToggler showLabel />

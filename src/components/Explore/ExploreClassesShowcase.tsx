@@ -12,10 +12,10 @@ const DEFAULT_CARD_DURATION = "60 min";
 
 const STUDIO_VIBE: Record<string, string> = {
   "groove-stepper": "Structured step choreography with serious groove.",
-  zumbaton: "High-energy step cardio that hits like a party. Pure energy.",
+  "zumba-step": "High-energy step cardio that hits like a party. Pure energy.",
   "lil-steppers": "Games, friends, and confidence for young movers.",
-  "thunderbolt-bodyweight-steppers": "Tabata on the step—bodyweight power with Coach Robert.",
-  "thunderbolt-resistance-dance": "Bands + dance cardio Thunderbolt—full body, no steppers, Coach Fizah.",
+  "thunderbolt-bodyweight-steppers": "Tabata on the step: bodyweight power with Coach Robert.",
+  "thunderbolt-resistance-dance": "Bands + dance cardio Thunderbolt: full body, no steppers, Coach Fizah.",
   piloxing: "HIIT fusion of Pilates, boxing, and dance with Coach Fizah.",
 };
 
@@ -36,7 +36,7 @@ const OUTDOOR: OutdoorClass[] = [
     href: "/zt-fiesta",
     image: "/images/fiesta/Screen7.png",
     intensity: "All Levels",
-    vibe: "West-side outdoor sessions — fresh air, big energy.",
+    vibe: "West-side outdoor sessions: fresh air, big energy.",
     energy: 4,
   },
 ];

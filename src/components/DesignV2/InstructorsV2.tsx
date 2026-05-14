@@ -66,7 +66,7 @@ const InstructorsV2 = () => {
                     ) : (
                       <span
                         className="flex h-full w-full items-center justify-center bg-zinc-700 text-sm font-black uppercase tracking-tight text-white sm:text-base"
-                        aria-label={`${coach.name} — photo coming soon`}
+                        aria-label={`${coach.name}, photo coming soon`}
                       >
                         {coach.name.slice(0, 1)}
                       </span>

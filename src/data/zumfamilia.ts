@@ -114,3 +114,18 @@ export const zumFamiliaPackages: ZumFamiliaPackage[] = [
 
 export const getZumFamiliaPackage = (id: string): ZumFamiliaPackage | undefined =>
   zumFamiliaPackages.find((pkg) => pkg.id === id);
+
+/**
+ * True if a scheduled class row should appear on One Familia booking (matches schedule page naming).
+ * DB titles may use "One Familia + …" while older rows used "ZumFamilia".
+ */
+export function isOneFamiliaScheduledClass(title: string, classType: string): boolean {
+  const t = (title || "").toLowerCase();
+  const c = (classType || "").toLowerCase();
+  if (t.includes("zumfamilia") || c.includes("zumfamilia")) return true;
+  if (t.includes("one familia") || t.replace(/\s+/g, "").includes("onefamilia")) return true;
+  if (c.includes("one_familia") || c.includes("one-familia") || c.replace(/\s+/g, "").includes("onefamilia")) {
+    return true;
+  }
+  return false;
+}

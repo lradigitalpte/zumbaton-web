@@ -56,7 +56,7 @@ const ScheduleHero = () => {
               
               <p className="max-w-md text-white font-bold text-xs md:text-base leading-relaxed border-l-4 border-lime-500 pl-6 md:pl-8 uppercase tracking-wider">
                 Find your dance fitness class. We have step aerobics classes for 
-                everyone. Join now — this is the schedule.
+                everyone. Join now. This is the schedule.
               </p>
             </div>
           </motion.div>
