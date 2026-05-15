@@ -15,6 +15,14 @@ interface Instructor {
   certifications?: string[];
 }
 
+function instructorBookName(name: string): string {
+  const paren = name.match(/\(([^)]+)\)/);
+  if (paren) return paren[1];
+  const parts = name.split(" ");
+  if (parts[0].toLowerCase() === "coach" && parts[1]) return parts[1];
+  return parts[0];
+}
+
 const instructors: Instructor[] = [
   {
     id: "1",
@@ -22,7 +30,7 @@ const instructors: Instructor[] = [
     role: "Dance Fitness Instructor",
     bio: "Coach Lavs (Laavania) leads an active, wellness-driven lifestyle and believes fitness should be fun, empowering, and sustainable. With a performance background from Mediacorp Vasantham, her journey as a dance fitness instructor stems from her love for dance, music, and helping people move with confidence. She creates high-energy yet welcoming classes where participants can sweat, smile, and feel good in their bodies.",
     image: "/images/coach-lavs.jfif",
-    specialties: ["High Energy", "Dance Choreography", "Beginner Friendly"],
+    specialties: ["Groove Stepper", "Lil Steppers", "One Familia"],
   },
   {
     id: "2",
@@ -134,7 +142,7 @@ const InstructorsTabs = () => {
                 
                 {/* Floating Name Tag */}
                 <div className="absolute -bottom-6 -right-6 bg-lime-500 text-black px-10 py-6 font-black uppercase italic text-3xl md:text-5xl shadow-2xl z-20 hidden md:block">
-                  {activeInstructor.name.split(' ')[0]}
+                  {instructorBookName(activeInstructor.name)}
                 </div>
               </div>
             </div>
@@ -199,7 +207,7 @@ const InstructorsTabs = () => {
                   href="/trial-booking"
                   className="inline-flex w-full max-w-full items-center justify-center whitespace-normal bg-lime-500 px-4 py-4 text-center text-sm font-black uppercase tracking-[0.2em] text-black shadow-xl transition-all duration-300 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black sm:w-auto sm:px-10 sm:py-5 sm:text-base"
                 >
-                  Book a Class with {activeInstructor.name.split(" ")[0]}
+                  Book a Class with {instructorBookName(activeInstructor.name)}
                 </Link>
               </div>
             </div>
