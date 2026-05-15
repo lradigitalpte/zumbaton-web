@@ -74,7 +74,7 @@ const AboutSectionOne = () => {
                   High-energy sessions built for movement and pure joy.
                 </p>
                 <p className="text-base text-gray-600 dark:text-zinc-400 font-medium leading-relaxed">
-                  We don&apos;t do boring. Our approach is direct: smart movement, raw energy, and a community that keeps you moving forward. No distractions, just smart movement.
+                  We don&apos;t do boring. Our approach is direct: smart movement, raw energy, and a community that keeps you moving forward. No distractions, powerful, rhythm-driven sessions.
                 </p>
               </div>
 

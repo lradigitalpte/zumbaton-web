@@ -38,7 +38,7 @@ export const CLASS_ENERGY: Record<string, number> = {
   "lil-steppers": 1,
   "thunderbolt-bodyweight-steppers": 4,
   "thunderbolt-resistance-dance": 4,
-  piloxing: 4,
+  piloxing: 3,
   zumfiesta: 2.5,
   "one-familia": 1,
 };
@@ -278,7 +278,7 @@ export const zumbaClasses: ZumbaClass[] = [
     intensity: "All Levels",
     calories: "400-600",
     instructor: "Coach Fizah",
-    energy: 4,
+    energy: 3,
     highlights: [
       {
         title: "Pilates + Boxing + Dance",

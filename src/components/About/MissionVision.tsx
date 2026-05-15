@@ -50,7 +50,7 @@ const MissionVision = () => {
                 <h3 className="text-3xl md:text-4xl font-black text-white uppercase italic tracking-tight">Our Mission</h3>
               </div>
               <p className="text-white/60 text-lg md:text-xl font-medium leading-relaxed border-l border-lime-500/30 pl-8">
-                One Step Fitness exists to make fitness effective, inclusive, and empowering through structured aerobic routines. We provide a supportive environment where all fitness levels can move with confidence and achieve real results.
+                One Step Fitness exists to make fitness effective, inclusive, and empowering through structured step aerobics routines. We provide a supportive environment where all fitness levels can move with confidence and achieve real results.
               </p>
             </motion.div>
 

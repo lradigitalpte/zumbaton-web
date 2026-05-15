@@ -55,7 +55,7 @@ const FeaturesV2 = () => {
                 transition={{ duration: 0.36, delay: 0.08, ease: "easeOut" }}
                 className="mt-4 text-base font-medium leading-relaxed text-gray-600 sm:mt-6 sm:text-lg md:text-xl dark:text-zinc-400"
               >
-                We&apos;re building a movement where fitness meets happiness. No distractions, just smart movement and a community that has your back.
+                We&apos;re building a movement where fitness meets happiness. No distractions, powerful, rhythm-driven sessions and a community that has your back.
               </motion.p>
             </div>
 
