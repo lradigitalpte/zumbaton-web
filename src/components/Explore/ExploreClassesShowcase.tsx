@@ -1,13 +1,13 @@
 "use client";
 
-import { useRef, useCallback, useState, useEffect, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { zumbaClasses, type ZumbaClass, CLASS_ENERGY } from "@/data/classes";
 import { highlightCoachInText } from "@/lib/highlightCoachInText";
 import { LightningRating } from "@/components/Common/LightningRating";
+import { HorizontalScrollCarousel } from "@/components/Common/HorizontalScrollCarousel";
 
 const DEFAULT_CARD_DURATION = "60 min";
 
@@ -114,88 +114,6 @@ function ClassCard({
   );
 }
 
-const ARROW_BTN =
-  "absolute top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center border-2 border-gray-200 bg-white text-gray-900 shadow-lg transition-all hover:border-lime-500 hover:bg-lime-500 hover:text-black disabled:pointer-events-none disabled:opacity-30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:hover:text-black sm:h-11 sm:w-11";
-
-function ScrollableClassRow({
-  id,
-  children,
-}: {
-  id: string;
-  children: ReactNode;
-}) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const updateScrollState = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const { scrollLeft, scrollWidth, clientWidth } = el;
-    setCanScrollLeft(scrollLeft > 8);
-    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 8);
-  }, []);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    updateScrollState();
-    el.addEventListener("scroll", updateScrollState, { passive: true });
-    const ro = new ResizeObserver(updateScrollState);
-    ro.observe(el);
-    return () => {
-      el.removeEventListener("scroll", updateScrollState);
-      ro.disconnect();
-    };
-  }, [updateScrollState, children]);
-
-  const scroll = (direction: "left" | "right") => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const card = el.querySelector<HTMLElement>("[data-carousel-card]");
-    const amount = card ? card.offsetWidth + 16 : 296;
-    el.scrollBy({ left: direction === "left" ? -amount : amount, behavior: "smooth" });
-  };
-
-  const showArrows = canScrollLeft || canScrollRight;
-
-  return (
-    <div className="relative -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
-      {showArrows && (
-        <>
-          <button
-            type="button"
-            onClick={() => scroll("left")}
-            disabled={!canScrollLeft}
-            aria-controls={id}
-            aria-label="Scroll to previous classes"
-            className={`${ARROW_BTN} left-0 sm:left-1`}
-          >
-            <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
-          </button>
-          <button
-            type="button"
-            onClick={() => scroll("right")}
-            disabled={!canScrollRight}
-            aria-controls={id}
-            aria-label="Scroll to next classes"
-            className={`${ARROW_BTN} right-0 sm:right-1`}
-          >
-            <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
-          </button>
-        </>
-      )}
-      <div
-        id={id}
-        ref={scrollRef}
-        className={`flex gap-4 overflow-x-auto pb-8 scrollbar-hide snap-x snap-mandatory ${showArrows ? "px-11 sm:px-12" : ""}`}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
 export default function ExploreClassesShowcase() {
   const studio = zumbaClasses;
 
@@ -235,18 +153,17 @@ export default function ExploreClassesShowcase() {
           </Link>
         </motion.div>
 
-        <motion.div className="mb-4 flex items-center justify-between gap-4">
-          <h3 className="text-xl font-black uppercase italic tracking-tight text-gray-900 dark:text-white sm:text-2xl">
-            Studio Sessions
-          </h3>
-          <motion.div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-            <span>Use arrows to explore</span>
-            <ArrowRight className="h-3 w-3" />
-          </motion.div>
-        </motion.div>
-        <ScrollableClassRow id="studio-sessions-carousel">
+        <HorizontalScrollCarousel
+          id="studio-sessions-carousel"
+          hint="Scroll the lineup"
+          label={
+            <h3 className="text-xl font-black uppercase italic tracking-tight text-gray-900 dark:text-white sm:text-2xl">
+              Studio Sessions
+            </h3>
+          }
+        >
           {studio.map((c) => (
-            <motion.div
+            <div
               key={c.slug}
               data-carousel-card
               className="w-[240px] flex-shrink-0 snap-start sm:w-[280px]"
@@ -260,24 +177,22 @@ export default function ExploreClassesShowcase() {
                 energy={CLASS_ENERGY[c.slug] ?? 4}
                 durationLabel={c.duration}
               />
-            </motion.div>
+            </div>
           ))}
-        </ScrollableClassRow>
+        </HorizontalScrollCarousel>
 
-        <motion.div className="mt-14 mb-4 flex items-center justify-between gap-4">
-          <h3 className="text-xl font-black uppercase italic tracking-tight text-gray-900 dark:text-white sm:text-2xl">
-            Outdoor Energy
-          </h3>
-          {OUTDOOR.length > 1 && (
-            <motion.div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-              <span>Use arrows to explore</span>
-              <ArrowRight className="h-3 w-3" />
-            </motion.div>
-          )}
-        </motion.div>
-        <ScrollableClassRow id="outdoor-energy-carousel">
+        <HorizontalScrollCarousel
+          id="outdoor-energy-carousel"
+          hint="Scroll the lineup"
+          outerClassName="-mx-4 mt-14 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0"
+          label={
+            <h3 className="text-xl font-black uppercase italic tracking-tight text-gray-900 dark:text-white sm:text-2xl">
+              Outdoor Energy
+            </h3>
+          }
+        >
           {OUTDOOR.map((c) => (
-            <motion.div
+            <div
               key={c.slug}
               data-carousel-card
               className="w-[240px] flex-shrink-0 snap-start sm:w-[280px]"
@@ -290,9 +205,9 @@ export default function ExploreClassesShowcase() {
                 intensity={c.intensity}
                 energy={CLASS_ENERGY[c.slug] ?? c.energy}
               />
-            </motion.div>
+            </div>
           ))}
-        </ScrollableClassRow>
+        </HorizontalScrollCarousel>
       </motion.div>
     </section>
   );

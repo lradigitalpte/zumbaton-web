@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { LightningRating } from "@/components/Common/LightningRating";
+import { HorizontalScrollCarousel } from "@/components/Common/HorizontalScrollCarousel";
 import { CLASS_ENERGY } from "@/data/classes";
 
 const classes = [
@@ -80,10 +81,19 @@ const ClassesV2 = () => {
           </Link>
         </div>
 
-        <div className="relative -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
-          <div className="flex gap-6 overflow-x-auto pb-12 scrollbar-hide snap-x snap-mandatory">
+        <HorizontalScrollCarousel
+          id="home-classes-carousel"
+          gap={24}
+          hint="Browse all sessions"
+          trackClassName="flex gap-6 overflow-x-auto pb-12 scrollbar-hide snap-x snap-mandatory"
+          label={
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+              Featured sessions
+            </p>
+          }
+        >
             {classes.map((cls, index) => (
-              <div key={index} className="w-[300px] flex-shrink-0 snap-start sm:w-[360px] md:w-[400px]">
+              <div key={index} data-carousel-card className="w-[300px] flex-shrink-0 snap-start sm:w-[360px] md:w-[400px]">
                 <div className="group relative h-full border-2 border-black/10 bg-white transition-all duration-500 hover:-translate-y-2 hover:border-lime-500 hover:shadow-2xl dark:border-white/10 dark:bg-zinc-950 dark:hover:border-lime-500/60">
                   {/* Main Clickable Area */}
                   <Link href={`/classes/${cls.slug}`} className="absolute inset-0 z-0" aria-label={`View details for ${cls.title}`} />
@@ -126,8 +136,7 @@ const ClassesV2 = () => {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
+        </HorizontalScrollCarousel>
       </div>
     </section>
   );
