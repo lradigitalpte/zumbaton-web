@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
       ...cls,
       booked_count: bookingCounts[cls.id] || 0,
       room_name: (cls.rooms as any)?.name || null,
-      room_type: (cls.rooms as any)?.room_type || 'studio',
+      room_type: (cls.rooms as any)?.room_type ?? null,
     }))
 
     return NextResponse.json({

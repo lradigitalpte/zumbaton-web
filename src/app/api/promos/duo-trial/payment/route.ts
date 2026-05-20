@@ -33,8 +33,22 @@ const ParticipantSchema = z.object({
   phone: z.string().min(1, 'Phone number is required').max(50),
   dateOfBirth: z.string().min(1, 'Date of birth is required'),
   gender: z.enum(['male', 'female', 'other', 'prefer_not_to_say']),
-  nricLast4: z.string().length(4, 'NRIC last 4 characters required').optional(),
-  signature: z.string().min(1, 'Signature is required').optional(),
+  nricLast4: z.preprocess(
+    (value) => {
+      if (typeof value !== 'string') return value
+      const trimmed = value.trim().toUpperCase()
+      return trimmed === '' ? undefined : trimmed
+    },
+    z.string().length(4, 'NRIC last 4 characters required').optional()
+  ),
+  signature: z.preprocess(
+    (value) => {
+      if (typeof value !== 'string') return value
+      const trimmed = value.trim()
+      return trimmed === '' ? undefined : trimmed
+    },
+    z.string().min(1, 'Signature is required').optional()
+  ),
 })
 
 // Request schema
@@ -95,13 +109,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    // Validate class type matches promo
-    const roomType = (classData.rooms as any)?.room_type
+    // Validate class type matches promo (must match room_type on linked room — no fallback)
+    const roomType = (classData.rooms as { room_type?: string } | null)?.room_type ?? null
     if (promoId === 'indoor-duo' && roomType !== 'studio') {
-      return NextResponse.json({ error: 'Invalid Class', message: 'This class is not eligible for the Studio Duo Trial' }, { status: 400 })
+      return NextResponse.json({
+        error: 'Invalid Class',
+        message: 'This session is not eligible for the Studio Duo Trial. Please choose a studio class.',
+      }, { status: 400 })
     }
     if (promoId === 'outdoor-duo' && roomType !== 'outdoor') {
-      return NextResponse.json({ error: 'Invalid Class', message: 'This class is not eligible for the Outdoor Duo Trial' }, { status: 400 })
+      return NextResponse.json({
+        error: 'Invalid Class',
+        message: 'This session is not eligible for the Outdoor Duo Trial. Please choose an outdoor class.',
+      }, { status: 400 })
     }
 
     // Check capacity (need 2 spots)
@@ -218,7 +238,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!hitpayResponse.ok) {
       console.error('[Duo Trial] HitPay API error:', hitpayData)
       await supabaseAdmin.from('payments').update({ status: 'failed', failure_reason: 'HitPay API error' }).eq('id', paymentRecord.id)
-      return NextResponse.json({ error: 'Payment Error', message: 'Failed to create payment request' }, { status: 500 })
+      const hitpayWebhookError = hitpayData?.errors?.webhook?.[0] as string | undefined
+      const isLocalhostWebhook =
+        typeof hitpayWebhookError === 'string' && hitpayWebhookError.toLowerCase().includes('localhost')
+      return NextResponse.json({
+        error: 'Payment Error',
+        message: isLocalhostWebhook
+          ? 'Payments cannot use localhost. Set NEXT_PUBLIC_APP_URL to your public site URL (or ngrok) in .env.local — see HITPAY_LOCAL_TESTING.md.'
+          : hitpayData?.message || 'Failed to create payment request',
+      }, { status: 500 })
     }
 
     // Update payment record with HitPay details

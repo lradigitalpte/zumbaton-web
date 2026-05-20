@@ -26,6 +26,26 @@ interface Class {
   booked_count: number;
 }
 
+function getClassRoomType(c: Class): string | null {
+  const raw = c.room_type ?? (c as Class & { rooms?: { room_type?: string } }).rooms?.room_type;
+  return typeof raw === "string" && raw.length > 0 ? raw : null;
+}
+
+function isClassEligibleForPromo(c: Class, promoRoomType: string | undefined): boolean {
+  if (!promoRoomType) return false;
+  return getClassRoomType(c) === promoRoomType;
+}
+
+function promoEligibilityMessage(promoId: string): string {
+  if (promoId === "indoor-duo") {
+    return "This session is not eligible for the Studio Duo Trial. Please choose a studio class.";
+  }
+  if (promoId === "outdoor-duo") {
+    return "This session is not eligible for the Outdoor Duo Trial. Please choose an outdoor class.";
+  }
+  return "This session is not eligible for the selected promo.";
+}
+
 const PromosPage = () => {
   const { openWhatsAppModal } = useWhatsAppModal();
   const toast = useToast();
@@ -36,6 +56,7 @@ const PromosPage = () => {
   const [classes, setClasses] = useState<Class[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   
   const [formData, setFormData] = useState({
@@ -104,13 +125,40 @@ const PromosPage = () => {
 
   const handleBookClick = (promo: any) => {
     setSelectedPromo(promo);
+    setSubmitError(null);
+    setFormData((prev) => ({ ...prev, classId: "" }));
     setIsModalOpen(true);
   };
 
+  const filteredClasses = classes.filter((c) =>
+    isClassEligibleForPromo(c, selectedPromo?.roomType)
+  );
+
+  useEffect(() => {
+    if (!formData.classId || !selectedPromo) return;
+    const stillValid = filteredClasses.some((c) => c.id === formData.classId);
+    if (!stillValid) {
+      setFormData((prev) => ({ ...prev, classId: "" }));
+      setSubmitError(promoEligibilityMessage(selectedPromo.id));
+    }
+  }, [filteredClasses, formData.classId, selectedPromo]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
+
     if (!formData.classId) {
-      toast.error("Please select a class");
+      const msg = "Please select a class";
+      setSubmitError(msg);
+      toast.error(msg);
+      return;
+    }
+
+    const selectedClass = classes.find((c) => c.id === formData.classId);
+    if (!selectedClass || !isClassEligibleForPromo(selectedClass, selectedPromo?.roomType)) {
+      const msg = promoEligibilityMessage(selectedPromo?.id ?? "");
+      setSubmitError(msg);
+      toast.error(msg);
       return;
     }
     
@@ -135,9 +183,18 @@ const PromosPage = () => {
       return;
     }
 
+    const normalizedP1NricLast4 = formData.p1.nricLast4.trim().toUpperCase();
+    const normalizedP1Signature = formData.p1.signature.trim();
+    const normalizedP2NricLast4 = formData.p2.nricLast4.trim().toUpperCase();
+    const normalizedP2Signature = formData.p2.signature.trim();
+
     // Waiver validation
-    if (!formData.p1.waiverAgreed || !formData.p1.nricLast4 || !formData.p1.signature) {
+    if (!formData.p1.waiverAgreed || !normalizedP1NricLast4 || !normalizedP1Signature) {
       toast.error("You must agree to the waiver and provide NRIC/Signature");
+      return;
+    }
+    if (!/^[A-Z0-9]{4}$/.test(normalizedP1NricLast4)) {
+      toast.error("NRIC last 4 must be exactly 4 letters/numbers");
       return;
     }
 
@@ -154,37 +211,44 @@ const PromosPage = () => {
             phone: formData.p1.phone,
             dateOfBirth: dob1,
             gender: formData.p1.gender,
-            nricLast4: formData.p1.nricLast4,
-            signature: formData.p1.signature,
+            nricLast4: normalizedP1NricLast4,
+            signature: normalizedP1Signature,
           },
           participant2: {
             name: formData.p2.name,
             phone: formData.p2.phone,
             dateOfBirth: dob2,
             gender: formData.p2.gender,
-            nricLast4: formData.p2.nricLast4,
-            signature: formData.p2.signature,
+            ...(normalizedP2NricLast4 ? { nricLast4: normalizedP2NricLast4 } : {}),
+            ...(normalizedP2Signature ? { signature: normalizedP2Signature } : {}),
           },
         }),
       });
 
       const result = await response.json();
-      if (result.success && result.paymentUrl) {
+      if (response.ok && result.success && result.paymentUrl) {
         window.location.href = result.paymentUrl;
-      } else {
-        throw new Error(result.message || "Failed to initiate payment");
+        return;
       }
+
+      const msg =
+        result.message ||
+        (response.status === 400 && selectedPromo?.id
+          ? promoEligibilityMessage(selectedPromo.id)
+          : null) ||
+        result.error ||
+        "Failed to initiate payment";
+      setSubmitError(msg);
+      toast.error(msg);
     } catch (error) {
       console.error("Error:", error);
-      toast.error(error instanceof Error ? error.message : "Something went wrong");
+      const msg = error instanceof Error ? error.message : "Something went wrong";
+      setSubmitError(msg);
+      toast.error(msg);
+    } finally {
       setProcessing(false);
     }
   };
-
-  const filteredClasses = classes.filter(c => {
-    const roomType = (c as any).rooms?.room_type || (c as any).room_type;
-    return roomType === selectedPromo?.roomType;
-  });
 
   return (
     <main className="bg-[#f6f4ee] dark:bg-black min-h-screen text-gray-900 dark:text-white">
@@ -408,7 +472,11 @@ const PromosPage = () => {
                         type="date"
                         id="promoDate"
                         value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
+                        onChange={(e) => {
+                          setSelectedDate(e.target.value);
+                          setSubmitError(null);
+                          setFormData((prev) => ({ ...prev, classId: "" }));
+                        }}
                         min={new Date().toISOString().split('T')[0]}
                         className="w-full bg-white dark:bg-black border border-black/10 dark:border-white/10 px-6 py-3 text-sm font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors"
                       />
@@ -440,7 +508,11 @@ const PromosPage = () => {
                           return (
                             <div 
                               key={cls.id}
-                              onClick={() => !isFull && setFormData({ ...formData, classId: cls.id })}
+                              onClick={() => {
+                                if (isFull) return;
+                                setSubmitError(null);
+                                setFormData({ ...formData, classId: cls.id });
+                              }}
                               className={`p-6 border-2 cursor-pointer transition-all relative overflow-hidden ${
                                 isSelected 
                                   ? "border-lime-500 bg-white dark:bg-zinc-900 shadow-lg" 
@@ -648,6 +720,14 @@ const PromosPage = () => {
 
                   {/* Submit Button */}
                   <div className="pt-10 border-t border-black/10 dark:border-white/10 flex flex-col items-center">
+                    {submitError && (
+                      <div
+                        role="alert"
+                        className="w-full max-w-2xl mb-6 p-4 border-2 border-red-500/80 bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-200 text-sm font-bold uppercase tracking-wide text-left"
+                      >
+                        {submitError}
+                      </div>
+                    )}
                     <button
                       type="submit"
                       disabled={processing || !formData.classId}
