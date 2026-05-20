@@ -12,9 +12,18 @@ interface WaiverFormProps {
   wide?: boolean;
   /** Hide the built-in title (when the parent section already has a heading) */
   hideTitle?: boolean;
+  /** When true, NRIC last 4 is not required (signature + agreement still required) */
+  nricOptional?: boolean;
 }
 
-export default function WaiverForm({ participantName, onAgreementChange, isMinor = false, wide = false, hideTitle = false }: WaiverFormProps) {
+export default function WaiverForm({
+  participantName,
+  onAgreementChange,
+  isMinor = false,
+  wide = false,
+  hideTitle = false,
+  nricOptional = false,
+}: WaiverFormProps) {
   const [agreed, setAgreed] = useState(false);
   const [nricLast4, setNricLast4] = useState("");
   const [signature, setSignature] = useState("");
@@ -132,7 +141,7 @@ export default function WaiverForm({ participantName, onAgreementChange, isMinor
       >
         <div className={`min-w-0 space-y-2 ${wide ? "xl:col-span-3" : ""}`}>
           <label className="block text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-zinc-500 break-words">
-            Last 4 characters of NRIC *
+            Last 4 characters of NRIC{nricOptional ? " (optional)" : " *"}
           </label>
           <input
             type="text"

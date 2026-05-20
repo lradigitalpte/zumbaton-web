@@ -268,15 +268,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           return NextResponse.json({ received: true, error: 'Class not found' })
         }
 
-        // Extract guest info from metadata
-        const metadata = payment.metadata as any || {}
-        const guestName = metadata.guest_name || 'Guest'
-        const guestEmail = metadata.guest_email
-        const guestPhone = metadata.guest_phone || ''
-        const guestDateOfBirth = metadata.guest_date_of_birth || null
+        // Extract guest info from metadata (duo trial stores payer on participant1)
+        const metadata = payment.metadata as Record<string, unknown> || {}
+        const duoP1 = metadata.participant1 as { name?: string; email?: string; phone?: string } | undefined
+        const isDuoTrial = metadata.flow_type === 'duo_trial'
+        const duoP2 = metadata.participant2 as { name?: string } | undefined
 
-        if (!guestEmail) {
-          console.error('[Webhook] Guest email missing for trial booking:', payment.id)
+        let guestName = (metadata.guest_name as string) || duoP1?.name || 'Guest'
+        let guestEmail = (metadata.guest_email as string) || duoP1?.email || ''
+        const guestPhone = (metadata.guest_phone as string) || duoP1?.phone || ''
+        const guestDateOfBirth = (metadata.guest_date_of_birth as string) || null
+
+        if (isDuoTrial && duoP2?.name) {
+          guestName = `${guestName} & ${duoP2.name} (Duo Trial)`
+        }
+
+        if (!guestEmail || guestEmail.includes('@guest.onestepfitness.sg')) {
+          console.error('[Webhook] Real guest email missing for trial booking:', payment.id)
           return NextResponse.json({ received: true, error: 'Guest email missing' })
         }
 
@@ -295,10 +303,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           return NextResponse.json({ received: true, error: 'Failed to update payment' })
         }
 
-        // Check if draft bookings exist: metadata.draft_booking_id or bookings linked by payment_id
+        // Check if draft bookings exist: metadata.draft_booking_id(s) or bookings linked by payment_id
         let draftBookingIds: string[] = []
-        if (metadata?.draft_booking_id) {
+        if (typeof metadata.draft_booking_id === 'string') {
           draftBookingIds = [metadata.draft_booking_id]
+        }
+        if (Array.isArray(metadata.draft_booking_ids)) {
+          draftBookingIds = Array.from(
+            new Set([
+              ...draftBookingIds,
+              ...metadata.draft_booking_ids.filter((id): id is string => typeof id === 'string'),
+            ])
+          )
         }
         
         // Also look for any other draft bookings linked to this payment

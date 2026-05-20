@@ -62,7 +62,7 @@ const PromosPage = () => {
   const [formData, setFormData] = useState({
     classId: "",
     p1: { 
-      name: "", phone: "", age: "", gender: "prefer_not_to_say",
+      name: "", email: "", phone: "", age: "", gender: "prefer_not_to_say",
       waiverAgreed: false, nricLast4: "", signature: ""
     },
     p2: { 
@@ -163,9 +163,18 @@ const PromosPage = () => {
     }
     
     // Basic validation
-    if (!formData.p1.name || !formData.p1.phone ||
+    const payerEmail = formData.p1.email.trim().toLowerCase();
+    if (!formData.p1.name || !payerEmail || !formData.p1.phone ||
         !formData.p2.name || !formData.p2.phone) {
-      toast.error("Please fill in all participant details");
+      const msg = "Please fill in all participant details (including email for Participant 1)";
+      setSubmitError(msg);
+      toast.error(msg);
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payerEmail)) {
+      const msg = "Please enter a valid email for Participant 1 (payment receipts are sent here)";
+      setSubmitError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -188,13 +197,17 @@ const PromosPage = () => {
     const normalizedP2NricLast4 = formData.p2.nricLast4.trim().toUpperCase();
     const normalizedP2Signature = formData.p2.signature.trim();
 
-    // Waiver validation
-    if (!formData.p1.waiverAgreed || !normalizedP1NricLast4 || !normalizedP1Signature) {
-      toast.error("You must agree to the waiver and provide NRIC/Signature");
+    // Waiver validation (NRIC optional; signature + agreement required)
+    if (!formData.p1.waiverAgreed || !normalizedP1Signature) {
+      const msg = "You must agree to the waiver and provide your signature";
+      setSubmitError(msg);
+      toast.error(msg);
       return;
     }
-    if (!/^[A-Z0-9]{4}$/.test(normalizedP1NricLast4)) {
-      toast.error("NRIC last 4 must be exactly 4 letters/numbers");
+    if (normalizedP1NricLast4 && !/^[A-Z0-9]{4}$/.test(normalizedP1NricLast4)) {
+      const msg = "If provided, NRIC last 4 must be exactly 4 letters/numbers";
+      setSubmitError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -208,10 +221,11 @@ const PromosPage = () => {
           promoId: selectedPromo.id,
           participant1: {
             name: formData.p1.name,
+            email: payerEmail,
             phone: formData.p1.phone,
             dateOfBirth: dob1,
             gender: formData.p1.gender,
-            nricLast4: normalizedP1NricLast4,
+            ...(normalizedP1NricLast4 ? { nricLast4: normalizedP1NricLast4 } : {}),
             signature: normalizedP1Signature,
           },
           participant2: {
@@ -567,6 +581,21 @@ const PromosPage = () => {
                             placeholder="NAME"
                           />
                         </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Email *</label>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                            Payment receipt &amp; booking confirmation are sent here
+                          </p>
+                          <input
+                            type="email"
+                            required
+                            autoComplete="email"
+                            value={formData.p1.email}
+                            onChange={(e) => setFormData({ ...formData, p1: { ...formData.p1, email: e.target.value } })}
+                            className="w-full bg-white dark:bg-black border border-black/10 dark:border-white/10 px-6 py-3 text-sm font-bold tracking-widest focus:border-lime-500 outline-none transition-colors normal-case"
+                            placeholder="you@email.com"
+                          />
+                        </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Phone *</label>
@@ -702,6 +731,7 @@ const PromosPage = () => {
                       <WaiverForm
                         wide
                         hideTitle
+                        nricOptional
                         participantName={formData.p1.name}
                         onAgreementChange={(agreed, details) =>
                           setFormData({

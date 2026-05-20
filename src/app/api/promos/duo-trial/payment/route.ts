@@ -6,7 +6,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
-import { placeholderGuestEmailFromPhone } from '@/lib/guest-email-placeholder'
+import {
+  isPlaceholderGuestEmail,
+  placeholderGuestEmailFromPhone,
+  resolveGuestEmail,
+} from '@/lib/guest-email-placeholder'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +31,11 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 )
 
+const emailField = z.preprocess(
+  (value) => (typeof value === 'string' ? value.trim().toLowerCase() : value),
+  z.string().email('Enter a valid email address').max(200)
+)
+
 // Participant schema
 const ParticipantSchema = z.object({
   name: z.string().min(1, 'Name is required').max(200),
@@ -39,7 +48,7 @@ const ParticipantSchema = z.object({
       const trimmed = value.trim().toUpperCase()
       return trimmed === '' ? undefined : trimmed
     },
-    z.string().length(4, 'NRIC last 4 characters required').optional()
+    z.string().length(4, 'NRIC last 4 must be exactly 4 characters').optional()
   ),
   signature: z.preprocess(
     (value) => {
@@ -51,12 +60,23 @@ const ParticipantSchema = z.object({
   ),
 })
 
-// Request schema
+// Request schema — payer (participant 1) must supply a real email for receipts & confirmations
 const DuoTrialPaymentSchema = z.object({
   classId: z.string().uuid('Invalid class ID'),
   promoId: z.enum(['indoor-duo', 'outdoor-duo']),
-  participant1: ParticipantSchema,
-  participant2: ParticipantSchema,
+  participant1: ParticipantSchema.extend({
+    email: emailField,
+  }),
+  participant2: ParticipantSchema.extend({
+    email: z.preprocess(
+      (value) => {
+        if (typeof value !== 'string') return value
+        const trimmed = value.trim().toLowerCase()
+        return trimmed === '' ? undefined : trimmed
+      },
+      z.string().email('Enter a valid email address').max(200).optional()
+    ),
+  }),
 })
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -85,13 +105,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const samePhone =
       participant1.phone.trim().replace(/\s+/g, '') === participant2.phone.trim().replace(/\s+/g, '')
+    const payerEmail = participant1.email.trim().toLowerCase()
+    if (isPlaceholderGuestEmail(payerEmail)) {
+      return NextResponse.json(
+        { error: 'Validation Error', message: 'Participant 1 must use a real email address (not a placeholder).' },
+        { status: 400 }
+      )
+    }
+
     const participant1WithEmail = {
       ...participant1,
-      email: placeholderGuestEmailFromPhone(participant1.phone, samePhone ? 'p1' : undefined),
+      email: payerEmail,
     }
     const participant2WithEmail = {
       ...participant2,
-      email: placeholderGuestEmailFromPhone(participant2.phone, samePhone ? 'p2' : undefined),
+      email: resolveGuestEmail(participant2.email, participant2.phone, samePhone ? 'p2' : undefined),
     }
 
     // 1. Get class details and validate availability
@@ -189,6 +217,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         metadata: {
           flow_type: 'duo_trial',
           promo_id: promoId,
+          guest_name: participant1WithEmail.name,
+          guest_email: payerEmail,
+          guest_phone: participant1WithEmail.phone,
           participant1: participant1WithEmail,
           participant2: participant2WithEmail,
           draft_booking_ids: draftBookingIds,
@@ -223,7 +254,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       body: JSON.stringify({
         amount,
         currency,
-        email: participant1WithEmail.email.toLowerCase(),
+        email: payerEmail,
         name: participant1WithEmail.name,
         purpose: `Duo Trial (1-for-1): ${classData.title}`,
         reference_number: referenceNumber,

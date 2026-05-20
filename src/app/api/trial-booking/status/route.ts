@@ -176,7 +176,11 @@ export async function GET(request: NextRequest) {
         classLocation: classData?.location || 'TBA',
         instructorName: classData?.instructor_name || null,
         guestName: booking?.guest_name || payment.metadata?.guest_name || '',
-        guestEmail: booking?.guest_email || payment.metadata?.guest_email || '',
+        guestEmail:
+          booking?.guest_email ||
+          payment.metadata?.guest_email ||
+          (payment.metadata?.participant1 as { email?: string } | undefined)?.email ||
+          '',
         isDuoTrial: payment.metadata?.flow_type === 'duo_trial',
         participant1: payment.metadata?.participant1,
         participant2: payment.metadata?.participant2,

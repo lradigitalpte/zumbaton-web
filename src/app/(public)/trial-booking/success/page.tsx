@@ -137,6 +137,14 @@ function TrialBookingSuccessContent() {
             </h1>
             <p className="text-base md:text-lg text-gray-600 dark:text-gray-400">
               Your trial class has been successfully booked
+              {bookingData?.guestEmail && !String(bookingData.guestEmail).includes("@guest.onestepfitness.sg") && (
+                <>
+                  <br />
+                  <span className="text-sm mt-2 inline-block">
+                    Confirmation sent to {bookingData.guestEmail}
+                  </span>
+                </>
+              )}
             </p>
           </div>
 
