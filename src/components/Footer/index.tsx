@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Facebook, Instagram, Youtube, ArrowRight, MapPin, Phone, Mail, Clock } from "lucide-react";
+import { ArrowRight, MapPin, Phone, Mail, Clock } from "lucide-react";
+import { SOCIAL_LINKS } from "@/constants/social-links";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -28,12 +29,6 @@ const Footer = () => {
       { name: "Terms of Service", href: "/terms" },
     ],
   };
-
-  const socialLinks = [
-    { name: "Facebook", href: "https://www.facebook.com/zumbaton", icon: Facebook },
-    { name: "Instagram", href: "https://www.instagram.com/zumbatonsg", icon: Instagram },
-    { name: "YouTube", href: "https://youtube.com", icon: Youtube },
-  ];
 
   return (
     <footer className="relative overflow-x-clip border-t border-white/10 bg-black pt-20">
@@ -73,7 +68,7 @@ const Footer = () => {
             </p>
 
             <div className="flex gap-4">
-              {socialLinks.map((social) => (
+              {SOCIAL_LINKS.map((social) => (
                 <a
                   key={social.name}
                   href={social.href}

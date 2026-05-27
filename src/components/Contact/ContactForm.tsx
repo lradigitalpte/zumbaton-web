@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { Send, Phone, Mail, Clock, Facebook, Instagram, Youtube, ArrowRight } from "lucide-react";
+import { Send, Phone, Mail, Clock, ArrowRight } from "lucide-react";
+import { SOCIAL_LINKS } from "@/constants/social-links";
 import LoadingIcon from "@/components/Common/LoadingIcon";
 
 const ContactForm = () => {
@@ -106,15 +107,21 @@ const ContactForm = () => {
             <div className="flex items-center gap-6">
               <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Follow Us</span>
               <div className="flex gap-4">
-                {[Facebook, Instagram, Youtube].map((Icon, i) => (
-                  <a
-                    key={i}
-                    href="#"
-                    className="w-10 h-10 border border-black/10 dark:border-white/10 flex items-center justify-center text-gray-900 dark:text-white hover:bg-lime-500 hover:text-black hover:border-lime-500 transition-all duration-300"
-                  >
-                    <Icon className="w-5 h-5" />
-                  </a>
-                ))}
+                {SOCIAL_LINKS.map((social) => {
+                  const Icon = social.icon;
+                  return (
+                    <a
+                      key={social.name}
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={social.name}
+                      className="w-10 h-10 border border-black/10 dark:border-white/10 flex items-center justify-center text-gray-900 dark:text-white hover:bg-lime-500 hover:text-black hover:border-lime-500 transition-all duration-300"
+                    >
+                      <Icon className="w-5 h-5" />
+                    </a>
+                  );
+                })}
               </div>
             </div>
           </motion.div>
