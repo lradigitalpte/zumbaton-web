@@ -46,6 +46,7 @@ const instructors: Instructor[] = [
     name: "Fizah",
     role: "Piloxing & Zumba Lift Instructor",
     bio: "Fizah leads Piloxing, an athletic blend of Pilates, boxing, and dance for cardio, core strength, and stress relief, and Zumba Lift, where Latin-inspired dance cardio meets structured resistance using bands and light weights.\n\nShe also coaches our Thunderbolt resistance format (bands-focused, no steppers), alongside our step-and-bodyweight Thunderbolt sessions. Her sessions are clear, challenging, and built so you leave feeling stronger, whether you are new to resistance work or ready to level up.",
+    image: "/270cfec9-3815-422d-9a53-86de85420b99.jpeg",
     specialties: ["Piloxing", "Zumba Lift", "Thunderbolt (Resistance)"],
   },
 ];
