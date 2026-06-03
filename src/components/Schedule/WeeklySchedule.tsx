@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import { useRef, useState, useEffect, useMemo } from "react";
 import LoadingIcon from "@/components/Common/LoadingIcon";
 
@@ -13,13 +13,13 @@ interface Class {
   class_type: string;
   recurrence_type?: string;
   recurrence_pattern?: any;
+  is_outdoor?: boolean;
 }
 
 const WeeklySchedule = () => {
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
   const sectionRef = useRef(null);
-  const isInView = useInView(sectionRef, { once: true, amount: 0.1 });
 
   useEffect(() => {
     const fetchClasses = async () => {
@@ -100,14 +100,15 @@ const WeeklySchedule = () => {
   }
 
   return (
-    <section ref={sectionRef} className="py-16 md:py-32 bg-[#f6f4ee] dark:bg-black overflow-hidden">
+    <section ref={sectionRef} className="py-10 md:py-16 bg-[#f6f4ee] dark:bg-black overflow-hidden">
       <div className="container px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.5 }}
-          className="mb-12 md:mb-20"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.45 }}
+          className="mb-8 md:mb-12"
         >
           <div className="text-lime-600 dark:text-lime-400 font-black text-sm md:text-base uppercase tracking-[0.3em] mb-4 md:mb-6">
             Weekly Schedule
@@ -143,6 +144,10 @@ const WeeklySchedule = () => {
           <div className="flex items-center gap-3 md:gap-4">
             <div className="w-5 h-5 md:w-6 md:h-6 bg-black dark:bg-zinc-800 border border-white/10"></div>
             <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-900 dark:text-white">Special Events</span>
+          </div>
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="w-5 h-5 md:w-6 md:h-6 bg-green-500 border border-black/10"></div>
+            <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-900 dark:text-white">Outdoors</span>
           </div>
         </div>
       </div>
@@ -227,6 +232,11 @@ const ClassCard = ({
       {/* Class Name */}
       <div className="font-black text-gray-900 dark:text-white mb-2 md:mb-3 text-lg md:text-xl leading-tight uppercase italic tracking-tighter group-hover:text-lime-600 dark:group-hover:text-lime-400 transition-colors">
         {classItem.title}
+        {classItem.is_outdoor && (
+          <span className="ml-2 align-middle inline-block px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest bg-green-500 text-white rounded-sm not-italic">
+            Outdoors
+          </span>
+        )}
       </div>
       
       {/* Instructor */}

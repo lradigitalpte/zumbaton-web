@@ -674,7 +674,7 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
                 {/* Body: class name, badges, instructor, location */}
                 <div className="flex-1 p-4 flex flex-col min-h-0">
                   <h3 className="text-base font-bold text-dark dark:text-white line-clamp-2 mb-2">
-                    {classItem.name}
+                    {classItem.name}{classItem.is_outdoor ? " (outdoors)" : ""}
                   </h3>
                   <div className="flex items-center gap-1.5 flex-wrap mb-2">
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${spotsInfo.bg} ${spotsInfo.color}`}>
@@ -905,7 +905,7 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
               <div className="flex-1">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  {sessionsPanel.parentClass.name}
+                  {sessionsPanel.parentClass.name}{(sessionsPanel.parentClass as any).is_outdoor ? " (outdoors)" : ""}
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   {sessionsPanel.sessions.length} {sessionsPanel.sessions.length === 1 ? 'session' : 'sessions'}

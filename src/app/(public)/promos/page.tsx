@@ -22,6 +22,7 @@ interface Class {
   location: string | null;
   room_name: string | null;
   room_type?: string;
+  is_outdoor?: boolean;
   capacity: number;
   booked_count: number;
 }
@@ -33,6 +34,10 @@ function getClassRoomType(c: Class): string | null {
 
 function isClassEligibleForPromo(c: Class, promoRoomType: string | undefined): boolean {
   if (!promoRoomType) return false;
+  // Outdoor promo: use the is_outdoor flag on the class
+  if (promoRoomType === "outdoor") return c.is_outdoor === true;
+  // Studio/indoor promo: class must NOT be outdoor
+  if (promoRoomType === "studio") return !c.is_outdoor;
   return getClassRoomType(c) === promoRoomType;
 }
 
@@ -53,7 +58,7 @@ const PromosPage = () => {
 
   const [selectedPromo, setSelectedPromo] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [classes, setClasses] = useState<Class[]>([]);
+  const [allClasses, setAllClasses] = useState<Class[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -101,13 +106,31 @@ const PromosPage = () => {
     }
   ];
 
-  const fetchClasses = async (date: string) => {
+  // Convert UTC ISO string → YYYY-MM-DD in Singapore time
+  const toSGTDate = (iso: string) =>
+    new Date(iso).toLocaleDateString("en-CA", { timeZone: "Asia/Singapore" });
+
+  // Fetch 60-day window; auto-jump to nearest date with eligible classes
+  const fetchUpcomingClasses = async (promoRoomType?: string) => {
     setLoadingClasses(true);
     try {
-      const response = await fetch(`/api/classes/public?date=${date}`);
-      const result = await response.json();
+      const from = new Date().toISOString().split("T")[0];
+      const toDate = new Date();
+      toDate.setDate(toDate.getDate() + 60);
+      const to = toDate.toISOString().split("T")[0];
+      const res = await fetch(`/api/classes/public?from=${from}&to=${to}`);
+      const result = await res.json();
       if (result.success) {
-        setClasses(result.data);
+        const data: Class[] = result.data ?? [];
+        setAllClasses(data);
+        if (promoRoomType) {
+          const eligible = data
+            .filter((c) => isClassEligibleForPromo(c, promoRoomType))
+            .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
+          if (eligible.length > 0) {
+            setSelectedDate(toSGTDate(eligible[0].scheduled_at));
+          }
+        }
       }
     } catch (error) {
       console.error("Error fetching classes:", error);
@@ -118,10 +141,11 @@ const PromosPage = () => {
   };
 
   useEffect(() => {
-    if (isModalOpen) {
-      fetchClasses(selectedDate);
+    if (isModalOpen && selectedPromo) {
+      fetchUpcomingClasses(selectedPromo.roomType);
     }
-  }, [selectedDate, isModalOpen]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isModalOpen, selectedPromo?.id]);
 
   const handleBookClick = (promo: any) => {
     setSelectedPromo(promo);
@@ -130,9 +154,18 @@ const PromosPage = () => {
     setIsModalOpen(true);
   };
 
-  const filteredClasses = classes.filter((c) =>
-    isClassEligibleForPromo(c, selectedPromo?.roomType)
-  );
+  // Classes for the selected date that match this promo type
+  const filteredClasses = allClasses.filter((c) => {
+    if (!isClassEligibleForPromo(c, selectedPromo?.roomType)) return false;
+    return toSGTDate(c.scheduled_at) === selectedDate;
+  });
+
+  // Other dates (not selectedDate) that have eligible classes — for the UX hint
+  const otherEligibleDates = [...new Set(
+    allClasses
+      .filter((c) => isClassEligibleForPromo(c, selectedPromo?.roomType) && toSGTDate(c.scheduled_at) !== selectedDate)
+      .map((c) => toSGTDate(c.scheduled_at))
+  )];
 
   useEffect(() => {
     if (!formData.classId || !selectedPromo) return;
@@ -154,7 +187,7 @@ const PromosPage = () => {
       return;
     }
 
-    const selectedClass = classes.find((c) => c.id === formData.classId);
+    const selectedClass = allClasses.find((c) => c.id === formData.classId);
     if (!selectedClass || !isClassEligibleForPromo(selectedClass, selectedPromo?.roomType)) {
       const msg = promoEligibilityMessage(selectedPromo?.id ?? "");
       setSubmitError(msg);
@@ -479,7 +512,8 @@ const PromosPage = () => {
                       <h3 className="text-xl font-black uppercase italic tracking-tight">Choose a Date</h3>
                     </div>
                     <div className="max-w-xs">
-                      <label htmlFor="promoDate" className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2 block">
+                      <label htmlFor="promoDate" className="text-[10px] font-black uppercase tracking-widest text-red-600 dark:text-red-400 mb-2 block flex items-center gap-2">
+                        <Calendar className="w-3.5 h-3.5" />
                         Select Date
                       </label>
                       <input
@@ -492,8 +526,13 @@ const PromosPage = () => {
                           setFormData((prev) => ({ ...prev, classId: "" }));
                         }}
                         min={new Date().toISOString().split('T')[0]}
-                        className="w-full bg-white dark:bg-black border border-black/10 dark:border-white/10 px-6 py-3 text-sm font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors"
+                        className="w-full bg-white dark:bg-black border-2 border-red-500 px-6 py-3 text-sm font-black uppercase tracking-widest focus:border-red-600 outline-none transition-colors text-red-600 dark:text-red-400"
                       />
+                      {otherEligibleDates.length > 0 && (
+                        <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                          {otherEligibleDates.length} other date{otherEligibleDates.length !== 1 ? "s" : ""} available — change date to explore
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -508,10 +547,41 @@ const PromosPage = () => {
                       <div className="py-12 flex justify-center">
                         <LoadingIcon size="md" showLabel />
                       </div>
-                    ) : filteredClasses.length === 0 ? (
+                    ) : filteredClasses.length === 0 && otherEligibleDates.length === 0 ? (
+                      /* No eligible classes anywhere in the 60-day window */
                       <div className="p-10 border-2 border-dashed border-black/10 dark:border-white/10 text-center">
-                        <p className="text-zinc-500 font-bold uppercase tracking-widest text-sm mb-2">No {selectedPromo?.roomType} classes available on this date.</p>
-                        <p className="text-zinc-400 text-xs uppercase tracking-widest">Please try selecting another date above.</p>
+                        <Calendar className="w-8 h-8 text-zinc-300 dark:text-zinc-700 mx-auto mb-4" />
+                        <p className="text-zinc-700 dark:text-zinc-300 font-black uppercase tracking-widest text-sm mb-2">
+                          No {selectedPromo?.id === "outdoor-duo" ? "outdoor" : "studio"} sessions scheduled yet
+                        </p>
+                        <p className="text-zinc-400 text-xs uppercase tracking-widest max-w-xs mx-auto leading-relaxed">
+                          We&apos;re adding new classes soon. Check back or WhatsApp us to find out the next available session.
+                        </p>
+                      </div>
+                    ) : filteredClasses.length === 0 ? (
+                      /* Classes exist, but not on this specific date */
+                      <div className="p-10 border-2 border-dashed border-black/10 dark:border-white/10 text-center">
+                        <p className="text-zinc-700 dark:text-zinc-300 font-black uppercase tracking-widest text-sm mb-3">
+                          No sessions on this date
+                        </p>
+                        <p className="text-zinc-400 text-xs uppercase tracking-widest mb-6">
+                          Available dates:
+                        </p>
+                        <div className="flex flex-wrap justify-center gap-2">
+                          {otherEligibleDates.slice(0, 6).map((d) => (
+                            <button
+                              key={d}
+                              type="button"
+                              onClick={() => {
+                                setSelectedDate(d);
+                                setFormData((prev) => ({ ...prev, classId: "" }));
+                              }}
+                              className="px-4 py-2 bg-black text-lime-500 font-black uppercase tracking-widest text-[10px] hover:bg-lime-500 hover:text-black transition-all"
+                            >
+                              {new Date(d + "T00:00:00").toLocaleDateString("en-SG", { weekday: "short", day: "numeric", month: "short" })}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

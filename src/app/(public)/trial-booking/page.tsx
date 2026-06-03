@@ -34,6 +34,7 @@ interface Class {
   booked_count?: number;
   instructor_avatar?: string | null;
   age_group?: 'adult' | 'kid' | 'all' | null;
+  is_outdoor?: boolean;
 }
 
 interface InstructorProfile {
@@ -72,10 +73,11 @@ function getDefaultTrialPrice(ageGroup: 'adult' | 'kid' | 'all' | null | undefin
   return 2300;
 }
 
-function getTrialPriceCents(ageGroup: 'adult' | 'kid' | 'all' | null | undefined, trialPriceCents: number | null): number {
+function getTrialPriceCents(ageGroup: 'adult' | 'kid' | 'all' | null | undefined, trialPriceCents: number | null, isOutdoor?: boolean): number {
   const fromDb = trialPriceCents && trialPriceCents > 0 ? trialPriceCents : null;
   if (ageGroup === 'kid' && fromDb === 1700) return 1800;
   if (fromDb != null) return fromDb;
+  if (isOutdoor) return 2800;
   return getDefaultTrialPrice(ageGroup);
 }
 
@@ -86,8 +88,9 @@ export default function TrialBookingPage() {
   const [loading, setLoading] = useState(true);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [dateFilter, setDateFilter] = useState<string>(() => formatYmdLocal(new Date()));
+  const [dateFilterTo, setDateFilterTo] = useState<string>("");
   const [dateRangeMode, setDateRangeMode] = useState<"day" | "week">("day");
-  const [ageGroupFilter, setAgeGroupFilter] = useState<'all' | 'adult' | 'kid'>('all');
+  const [ageGroupFilter, setAgeGroupFilter] = useState<'all' | 'adult' | 'kid' | 'outdoor'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [instructorProfiles, setInstructorProfiles] = useState<Record<string, InstructorProfile>>({});
   const [formData, setFormData] = useState({
@@ -177,6 +180,10 @@ export default function TrialBookingPage() {
           const { from, to } = weekRangeFromAnchorYmd(anchorYmd);
           params.append("from", from);
           params.append("to", to);
+        } else if (dateFilterTo && dateFilterTo > anchorYmd) {
+          // Custom range: from dateFilter to dateFilterTo
+          params.append("from", anchorYmd);
+          params.append("to", dateFilterTo);
         } else {
           params.append("date", anchorYmd);
         }
@@ -197,9 +204,45 @@ export default function TrialBookingPage() {
     };
     fetchClasses();
     setCurrentPage(1);
-  }, [toast, dateFilter, dateRangeMode]);
+  }, [toast, dateFilter, dateFilterTo, dateRangeMode]);
+
+  // When the outdoor tab is selected, auto-jump to the nearest date with outdoor classes
+  useEffect(() => {
+    if (ageGroupFilter !== "outdoor") return;
+    const hasOutdoorToday = classes.some((c) => c.is_outdoor === true);
+    if (hasOutdoorToday) return;
+
+    const findNextOutdoor = async () => {
+      try {
+        const from = formatYmdLocal(new Date());
+        const toDate = new Date();
+        toDate.setDate(toDate.getDate() + 90);
+        const to = formatYmdLocal(toDate);
+        const res = await fetch(`/api/classes/public?from=${from}&to=${to}`);
+        const result = await res.json();
+        if (result.success && result.data) {
+          const outdoor = (result.data as any[])
+            .filter((c) => c.is_outdoor === true)
+            .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
+          if (outdoor.length > 0) {
+            const nearestDate = new Date(outdoor[0].scheduled_at).toLocaleDateString("en-CA", {
+              timeZone: "Asia/Singapore",
+            });
+            setDateFilter(nearestDate);
+          }
+        }
+      } catch (e) {
+        console.error("Error finding outdoor classes:", e);
+      }
+    };
+    findNextOutdoor();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ageGroupFilter]);
 
   const filteredClasses = classes.filter((cls) => {
+    if (ageGroupFilter === "outdoor") return cls.is_outdoor === true;
+    // Exclude outdoor classes from All / Adults / Kids tabs
+    if (cls.is_outdoor) return false;
     const g = getTrialBookingEffectiveAgeGroup(cls.title, cls.age_group);
     if (ageGroupFilter === "all") return true;
     if (ageGroupFilter === "kid") return g === "kid";
@@ -353,9 +396,11 @@ export default function TrialBookingPage() {
 
                 <div className="flex items-baseline gap-3 bg-white dark:bg-zinc-900 px-6 py-3 border-2 border-black dark:border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
                   <span className="text-2xl font-black text-lime-600 dark:text-lime-400">
-                    ${ageGroupFilter === 'kid' 
+                    ${ageGroupFilter === 'kid'
                       ? (getDefaultTrialPrice('kid') / 100).toFixed(2)
-                      : (getDefaultTrialPrice('adult') / 100).toFixed(2)}
+                      : ageGroupFilter === 'outdoor'
+                        ? (2800 / 100).toFixed(2)
+                        : (getDefaultTrialPrice('adult') / 100).toFixed(2)}
                   </span>
                   <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
                     PER TRIAL SESSION
@@ -367,23 +412,60 @@ export default function TrialBookingPage() {
                 <div className="flex flex-col sm:flex-row items-center gap-6 w-full lg:w-auto">
                   <div className="w-full sm:w-auto space-y-1">
                     <label htmlFor="dateFilter" className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block">
-                      {dateRangeMode === "week" ? "Week includes this date" : "Select date"}
+                      {dateRangeMode === "week" ? "Week includes this date" : dateFilterTo ? "From" : "Select date"}
                     </label>
-                    <input
-                      type="date"
-                      id="dateFilter"
-                      value={dateFilter}
-                      onChange={(e) => setDateFilter(e.target.value)}
-                      min={new Date().toISOString().split("T")[0]}
-                      className="w-full sm:w-48 bg-white dark:bg-black border-2 border-red-600 dark:border-red-500 px-4 py-2 text-xs font-bold uppercase tracking-widest focus:border-red-700 outline-none transition-colors rounded-none shadow-[3px_3px_0px_0px_rgba(220,38,38,1)]"
-                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="date"
+                        id="dateFilter"
+                        value={dateFilter}
+                        onChange={(e) => {
+                          setDateFilter(e.target.value);
+                          // If new from-date is after current to-date, clear to-date
+                          if (dateFilterTo && e.target.value >= dateFilterTo) setDateFilterTo("");
+                          setSelectedClass(null);
+                        }}
+                        min={new Date().toISOString().split("T")[0]}
+                        className="w-36 bg-white dark:bg-black border-2 border-red-600 dark:border-red-500 px-3 py-2 text-xs font-bold uppercase tracking-widest focus:border-red-700 outline-none transition-colors rounded-none"
+                      />
+                      <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">→</span>
+                      <div className="space-y-0.5">
+                        <label htmlFor="dateFilterTo" className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block">To (opt.)</label>
+                        <input
+                          type="date"
+                          id="dateFilterTo"
+                          value={dateFilterTo}
+                          onChange={(e) => { setDateFilterTo(e.target.value); setSelectedClass(null); }}
+                          min={dateFilter || new Date().toISOString().split("T")[0]}
+                          className="w-36 bg-white dark:bg-black border-2 border-gray-300 dark:border-gray-600 px-3 py-2 text-xs font-bold uppercase tracking-widest focus:border-red-600 outline-none transition-colors rounded-none"
+                        />
+                      </div>
+                      {dateFilterTo && (
+                        <button
+                          type="button"
+                          onClick={() => { setDateFilterTo(""); setSelectedClass(null); }}
+                          className="text-[10px] font-black text-zinc-400 hover:text-red-500 transition-colors uppercase tracking-widest"
+                          title="Clear end date"
+                        >✕</button>
+                      )}
+                    </div>
                     {dateRangeMode === "week" && weekRangeSummary && (
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 max-w-[16rem] leading-relaxed">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mt-1">
                         Kids: {weekRangeSummary.label}
                       </p>
                     )}
-                    {dateRangeMode === "day" && (
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 max-w-[16rem] leading-relaxed">
+                    {dateRangeMode === "day" && dateFilterTo && (
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mt-1">
+                        Showing classes {formatDate(`${dateFilter}T12:00:00`)} – {formatDate(`${dateFilterTo}T12:00:00`)}
+                      </p>
+                    )}
+                    {dateRangeMode === "day" && !dateFilterTo && ageGroupFilter === "outdoor" && (
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mt-1">
+                        Outdoor classes · one day at a time
+                      </p>
+                    )}
+                    {dateRangeMode === "day" && !dateFilterTo && ageGroupFilter !== "outdoor" && (
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mt-1">
                         Adults / All: one day at a time
                       </p>
                     )}
@@ -398,7 +480,7 @@ export default function TrialBookingPage() {
                       role="group"
                       aria-label="Class category"
                     >
-                      {(['all', 'adult', 'kid'] as const).map((tab) => (
+                      {(['all', 'adult', 'kid', 'outdoor'] as const).map((tab) => (
                         <button
                           key={tab}
                           type="button"
@@ -414,7 +496,7 @@ export default function TrialBookingPage() {
                               : "border-transparent bg-zinc-100 text-gray-600 hover:border-lime-500/50 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-lime-500/50"
                           }`}
                         >
-                          {tab === 'all' ? 'All' : tab === 'adult' ? 'Adults' : 'Kids'}
+                          {tab === 'all' ? 'All' : tab === 'adult' ? 'Adults' : tab === 'kid' ? 'Kids' : 'Outdoor'}
                         </button>
                       ))}
                     </div>
@@ -569,6 +651,7 @@ export default function TrialBookingPage() {
                             getTrialPriceCents(
                               getTrialBookingEffectiveAgeGroup(selectedClass.title, selectedClass.age_group),
                               selectedClass.trial_price_cents,
+                              selectedClass.is_outdoor,
                             ) / 100
                           ).toFixed(2)}
                         </span>
@@ -812,6 +895,7 @@ function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData
     getTrialPriceCents(
       getTrialBookingEffectiveAgeGroup(selectedClass.title, selectedClass.age_group),
       selectedClass.trial_price_cents,
+      selectedClass.is_outdoor,
     ) / 100
   ).toFixed(2);
 

@@ -41,6 +41,7 @@ const FiestaPaymentSchema = z.object({
   nricLast4: z.string().length(4, "NRIC last 4 characters required"),
   signature: z.string().min(1, "Signature is required"),
   waiverAgreed: z.literal(true, { errorMap: () => ({ message: "Waiver must be accepted" }) }),
+  classId: z.string().uuid().optional(),
 });
 
 const PACKAGE_MAP = {
@@ -65,29 +66,34 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const body = parsed.data;
     const pkg = PACKAGE_MAP[body.packageOption];
 
-    let actualClassId: string | null = null;
-    let { data: placeholderClass } = await supabaseAdmin
-      .from("classes")
-      .select("id")
-      .eq("title", "ZumFiesta Guest Booking")
-      .maybeSingle();
+    // Use the real class ID if a specific outdoor class was selected
+    let actualClassId: string | null = body.classId || null;
 
-    if (!placeholderClass) {
-      const { data: newClass } = await supabaseAdmin
+    if (!actualClassId) {
+      // Fall back to placeholder class for legacy/unlinked bookings
+      let { data: placeholderClass } = await supabaseAdmin
         .from("classes")
-        .insert({
-          title: "ZumFiesta Guest Booking",
-          description: "System placeholder class for ZumFiesta guest checkout.",
-          class_type: "dance",
-          scheduled_at: new Date().toISOString(),
-          capacity: 999,
-          status: "cancelled",
-        })
         .select("id")
-        .single();
-      placeholderClass = newClass;
+        .eq("title", "ZumFiesta Guest Booking")
+        .maybeSingle();
+
+      if (!placeholderClass) {
+        const { data: newClass } = await supabaseAdmin
+          .from("classes")
+          .insert({
+            title: "ZumFiesta Guest Booking",
+            description: "System placeholder class for ZumFiesta guest checkout.",
+            class_type: "dance",
+            scheduled_at: new Date().toISOString(),
+            capacity: 999,
+            status: "cancelled",
+          })
+          .select("id")
+          .single();
+        placeholderClass = newClass;
+      }
+      actualClassId = placeholderClass?.id || null;
     }
-    actualClassId = placeholderClass?.id || null;
 
     const validFrom = new Date();
     const validUntil = new Date(validFrom);
@@ -153,6 +159,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           guest_gender: body.gender,
           preferred_date: body.preferredDate,
           preferred_time: body.preferredTime,
+          selected_class_id: body.classId || null,
           nric_last_4: body.nricLast4,
           signature: body.signature,
           waiver_agreed: true,

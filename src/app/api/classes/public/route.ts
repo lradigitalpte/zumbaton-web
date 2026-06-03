@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
         location,
         room_id,
         status,
+        is_outdoor,
         rooms (
           id,
           name,

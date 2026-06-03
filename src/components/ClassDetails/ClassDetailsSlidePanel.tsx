@@ -36,7 +36,7 @@ const ClassDetailsSlidePanel = ({
     <SlidePanel
       isOpen={isOpen}
       onClose={onClose}
-      title={classItem.name}
+      title={`${classItem.name}${(classItem as any).is_outdoor ? " (outdoors)" : ""}`}
       description={classItem.class_type}
       size="lg"
       footer={
@@ -84,7 +84,7 @@ const ClassDetailsSlidePanel = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <h3 className="text-2xl font-bold text-dark dark:text-white">
-                  {classItem.name}
+                  {classItem.name}{(classItem as any).is_outdoor ? " (outdoors)" : ""}
                 </h3>
                 {/* Show age group badge */}
                 {classItem.age_group && classItem.age_group !== 'all' && (

@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     const date = searchParams.get('date')
     const recurrenceType = searchParams.get('recurrenceType') as 'single' | 'recurring' | 'course' | 'all' | null
     const categoryId = searchParams.get('categoryId')
+    const isOutdoor = searchParams.get('isOutdoor')
 
     const supabase = getSupabaseAdminClient()
 
@@ -48,6 +49,7 @@ export async function GET(request: NextRequest) {
         recurrence_type,
         recurrence_pattern,
         parent_class_id,
+        is_outdoor,
         rooms (
           id,
           name
@@ -75,6 +77,10 @@ export async function GET(request: NextRequest) {
 
     if (categoryId) {
       query = query.eq('category_id', categoryId)
+    }
+
+    if (isOutdoor === 'true') {
+      query = query.eq('is_outdoor', true)
     }
 
     if (date) {

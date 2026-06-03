@@ -41,6 +41,7 @@ export interface ClassWithAvailability {
   recurrence_type?: 'single' | 'recurring' | 'course' | null
   recurrence_pattern?: Record<string, unknown> | null
   parent_class_id?: string | null
+  is_outdoor?: boolean
   _isParent?: boolean
   _childInstances?: ClassWithAvailability[]
   _totalSessions?: number
@@ -675,6 +676,7 @@ export async function getUpcomingClasses(filters?: {
       recurrence_type,
         recurrence_pattern,
         parent_class_id,
+        is_outdoor,
         rooms (
           id,
           name
@@ -820,6 +822,7 @@ function groupRecurringClasses(
       recurrence_type: parent.recurrence_type || null,
       recurrence_pattern: parent.recurrence_pattern || null,
       parent_class_id: null,
+      is_outdoor: parent.is_outdoor || false,
     }
 
     // Check if this is a recurring or course parent
@@ -941,6 +944,7 @@ function groupRecurringClasses(
         recurrence_type: firstInstance.recurrence_type === 'course' ? 'course' : 'recurring',
         recurrence_pattern: firstInstance.recurrence_pattern,
         parent_class_id: null,
+        is_outdoor: firstInstance.is_outdoor || false,
         _isParent: true,
         _childInstances: sorted,
         _totalSessions: sorted.length,
