@@ -125,7 +125,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 1. Get class details and validate availability
     const { data: classData, error: classError } = await supabaseAdmin
       .from('classes')
-      .select('*, rooms(room_type)')
+      .select('*')
       .eq('id', classId)
       .eq('status', 'scheduled')
       .single()
@@ -137,15 +137,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    // Validate class type matches promo (must match room_type on linked room — no fallback)
-    const roomType = (classData.rooms as { room_type?: string } | null)?.room_type ?? null
-    if (promoId === 'indoor-duo' && roomType !== 'studio') {
+    // Match promos page: use is_outdoor so legacy classes without room_type still work
+    const isOutdoor = classData.is_outdoor === true
+    if (promoId === 'indoor-duo' && isOutdoor) {
       return NextResponse.json({
         error: 'Invalid Class',
         message: 'This session is not eligible for the Studio Duo Trial. Please choose a studio class.',
       }, { status: 400 })
     }
-    if (promoId === 'outdoor-duo' && roomType !== 'outdoor') {
+    if (promoId === 'outdoor-duo' && !isOutdoor) {
       return NextResponse.json({
         error: 'Invalid Class',
         message: 'This session is not eligible for the Outdoor Duo Trial. Please choose an outdoor class.',
