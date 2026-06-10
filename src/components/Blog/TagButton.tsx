@@ -1,11 +1,14 @@
 const TagButton = ({ href = "#0", text }: { href?: string; text: string }) => {
   return (
-    <a
-      href={href}
-      className="bg-gray-light mb-3 mr-3 inline-flex items-center justify-center rounded-xs px-4 py-2 text-sm text-black duration-300 hover:bg-primary hover:text-white dark:bg-[#2C303B] dark:text-white dark:hover:bg-primary"
-    >
-      {text}
-    </a>
+    <span className="inline-block border border-lime-500/40 bg-lime-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-lime-400">
+      {href !== "#0" ? (
+        <a href={href} className="hover:text-lime-300">
+          {text}
+        </a>
+      ) : (
+        text
+      )}
+    </span>
   );
 };
 

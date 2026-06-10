@@ -13,11 +13,28 @@ interface PageHeroProps {
   title: string;
   breadcrumbs: BreadcrumbItem[];
   backgroundImage?: string;
+  /** `display` = big stacked words (short page titles). `article` = wrapped readable title for blog posts. */
+  titleMode?: "display" | "article";
 }
 
-const PageHero = ({ title, breadcrumbs, backgroundImage = "/images/hero/hero.jpeg" }: PageHeroProps) => {
+const PageHero = ({
+  title,
+  breadcrumbs,
+  backgroundImage = "/images/hero/hero.jpeg",
+  titleMode = "display",
+}: PageHeroProps) => {
+  const isArticle = titleMode === "article";
+  const titleWords = title.trim().split(/\s+/);
+  const stackTitleWords = titleWords.length >= 3;
+
   return (
-    <section className="relative min-h-[50vh] md:h-[60vh] flex items-center overflow-hidden bg-black pt-32 sm:pt-40 lg:pt-48 pb-12 md:pb-0">
+    <section
+      className={`relative flex bg-black ${
+        isArticle
+          ? "min-h-[38vh] items-end overflow-x-hidden pt-28 pb-16 sm:pt-36 sm:pb-20 md:min-h-[42vh] lg:pt-40"
+          : "min-h-[42vh] items-end overflow-x-hidden pt-28 pb-16 sm:min-h-[48vh] sm:pt-36 sm:pb-20 md:min-h-[52vh] lg:pt-40"
+      }`}
+    >
       {/* High-Impact Background Image */}
       <div className="absolute inset-0 -z-10">
         <Image 
@@ -46,13 +63,24 @@ const PageHero = ({ title, breadcrumbs, backgroundImage = "/images/hero/hero.jpe
               One Step Fitness
             </div>
             
-            <h1 className="text-3xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white uppercase italic tracking-tighter leading-[0.85] mb-6 md:mb-10 drop-shadow-2xl">
-              {title.split(' ').map((word, i) => (
-                <span key={i} className={i === title.split(' ').length - 1 ? "text-lime-500" : ""}>
-                  {word} {i < title.split(' ').length - 1 && <br className="hidden md:block" />}
-                </span>
-              ))}
-            </h1>
+            {isArticle ? (
+              <h1 className="mb-6 max-w-4xl break-words text-2xl font-black uppercase italic leading-snug tracking-tight text-white drop-shadow-2xl sm:text-3xl sm:leading-snug md:text-4xl md:leading-tight lg:text-[2.75rem] lg:leading-tight">
+                {title}
+              </h1>
+            ) : (
+              <h1 className="mb-6 max-w-5xl text-3xl font-black uppercase italic leading-none tracking-tighter text-white drop-shadow-2xl sm:text-6xl md:mb-8 md:text-7xl lg:text-8xl">
+                {titleWords.map((word, i) => (
+                  <span key={i} className={i === titleWords.length - 1 ? "text-lime-500" : ""}>
+                    {word}
+                    {stackTitleWords && i < titleWords.length - 1 ? (
+                      <br className="hidden md:block" />
+                    ) : i < titleWords.length - 1 ? (
+                      " "
+                    ) : null}
+                  </span>
+                ))}
+              </h1>
+            )}
 
             <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
               <nav className="flex items-center gap-3 text-[9px] md:text-xs font-black uppercase tracking-widest bg-lime-500 text-black px-3 py-1.5 md:px-6 md:py-3 self-start shadow-2xl">

@@ -18,6 +18,7 @@ const Footer = () => {
     ],
     company: [
       { name: "About Us", href: "/about" },
+      { name: "Blog", href: "/blog" },
       { name: "Our Instructors", href: "/instructors" },
       { name: "Kids & Family", href: "/zumfamilia" },
       { name: "Outdoor Classes", href: "/zt-fiesta" },

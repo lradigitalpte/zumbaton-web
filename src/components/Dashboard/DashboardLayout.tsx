@@ -13,6 +13,22 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
+const SESSION_CHECK_TIMEOUT_MS = 5000;
+
+async function withTimeout<T>(promise: PromiseLike<T>, timeoutMs: number, message: string): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      Promise.resolve(promise),
+      new Promise<T>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
+
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -20,7 +36,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
-  const [isActiveChecked, setIsActiveChecked] = useState(false);
   const hasRedirectedRef = useRef(false);
   const hasCheckedActiveRef = useRef(false);
 
@@ -64,36 +79,33 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         return;
       }
 
-      // Check user active status from database
+      // Check user active status in background — never block layout render on this.
       try {
-        const { data: profile, error } = await supabase
-          .from('user_profiles')
-          .select('is_active')
-          .eq('id', user.id)
-          .single();
+        const { data: profile, error } = await withTimeout(
+          supabase
+            .from('user_profiles')
+            .select('is_active')
+            .eq('id', user.id)
+            .single(),
+          SESSION_CHECK_TIMEOUT_MS,
+          'Active status check timed out'
+        );
 
         if (error) {
           console.error('[Dashboard] Error checking user active status:', error);
-          // On error, allow access (fail open for backwards compatibility)
-          setIsActiveChecked(true);
           return;
         }
 
-        // If user is deactivated, sign out and redirect
         if (profile && profile.is_active === false) {
           console.warn('[Dashboard] User account is deactivated, signing out...');
           hasCheckedActiveRef.current = true;
           await signOut();
-          return;
+        } else {
+          hasCheckedActiveRef.current = true;
         }
-
-        // User is active
-        setIsActiveChecked(true);
-        hasCheckedActiveRef.current = true;
       } catch (error) {
-        console.error('[Dashboard] Error checking user active status:', error);
-        // On error, allow access (fail open for backwards compatibility)
-        setIsActiveChecked(true);
+        console.warn('[Dashboard] Active status check skipped:', error);
+        hasCheckedActiveRef.current = true;
       }
     };
 
@@ -116,14 +128,19 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       // Context says not authenticated - double-check with Supabase directly
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await withTimeout(
+          supabase.auth.getSession(),
+          SESSION_CHECK_TIMEOUT_MS,
+          'Session check timed out'
+        );
         if (session?.user) {
           // Session exists but context hasn't updated yet - wait a bit
           setSessionChecked(true);
           return;
         }
       } catch (error) {
-        console.error('[Dashboard] Error checking session:', error);
+        console.warn('[Dashboard] Session check failed or timed out:', error);
+        setSessionChecked(true);
       }
 
       // No session found - redirect to signin (but only once)
@@ -138,8 +155,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     return () => clearTimeout(timeoutId);
   }, [isLoading, isAuthenticated, router, pathname]);
 
-  // Show loading while checking auth or user active status
-  if (isLoading || (!isAuthenticated && !sessionChecked) || (isAuthenticated && !isActiveChecked)) {
+  // Show loading only while auth context or session redirect check is pending.
+  // Active-status verification runs in the background and must not block the shell.
+  if (isLoading || (!isAuthenticated && !sessionChecked)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-dark">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>

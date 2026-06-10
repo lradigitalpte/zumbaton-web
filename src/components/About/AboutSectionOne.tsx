@@ -2,13 +2,12 @@
 
 import Image from "next/image";
 import { useRef } from "react";
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
 
 const AboutSectionOne = () => {
   const { openWhatsAppModal } = useWhatsAppModal();
   const sectionRef = useRef(null);
-  const isInView = useInView(sectionRef, { once: true, amount: 0.2 });
 
   return (
     <section ref={sectionRef} className="relative py-20 md:py-32 bg-[#f6f4ee] dark:bg-black overflow-hidden">
@@ -21,7 +20,8 @@ const AboutSectionOne = () => {
               {/* Main Image */}
               <motion.div
                 initial={{ opacity: 0, scale: 1.05 }}
-                animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 1.05 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true, amount: 0.2 }}
                 transition={{ duration: 0.6 }}
                 className="absolute inset-0 z-10 border border-black/10 dark:border-white/10"
               >
@@ -40,7 +40,8 @@ const AboutSectionOne = () => {
               {/* Floating Badge */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
-                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
                 transition={{ duration: 0.4, delay: 0.3 }}
                 className="absolute -bottom-10 -right-6 z-20 bg-black text-white p-8 md:p-10 rounded-none shadow-2xl max-w-[200px]"
               >
@@ -56,7 +57,8 @@ const AboutSectionOne = () => {
           <div className="lg:col-span-6">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
-              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.15 }}
               transition={{ duration: 0.4 }}
             >
               <div className="inline-block bg-lime-500 text-black px-4 py-1 text-xs font-black uppercase tracking-[0.3em] mb-8">
@@ -92,7 +94,7 @@ const AboutSectionOne = () => {
         </div>
 
         {/* Values — 2×2 on mobile, single row from md */}
-        <div className="mt-24 grid grid-cols-2 gap-px border-t border-black/10 bg-black/10 pt-px dark:border-white/10 dark:bg-white/10 md:mt-32 md:grid-cols-4">
+        <div className="mt-24 grid grid-cols-2 gap-3 md:mt-32 md:grid-cols-4 md:gap-4">
           <ValueItem number="01" title="All Levels" desc="Sessions for everyone." />
           <ValueItem number="02" title="All Stages" desc="Energy for every stage." />
           <ValueItem number="03" title="Structured" desc="Raw, structured energy." />
@@ -104,7 +106,7 @@ const AboutSectionOne = () => {
 };
 
 const ValueItem = ({ number, title, desc }: { number: string; title: string; desc: string }) => (
-  <div className="group bg-[#f6f4ee] p-5 transition-colors hover:bg-lime-500/5 dark:bg-black sm:p-6 md:p-10">
+  <div className="group border border-black/10 bg-white p-5 shadow-sm transition-colors hover:border-lime-500/40 hover:bg-lime-500/5 dark:border-white/10 dark:bg-zinc-950 sm:p-6 md:p-10">
     <div className="mb-3 text-sm font-black tracking-widest text-lime-500 md:mb-6">{number}</div>
     <h3 className="mb-2 text-lg font-black uppercase italic tracking-tighter text-gray-900 transition-colors group-hover:text-lime-500 dark:text-white sm:text-xl md:mb-4 md:text-2xl">
       {title}

@@ -13,7 +13,7 @@ import { getSupabaseClient } from './supabase'
 
 const AUTH_HELPER_TIMEOUT_MS = 12000
 
-function getBrowserStoredAccessToken(): string | null {
+function getBrowserStoredSession(): { accessToken: string; expiresAt: number | null } | null {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
     return null
   }
@@ -41,14 +41,17 @@ function getBrowserStoredAccessToken(): string | null {
 
       try {
         const parsed = JSON.parse(raw)
-        const token =
-          parsed?.currentSession?.access_token ||
-          parsed?.session?.access_token ||
-          parsed?.access_token ||
-          null
+        const session = parsed?.currentSession || parsed?.session || parsed
+        const token = session?.access_token || null
+        const expiresAt =
+          typeof session?.expires_at === 'number'
+            ? session.expires_at
+            : typeof parsed?.expires_at === 'number'
+              ? parsed.expires_at
+              : null
 
         if (typeof token === 'string' && token.length > 0) {
-          return token
+          return { accessToken: token, expiresAt }
         }
       } catch {
         // Ignore malformed entries and keep scanning.
@@ -59,6 +62,17 @@ function getBrowserStoredAccessToken(): string | null {
   }
 
   return null
+}
+
+function getBrowserStoredAccessToken(): string | null {
+  return getBrowserStoredSession()?.accessToken ?? null
+}
+
+function isStoredTokenExpired(expiresAt: number | null): boolean {
+  if (!expiresAt) return false
+  const nowSeconds = Math.floor(Date.now() / 1000)
+  // Treat as expired slightly before actual expiry to avoid edge-case 401s.
+  return expiresAt <= nowSeconds + 30
 }
 
 async function withAuthTimeout<T>(promise: Promise<T>, timeoutMs = AUTH_HELPER_TIMEOUT_MS): Promise<T> {
@@ -98,47 +112,31 @@ export async function apiFetch(
   // Get token before request
   let accessToken: string | null = null
   if (requireAuth) {
-    // Fast path: use persisted browser token immediately to avoid blocking request start.
-    accessToken = getBrowserStoredAccessToken()
+    const storedSession = getBrowserStoredSession()
 
-    if (accessToken) {
-      console.log('[API Fetch] Using fast localStorage token path')
+    // Fast path: read token from localStorage without touching Supabase auth (avoids lock contention).
+    if (storedSession && !isStoredTokenExpired(storedSession.expiresAt)) {
+      accessToken = storedSession.accessToken
     }
 
-    // Fallback path: only call getSession if no stored token was found.
+    // Only call getSession when we have no usable stored token.
     if (!accessToken) {
-    try {
-      const supabase = getSupabaseClient()
-      const { data: { session }, error } = await withAuthTimeout(supabase.auth.getSession())
-      
-      if (error) {
-        console.warn('[API Fetch] Error getting session:', error)
-        // Don't block - let the request proceed without token
-        // Server will return 401 and retry logic will refresh token
-      } else if (session?.access_token) {
-        accessToken = session.access_token
-      } else {
-        // No session found - this can happen if session is stale
-        // Don't return fake 401 - let the actual request go through
-        // Server will return real 401 which triggers refresh logic
-        console.warn('[API Fetch] No session found, request will proceed without auth')
-        accessToken = getBrowserStoredAccessToken()
-        if (accessToken) {
-          console.log('[API Fetch] Using localStorage token fallback')
+      try {
+        const supabase = getSupabaseClient()
+        const { data: { session }, error } = await withAuthTimeout(supabase.auth.getSession())
+
+        if (error) {
+          console.warn('[API Fetch] Error getting session:', error)
+        } else if (session?.access_token) {
+          accessToken = session.access_token
+        } else {
+          console.warn('[API Fetch] No session found, trying localStorage fallback')
+          accessToken = getBrowserStoredAccessToken()
         }
+      } catch (error) {
+        console.error('[API Fetch] Error getting session:', error)
+        accessToken = getBrowserStoredAccessToken()
       }
-    } catch (error) {
-      console.error('[API Fetch] Error getting session:', error)
-      if (error instanceof Error && error.message.includes('Auth helper timeout')) {
-        console.warn('[API Fetch] Session read timed out, trying localStorage token fallback')
-      }
-      accessToken = getBrowserStoredAccessToken()
-      if (accessToken) {
-        console.log('[API Fetch] Using localStorage token fallback after session error')
-      }
-      // Don't block - let the request proceed
-      // If auth is truly required, server will return 401
-    }
     }
   }
 

@@ -1,12 +1,11 @@
 "use client";
 
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import { useRef, useState } from "react";
 import Link from "next/link";
 
 const HomeContact = () => {
   const sectionRef = useRef(null);
-  const isInView = useInView(sectionRef, { once: true, amount: 0.2 });
   const [formStatus, setFormStatus] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -61,7 +60,8 @@ const HomeContact = () => {
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.12 }}
           transition={{ duration: 0.35 }}
           className="text-center mb-10 sm:mb-12 md:mb-16"
         >
@@ -81,7 +81,8 @@ const HomeContact = () => {
           {/* Left Column - Contact Info & Response Time */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
-            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.12 }}
             transition={{ duration: 0.35, delay: 0.04 }}
           >
             {/* Contact Methods */}
@@ -155,7 +156,8 @@ const HomeContact = () => {
           {/* Right Column - Newsletter Form */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
-            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.12 }}
             transition={{ duration: 0.35, delay: 0.08 }}
             className="lg:col-span-2"
           >
@@ -276,7 +278,8 @@ const HomeContact = () => {
         {/* Full Width CTA */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.12 }}
           transition={{ duration: 0.35, delay: 0.1 }}
           className="text-center"
         >

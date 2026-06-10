@@ -1,98 +1,90 @@
-import SingleBlog from "@/components/Blog/SingleBlog";
-import blogData from "@/components/Blog/blogData";
-import Breadcrumb from "@/components/Common/Breadcrumb";
-
+import BlogListing from "@/components/Blog/BlogListing";
+import PageHero from "@/components/Common/PageHero";
+import {
+  getBlogFilterMeta,
+  getPublishedBlogPostsPaginated,
+} from "@/lib/blog-queries";
 import { Metadata } from "next";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Blog | One Step Fitness",
-  description: "Read the latest fitness tips, class updates, and health articles from One Step Fitness.",
+  description:
+    "Read the latest fitness tips, class updates, and health articles from One Step Fitness Singapore.",
+  openGraph: {
+    title: "Blog | One Step Fitness",
+    description:
+      "Read the latest fitness tips, class updates, and health articles from One Step Fitness Singapore.",
+    type: "website",
+  },
 };
 
-const Blog = () => {
+export const dynamic = "force-dynamic";
+
+type PageProps = {
+  searchParams: Promise<{
+    category?: string;
+    year?: string;
+    month?: string;
+    page?: string;
+  }>;
+};
+
+function parseSearchParams(raw: {
+  category?: string;
+  year?: string;
+  month?: string;
+  page?: string;
+}) {
+  const year = raw.year ? parseInt(raw.year, 10) : undefined;
+  const month = raw.month ? parseInt(raw.month, 10) : undefined;
+  const page = raw.page ? parseInt(raw.page, 10) : 1;
+
+  return {
+    category: raw.category?.trim() || undefined,
+    year: year && Number.isFinite(year) ? year : undefined,
+    month: month && month >= 1 && month <= 12 ? month : undefined,
+    page: page && Number.isFinite(page) ? page : 1,
+  };
+}
+
+export default async function BlogPage({ searchParams }: PageProps) {
+  const raw = await searchParams;
+  const filters = parseSearchParams(raw);
+
+  const [filterMeta, listing] = await Promise.all([
+    getBlogFilterMeta(),
+    getPublishedBlogPostsPaginated(filters),
+  ]);
+
   return (
     <>
-      <Breadcrumb
-        pageName="Blog Grid"
-        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. In varius eros eget sapien consectetur ultrices. Ut quis dapibus libero."
+      <PageHero
+        title="The Blog"
+        breadcrumbs={[
+          { label: "Home", href: "/explore" },
+          { label: "Blog" },
+        ]}
       />
-
-      <section className="pt-[120px] pb-[120px]">
-        <div className="container">
-          <div className="-mx-4 flex flex-wrap justify-center">
-            {blogData.map((blog) => (
-              <div
-                key={blog.id}
-                className="w-full px-4 md:w-2/3 lg:w-1/2 xl:w-1/3"
-              >
-                <SingleBlog blog={blog} />
-              </div>
-            ))}
-          </div>
-
-          <div className="-mx-4 flex flex-wrap" data-wow-delay=".15s">
-            <div className="w-full px-4">
-              <ul className="flex items-center justify-center pt-8">
-                <li className="mx-1">
-                  <a
-                    href="#0"
-                    className="bg-body-color/15 text-body-color hover:bg-primary flex h-9 min-w-[36px] items-center justify-center rounded-md px-4 text-sm transition hover:text-white"
-                  >
-                    Prev
-                  </a>
-                </li>
-                <li className="mx-1">
-                  <a
-                    href="#0"
-                    className="bg-body-color/15 text-body-color hover:bg-primary flex h-9 min-w-[36px] items-center justify-center rounded-md px-4 text-sm transition hover:text-white"
-                  >
-                    1
-                  </a>
-                </li>
-                <li className="mx-1">
-                  <a
-                    href="#0"
-                    className="bg-body-color/15 text-body-color hover:bg-primary flex h-9 min-w-[36px] items-center justify-center rounded-md px-4 text-sm transition hover:text-white"
-                  >
-                    2
-                  </a>
-                </li>
-                <li className="mx-1">
-                  <a
-                    href="#0"
-                    className="bg-body-color/15 text-body-color hover:bg-primary flex h-9 min-w-[36px] items-center justify-center rounded-md px-4 text-sm transition hover:text-white"
-                  >
-                    3
-                  </a>
-                </li>
-                <li className="mx-1">
-                  <span className="bg-body-color/15 text-body-color flex h-9 min-w-[36px] cursor-not-allowed items-center justify-center rounded-md px-4 text-sm">
-                    ...
-                  </span>
-                </li>
-                <li className="mx-1">
-                  <a
-                    href="#0"
-                    className="bg-body-color/15 text-body-color hover:bg-primary flex h-9 min-w-[36px] items-center justify-center rounded-md px-4 text-sm transition hover:text-white"
-                  >
-                    12
-                  </a>
-                </li>
-                <li className="mx-1">
-                  <a
-                    href="#0"
-                    className="bg-body-color/15 text-body-color hover:bg-primary flex h-9 min-w-[36px] items-center justify-center rounded-md px-4 text-sm transition hover:text-white"
-                  >
-                    Next
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Suspense fallback={<div className="min-h-[40vh] bg-[#f6f4ee] dark:bg-black" />}>
+        <BlogListing
+          posts={listing.posts}
+          featured={listing.featured}
+          filterMeta={filterMeta}
+          pagination={{
+            page: listing.page,
+            totalPages: listing.totalPages,
+            total: listing.total,
+          }}
+          activeFilters={{
+            category: filters.category,
+            year: filters.year,
+            month: filters.month,
+          }}
+          filtersActive={listing.filtersActive}
+          totalPublished={filterMeta.totalPublished}
+        />
+      </Suspense>
     </>
   );
-};
-
-export default Blog;
+}

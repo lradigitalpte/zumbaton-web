@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 
 const RelatedPost = ({
   image,
@@ -13,24 +14,21 @@ const RelatedPost = ({
   date: string;
 }) => {
   return (
-    <div className="flex items-center lg:block xl:flex">
-      <div className="mr-5 lg:mb-3 xl:mb-0">
-        <div className="relative h-[60px] w-[70px] overflow-hidden rounded-md sm:h-[75px] sm:w-[85px]">
-          <Image src={image} alt={title} fill />
-        </div>
+    <Link
+      href={slug}
+      className="group flex gap-4 border border-black/10 bg-gray-50 p-3 transition-all hover:border-lime-500/50 hover:bg-lime-500/5 dark:border-white/10 dark:bg-black/40 dark:hover:bg-zinc-900"
+    >
+      <div className="relative h-16 w-20 shrink-0 overflow-hidden sm:h-[72px] sm:w-24">
+        <Image src={image} alt="" fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="96px" />
       </div>
-      <div className="w-full">
-        <h5>
-          <Link
-            href={slug}
-            className="mb-[6px] block text-base font-medium leading-snug text-black hover:text-primary dark:text-white dark:hover:text-primary"
-          >
-            {title}
-          </Link>
+      <div className="min-w-0 flex-1">
+        <h5 className="line-clamp-2 text-sm font-bold uppercase leading-snug text-gray-900 group-hover:text-lime-600 dark:text-white dark:group-hover:text-lime-400">
+          {title}
         </h5>
-        <p className="text-xs font-medium text-body-color">{date}</p>
+        <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-gray-500 dark:text-zinc-500">{date}</p>
       </div>
-    </div>
+      <ArrowUpRight className="h-4 w-4 shrink-0 text-gray-400 transition-colors group-hover:text-lime-600 dark:text-zinc-600 dark:group-hover:text-lime-500" />
+    </Link>
   );
 };
 

@@ -42,6 +42,24 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+// Build user from auth session metadata only (no Supabase DB calls — safe inside auth callbacks)
+function userFromSupabaseAuthUser(supabaseUser: User): UserResponse {
+  return {
+    id: supabaseUser.id,
+    name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'User',
+    email: supabaseUser.email || '',
+    role: (supabaseUser.user_metadata?.role as 'user' | 'admin' | 'instructor' | 'super_admin') || 'user',
+    createdAt: supabaseUser.created_at,
+    updatedAt: supabaseUser.updated_at || supabaseUser.created_at,
+  }
+}
+
+// Supabase holds an internal auth lock while onAuthStateChange runs.
+// Never await Supabase calls inside that callback — it deadlocks the whole client.
+function deferAfterAuthCallback(fn: () => void) {
+  setTimeout(fn, 0)
+}
+
 // Map Supabase user to UserResponse
 async function mapSupabaseUserToUserResponse(supabaseUser: User | null): Promise<UserResponse | null> {
   if (!supabaseUser) return null
@@ -144,17 +162,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     init()
 
-    // Listen for auth state changes
+    // Listen for auth state changes — callback MUST stay synchronous (no await).
+    // See: https://supabase.com/docs/reference/javascript/auth-onauthstatechange
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (!isMounted) return
 
         if (event === 'SIGNED_IN' && session?.user) {
-          const userResponse = await mapSupabaseUserToUserResponse(session.user)
-          setUser(userResponse)
+          setUser(userFromSupabaseAuthUser(session.user))
           setIsAuthenticated(true)
           setIsLoading(false)
           setLoadingTooLong(false)
+
+          deferAfterAuthCallback(() => {
+            if (!isMounted) return
+            withTimeout(
+              mapSupabaseUserToUserResponse(session.user),
+              5000,
+              'Profile fetch timed out'
+            ).then((profileUser) => {
+              if (!isMounted) return
+              if (profileUser) {
+                setUser(profileUser)
+              } else {
+                console.warn('[Auth] User profile returned null, signing out...')
+                supabase.auth.signOut()
+                setUser(null)
+                setIsAuthenticated(false)
+              }
+            }).catch((err) => {
+              console.warn('[Auth] Deferred profile fetch failed:', err)
+            })
+          })
         } else if (event === 'SIGNED_OUT') {
           // Handle sign out - can be triggered by user action or refresh token failure
           console.log('[Auth] User signed out (event:', event, ')')
@@ -164,14 +203,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setLoadingTooLong(false)
           // NOTE: Do NOT call supabase.auth.signOut() here — it would trigger
           // another SIGNED_OUT event, creating an infinite loop.
-        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-          // Token was successfully refreshed
-          const userResponse = await mapSupabaseUserToUserResponse(session.user)
-          setUser(userResponse)
+        } else if (event === 'TOKEN_REFRESHED') {
+          // Token refresh does not change profile data — do not call Supabase here.
         } else if (event === 'USER_UPDATED' && session?.user) {
-          // User data was updated
-          const userResponse = await mapSupabaseUserToUserResponse(session.user)
-          setUser(userResponse)
+          setUser(userFromSupabaseAuthUser(session.user))
+
+          deferAfterAuthCallback(() => {
+            if (!isMounted) return
+            withTimeout(
+              mapSupabaseUserToUserResponse(session.user),
+              5000,
+              'Profile fetch timed out'
+            ).then((profileUser) => {
+              if (!isMounted || !profileUser) return
+              setUser(profileUser)
+            }).catch((err) => {
+              console.warn('[Auth] Deferred profile update failed:', err)
+            })
+          })
         }
       }
     )
