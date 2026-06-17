@@ -21,10 +21,6 @@ function estimateReadMinutes(excerpt: string, body: string) {
   return Math.max(3, Math.min(15, Math.ceil(words / 200)));
 }
 
-export async function generateStaticParams() {
-  return [];
-}
-
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPublishedBlogPostBySlug(slug);

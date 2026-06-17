@@ -51,7 +51,9 @@ const WeeklySchedule = () => {
     
     classes.forEach((cls) => {
       const scheduledDate = new Date(cls.scheduled_at);
-      const dateKey = scheduledDate.toISOString().split('T')[0];
+      // Group by the Singapore-local day so a visitor in any timezone sees the
+      // same day buckets the studio uses. en-CA gives YYYY-MM-DD ordering.
+      const dateKey = scheduledDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore' });
       
       if (!grouped[dateKey]) {
         grouped[dateKey] = {
@@ -172,9 +174,12 @@ const DayColumn = ({
   index: number;
   formatTime: (dateString: string, durationMinutes: number) => string;
 }) => {
-  const dayName = daySchedule.date.toLocaleDateString('en-US', { weekday: 'short' });
-  const dateStr = daySchedule.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const isToday = new Date().toDateString() === daySchedule.date.toDateString();
+  // Pin labels + the "today" highlight to Singapore time so they're identical
+  // for every visitor regardless of their browser timezone.
+  const dayName = daySchedule.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Singapore' });
+  const dateStr = daySchedule.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Singapore' });
+  const sgtDayKey = (d: Date) => d.toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore' });
+  const isToday = sgtDayKey(new Date()) === sgtDayKey(daySchedule.date);
 
   return (
     <motion.div

@@ -1,4 +1,4 @@
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 
 type BlogPostContentProps = {
   body: string;
@@ -20,8 +20,9 @@ function plainTextToHtml(text: string) {
 export default function BlogPostContent({ body }: BlogPostContentProps) {
   const rawHtml = isHtmlContent(body) ? body : plainTextToHtml(body);
 
-  const safeHtml = DOMPurify.sanitize(rawHtml, {
-    ALLOWED_TAGS: [
+  // sanitize-html is pure JS (no jsdom) so it bundles cleanly on serverless.
+  const safeHtml = sanitizeHtml(rawHtml, {
+    allowedTags: [
       "p",
       "br",
       "strong",
@@ -38,7 +39,13 @@ export default function BlogPostContent({ body }: BlogPostContentProps) {
       "a",
       "img",
     ],
-    ALLOWED_ATTR: ["href", "src", "alt", "title", "target", "rel", "class"],
+    allowedAttributes: {
+      a: ["href", "title", "target", "rel", "class"],
+      img: ["src", "alt", "title", "class"],
+      "*": ["class"],
+    },
+    allowedSchemes: ["http", "https", "mailto"],
+    allowedSchemesByTag: { img: ["http", "https", "data"] },
   });
 
   return (
