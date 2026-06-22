@@ -67,28 +67,35 @@ const menuData: Menu[] = [
     ],
   },
   {
-    id: 5,
-    title: "Instructors",
-    path: "/instructors",
-    newTab: false,
-  },
-  {
     id: 6,
     title: "Schedule",
     path: "/schedule",
     newTab: false,
   },
   {
-    id: 65,
-    title: "Blog",
-    path: "/blog",
-    newTab: false,
-  },
-  {
     id: 7,
-    title: "FAQ",
-    path: "/faq",
+    title: "More",
     newTab: false,
+    submenu: [
+      {
+        id: 71,
+        title: "Instructors",
+        path: "/instructors",
+        newTab: false,
+      },
+      {
+        id: 72,
+        title: "Blog",
+        path: "/blog",
+        newTab: false,
+      },
+      {
+        id: 73,
+        title: "FAQ",
+        path: "/faq",
+        newTab: false,
+      },
+    ],
   },
   {
     id: 8,

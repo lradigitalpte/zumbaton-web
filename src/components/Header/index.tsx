@@ -54,14 +54,14 @@ const Header = () => {
             
             {/* LOGO — width cap keeps room for actions */}
             <div className="flex min-w-0 flex-1 items-center sm:flex-initial sm:min-w-0">
-              <Link href="/explore" className="group flex max-w-[7.5rem] items-center sm:max-w-[9rem] md:max-w-none">
+              <Link href="/explore" className="group flex max-w-38 items-center sm:max-w-48 md:max-w-none">
                 <div className="relative w-full">
                   <Image
                     src="/logo/One step fitness logo.png"
                     alt="One Step Fitness Logo"
                     width={160}
                     height={53}
-                    className={`h-7 w-auto max-h-7 max-w-full object-contain object-left transition-all duration-500 sm:h-8 sm:max-h-none md:h-9 lg:h-10 ${
+                    className={`h-9 w-auto max-h-9 max-w-full object-contain object-left transition-all duration-500 sm:h-10 sm:max-h-none md:h-11 lg:h-12 ${
                       needsBackground ? "brightness-110" : ""
                     }`}
                     priority

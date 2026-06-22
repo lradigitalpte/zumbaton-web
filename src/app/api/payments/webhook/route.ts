@@ -242,6 +242,81 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         return NextResponse.json({ received: true, message: 'ZumFamilia booking processed' })
       }
 
+      // Handle Quick Join (pay-first, no class) — staff schedule the guest later
+      if (flowType === 'quick_join') {
+        console.log('[Webhook] Processing Quick Join payment:', payment.id)
+
+        await supabase
+          .from('payments')
+          .update({
+            status: 'succeeded',
+            hitpay_payment_id: payment_id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', payment.id)
+
+        const guestName = (metadata.guest_name as string) || 'Guest'
+        const guestEmail = (metadata.guest_email as string) || ''
+        const guestPhone = (metadata.guest_phone as string) || ''
+        const venueLabel = (metadata.promo_label as string) || '1-for-1'
+        const preferredNote = (metadata.preferred_note as string) || ''
+        const balanceCents = typeof metadata.balance_cents === 'number' ? metadata.balance_cents : 0
+        const balanceSuffix = balanceCents > 0 ? ` Balance $${(balanceCents / 100).toFixed(2)} due at studio.` : ''
+
+        // In-app notification for admins: a paid lead that needs scheduling
+        try {
+          const { data: adminUsers } = await supabase
+            .from('user_profiles')
+            .select('id, email')
+            .in('role', ['admin', 'super_admin'])
+            .eq('is_active', true)
+
+          if (adminUsers && adminUsers.length > 0) {
+            const noteSuffix = preferredNote ? ` · Prefers: ${preferredNote}` : ''
+            await supabase.from('notifications').insert(
+              adminUsers.map((admin) => ({
+                user_id: admin.id,
+                type: 'trial_booking',
+                channel: 'in_app',
+                subject: 'PAID — schedule this guest',
+                body: `${guestName} paid $${(payment.amount_cents / 100).toFixed(2)} for ${venueLabel}.${balanceSuffix} Contact ${guestPhone || guestEmail} to arrange their class.${noteSuffix}`,
+                status: 'sent',
+                sent_at: new Date().toISOString(),
+                data: {
+                  payment_id: payment.id,
+                  flow_type: 'quick_join',
+                  needs_scheduling: true,
+                  venue: metadata.venue,
+                  guest_name: guestName,
+                  guest_email: guestEmail,
+                  guest_phone: guestPhone,
+                  preferred_note: preferredNote,
+                  amount: payment.amount_cents / 100,
+                },
+              }))
+            )
+          }
+
+          // Email alert to staff so they act even without opening the dashboard
+          const { sendSuccessfulPaymentAlertEmail } = await import('@/lib/email')
+          await sendSuccessfulPaymentAlertEmail({
+            paymentId: payment.id,
+            paymentType: 'trial-booking',
+            source: 'webhook',
+            amount: payment.amount_cents / 100,
+            currency: payment.currency,
+            guestName,
+            guestEmail,
+            className: `${venueLabel} — NEEDS SCHEDULING${balanceSuffix}${preferredNote ? ` (prefers: ${preferredNote})` : ''}`,
+          })
+        } catch (notifyErr) {
+          console.error('[Webhook] Non-critical: quick_join staff notification failed:', notifyErr)
+        }
+
+        console.log('[Webhook] Quick Join payment completed:', payment.id)
+        return NextResponse.json({ received: true, message: 'Quick Join processed' })
+      }
+
       // Handle trial booking vs package purchase
       if (payment.is_trial_booking && payment.class_id) {
         // TRIAL BOOKING FLOW

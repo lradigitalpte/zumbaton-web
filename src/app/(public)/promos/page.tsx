@@ -66,15 +66,53 @@ const PromosPage = () => {
   
   const [formData, setFormData] = useState({
     classId: "",
-    p1: { 
+    p1: {
       name: "", email: "", phone: "", age: "", gender: "prefer_not_to_say",
       waiverAgreed: false, nricLast4: "", signature: ""
     },
-    p2: { 
+    p2: {
       name: "", phone: "", age: "", gender: "prefer_not_to_say",
       waiverAgreed: false, nricLast4: "", signature: ""
     },
   });
+
+  // Admin-editable promo config (price + booking mode). Defaults mirror the
+  // original hardcoded behaviour so the page renders correctly before it loads.
+  type DuoBookingMode = "pay_online" | "reserve_only" | "both";
+  const [promoConfig, setPromoConfig] = useState<{
+    indoorPriceCents: number;
+    outdoorPriceCents: number;
+    bookingMode: DuoBookingMode;
+    live: boolean;
+  }>({ indoorPriceCents: 2300, outdoorPriceCents: 3500, bookingMode: "pay_online", live: true });
+  const [reserveSuccess, setReserveSuccess] = useState<{ reference: string; amount: string } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/promos/config")
+      .then((r) => r.json())
+      .then((res) => {
+        if (active && res?.success && res.data) {
+          setPromoConfig({
+            indoorPriceCents: res.data.indoorPriceCents ?? 2300,
+            outdoorPriceCents: res.data.outdoorPriceCents ?? 3500,
+            bookingMode: res.data.bookingMode ?? "pay_online",
+            live: res.data.live ?? true,
+          });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const priceCentsFor = (id?: string) =>
+    id === "outdoor-duo" ? promoConfig.outdoorPriceCents : promoConfig.indoorPriceCents;
+  const formatPrice = (cents: number) => {
+    const d = cents / 100;
+    return `$${Number.isInteger(d) ? d : d.toFixed(2)}`;
+  };
 
   const promos = [
     {
@@ -150,9 +188,21 @@ const PromosPage = () => {
   const handleBookClick = (promo: any) => {
     setSelectedPromo(promo);
     setSubmitError(null);
+    setReserveSuccess(null);
     setFormData((prev) => ({ ...prev, classId: "" }));
     setIsModalOpen(true);
   };
+
+  // Deep-link: /promos?book=indoor-duo (used by the /start landing page)
+  // opens that promo's booking modal straight away.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const book = new URLSearchParams(window.location.search).get("book");
+    if (!book) return;
+    const target = promos.find((p) => p.id === book);
+    if (target) handleBookClick(target);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Classes for the selected date that match this promo type
   const filteredClasses = allClasses.filter((c) => {
@@ -176,15 +226,16 @@ const PromosPage = () => {
     }
   }, [filteredClasses, formData.classId, selectedPromo]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Validate the form and build the duo payload shared by both pay & reserve.
+  // Returns null (and surfaces an error) when something is invalid.
+  const prepareDuoPayload = (): Record<string, any> | null => {
     setSubmitError(null);
 
     if (!formData.classId) {
       const msg = "Please select a class";
       setSubmitError(msg);
       toast.error(msg);
-      return;
+      return null;
     }
 
     const selectedClass = allClasses.find((c) => c.id === formData.classId);
@@ -192,9 +243,9 @@ const PromosPage = () => {
       const msg = promoEligibilityMessage(selectedPromo?.id ?? "");
       setSubmitError(msg);
       toast.error(msg);
-      return;
+      return null;
     }
-    
+
     // Basic validation
     const payerEmail = formData.p1.email.trim().toLowerCase();
     if (!formData.p1.name || !payerEmail || !formData.p1.phone ||
@@ -202,27 +253,27 @@ const PromosPage = () => {
       const msg = "Please fill in all participant details (including email for Participant 1)";
       setSubmitError(msg);
       toast.error(msg);
-      return;
+      return null;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payerEmail)) {
-      const msg = "Please enter a valid email for Participant 1 (payment receipts are sent here)";
+      const msg = "Please enter a valid email for Participant 1 (confirmations are sent here)";
       setSubmitError(msg);
       toast.error(msg);
-      return;
+      return null;
     }
 
     const age1 = parseAgeYearsInput(formData.p1.age);
     const age2 = parseAgeYearsInput(formData.p2.age);
     if (age1 == null || age2 == null) {
       toast.error("Please enter a valid age (1–120) for both participants");
-      return;
+      return null;
     }
 
     const dob1 = dateOfBirthFromAge(age1);
     const dob2 = dateOfBirthFromAge(age2);
     if (!dob1 || !dob2) {
       toast.error("Could not process age. Please try again.");
-      return;
+      return null;
     }
 
     const normalizedP1NricLast4 = formData.p1.nricLast4.trim().toUpperCase();
@@ -235,47 +286,63 @@ const PromosPage = () => {
       const msg = "You must agree to the waiver and provide your signature";
       setSubmitError(msg);
       toast.error(msg);
-      return;
+      return null;
     }
     if (normalizedP1NricLast4 && !/^[A-Z0-9]{4}$/.test(normalizedP1NricLast4)) {
       const msg = "If provided, NRIC last 4 must be exactly 4 letters/numbers";
       setSubmitError(msg);
       toast.error(msg);
-      return;
+      return null;
     }
+
+    return {
+      classId: formData.classId,
+      promoId: selectedPromo.id,
+      participant1: {
+        name: formData.p1.name,
+        email: payerEmail,
+        phone: formData.p1.phone,
+        dateOfBirth: dob1,
+        gender: formData.p1.gender,
+        ...(normalizedP1NricLast4 ? { nricLast4: normalizedP1NricLast4 } : {}),
+        signature: normalizedP1Signature,
+      },
+      participant2: {
+        name: formData.p2.name,
+        phone: formData.p2.phone,
+        dateOfBirth: dob2,
+        gender: formData.p2.gender,
+        ...(normalizedP2NricLast4 ? { nricLast4: normalizedP2NricLast4 } : {}),
+        ...(normalizedP2Signature ? { signature: normalizedP2Signature } : {}),
+      },
+    };
+  };
+
+  // mode "pay" → HitPay redirect; mode "reserve" → hold spots, pay at studio.
+  const submitDuo = async (mode: "pay" | "reserve") => {
+    const body = prepareDuoPayload();
+    if (!body) return;
 
     setProcessing(true);
     try {
-      const response = await fetch("/api/promos/duo-trial/payment", {
+      const endpoint =
+        mode === "pay" ? "/api/promos/duo-trial/payment" : "/api/promos/duo-trial/reserve";
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          classId: formData.classId,
-          promoId: selectedPromo.id,
-          participant1: {
-            name: formData.p1.name,
-            email: payerEmail,
-            phone: formData.p1.phone,
-            dateOfBirth: dob1,
-            gender: formData.p1.gender,
-            ...(normalizedP1NricLast4 ? { nricLast4: normalizedP1NricLast4 } : {}),
-            signature: normalizedP1Signature,
-          },
-          participant2: {
-            name: formData.p2.name,
-            phone: formData.p2.phone,
-            dateOfBirth: dob2,
-            gender: formData.p2.gender,
-            ...(normalizedP2NricLast4 ? { nricLast4: normalizedP2NricLast4 } : {}),
-            ...(normalizedP2Signature ? { signature: normalizedP2Signature } : {}),
-          },
-        }),
+        body: JSON.stringify(body),
       });
 
       const result = await response.json();
-      if (response.ok && result.success && result.paymentUrl) {
-        window.location.href = result.paymentUrl;
-        return;
+      if (response.ok && result.success) {
+        if (mode === "pay" && result.paymentUrl) {
+          window.location.href = result.paymentUrl;
+          return;
+        }
+        if (mode === "reserve" && result.reserved) {
+          setReserveSuccess({ reference: result.reference, amount: result.amount });
+          return;
+        }
       }
 
       const msg =
@@ -284,7 +351,7 @@ const PromosPage = () => {
           ? promoEligibilityMessage(selectedPromo.id)
           : null) ||
         result.error ||
-        "Failed to initiate payment";
+        (mode === "pay" ? "Failed to initiate payment" : "Failed to reserve your spot");
       setSubmitError(msg);
       toast.error(msg);
     } catch (error) {
@@ -295,6 +362,12 @@ const PromosPage = () => {
     } finally {
       setProcessing(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // In reserve-only mode the primary action is reserving, not paying.
+    submitDuo(promoConfig.bookingMode === "reserve_only" ? "reserve" : "pay");
   };
 
   return (
@@ -377,7 +450,7 @@ const PromosPage = () => {
                     {promo.location}
                   </div>
                   <div className="text-6xl md:text-7xl font-black italic tracking-tighter mb-6">
-                    {promo.price}
+                    {formatPrice(priceCentsFor(promo.id))}
                     <span className="text-sm font-black uppercase tracking-widest opacity-40 ml-2">/ duo</span>
                   </div>
                   <p className="font-medium text-sm md:text-base leading-relaxed uppercase tracking-tight opacity-80">
@@ -408,7 +481,7 @@ const PromosPage = () => {
                       : 'bg-black dark:bg-white text-white dark:text-black hover:bg-lime-500 hover:text-black'
                   }`}
                 >
-                  <span>Book & Pay Duo Trial</span>
+                  <span>{promoConfig.bookingMode === "reserve_only" ? "Book Duo Trial" : "Book & Pay Duo Trial"}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </motion.div>
@@ -490,7 +563,7 @@ const PromosPage = () => {
                     Duo Trial Booking
                   </div>
                   <h2 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white">
-                    {selectedPromo?.title} · <span className="text-lime-500">{selectedPromo?.price}</span>
+                    {selectedPromo?.title} · <span className="text-lime-500">{formatPrice(priceCentsFor(selectedPromo?.id))}</span>
                   </h2>
                 </div>
                 <button 
@@ -503,6 +576,34 @@ const PromosPage = () => {
 
               {/* Modal Body */}
               <div className="flex-1 overflow-y-auto p-6 md:p-10">
+                {reserveSuccess ? (
+                  /* Reserve & pay-at-studio confirmation */
+                  <div className="max-w-2xl mx-auto text-center py-8">
+                    <div className="w-16 h-16 bg-lime-500 flex items-center justify-center mx-auto mb-8">
+                      <Check className="w-8 h-8 text-black" />
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter mb-4">
+                      Spots Reserved!
+                    </h3>
+                    <p className="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-8 leading-relaxed">
+                      Your two spots for {selectedPromo?.title} are held. Please pay{" "}
+                      <span className="text-lime-600 dark:text-lime-400">${reserveSuccess.amount}</span> at the studio on arrival.
+                    </p>
+                    <div className="inline-block border border-black/10 dark:border-white/10 px-6 py-3 mb-10">
+                      <div className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">Reference</div>
+                      <div className="font-black uppercase tracking-widest text-sm">{reserveSuccess.reference}</div>
+                    </div>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setIsModalOpen(false)}
+                        className="px-12 py-5 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-lime-500 hover:text-black transition-all"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  </div>
+                ) : (
                 <form onSubmit={handleSubmit} className="space-y-12">
                   
                   {/* Step 0: Date Selection */}
@@ -837,16 +938,30 @@ const PromosPage = () => {
                         <LoadingIcon size="sm" className="!flex-row gap-2 !mt-0" />
                       ) : (
                         <>
-                          PROCEED TO PAYMENT
+                          {promoConfig.bookingMode === "reserve_only" ? "RESERVE MY SPOTS" : "PROCEED TO PAYMENT"}
                           <ArrowRight className="w-5 h-5" />
                         </>
                       )}
                     </button>
+
+                    {/* In "both" mode, paying online is primary and reserving is the secondary option. */}
+                    {promoConfig.bookingMode === "both" && (
+                      <button
+                        type="button"
+                        onClick={() => submitDuo("reserve")}
+                        disabled={processing || !formData.classId}
+                        className="mt-4 text-[11px] font-black uppercase tracking-widest text-zinc-500 hover:text-lime-600 dark:hover:text-lime-400 underline decoration-2 underline-offset-4 disabled:opacity-30 transition-colors"
+                      >
+                        Or reserve &amp; pay at the studio
+                      </button>
+                    )}
+
                     <p className="mt-6 text-[10px] font-black uppercase tracking-widest text-zinc-500">
                       By proceeding, you agree to our <Link href="/terms" className="text-lime-600 dark:text-lime-400 hover:underline">Terms & Conditions</Link>.
                     </p>
                   </div>
                 </form>
+                )}
               </div>
             </motion.div>
           </div>

@@ -11,6 +11,7 @@ import {
   placeholderGuestEmailFromPhone,
   resolveGuestEmail,
 } from '@/lib/guest-email-placeholder'
+import { getDuoPromoConfig, isDuoPromoExpired } from '@/lib/duo-promo-config'
 
 export const dynamic = 'force-dynamic'
 
@@ -102,6 +103,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const { classId, promoId, participant1, participant2 } = validationResult.data
+
+    // Load admin-editable promo config (price, booking mode, active window)
+    const promoConfig = await getDuoPromoConfig()
+    if (!promoConfig.active || isDuoPromoExpired(promoConfig)) {
+      return NextResponse.json(
+        { error: 'Promo Unavailable', message: 'This promo is not currently available.' },
+        { status: 400 }
+      )
+    }
+    if (promoConfig.bookingMode === 'reserve_only') {
+      return NextResponse.json(
+        { error: 'Online Payment Disabled', message: 'Online payment is turned off for this promo. Please reserve your spot and pay at the studio.' },
+        { status: 400 }
+      )
+    }
 
     const samePhone =
       participant1.phone.trim().replace(/\s+/g, '') === participant2.phone.trim().replace(/\s+/g, '')
@@ -199,8 +215,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       draftBookingIds.push(draftBooking.id)
     }
 
-    // 3. Create payment record
-    const amountCents = promoId === 'indoor-duo' ? 2300 : 3500
+    // 3. Create payment record (price comes from admin-editable config)
+    const amountCents = promoId === 'indoor-duo' ? promoConfig.indoorPriceCents : promoConfig.outdoorPriceCents
     const amount = (amountCents / 100).toFixed(2)
     const currency = 'SGD'
     const referenceNumber = `DUO-${promoId}-${Date.now()}`
