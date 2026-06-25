@@ -13,6 +13,45 @@ function TrialBookingSuccessContent() {
   const [loading, setLoading] = useState(true);
   const [bookingData, setBookingData] = useState<any>(null);
 
+  // Post-payment waiver capture (NRIC + signature)
+  const [nric, setNric] = useState("");
+  const [signature, setSignature] = useState("");
+  const [guardianSignature, setGuardianSignature] = useState("");
+  const [savingWaiver, setSavingWaiver] = useState(false);
+  const [waiverSaved, setWaiverSaved] = useState(false);
+  const [waiverError, setWaiverError] = useState<string | null>(null);
+
+  const submitWaiver = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setWaiverError(null);
+    if (!nric.trim()) { setWaiverError("Please enter the last 4 of your NRIC"); return; }
+    if (!signature.trim()) { setWaiverError("Please type your full name as signature"); return; }
+    if (bookingData?.isKids && !guardianSignature.trim()) {
+      setWaiverError("Guardian signature is required for kids classes");
+      return;
+    }
+    setSavingWaiver(true);
+    try {
+      const res = await fetch("/api/trial-booking/waiver", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentId,
+          nricLast4: nric.trim(),
+          signature: signature.trim(),
+          ...(bookingData?.isKids ? { guardianSignature: guardianSignature.trim() } : {}),
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok || !result.success) throw new Error(result.message || "Failed to save waiver");
+      setWaiverSaved(true);
+    } catch (err) {
+      setWaiverError(err instanceof Error ? err.message : "Failed to save waiver. Please try again.");
+    } finally {
+      setSavingWaiver(false);
+    }
+  };
+
   useEffect(() => {
     if (!paymentId) {
       router.push("/trial-booking");
@@ -33,6 +72,7 @@ function TrialBookingSuccessContent() {
 
         if (result.success && result.data) {
           setBookingData(result.data);
+          if (result.data.guestName) setSignature((prev) => prev || result.data.guestName);
         }
       } catch (error) {
         console.error("Error fetching booking:", error);
@@ -216,6 +256,83 @@ function TrialBookingSuccessContent() {
                 )}
               </div>
             </div>
+          )}
+
+          {bookingData && (bookingData.waiverComplete || waiverSaved) && (
+            <div className="bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700 rounded-lg p-4 mb-6 flex items-center justify-center gap-2">
+              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <p className="text-sm font-semibold text-green-800 dark:text-green-300">Waiver signed — you're all set!</p>
+            </div>
+          )}
+
+          {bookingData && !bookingData.waiverComplete && !waiverSaved && (
+            <form
+              onSubmit={submitWaiver}
+              className="bg-white dark:bg-gray-900 border-2 border-green-300 dark:border-green-700 rounded-lg p-6 mb-6 text-left"
+            >
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">One last step: sign your waiver</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Required before your class. Takes 10 seconds.
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="nric" className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                    Last 4 characters of NRIC *
+                  </label>
+                  <input
+                    id="nric"
+                    type="text"
+                    maxLength={4}
+                    value={nric}
+                    onChange={(e) => setNric(e.target.value.toUpperCase())}
+                    placeholder="E.G. 123A"
+                    className="w-full bg-gray-50 dark:bg-black border border-gray-300 dark:border-gray-700 rounded-md px-4 py-3 text-sm font-bold uppercase tracking-widest focus:border-green-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="signature" className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                    Signature (type full name) *
+                  </label>
+                  <input
+                    id="signature"
+                    type="text"
+                    value={signature}
+                    onChange={(e) => setSignature(e.target.value)}
+                    placeholder="YOUR FULL NAME"
+                    style={{ fontFamily: "'Dancing Script', cursive" }}
+                    className="w-full bg-gray-50 dark:bg-black border border-gray-300 dark:border-gray-700 rounded-md px-4 py-3 text-2xl font-bold text-green-600 dark:text-green-400 focus:border-green-500 outline-none"
+                  />
+                </div>
+                {bookingData.isKids && (
+                  <div>
+                    <label htmlFor="guardianSignature" className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                      Guardian signature (type full name) *
+                    </label>
+                    <input
+                      id="guardianSignature"
+                      type="text"
+                      value={guardianSignature}
+                      onChange={(e) => setGuardianSignature(e.target.value)}
+                      placeholder="GUARDIAN FULL NAME"
+                      style={{ fontFamily: "'Dancing Script', cursive" }}
+                      className="w-full bg-gray-50 dark:bg-black border border-gray-300 dark:border-gray-700 rounded-md px-4 py-3 text-2xl font-bold text-green-600 dark:text-green-400 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                )}
+                {waiverError && (
+                  <p className="text-sm font-semibold text-red-600">{waiverError}</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={savingWaiver}
+                  className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                >
+                  {savingWaiver ? "Saving…" : "Sign & Complete"}
+                </button>
+              </div>
+            </form>
           )}
 
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-6">

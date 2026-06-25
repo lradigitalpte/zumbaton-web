@@ -184,3 +184,59 @@ Add a dedicated section/page describing ThunderBolt Tabata workout with benefits
 - Is WhatsApp confirmation needed in addition to email?
 - Do we keep any legacy URLs, or redirect all old branding routes immediately?
 
+Summarize the issue and suggest fixes for the following lint item:
+Title: Security Definer View
+Entity: public.upcoming_classes_summary
+Schema: public
+Issue Details: View `public.upcoming_classes_summary` is defined with the SECURITY DEFINER property
+Description: Detects views defined with the SECURITY DEFINER property. These views enforce Postgres permissions and row level security policies (RLS) of the view creator, rather than that of the querying user...Summarize the issue and suggest fixes for the following lint item:
+Title: Security Definer View
+Entity: public.admin_dashboard_metrics
+Schema: public
+Issue Details: View `public.admin_dashboard_metrics` is defined with the SECURITY DEFINER property
+Description: Detects views defined with the SECURITY DEFINER property. These views enforce Postgres permissions and row level security policies (RLS) of the view creator, rather than that of the querying user.. Summarize the issue and suggest fixes for the following lint item:
+Title: Security Definer View
+Entity: public.user_profiles_with_stats
+Schema: public
+Issue Details: View `public.user_profiles_with_stats` is defined with the SECURITY DEFINER property
+Description: Detects views defined with the SECURITY DEFINER property. These views enforce Postgres permissions and row level security policies (RLS) of the view creator, rather than that of the querying user.. Summarize the issue and suggest fixes for the following lint item:
+Title: Security Definer View
+Entity: public.rooms_with_usage
+Schema: public
+Issue Details: View `public.rooms_with_usage` is defined with the SECURITY DEFINER property
+Description: Detects views defined with the SECURITY DEFINER property. These views enforce Postgres permissions and row level security policies (RLS) of the view creator, rather than that of the querying user.. Summarize the issue and suggest fixes for the following lint item:
+Title: Security Definer View
+Entity: public.categories_with_usage
+Schema: public
+Issue Details: View `public.categories_with_usage` is defined with the SECURITY DEFINER property
+Description: Detects views defined with the SECURITY DEFINER property. These views enforce Postgres permissions and row level security policies (RLS) of the view creator, rather than that of the querying user..Summarize the issue and suggest fixes for the following lint item:
+Title: Security Definer View
+Entity: public.user_token_balances
+Schema: public
+Issue Details: View `public.user_token_balances` is defined with the SECURITY DEFINER property
+Description: Detects views defined with the SECURITY DEFINER property. These views enforce Postgres permissions and row level security policies (RLS) of the view creator, rather than that of the querying user.. Summarize the issue and suggest fixes for the following lint item:
+Title: Security Definer View
+Entity: public.user_no_show_counts
+Schema: public
+Issue Details: View `public.user_no_show_counts` is defined with the SECURITY DEFINER property
+Description: Detects views defined with the SECURITY DEFINER property. These views enforce Postgres permissions and row level security policies (RLS) of the view creator, rather than that of the querying user..Summarize the issue and suggest fixes for the following lint item:
+Title: RLS Disabled in Public
+Entity: public.referral_vouchers
+Schema: public
+Issue Details: Table `public.referral_vouchers` is public, but RLS has not been enabled.
+Description: Detects cases where row level security (RLS) has not been enabled on tables in schemas exposed to PostgREST...Summarize the issue and suggest fixes for the following lint item:
+Title: RLS Disabled in Public
+Entity: public.announcements
+Schema: public
+Issue Details: Table `public.announcements` is public, but RLS has not been enabled.
+Description: Detects cases where row level security (RLS) has not been enabled on tables in schemas exposed to PostgREST..Summarize the issue and suggest fixes for the following lint item:
+Title: RLS Disabled in Public
+Entity: public.password_reset_otps
+Schema: public
+Issue Details: Table `public.password_reset_otps` is public, but RLS has not been enabled.
+Description: Detects cases where row level security (RLS) has not been enabled on tables in schemas exposed to PostgREST..Summarize the issue and suggest fixes for the following lint item:
+Title: Security Definer View
+Entity: public.user_no_show_counts
+Schema: public
+Issue Details: View `public.user_no_show_counts` is defined with the SECURITY DEFINER property
+Description: Detects views defined with the SECURITY DEFINER property. These views enforce Postgres permissions and row level security policies (RLS) of the view creator, rather than that of the querying user

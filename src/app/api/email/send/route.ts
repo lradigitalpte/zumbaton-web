@@ -2,7 +2,7 @@
  * Email API Route
  * POST /api/email/send - Send transactional emails
  * 
- * This endpoint is used by the admin app to send emails via the web app's SMTP configuration
+ * This endpoint is used by the admin app to send emails via the web app's Resend configuration
  */
 
 import { NextRequest, NextResponse } from 'next/server'

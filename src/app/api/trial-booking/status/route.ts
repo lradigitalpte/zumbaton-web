@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getTrialBookingEffectiveAgeGroup } from '@/lib/trial-booking-display'
 
 export const dynamic = 'force-dynamic'
 
@@ -152,9 +153,18 @@ export async function GET(request: NextRequest) {
     const booking = bookings && bookings.length > 0 ? bookings[0] : null
     const classData = payment.classes as any
 
+    // Has the post-payment waiver (NRIC + signature) been completed yet?
+    const meta = (payment.metadata as Record<string, unknown>) || {}
+    const nricSaved = typeof meta.nric_last_4 === 'string' && meta.nric_last_4.trim() !== '' && meta.nric_last_4 !== 'PENDING'
+    const isKids = getTrialBookingEffectiveAgeGroup(classData?.title || '', classData?.age_group) === 'kid'
+
     return NextResponse.json({
       success: true,
       data: {
+        paymentId: payment.id,
+        bookingId: booking?.id || null,
+        isKids,
+        waiverComplete: nricSaved,
         className: classData?.title || 'Unknown',
         classDate: classData?.scheduled_at
           ? new Date(classData.scheduled_at).toLocaleDateString('en-SG', {

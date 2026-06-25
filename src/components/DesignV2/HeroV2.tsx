@@ -47,7 +47,11 @@ const HeroV2 = () => {
   return (
     <section ref={containerRef} className="relative min-h-svh w-full overflow-hidden bg-black md:h-dvh">
       <div className="absolute inset-0 w-full h-full">
-        <AnimatePresence mode="wait">
+        {/* initial={false} skips the enter animation on first mount so the LCP hero
+            image renders at full opacity in the SSR HTML and paints immediately,
+            instead of waiting for the JS bundle to hydrate and fade it in.
+            Slide-to-slide transitions still crossfade. */}
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={currentSlide}
             initial={{ opacity: 0, scale: 1.04 }}

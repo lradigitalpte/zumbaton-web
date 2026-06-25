@@ -21,11 +21,11 @@ export default function StartSuccessPage() {
           You&apos;re In
         </div>
         <h1 className="text-4xl sm:text-5xl font-black uppercase italic tracking-tighter leading-[0.9] mb-6">
-          PAYMENT <span className="text-lime-500">DONE!</span>
+          YOU&apos;RE <span className="text-lime-500">ALL SET!</span>
         </h1>
         <p className="text-gray-600 dark:text-zinc-400 font-medium text-sm md:text-base leading-relaxed mb-10">
-          That&apos;s the hard part over. Our team will message you shortly — usually within 24 hours —
-          to lock in a day and time for your 1-for-1 class. Keep an eye on your phone and email.
+          Lovely — you&apos;re booked. Our team will message you as soon as possible
+          to find a day and time for your 1-for-1 class. Keep an eye on your phone and email.
         </p>
 
         <div className="border border-black/10 dark:border-white/10 bg-white dark:bg-zinc-950 p-6 mb-10 text-left">
@@ -34,7 +34,7 @@ export default function StartSuccessPage() {
             <div>
               <div className="font-black uppercase tracking-widest text-sm mb-1">What happens next</div>
               <p className="text-xs font-medium text-gray-600 dark:text-zinc-400 leading-relaxed">
-                We&apos;ll reach out on WhatsApp/phone to schedule you and your friend. A payment receipt
+                We&apos;ll reach out on WhatsApp or phone to schedule you and your dance partner. A receipt
                 has also been emailed to you. No further action needed right now.
               </p>
             </div>

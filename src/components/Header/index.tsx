@@ -145,7 +145,14 @@ const Header = () => {
               >
                 Sign In
               </Link>
-              
+
+              <Link
+                href="/signup"
+                className="hidden whitespace-nowrap px-1.5 py-1.5 text-[11px] font-black uppercase tracking-wide text-white hover:text-lime-400 sm:inline-block sm:px-2.5 sm:text-xs xl:px-4 xl:py-2 xl:text-sm xl:tracking-wider xl:text-white/70 xl:hover:text-lime-500"
+              >
+                Join
+              </Link>
+
               <Link
                 href="/trial-booking"
                 className="bg-lime-500 px-3 py-2 text-center text-[11px] font-black uppercase leading-tight tracking-wide text-black shadow-xl transition-all hover:bg-white sm:px-4 sm:py-2.5 sm:text-xs lg:px-8 lg:py-4 lg:text-sm"
@@ -280,6 +287,13 @@ const Header = () => {
                   onClick={() => setNavbarOpen(false)}
                 >
                   Sign In
+                </Link>
+                <Link
+                  href="/signup"
+                  className="block border border-white/20 py-3 text-center text-xs font-black uppercase tracking-widest text-white transition-colors hover:border-lime-500 hover:text-lime-400"
+                  onClick={() => setNavbarOpen(false)}
+                >
+                  Join — Sign Up
                 </Link>
                 <Link
                   href="/trial-booking"

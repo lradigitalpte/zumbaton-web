@@ -49,10 +49,41 @@ function MagicLinkCallbackContent() {
             const isValid = await checkSession();
             if (isValid) {
               setStatus("success");
-              
-              // Get redirect URL from query params or default to dashboard
-              const redirectTo = searchParams.get("redirectTo") || "/dashboard";
-              
+
+              // For brand-new passwordless signups, persist name/phone carried in
+              // the auth metadata as a resilience fallback (the DB trigger also does
+              // this). Best-effort — never block the redirect.
+              try {
+                const { data: { user } } = await supabase.auth.getUser();
+                const meta = user?.user_metadata || {};
+                if (meta.name || meta.phone) {
+                  await fetch("/api/profile", {
+                    method: "PUT",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${accessToken}`,
+                    },
+                    body: JSON.stringify({ name: meta.name, phone: meta.phone }),
+                  });
+                }
+              } catch (profileErr) {
+                console.warn("[Magic Link Callback] Profile upsert skipped:", profileErr);
+              }
+
+              // Decide destination: incomplete onboarding -> /onboarding.
+              let redirectTo = searchParams.get("redirectTo") || "/dashboard";
+              try {
+                const res = await fetch("/api/onboarding", {
+                  headers: { Authorization: `Bearer ${accessToken}` },
+                });
+                const data = await res.json();
+                if (data?.success && data.data?.completed === false) {
+                  redirectTo = "/onboarding";
+                }
+              } catch (onbErr) {
+                console.warn("[Magic Link Callback] Onboarding check skipped:", onbErr);
+              }
+
               // Small delay to show success message
               setTimeout(() => {
                 router.push(redirectTo);

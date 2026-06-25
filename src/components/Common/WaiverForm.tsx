@@ -14,6 +14,9 @@ interface WaiverFormProps {
   hideTitle?: boolean;
   /** When true, NRIC last 4 is not required (signature + agreement still required) */
   nricOptional?: boolean;
+  /** When false, hide the NRIC + signature inputs and render only the disclaimer +
+   *  agreement checkbox (used pre-payment; identity is collected after payment). */
+  showIdentityFields?: boolean;
 }
 
 export default function WaiverForm({
@@ -23,6 +26,7 @@ export default function WaiverForm({
   wide = false,
   hideTitle = false,
   nricOptional = false,
+  showIdentityFields = true,
 }: WaiverFormProps) {
   const [agreed, setAgreed] = useState(false);
   const [nricLast4, setNricLast4] = useState("");
@@ -132,6 +136,7 @@ export default function WaiverForm({
         </button>
       </div>
 
+      {showIdentityFields && (
       <div
         className={
           wide
@@ -185,8 +190,9 @@ export default function WaiverForm({
           />
         </div>
       </div>
+      )}
 
-      {isMinor && (
+      {showIdentityFields && isMinor && (
         <div className="pt-6 border-t border-black/5 dark:border-white/5 space-y-6">
           <p className="text-[10px] font-black uppercase tracking-widest text-lime-600 dark:text-lime-400">
             Parent or Legal Guardian completing form on behalf of child or minor:

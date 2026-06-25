@@ -192,123 +192,6 @@ export default function StartPage() {
         </div>
       </section>
 
-      {/* ===== Why us ===== */}
-      <section className="py-16 md:py-24 border-b border-black/10 dark:border-white/10">
-        <div className="container px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { icon: Heart, title: "All Levels Welcome", text: "Never danced before? Perfect. Our coaches give modifications so everyone moves at their own pace." },
-              { icon: Sparkles, title: "Certified Coaches", text: "Led by certified instructors with playlists spanning Afrobeats, EDM, Latin, K-Pop and more." },
-              { icon: Users, title: "Better With a Friend", text: "Our current 1-for-1 deal means you and a buddy try a full session together, for one price." },
-            ].map((item, i) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.35 }}
-                className="border border-black/10 dark:border-white/10 bg-white dark:bg-zinc-950 p-8"
-              >
-                <div className="w-12 h-12 bg-lime-500 flex items-center justify-center mb-6">
-                  <item.icon className="w-6 h-6 text-black" />
-                </div>
-                <h3 className="text-xl font-black uppercase italic tracking-tight mb-3">{item.title}</h3>
-                <p className="text-sm font-medium text-gray-600 dark:text-zinc-400 leading-relaxed">{item.text}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ===== Classes ===== */}
-      <section id="classes" className="py-16 md:py-24 scroll-mt-20">
-        <div className="container px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-3xl mb-14"
-          >
-            <div className="text-lime-600 dark:text-lime-400 font-black text-xs uppercase tracking-[0.3em] mb-4">
-              The Classes
-            </div>
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-black uppercase italic tracking-tighter leading-[0.9] mb-6">
-              PICK YOUR <span className="text-lime-500">VIBE</span>
-            </h2>
-            <p className="text-gray-600 dark:text-zinc-400 font-medium text-sm md:text-base leading-relaxed">
-              Every class is a 60-minute dance-fitness session — some lean cardio, some lean strength,
-              all of them fun. Tap any class to see the details, or join below and we&apos;ll help you choose.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
-            {lineup.map((cls, i) => (
-              <motion.div
-                key={cls.slug}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: (i % 3) * 0.08, duration: 0.35 }}
-              >
-                <Link
-                  href={`/classes/${cls.slug}`}
-                  className="group border border-black/10 dark:border-white/10 bg-white dark:bg-zinc-950 overflow-hidden flex flex-col h-full hover:border-lime-500 transition-colors"
-                >
-                  <div className="relative h-32 sm:h-52 overflow-hidden">
-                    <Image
-                      src={cls.image}
-                      alt={cls.name}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="(max-width: 1024px) 50vw, 33vw"
-                    />
-                    <div className="absolute top-0 left-0 bg-lime-500 text-black px-2 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-widest">
-                      {cls.intensity}
-                    </div>
-                  </div>
-                  <div className="p-4 sm:p-6 flex flex-col flex-1">
-                    <h3 className="text-base sm:text-xl font-black uppercase italic tracking-tighter mb-2 leading-none">{cls.name}</h3>
-                    <div className="flex items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest opacity-60 mb-3 sm:mb-4">
-                      <span>{cls.duration}</span>
-                      <span>•</span>
-                      <span>{cls.calories} cal</span>
-                    </div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-zinc-400 leading-relaxed flex-1 line-clamp-4 sm:line-clamp-none">
-                      {cls.shortDescription}
-                    </p>
-                    <span className="mt-4 sm:mt-5 inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-lime-600 dark:text-lime-400 group-hover:gap-3 transition-all">
-                      View class <ArrowRight className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-
-            {/* Kids & family routes to its own page */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.35 }}
-            >
-              <Link
-                href="/zumfamilia"
-                className="group border border-dashed border-black/20 dark:border-white/20 bg-transparent flex flex-col h-full items-center justify-center text-center p-5 sm:p-8 hover:border-lime-500 transition-colors min-h-full"
-              >
-                <Users className="w-7 h-7 sm:w-8 sm:h-8 text-lime-500 mb-3 sm:mb-4" />
-                <h3 className="text-base sm:text-xl font-black uppercase italic tracking-tighter mb-2">Kids &amp; Family?</h3>
-                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-zinc-400 leading-relaxed mb-4 sm:mb-5">
-                  Bring the little ones to One Familia — our family dance sessions.
-                </p>
-                <span className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-lime-600 dark:text-lime-400 group-hover:gap-3 transition-all">
-                  Explore One Familia <ArrowRight className="w-3.5 h-3.5" />
-                </span>
-              </Link>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
       {/* ===== JOIN: pay first, schedule later ===== */}
       <section id="join" className="py-16 md:py-24 bg-black text-white scroll-mt-20">
         <div className="container px-4 sm:px-6 lg:px-8">
@@ -320,21 +203,22 @@ export default function StartPage() {
               viewport={{ once: true }}
             >
               <div className="text-lime-500 font-black text-xs uppercase tracking-[0.3em] mb-4">
-                {promo.live ? "Join Now" : "Booking"}
+                {promo.live ? "Your First Class" : "Booking"}
               </div>
               <h2 className="text-4xl sm:text-5xl md:text-6xl font-black uppercase italic tracking-tighter leading-[0.9] mb-6">
-                PAY NOW.<br />
-                <span className="text-lime-500">DANCE SOON.</span>
+                BRING YOUR PERSON.<br />
+                <span className="text-lime-500">DANCE TOGETHER.</span>
               </h2>
               <p className="text-white/70 font-medium text-sm md:text-base leading-relaxed mb-8">
-                No class to choose, no calendar to figure out. Pay for your first session, and we&apos;ll
-                personally message you to lock in a day and time that works — usually within 24 hours.
+                Enjoy a 1-for-1 session with someone you choose — no class to pick, no calendar to decode.
+                Book your first visit at one simple price, and we&apos;ll message you personally to find a
+                day and time that suits you — as soon as possible.
               </p>
               <ul className="space-y-3">
                 {[
-                  promo.live ? "1-for-1: two people, one price" : "Try any class, your pace",
-                  "We contact you to schedule",
-                  "No hidden fees, ever",
+                  promo.live ? "1-for-1: you + your person, one price" : "Try any class, your pace",
+                  "We reach out to schedule — you just show up",
+                  "Straightforward pricing, no surprises",
                 ].map((t) => (
                   <li key={t} className="flex items-center gap-3 text-xs font-black uppercase tracking-widest">
                     <ShieldCheck className="w-4 h-4 text-lime-500" /> {t}
@@ -342,7 +226,7 @@ export default function StartPage() {
                 ))}
               </ul>
               <p className="mt-8 text-xs font-bold uppercase tracking-widest text-white/50">
-                Want a specific class first?{" "}
+                Curious about the lineup?{" "}
                 <Link href="/classes" className="text-lime-500 hover:underline">Browse all classes</Link>
               </p>
             </motion.div>
@@ -465,10 +349,10 @@ export default function StartPage() {
                   ) : (
                     <>
                       {!payOnline
-                        ? "Reserve my spot"
+                        ? "Book my first class"
                         : promo.paymentTerms === "deposit"
-                          ? `Pay deposit ${formatPrice(chargeCents)} & join`
-                          : `Pay ${formatPrice(chargeCents)} & join`}
+                          ? `Book with ${formatPrice(chargeCents)} deposit`
+                          : `Book for ${formatPrice(chargeCents)}`}
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
@@ -478,7 +362,7 @@ export default function StartPage() {
                     ? "No payment now · pay at the studio · we'll message you to schedule"
                     : promo.paymentTerms === "deposit" && balanceCents > 0
                       ? `${formatPrice(chargeCents)} now via HitPay · ${formatPrice(balanceCents)} at the studio`
-                      : "Secure payment via HitPay · we'll message you to schedule"}{" "}
+                      : "Checkout via HitPay · we'll message you to find a time"}{" "}
                   · <Link href="/terms" className="text-lime-500 hover:underline">Terms</Link>
                 </p>
               </motion.form>
@@ -510,6 +394,123 @@ export default function StartPage() {
         </div>
       </section>
 
+      {/* ===== Classes ===== */}
+      <section id="classes" className="py-16 md:py-24 scroll-mt-20">
+        <div className="container px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-3xl mb-14"
+          >
+            <div className="text-lime-600 dark:text-lime-400 font-black text-xs uppercase tracking-[0.3em] mb-4">
+              The Classes
+            </div>
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-black uppercase italic tracking-tighter leading-[0.9] mb-6">
+              PICK YOUR <span className="text-lime-500">VIBE</span>
+            </h2>
+            <p className="text-gray-600 dark:text-zinc-400 font-medium text-sm md:text-base leading-relaxed">
+              Every class is a 60-minute dance-fitness session — some lean cardio, some lean strength,
+              all of them fun. Tap any class to see the details, or join above and we&apos;ll help you choose.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+            {lineup.map((cls, i) => (
+              <motion.div
+                key={cls.slug}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: (i % 3) * 0.08, duration: 0.35 }}
+              >
+                <Link
+                  href={`/classes/${cls.slug}`}
+                  className="group border border-black/10 dark:border-white/10 bg-white dark:bg-zinc-950 overflow-hidden flex flex-col h-full hover:border-lime-500 transition-colors"
+                >
+                  <div className="relative h-32 sm:h-52 overflow-hidden">
+                    <Image
+                      src={cls.image}
+                      alt={cls.name}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width: 1024px) 50vw, 33vw"
+                    />
+                    <div className="absolute top-0 left-0 bg-lime-500 text-black px-2 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-widest">
+                      {cls.intensity}
+                    </div>
+                  </div>
+                  <div className="p-4 sm:p-6 flex flex-col flex-1">
+                    <h3 className="text-base sm:text-xl font-black uppercase italic tracking-tighter mb-2 leading-none">{cls.name}</h3>
+                    <div className="flex items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest opacity-60 mb-3 sm:mb-4">
+                      <span>{cls.duration}</span>
+                      <span>•</span>
+                      <span>{cls.calories} cal</span>
+                    </div>
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-zinc-400 leading-relaxed flex-1 line-clamp-4 sm:line-clamp-none">
+                      {cls.shortDescription}
+                    </p>
+                    <span className="mt-4 sm:mt-5 inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-lime-600 dark:text-lime-400 group-hover:gap-3 transition-all">
+                      View class <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+
+            {/* Kids & family routes to its own page */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.35 }}
+            >
+              <Link
+                href="/zumfamilia"
+                className="group border border-dashed border-black/20 dark:border-white/20 bg-transparent flex flex-col h-full items-center justify-center text-center p-5 sm:p-8 hover:border-lime-500 transition-colors min-h-full"
+              >
+                <Users className="w-7 h-7 sm:w-8 sm:h-8 text-lime-500 mb-3 sm:mb-4" />
+                <h3 className="text-base sm:text-xl font-black uppercase italic tracking-tighter mb-2">Kids &amp; Family?</h3>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-zinc-400 leading-relaxed mb-4 sm:mb-5">
+                  Bring the little ones to One Familia — our family dance sessions.
+                </p>
+                <span className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-lime-600 dark:text-lime-400 group-hover:gap-3 transition-all">
+                  Explore One Familia <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== Why us ===== */}
+      <section className="py-16 md:py-24 border-b border-black/10 dark:border-white/10">
+        <div className="container px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { icon: Heart, title: "All Levels Welcome", text: "Never danced before? Perfect. Our coaches give modifications so everyone moves at their own pace." },
+              { icon: Sparkles, title: "Certified Coaches", text: "Led by certified instructors with playlists spanning Afrobeats, EDM, Latin, K-Pop and more." },
+              { icon: Users, title: "Better With a Friend", text: "Our 1-for-1 sessions are built for two — bring your partner, mate, or favourite dance buddy and enjoy a full class together, one price." },
+            ].map((item, i) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.35 }}
+                className="border border-black/10 dark:border-white/10 bg-white dark:bg-zinc-950 p-8"
+              >
+                <div className="w-12 h-12 bg-lime-500 flex items-center justify-center mb-6">
+                  <item.icon className="w-6 h-6 text-black" />
+                </div>
+                <h3 className="text-xl font-black uppercase italic tracking-tight mb-3">{item.title}</h3>
+                <p className="text-sm font-medium text-gray-600 dark:text-zinc-400 leading-relaxed">{item.text}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ===== How it works ===== */}
       <section className="py-16 md:py-24">
         <div className="container px-4 sm:px-6 lg:px-8 max-w-4xl">
@@ -518,9 +519,9 @@ export default function StartPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {[
-              { step: "01", text: "Pay for your first session — takes a minute" },
-              { step: "02", text: "We message you to pick a day & time" },
-              { step: "03", text: "Show up and dance" },
+              { step: "01", text: "Book your first 1-for-1 session — quick and easy" },
+              { step: "02", text: "We message you to find a time that works" },
+              { step: "03", text: "Show up together and dance" },
             ].map((s) => (
               <div key={s.step} className="flex flex-col items-center text-center">
                 <div className="w-14 h-14 bg-black dark:bg-white text-lime-500 dark:text-black flex items-center justify-center font-black text-xl italic mb-4">
@@ -549,7 +550,7 @@ export default function StartPage() {
             <ArrowRight className="w-4 h-4" />
           </a>
           <p className="mt-6 text-[11px] font-black uppercase tracking-widest text-black/60">
-            Pay first · we message you to schedule · all levels welcome
+            Book first · we sort the schedule together · all levels welcome
           </p>
         </div>
       </section>

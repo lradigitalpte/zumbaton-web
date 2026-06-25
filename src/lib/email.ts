@@ -1,9 +1,9 @@
 /**
  * Email Service
- * Reusable email utility for sending emails via SMTP
+ * Reusable email utility for sending emails via Resend
  */
 
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 
 export interface SendEmailOptions {
   to: string | string[]
@@ -43,60 +43,81 @@ export interface PaymentAlertEmailData {
 }
 
 /**
- * Create a reusable email transporter
- * Uses SMTP configuration from environment variables
+ * Resend client (lazy singleton)
  */
-function createTransporter() {
-  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com'
-  const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10)
-  const smtpUser = process.env.SMTP_USER || process.env.SMTP_USERNAME
-  const smtpPassword = process.env.SMTP_PASSWORD
-  const smtpSecure = process.env.SMTP_SECURE === 'true' || smtpPort === 465
+function getResendClient(): Resend {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    throw new Error('RESEND_API_KEY is not configured.')
+  }
+  return new Resend(apiKey)
+}
 
-  if (!smtpUser || !smtpPassword) {
-    throw new Error('SMTP credentials not configured. Please set SMTP_USER and SMTP_PASSWORD environment variables.')
+function getFromAddress(override?: string): string {
+  if (override) return override
+
+  const fromEmail =
+    process.env.EMAIL_FROM ||
+    process.env.RESEND_FROM_EMAIL ||
+    process.env.SMTP_FROM_EMAIL
+
+  if (!fromEmail) {
+    throw new Error('EMAIL_FROM is not configured.')
   }
 
-  return nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpSecure, // true for 465, false for other ports
-    auth: {
-      user: smtpUser,
-      pass: smtpPassword,
-    },
-  })
+  const fromName =
+    process.env.EMAIL_FROM_NAME ||
+    process.env.RESEND_FROM_NAME ||
+    process.env.SMTP_FROM_NAME ||
+    'One Step Fitness'
+
+  return `${fromName} <${fromEmail}>`
+}
+
+function normalizeRecipients(to: string | string[]): string[] {
+  const list = Array.isArray(to) ? to : [to]
+  return list.map((entry) => entry.trim()).filter(Boolean)
 }
 
 /**
- * Send an email using SMTP
- * 
- * @param options - Email options
- * @returns Promise with email result
+ * Send an email using Resend
  */
 export async function sendEmail(options: SendEmailOptions): Promise<EmailResult> {
   try {
-    const transporter = createTransporter()
-    
-    const fromEmail = options.from || process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER
-    const fromName = process.env.SMTP_FROM_NAME || 'One Step Fitness'
-    const from = fromName ? `"${fromName}" <${fromEmail}>` : fromEmail
+    const resend = getResendClient()
+    const from = getFromAddress(options.from)
+    const to = normalizeRecipients(options.to)
+    const replyToEmail =
+      options.replyTo ||
+      process.env.EMAIL_REPLY_TO ||
+      process.env.EMAIL_FROM ||
+      process.env.RESEND_FROM_EMAIL ||
+      process.env.SMTP_FROM_EMAIL
 
-    const mailOptions = {
+    const { data, error } = await resend.emails.send({
       from,
-      to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+      to,
       subject: options.subject,
       html: options.html,
-      text: options.text || options.html.replace(/<[^>]*>/g, ''), // Strip HTML for text version
-      replyTo: options.replyTo || fromEmail,
-      attachments: options.attachments || [],
-    }
+      text: options.text || options.html.replace(/<[^>]*>/g, ''),
+      replyTo: replyToEmail,
+      attachments: options.attachments?.map((attachment) => ({
+        filename: attachment.filename,
+        content: attachment.content,
+      })),
+    })
 
-    const info = await transporter.sendMail(mailOptions)
+    if (error) {
+      console.error('Error sending email:', error)
+      return {
+        success: false,
+        error: error.message || 'Failed to send email',
+      }
+    }
 
     return {
       success: true,
-      messageId: info.messageId,
+      messageId: data?.id,
     }
   } catch (error) {
     console.error('Error sending email:', error)

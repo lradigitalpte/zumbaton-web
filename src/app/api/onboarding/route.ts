@@ -146,6 +146,17 @@ export async function PUT(request: NextRequest) {
       })
     }
 
+    // Anyone who self-completes onboarding is a public signup. OAuth signups start
+    // with a NULL signup_source; only fill it when unset so admin-created accounts
+    // (already tagged 'admin') are never relabeled.
+    if (completed) {
+      await supabaseAdmin
+        .from('user_profiles')
+        .update({ signup_source: 'public' })
+        .eq('id', user.id)
+        .is('signup_source', null)
+    }
+
     return NextResponse.json({
       success: true,
       data: {

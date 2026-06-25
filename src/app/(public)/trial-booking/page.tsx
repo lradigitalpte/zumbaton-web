@@ -89,7 +89,7 @@ export default function TrialBookingPage() {
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [dateFilter, setDateFilter] = useState<string>(() => formatYmdLocal(new Date()));
   const [dateFilterTo, setDateFilterTo] = useState<string>("");
-  const [dateRangeMode, setDateRangeMode] = useState<"day" | "week">("day");
+  const [dateRangeMode, setDateRangeMode] = useState<"day" | "week">("week");
   const [ageGroupFilter, setAgeGroupFilter] = useState<'all' | 'adult' | 'kid' | 'outdoor'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [instructorProfiles, setInstructorProfiles] = useState<Record<string, InstructorProfile>>({});
@@ -314,14 +314,12 @@ export default function TrialBookingPage() {
         toast.error("You must confirm that a parent/guardian will be on premises");
         return;
       }
-      if (!guardianData.guardianSignature) {
-        toast.error("Guardian signature is required");
-        return;
-      }
     }
 
-    if (!formData.waiverAgreed || !formData.nricLast4 || !formData.signature) {
-      toast.error("You must agree to the waiver and provide NRIC/Signature");
+    // NRIC + signature are collected on the success page after payment.
+    // Only the waiver agreement is required to proceed to payment.
+    if (!formData.waiverAgreed) {
+      toast.error("You must agree to the waiver to continue");
       return;
     }
 
@@ -332,14 +330,11 @@ export default function TrialBookingPage() {
         guestName: formData.guestName.trim(),
         dateOfBirth: dateOfBirthIso,
         gender: formData.gender,
-        nricLast4: formData.nricLast4,
-        signature: formData.signature,
       };
       if (isKidsClass) {
         requestBody.guardianName = guardianData.guardianName.trim();
         requestBody.guardianPhone = guardianData.guardianPhone.trim();
         requestBody.guardianOnPremises = guardianData.guardianOnPremises;
-        requestBody.guardianSignature = guardianData.guardianSignature;
         requestBody.guestPhone = guardianData.guardianPhone.trim();
       } else {
         requestBody.guestPhone = formData.guestPhone.trim();
@@ -361,14 +356,9 @@ export default function TrialBookingPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f6f4ee] dark:bg-black">
-        <LoadingIcon size="md" showLabel />
-      </div>
-    );
-  }
-
+  // No full-page spinner: render the hero + filters immediately and show
+  // skeleton cards in the list area while classes load. This removes the
+  // blank-page wait on slow connections and the layout shift it caused.
   return (
     <>
       <TrialBookingHero />
@@ -487,8 +477,11 @@ export default function TrialBookingPage() {
                           onClick={() => {
                             setAgeGroupFilter(tab);
                             setCurrentPage(1);
-                            if (tab === "kid") setDateRangeMode("week");
-                            else setDateRangeMode("day");
+                            // Default to the whole week for All/Adults/Kids so the
+                            // list isn't empty when today has no classes. Outdoor
+                            // keeps its own one-day-at-a-time flow.
+                            if (tab === "outdoor") setDateRangeMode("day");
+                            else setDateRangeMode("week");
                           }}
                           className={`min-h-[38px] flex-1 px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all duration-300 border-2 sm:flex-none sm:px-5 ${
                             ageGroupFilter === tab
@@ -507,11 +500,28 @@ export default function TrialBookingPage() {
                   {dateRangeMode === "week" && weekRangeSummary && (
                     <p className="not-italic text-zinc-500">{weekRangeSummary.label}</p>
                   )}
-                  <p>{filteredClasses.length} session{filteredClasses.length !== 1 ? "s" : ""} available</p>
+                  <p>{loading ? "Loading…" : `${filteredClasses.length} session${filteredClasses.length !== 1 ? "s" : ""} available`}</p>
                 </div>
               </div>
 
-              {filteredClasses.length === 0 ? (
+              {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="border-2 border-black/10 dark:border-white/10 bg-white/50 dark:bg-zinc-900/50 p-6 animate-pulse"
+                    >
+                      <div className="h-5 w-2/3 bg-zinc-200 dark:bg-zinc-800 mb-4" />
+                      <div className="h-4 w-1/2 bg-zinc-200 dark:bg-zinc-800 mb-2" />
+                      <div className="h-4 w-1/3 bg-zinc-200 dark:bg-zinc-800 mb-6" />
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-zinc-200 dark:bg-zinc-800" />
+                        <div className="h-4 w-24 bg-zinc-200 dark:bg-zinc-800" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : filteredClasses.length === 0 ? (
                 <div className="bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 p-20 text-center shadow-xl">
                   <p className="text-xl font-black uppercase italic tracking-tighter text-zinc-400">
                     No classes found for this selection.
@@ -791,12 +801,13 @@ export default function TrialBookingPage() {
                           LIABILITY <span className="text-lime-500">WAIVER</span>
                         </h2>
                         <p className="text-xs font-black uppercase tracking-widest text-zinc-500">
-                          Please read and sign the waiver to proceed with your booking
+                          Please read and agree to the waiver to proceed. You&apos;ll sign right after payment.
                         </p>
                       </div>
 
                       <WaiverForm
                         wide
+                        showIdentityFields={false}
                         participantName={formData.guestName}
                         isMinor={
                           getTrialBookingEffectiveAgeGroup(selectedClass.title, selectedClass.age_group) === "kid"
@@ -1018,10 +1029,11 @@ function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData
 
           <div className="pt-8 border-t border-black/10 dark:border-white/10">
             <p className="mb-4 text-[10px] font-black uppercase tracking-widest text-zinc-500">
-              Last step: read the disclaimer, then sign and confirm below.
+              Last step: read the disclaimer and agree below. You&apos;ll sign right after payment.
             </p>
             <WaiverForm
               wide
+              showIdentityFields={false}
               participantName={formData.guestName}
               isMinor={effectiveKid}
               onAgreementChange={(agreed, details) => {

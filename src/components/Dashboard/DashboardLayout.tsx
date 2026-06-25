@@ -38,6 +38,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [sessionChecked, setSessionChecked] = useState(false);
   const hasRedirectedRef = useRef(false);
   const hasCheckedActiveRef = useRef(false);
+  const hasCheckedOnboardingRef = useRef(false);
 
   // Check if sidebar is collapsed from Sidebar component (via localStorage or state)
   useEffect(() => {
@@ -111,6 +112,33 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
     checkUserActive();
   }, [isLoading, isAuthenticated, user, signOut]);
+
+  // Hard onboarding gate: authenticated users who haven't completed onboarding
+  // are sent to /onboarding (a public route, so no redirect loop). Runs once,
+  // in the background, and fails open so a transient error never locks anyone out.
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      if (hasCheckedOnboardingRef.current) return;
+      if (isLoading || !isAuthenticated || !user) return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const res = await fetch('/api/onboarding', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const data = await res.json();
+        hasCheckedOnboardingRef.current = true;
+        if (data?.success && data.data?.completed === false) {
+          router.replace('/onboarding');
+        }
+      } catch (error) {
+        console.warn('[Dashboard] Onboarding check skipped:', error);
+        hasCheckedOnboardingRef.current = true;
+      }
+    };
+
+    checkOnboarding();
+  }, [isLoading, isAuthenticated, user, router]);
 
   // Check session directly as a fallback to avoid race conditions
   useEffect(() => {

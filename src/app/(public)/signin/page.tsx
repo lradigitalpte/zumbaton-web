@@ -6,18 +6,18 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/Toast";
-import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
 import LoadingIcon from "@/components/Common/LoadingIcon";
+import GoogleIcon from "@/components/Common/GoogleIcon";
 
 function SigninPageContent() {
-  const { openWhatsAppModal } = useWhatsAppModal();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { signIn, isLoading: authLoading, isAuthenticated, user } = useAuth();
+  const { signIn, signInWithGoogle, isLoading: authLoading, isAuthenticated, user } = useAuth();
   const toast = useToast();
-  
+
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -137,6 +137,36 @@ function SigninPageContent() {
                   SIGN <span className="text-lime-500">IN</span>
                 </h1>
 
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setGoogleLoading(true);
+                    try {
+                      await signInWithGoogle();
+                    } catch (err) {
+                      toast.error("Google sign-in failed", err instanceof Error ? err.message : "Please try again.");
+                      setGoogleLoading(false);
+                    }
+                  }}
+                  disabled={googleLoading}
+                  className="w-full mb-8 flex items-center justify-center gap-3 py-5 bg-white dark:bg-zinc-900 border-2 border-black/15 dark:border-white/20 text-gray-900 dark:text-white font-black uppercase tracking-[0.2em] text-sm hover:border-lime-500 transition-colors disabled:opacity-50"
+                >
+                  {googleLoading ? (
+                    <LoadingIcon size="sm" className="!flex-row gap-2 !mt-0" />
+                  ) : (
+                    <>
+                      <GoogleIcon className="w-5 h-5" />
+                      Continue with Google
+                    </>
+                  )}
+                </button>
+
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="h-px flex-1 bg-black/10 dark:bg-white/10" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">or</span>
+                  <div className="h-px flex-1 bg-black/10 dark:bg-white/10" />
+                </div>
+
                 <form onSubmit={handleSubmit} className="space-y-8">
                   <div className="space-y-2">
                     <label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
@@ -238,13 +268,13 @@ function SigninPageContent() {
                 <p className="text-lg font-medium uppercase tracking-tight text-white/70 max-w-sm mx-auto mb-12">
                   Ready for another session? Join the community and keep moving forward.
                 </p>
-                <button
-                  onClick={openWhatsAppModal}
+                <Link
+                  href="/signup"
                   className="inline-flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-lime-500 border-b-2 border-lime-500 pb-1 hover:text-white hover:border-white transition-colors"
                 >
                   NO ACCOUNT YET? SIGNUP
                   <ArrowRight className="w-4 h-4" />
-                </button>
+                </Link>
               </motion.div>
             </div>
 

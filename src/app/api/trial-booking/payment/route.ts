@@ -49,8 +49,10 @@ const TrialBookingPaymentSchema = z.object({
     { message: 'Invalid date of birth' }
   ),
   gender: z.enum(['male', 'female', 'other', 'prefer_not_to_say']),
-  nricLast4: z.string().length(4, 'NRIC last 4 characters required'),
-  signature: z.string().min(1, 'Signature is required'),
+  // NRIC + signature are collected after payment on the success page, so they are
+  // optional here. Pre-payment only requires the waiver agreement (enforced client-side).
+  nricLast4: z.string().max(4).optional(),
+  signature: z.string().optional(),
   // Guardian fields (required for kids classes)
   guardianName: z.string().min(1, 'Guardian name is required').max(200).optional(),
   guardianEmail: z.string().max(200).optional(),
@@ -227,8 +229,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       status: 'draft', // Draft status for incomplete bookings
       tokens_used: 0,
       booked_at: new Date().toISOString(),
-      // Store waiver details and gender in cancellation_reason for easy admin visibility
-      cancellation_reason: `NRIC: ${nricLast4} | Sign: ${signature} | Gender: ${gender}${guardianSignature ? ` | Guardian Sign: ${guardianSignature}` : ''}`,
+      // Store waiver details and gender in cancellation_reason for easy admin visibility.
+      // NRIC/Signature are filled in after payment (success page) -> show as PENDING until then.
+      cancellation_reason: `NRIC: ${nricLast4 || 'PENDING'} | Sign: ${signature || 'PENDING'} | Gender: ${gender}${guardianSignature ? ` | Guardian Sign: ${guardianSignature}` : ''}`,
     }
 
     // Add guardian information for kids sessions
