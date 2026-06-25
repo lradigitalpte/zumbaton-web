@@ -2,37 +2,101 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
 import { getSupabaseClient } from "@/lib/supabase";
 import Image from "next/image";
 
 function MagicLinkCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { checkSession } = useAuth();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   useEffect(() => {
+    const finishSignIn = async (accessToken: string) => {
+      setStatus("success");
+
+      try {
+        const { data: { user } } = await getSupabaseClient().auth.getUser();
+        const meta = user?.user_metadata || {};
+        if (meta.name || meta.phone) {
+          await fetch("/api/profile", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ name: meta.name, phone: meta.phone }),
+          });
+        }
+      } catch (profileErr) {
+        console.warn("[Auth Callback] Profile upsert skipped:", profileErr);
+      }
+
+      let redirectTo = searchParams.get("redirectTo") || "/dashboard";
+      try {
+        const res = await fetch("/api/onboarding", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const data = await res.json();
+        if (data?.success && data.data?.completed === false) {
+          redirectTo = "/onboarding";
+        }
+      } catch (onbErr) {
+        console.warn("[Auth Callback] Onboarding check skipped:", onbErr);
+      }
+
+      // Hard navigation avoids auth-context race conditions on /dashboard.
+      window.location.replace(redirectTo);
+    };
+
     const handleCallback = async () => {
       try {
         const supabase = getSupabaseClient();
-        
-        // Get the hash fragment from URL (Supabase magic links use hash fragments)
+
+        const queryError = searchParams.get("error");
+        const queryErrorDescription = searchParams.get("error_description");
+        if (queryError) {
+          setErrorMessage(queryErrorDescription || queryError || "Authentication failed");
+          setStatus("error");
+          return;
+        }
+
+        // Google OAuth (PKCE) returns ?code= on the callback URL.
+        const authCode = searchParams.get("code");
+        if (authCode) {
+          const { data: { session }, error: sessionError } =
+            await supabase.auth.exchangeCodeForSession(authCode);
+
+          if (sessionError) {
+            setErrorMessage(sessionError.message || "Failed to create session");
+            setStatus("error");
+            return;
+          }
+
+          if (session?.access_token) {
+            await finishSignIn(session.access_token);
+            return;
+          }
+
+          setErrorMessage("No session created");
+          setStatus("error");
+          return;
+        }
+
+        // Magic links use hash fragments (#access_token=...).
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get("access_token");
         const refreshToken = hashParams.get("refresh_token");
-        const error = hashParams.get("error");
-        const errorDescription = hashParams.get("error_description");
+        const hashError = hashParams.get("error");
+        const hashErrorDescription = hashParams.get("error_description");
 
-        if (error) {
-          setErrorMessage(errorDescription || error || "Authentication failed");
+        if (hashError) {
+          setErrorMessage(hashErrorDescription || hashError || "Authentication failed");
           setStatus("error");
           return;
         }
 
         if (accessToken && refreshToken) {
-          // Set the session using the tokens from the URL
           const { data: { session }, error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
@@ -44,72 +108,27 @@ function MagicLinkCallbackContent() {
             return;
           }
 
-          if (session) {
-            // Verify session is valid
-            const isValid = await checkSession();
-            if (isValid) {
-              setStatus("success");
-
-              // For brand-new passwordless signups, persist name/phone carried in
-              // the auth metadata as a resilience fallback (the DB trigger also does
-              // this). Best-effort — never block the redirect.
-              try {
-                const { data: { user } } = await supabase.auth.getUser();
-                const meta = user?.user_metadata || {};
-                if (meta.name || meta.phone) {
-                  await fetch("/api/profile", {
-                    method: "PUT",
-                    headers: {
-                      "Content-Type": "application/json",
-                      Authorization: `Bearer ${accessToken}`,
-                    },
-                    body: JSON.stringify({ name: meta.name, phone: meta.phone }),
-                  });
-                }
-              } catch (profileErr) {
-                console.warn("[Magic Link Callback] Profile upsert skipped:", profileErr);
-              }
-
-              // Decide destination: incomplete onboarding -> /onboarding.
-              let redirectTo = searchParams.get("redirectTo") || "/dashboard";
-              try {
-                const res = await fetch("/api/onboarding", {
-                  headers: { Authorization: `Bearer ${accessToken}` },
-                });
-                const data = await res.json();
-                if (data?.success && data.data?.completed === false) {
-                  redirectTo = "/onboarding";
-                }
-              } catch (onbErr) {
-                console.warn("[Magic Link Callback] Onboarding check skipped:", onbErr);
-              }
-
-              // Small delay to show success message
-              setTimeout(() => {
-                router.push(redirectTo);
-              }, 1500);
-            } else {
-              setErrorMessage("Session validation failed");
-              setStatus("error");
-            }
-          } else {
-            setErrorMessage("No session created");
-            setStatus("error");
+          if (session?.access_token) {
+            await finishSignIn(session.access_token);
+            return;
           }
-        } else {
-          // No tokens in URL - might be a direct visit or expired link
-          setErrorMessage("Invalid or expired magic link. Please request a new one.");
+
+          setErrorMessage("No session created");
           setStatus("error");
+          return;
         }
+
+        setErrorMessage("Invalid or expired sign-in link. Please try again.");
+        setStatus("error");
       } catch (error) {
-        console.error("[Magic Link Callback] Error:", error);
+        console.error("[Auth Callback] Error:", error);
         setErrorMessage(error instanceof Error ? error.message : "An unexpected error occurred");
         setStatus("error");
       }
     };
 
     handleCallback();
-  }, [router, searchParams, checkSession]);
+  }, [router, searchParams]);
 
   if (status === "loading") {
     return (
@@ -128,7 +147,7 @@ function MagicLinkCallbackContent() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Verifying your magic link...
+              Verifying your sign-in...
             </h2>
             <p className="text-gray-600 dark:text-gray-400">
               Please wait while we sign you in.

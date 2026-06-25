@@ -4,8 +4,8 @@ import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
 import { ToastProvider } from "@/components/Toast";
-// import { MothersDayPromoBanner } from "@/components/Promo/MothersDayPromoBanner"; // Disabled after Mother's Day
-import { useState, useEffect } from "react";
+import PostLoginRedirect from "@/components/auth/PostLoginRedirect";
+import { Suspense, useState } from "react";
 
 // Suppress React 19 script tag warning from next-themes
 // This is a known issue: https://github.com/pacocoursey/next-themes/issues/385
@@ -115,6 +115,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ToastProvider>
+            <Suspense fallback={null}>
+              <PostLoginRedirect />
+            </Suspense>
             {children}
             {/* <MothersDayPromoBanner /> */}
           </ToastProvider>

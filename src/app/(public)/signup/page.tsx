@@ -36,7 +36,7 @@ const SignupForm = () => {
   const handleGoogle = async () => {
     setGoogleLoading(true);
     try {
-      await signInWithGoogle();
+      await signInWithGoogle(nextPath || '/onboarding');
       // Redirects to Google; control leaves the page on success.
     } catch (err) {
       toast.error("Google sign-in failed", err instanceof Error ? err.message : "Please try again.");

@@ -34,7 +34,7 @@ interface AuthContextType {
   isAuthenticated: boolean
   signIn: (credentials: SignInRequest) => Promise<ApiResponse<SignInResponse>>
   signUp: (data: SignUpRequest) => Promise<ApiResponse<SignUpResponse>>
-  signInWithGoogle: () => Promise<void>
+  signInWithGoogle: (next?: string) => Promise<void>
   signOut: () => Promise<void>
   setUser: (user: UserResponse | null) => void
   checkSession: () => Promise<boolean>
@@ -845,28 +845,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (next?: string) => {
     try {
-      // Add timeout to prevent hanging if Supabase is unresponsive
+      if (typeof window === 'undefined') {
+        throw new Error('Google sign-in is only available in the browser.')
+      }
+
+      const destination =
+        next && next.startsWith('/') ? next : '/dashboard'
+      const callbackUrl = `${window.location.origin}/magic-link-callback?redirectTo=${encodeURIComponent(destination)}`
+
       const oauthPromise = supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : undefined,
+          redirectTo: callbackUrl,
         },
       })
-      
-      const { error } = await withTimeout(
+
+      const { data, error } = await withTimeout(
         oauthPromise,
-        10000, // 10 seconds for OAuth initialization
+        10000,
         'Google sign in timed out. Please try again.'
       )
-      
+
       if (error) {
         console.error('[Auth] Google sign in error:', error)
         throw error
       }
-      // Note: User will be redirected to Google, then back to the app
-      // The auth state change listener will handle setting the user
+
+      // Supabase returns the Google URL — we must navigate there manually.
+      if (data?.url) {
+        window.location.href = data.url
+        return
+      }
+
+      throw new Error('Google sign-in could not be started. Please try again.')
     } catch (error) {
       console.error('[Auth] Google sign in failed:', error)
       throw error

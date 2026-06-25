@@ -142,7 +142,11 @@ function SigninPageContent() {
                   onClick={async () => {
                     setGoogleLoading(true);
                     try {
-                      await signInWithGoogle();
+                      await signInWithGoogle(
+                        searchParams.get("redirect")?.startsWith("/")
+                          ? searchParams.get("redirect")!
+                          : "/dashboard"
+                      );
                     } catch (err) {
                       toast.error("Google sign-in failed", err instanceof Error ? err.message : "Please try again.");
                       setGoogleLoading(false);
