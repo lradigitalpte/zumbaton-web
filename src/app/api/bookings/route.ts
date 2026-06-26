@@ -17,6 +17,11 @@ import {
 } from '@/lib/api-route-utils'
 import { getAdminApiUrl } from '@/lib/admin-api-url'
 import { getUserType, isClassTypeCompatible, isPackageCompatibleWithClass } from '@/lib/user-age-utils'
+import {
+  BOOKING_WINDOW_CLOSED_MESSAGE,
+  isBookingWindowOpen,
+  logBookingWindowRejection,
+} from '@/lib/booking-window'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,22 +41,6 @@ const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 )
-
-/**
- * Helpers for Singapore time booking window
- */
-function getSingaporeNow() {
-  const now = new Date()
-  const utcMs = now.getTime() + now.getTimezoneOffset() * 60000
-  return new Date(utcMs + 8 * 60 * 60 * 1000)
-}
-
-function isBookingWindowOpen() {
-  const nowSG = getSingaporeNow()
-  const hour = nowSG.getHours()
-  // Allow booking from 08:00 (inclusive) to 22:00 (exclusive) - 8am to 10pm
-  return hour >= 8 && hour < 22
-}
 
 /**
  * Get authenticated user from Authorization header
@@ -136,8 +125,9 @@ export async function POST(request: NextRequest) {
     if (classIds && Array.isArray(classIds) && classIds.length > 0) {
       // Enforce booking window for batch bookings as well
       if (!isBookingWindowOpen()) {
+        logBookingWindowRejection('member batch booking')
         return NextResponse.json(
-          { success: false, error: { message: 'Bookings are only allowed between 08:00 and 22:00 SGT' } },
+          { success: false, error: { message: BOOKING_WINDOW_CLOSED_MESSAGE } },
           { status: 400 }
         )
       }
@@ -169,12 +159,12 @@ export async function POST(request: NextRequest) {
     } else if (classId) {
       // Enforce booking window for single bookings
       if (!isBookingWindowOpen()) {
+        logBookingWindowRejection('member single booking (POST)')
         return NextResponse.json(
-          { success: false, error: { message: 'Bookings are only allowed between 08:00 and 22:00 SGT' } },
+          { success: false, error: { message: BOOKING_WINDOW_CLOSED_MESSAGE } },
           { status: 400 }
         )
       }
-      // Single booking - handle server-side
       return await handleSingleBooking(targetUserId, classId)
     } else {
       return NextResponse.json(
@@ -283,8 +273,9 @@ async function handleSingleBooking(userId: string, classId: string) {
 
     // 2.5. Enforce booking window on server-side (SGT)
     if (!isBookingWindowOpen()) {
+      logBookingWindowRejection('member single booking')
       return NextResponse.json(
-        { success: false, error: { message: 'Bookings are only allowed between 09:00 and 17:00 SGT' } },
+        { success: false, error: { message: BOOKING_WINDOW_CLOSED_MESSAGE } },
         { status: 400 }
       )
     }
@@ -606,8 +597,9 @@ async function handleCourseBooking(userId: string, parentClassId: string, parent
 
     // Enforce booking window for course bookings as well
     if (!isBookingWindowOpen()) {
+      logBookingWindowRejection('member course booking')
       return NextResponse.json(
-        { success: false, error: { message: 'Bookings are only allowed between 09:00 and 17:00 SGT' } },
+        { success: false, error: { message: BOOKING_WINDOW_CLOSED_MESSAGE } },
         { status: 400 }
       )
     }

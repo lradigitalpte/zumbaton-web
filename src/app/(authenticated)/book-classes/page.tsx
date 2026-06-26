@@ -11,6 +11,7 @@ import Modal from "@/components/Modal/Modal";
 import { formatDate, formatDateFull, formatTime } from "@/lib/utils";
 import { handleMutationError } from "@/lib/toast-helper";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
 
 const CLASSES_PER_PAGE = 12;
 
@@ -64,20 +65,7 @@ const ClassesPage = () => {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Booking window (Singapore time)
-  const getSingaporeNow = () => {
-    const now = new Date()
-    const utcMs = now.getTime() + now.getTimezoneOffset() * 60000
-    return new Date(utcMs + 8 * 60 * 60 * 1000)
-  }
-
-  const isBookingWindowOpen = () => {
-    const nowSG = getSingaporeNow()
-    const hour = nowSG.getHours()
-    // Allow booking from 08:00 (inclusive) to 22:00 (exclusive) - 8am to 10pm
-    return hour >= 8 && hour < 22
-  }
-  const bookingWindowOpen = isBookingWindowOpen()
+  const bookingWindowOpen = useBookingWindowOpen();
 
   // Keep token balance in React Query (avoids stale local state when routes are cached)
   const { data: tokenBalanceData } = useDashboardTokenBalance(user?.id);

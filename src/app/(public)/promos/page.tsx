@@ -13,6 +13,9 @@ import { formatDate, formatTime } from "@/lib/utils";
 
 import WaiverForm from "@/components/Common/WaiverForm";
 import { dateOfBirthFromAge, parseAgeYearsInput } from "@/lib/user-age-utils";
+import { BookingWindowBanner } from "@/components/Booking/BookingWindowBanner";
+import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
+import { BOOKING_WINDOW_CLOSED_MESSAGE } from "@/lib/booking-window";
 
 interface Class {
   id: string;
@@ -61,6 +64,7 @@ const PromosPage = () => {
   const [allClasses, setAllClasses] = useState<Class[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const bookingWindowOpen = useBookingWindowOpen();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   
@@ -322,6 +326,13 @@ const PromosPage = () => {
   const submitDuo = async (mode: "pay" | "reserve") => {
     const body = prepareDuoPayload();
     if (!body) return;
+
+    if (!bookingWindowOpen) {
+      const msg = BOOKING_WINDOW_CLOSED_MESSAGE;
+      setSubmitError(msg);
+      toast.error(msg);
+      return;
+    }
 
     setProcessing(true);
     try {
@@ -605,6 +616,7 @@ const PromosPage = () => {
                   </div>
                 ) : (
                 <form onSubmit={handleSubmit} className="space-y-12">
+                  <BookingWindowBanner open={bookingWindowOpen} />
                   
                   {/* Step 0: Date Selection */}
                   <div>
@@ -931,11 +943,13 @@ const PromosPage = () => {
                     )}
                     <button
                       type="submit"
-                      disabled={processing || !formData.classId}
+                      disabled={processing || !formData.classId || !bookingWindowOpen}
                       className="w-full max-w-2xl py-6 bg-lime-500 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black text-black font-black uppercase tracking-[0.3em] transition-all duration-300 shadow-xl disabled:opacity-30 flex items-center justify-center gap-4"
                     >
                       {processing ? (
                         <LoadingIcon size="sm" className="!flex-row gap-2 !mt-0" />
+                      ) : !bookingWindowOpen ? (
+                        <>BOOKING CLOSED</>
                       ) : (
                         <>
                           {promoConfig.bookingMode === "reserve_only" ? "RESERVE MY SPOTS" : "PROCEED TO PAYMENT"}
@@ -949,7 +963,7 @@ const PromosPage = () => {
                       <button
                         type="button"
                         onClick={() => submitDuo("reserve")}
-                        disabled={processing || !formData.classId}
+                        disabled={processing || !formData.classId || !bookingWindowOpen}
                         className="mt-4 text-[11px] font-black uppercase tracking-widest text-zinc-500 hover:text-lime-600 dark:hover:text-lime-400 underline decoration-2 underline-offset-4 disabled:opacity-30 transition-colors"
                       >
                         Or reserve &amp; pay at the studio

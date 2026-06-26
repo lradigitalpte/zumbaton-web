@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { placeholderGuestEmailFromPhone } from "@/lib/guest-email-placeholder";
+import {
+  BOOKING_WINDOW_CLOSED_MESSAGE,
+  isBookingWindowOpen,
+  logBookingWindowRejection,
+} from "@/lib/booking-window";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +66,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const parsed = ZumFamiliaSchema.safeParse(payload);
     if (!parsed.success) {
       return NextResponse.json({ success: false, message: parsed.error.errors[0]?.message || "Invalid form data." }, { status: 400 });
+    }
+
+    if (!isBookingWindowOpen()) {
+      logBookingWindowRejection("zumfamilia payment");
+      return NextResponse.json({ success: false, message: BOOKING_WINDOW_CLOSED_MESSAGE }, { status: 400 });
     }
 
     const body = parsed.data;

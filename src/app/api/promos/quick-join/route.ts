@@ -16,6 +16,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
 import { getDuoPromoConfig, isDuoPromoExpired, computeCharge } from '@/lib/duo-promo-config'
+import {
+  BOOKING_WINDOW_CLOSED_MESSAGE,
+  isBookingWindowOpen,
+  logBookingWindowRejection,
+} from '@/lib/booking-window'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,6 +58,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
     const { name, email, phone, venue, preferredNote } = parsed.data
+
+    if (!isBookingWindowOpen()) {
+      logBookingWindowRejection('quick-join')
+      return NextResponse.json(
+        { error: 'Booking Closed', message: BOOKING_WINDOW_CLOSED_MESSAGE },
+        { status: 400 }
+      )
+    }
 
     // Promo must be active
     const promoConfig = await getDuoPromoConfig()

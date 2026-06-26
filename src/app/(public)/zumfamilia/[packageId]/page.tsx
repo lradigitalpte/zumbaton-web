@@ -10,6 +10,9 @@ import { formatDate, formatDateFull, formatTime } from "@/lib/utils";
 import { Calendar, Check, MapPin, ArrowRight } from "lucide-react";
 import LoadingIcon from "@/components/Common/LoadingIcon";
 import WaiverForm from "@/components/Common/WaiverForm";
+import { BookingWindowBanner } from "@/components/Booking/BookingWindowBanner";
+import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
+import { BOOKING_WINDOW_CLOSED_MESSAGE } from "@/lib/booking-window";
 
 interface PublicClass {
   id: string;
@@ -44,6 +47,7 @@ export default function ZumFamiliaDetailPage() {
   /** Optional: limit the list to one calendar day (client-side); empty = all upcoming in range. */
   const [dayFilter, setDayFilter] = useState("");
   const [processing, setProcessing] = useState(false);
+  const bookingWindowOpen = useBookingWindowOpen();
   const [form, setForm] = useState({
     parentName: "",
     parentPhone: "",
@@ -167,6 +171,10 @@ export default function ZumFamiliaDetailPage() {
     }
     if (form.nricLast4.length !== 4) {
       toast.error("Enter exactly 4 characters for the last digits of your NRIC.");
+      return;
+    }
+    if (!bookingWindowOpen) {
+      toast.error(BOOKING_WINDOW_CLOSED_MESSAGE);
       return;
     }
 
@@ -450,6 +458,7 @@ export default function ZumFamiliaDetailPage() {
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-10">
+                      <BookingWindowBanner open={bookingWindowOpen} />
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Parent Info */}
                         <div className="space-y-6">
@@ -566,6 +575,7 @@ export default function ZumFamiliaDetailPage() {
                           type="submit"
                           disabled={
                             processing ||
+                            !bookingWindowOpen ||
                             (classes.length > 0 && !selectedClassId) ||
                             (classes.length === 0 && (!customDate || !customTime))
                           }
@@ -573,6 +583,8 @@ export default function ZumFamiliaDetailPage() {
                         >
                           {processing ? (
                             <LoadingIcon size="sm" className="!flex-row gap-2 !mt-0" />
+                          ) : !bookingWindowOpen ? (
+                            <>Booking closed</>
                           ) : (
                             <>
                               Proceed to Payment

@@ -13,6 +13,11 @@ import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
 import { resolveGuestEmail } from '@/lib/guest-email-placeholder'
 import { getDuoPromoConfig, isDuoPromoExpired } from '@/lib/duo-promo-config'
+import {
+  BOOKING_WINDOW_CLOSED_MESSAGE,
+  isBookingWindowOpen,
+  logBookingWindowRejection,
+} from '@/lib/booking-window'
 
 export const dynamic = 'force-dynamic'
 
@@ -72,6 +77,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!validationResult.success) {
       return NextResponse.json(
         { error: 'Validation Error', message: validationResult.error.errors[0].message },
+        { status: 400 }
+      )
+    }
+
+    if (!isBookingWindowOpen()) {
+      logBookingWindowRejection('duo-trial reserve')
+      return NextResponse.json(
+        { error: 'Booking Closed', message: BOOKING_WINDOW_CLOSED_MESSAGE },
         { status: 400 }
       )
     }

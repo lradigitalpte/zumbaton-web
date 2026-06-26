@@ -16,6 +16,9 @@ import {
   getTrialBookingDisplayTitle,
   getTrialBookingEffectiveAgeGroup,
 } from "@/lib/trial-booking-display";
+import { BookingWindowBanner } from "@/components/Booking/BookingWindowBanner";
+import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
+import { BOOKING_WINDOW_CLOSED_MESSAGE } from "@/lib/booking-window";
 
 interface Class {
   id: string;
@@ -111,6 +114,7 @@ export default function TrialBookingPage() {
     guardianSignature: "",
   });
   const [processing, setProcessing] = useState(false);
+  const bookingWindowOpen = useBookingWindowOpen();
 
   const weekRangeSummary = useMemo(() => {
     if (dateRangeMode !== "week" || !dateFilter) return null;
@@ -276,6 +280,10 @@ export default function TrialBookingPage() {
     e.preventDefault();
     if (!selectedClass) {
       toast.error("Please select a class first");
+      return;
+    }
+    if (!bookingWindowOpen) {
+      toast.error(BOOKING_WINDOW_CLOSED_MESSAGE);
       return;
     }
     if (!formData.guestName.trim()) {
@@ -650,6 +658,7 @@ export default function TrialBookingPage() {
                 <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter leading-none text-gray-900 dark:text-white">
                   YOUR <span className="text-lime-500">DETAILS</span>
                 </h2>
+                <BookingWindowBanner open={bookingWindowOpen} className="justify-center" />
               </div>
 
               <div className="bg-white dark:bg-zinc-950 border border-black/10 dark:border-white/10 p-8 md:p-16 shadow-2xl relative overflow-hidden">
@@ -892,11 +901,13 @@ export default function TrialBookingPage() {
                     <div className="pt-10 flex flex-col items-center gap-8">
                       <button
                         type="submit"
-                        disabled={!selectedClass || processing}
+                        disabled={!selectedClass || processing || !bookingWindowOpen}
                         className="w-full max-w-md py-8 bg-lime-500 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black text-black font-black uppercase tracking-[0.4em] transition-all duration-300 shadow-2xl disabled:opacity-30 flex items-center justify-center gap-4 text-lg"
                       >
                         {processing ? (
                           <LoadingIcon size="sm" className="!flex-row gap-2 !mt-0" />
+                        ) : !bookingWindowOpen ? (
+                          <>BOOKING CLOSED</>
                         ) : (
                           <>
                             PROCEED TO PAYMENT
@@ -928,6 +939,7 @@ export default function TrialBookingPage() {
             setGuardianData={setGuardianData}
             onSubmit={handleSubmit}
             processing={processing}
+            bookingWindowOpen={bookingWindowOpen}
             onClose={() => setSelectedClass(null)}
           />
         )}
@@ -945,10 +957,11 @@ interface MobileBookingSheetProps {
   setGuardianData: React.Dispatch<React.SetStateAction<any>>;
   onSubmit: (e: React.FormEvent) => void;
   processing: boolean;
+  bookingWindowOpen: boolean;
   onClose: () => void;
 }
 
-function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData, setGuardianData, onSubmit, processing, onClose }: MobileBookingSheetProps) {
+function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData, setGuardianData, onSubmit, processing, bookingWindowOpen, onClose }: MobileBookingSheetProps) {
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -989,6 +1002,8 @@ function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData
             {selectedClass.duration_minutes} MIN · ${price}
           </p>
         </div>
+
+        <BookingWindowBanner open={bookingWindowOpen} className="mb-8" />
 
         <form onSubmit={onSubmit} className="space-y-6 pb-12">
           <div className="space-y-2">
@@ -1140,11 +1155,13 @@ function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData
 
           <button
             type="submit"
-            disabled={processing}
+            disabled={processing || !bookingWindowOpen}
             className="w-full py-6 bg-lime-500 text-black font-black uppercase tracking-[0.3em] shadow-2xl disabled:opacity-30 flex items-center justify-center gap-4"
           >
             {processing ? (
               <LoadingIcon size="sm" className="!flex-row gap-2 !mt-0" />
+            ) : !bookingWindowOpen ? (
+              <>BOOKING CLOSED</>
             ) : (
               <>PAY & BOOK TRIAL <ArrowRight className="w-5 h-5" /></>
             )}

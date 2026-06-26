@@ -9,6 +9,9 @@ import { ArrowRight, CalendarClock, Sparkles, CheckCircle2, Calendar, Clock, Use
 import { motion, useInView } from "framer-motion";
 import LoadingIcon from "@/components/Common/LoadingIcon";
 import WaiverForm from "@/components/Common/WaiverForm";
+import { BookingWindowBanner } from "@/components/Booking/BookingWindowBanner";
+import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
+import { BOOKING_WINDOW_CLOSED_MESSAGE } from "@/lib/booking-window";
 
 type FiestaPackage = "1_session";
 
@@ -69,6 +72,7 @@ export default function ZtFiestaPage() {
   const toast = useToast();
   const [selectedPackage, setSelectedPackage] = useState<FiestaPackage>("1_session");
   const [submitting, setSubmitting] = useState(false);
+  const bookingWindowOpen = useBookingWindowOpen();
 
   // Outdoor classes
   const [outdoorClasses, setOutdoorClasses] = useState<OutdoorClass[]>([]);
@@ -156,6 +160,10 @@ export default function ZtFiestaPage() {
     }
     if (form.nricLast4.length !== 4) {
       toast.error("Enter exactly 4 characters for the last digits of your NRIC.");
+      return;
+    }
+    if (!bookingWindowOpen) {
+      toast.error(BOOKING_WINDOW_CLOSED_MESSAGE);
       return;
     }
 
@@ -509,6 +517,7 @@ export default function ZtFiestaPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-12">
+                  <BookingWindowBanner open={bookingWindowOpen} />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                     {/* Participant Info */}
                     <div className="space-y-8">
@@ -648,11 +657,13 @@ export default function ZtFiestaPage() {
                   <div className="pt-12 flex flex-col items-center">
                     <button
                       type="submit"
-                      disabled={submitting || !selectedClassId}
+                      disabled={submitting || !selectedClassId || !bookingWindowOpen}
                       className="w-full max-w-2xl py-6 bg-lime-500 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black disabled:opacity-30 disabled:cursor-not-allowed text-black font-black uppercase tracking-[0.3em] text-sm transition-all shadow-2xl flex items-center justify-center gap-4"
                     >
                       {submitting ? (
                         <LoadingIcon size="sm" className="!flex-row gap-2 !mt-0" />
+                      ) : !bookingWindowOpen ? (
+                        <>Booking closed</>
                       ) : (
                         <>
                           {!selectedClassId ? "Select a session first" : "Proceed to Payment"}
