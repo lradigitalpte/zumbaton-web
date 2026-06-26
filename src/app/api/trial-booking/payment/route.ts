@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
-import { placeholderGuestEmailFromPhone } from '@/lib/guest-email-placeholder'
+import { isPlaceholderGuestEmail } from '@/lib/guest-email-placeholder'
 import { getTrialBookingEffectiveAgeGroup } from '@/lib/trial-booking-display'
 
 export const dynamic = 'force-dynamic'
@@ -34,12 +34,16 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 )
 
+const emailField = z.preprocess(
+  (value) => (typeof value === 'string' ? value.trim().toLowerCase() : value),
+  z.string().email('Enter a valid email address').max(200)
+)
+
 // Request schema
 const TrialBookingPaymentSchema = z.object({
   classId: z.string().uuid('Invalid class ID'),
   guestName: z.string().min(1, 'Name is required').max(200),
-  /** Optional; if omitted or invalid, a phone-based placeholder is used for HitPay/DB */
-  guestEmail: z.string().max(200).optional(),
+  guestEmail: emailField.optional(),
   guestPhone: z.string().min(1, 'Phone number is required').max(50),
   dateOfBirth: z.string().min(1, 'Date of birth is required').refine(
     (date) => {
@@ -55,7 +59,7 @@ const TrialBookingPaymentSchema = z.object({
   signature: z.string().optional(),
   // Guardian fields (required for kids classes)
   guardianName: z.string().min(1, 'Guardian name is required').max(200).optional(),
-  guardianEmail: z.string().max(200).optional(),
+  guardianEmail: emailField.optional(),
   guardianPhone: z.string().min(1, 'Guardian phone number is required').max(50).optional(),
   guardianOnPremises: z.boolean().optional(),
   guardianSignature: z.string().min(1, 'Guardian signature is required').optional(),
@@ -87,19 +91,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const d = validationResult.data
-    const guestEmailRaw = (d.guestEmail || '').trim()
-    const guestEmail =
-      guestEmailRaw.includes('@') && !guestEmailRaw.includes(' ')
-        ? guestEmailRaw.toLowerCase()
-        : placeholderGuestEmailFromPhone(d.guestPhone)
-
-    const guardianEmailRaw = (d.guardianEmail || '').trim()
-    const guardianEmailResolved =
-      guardianEmailRaw.includes('@') && !guardianEmailRaw.includes(' ')
-        ? guardianEmailRaw.toLowerCase()
-        : d.guardianPhone
-          ? placeholderGuestEmailFromPhone(d.guardianPhone)
-          : ''
 
     const {
       classId,
@@ -150,6 +141,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Validate guardian information for kids sessions (includes One Familia + Lil Steppers)
+    let guestEmail: string
+    let guardianEmailResolved = ''
+
     if (effectiveAgeGroup === 'kid') {
       if (!guardianName || !guardianPhone) {
         return NextResponse.json(
@@ -160,6 +154,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           { status: 400 }
         )
       }
+      if (!d.guardianEmail || isPlaceholderGuestEmail(d.guardianEmail)) {
+        return NextResponse.json(
+          {
+            error: 'Guardian Email Required',
+            message: 'A valid guardian email is required — HitPay sends the payment receipt there',
+          },
+          { status: 400 }
+        )
+      }
+      guardianEmailResolved = d.guardianEmail
+      guestEmail = guardianEmailResolved
       if (guardianOnPremises !== true) {
         return NextResponse.json(
           { 
@@ -169,6 +174,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           { status: 400 }
         )
       }
+    } else {
+      if (!d.guestEmail || isPlaceholderGuestEmail(d.guestEmail)) {
+        return NextResponse.json(
+          {
+            error: 'Email Required',
+            message: 'A valid email is required — HitPay sends the payment receipt there',
+          },
+          { status: 400 }
+        )
+      }
+      guestEmail = d.guestEmail
     }
 
     // Calculate price: use trial_price_cents from DB if set, otherwise fallback based on age group
@@ -237,7 +253,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Add guardian information for kids sessions
     if (effectiveAgeGroup === 'kid' && guardianName && guardianPhone) {
       bookingData.guardian_name = guardianName
-      bookingData.guardian_email = guardianEmailResolved || placeholderGuestEmailFromPhone(guardianPhone)
+      bookingData.guardian_email = guardianEmailResolved
       bookingData.guardian_phone = guardianPhone
       bookingData.guardian_on_premises = guardianOnPremises === true
     }

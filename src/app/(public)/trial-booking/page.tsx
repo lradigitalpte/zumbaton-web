@@ -96,6 +96,7 @@ export default function TrialBookingPage() {
   const [formData, setFormData] = useState({
     guestName: "",
     guestPhone: "",
+    guestEmail: "",
     age: "",
     gender: "prefer_not_to_say",
     waiverAgreed: false,
@@ -105,6 +106,7 @@ export default function TrialBookingPage() {
   const [guardianData, setGuardianData] = useState({
     guardianName: "",
     guardianPhone: "",
+    guardianEmail: "",
     guardianOnPremises: false,
     guardianSignature: "",
   });
@@ -265,7 +267,7 @@ export default function TrialBookingPage() {
     }
     setSelectedClass(classItem);
     if (getTrialBookingEffectiveAgeGroup(classItem.title, classItem.age_group) !== "kid") {
-      setGuardianData({ guardianName: "", guardianPhone: "", guardianOnPremises: false, guardianSignature: "" });
+      setGuardianData({ guardianName: "", guardianPhone: "", guardianEmail: "", guardianOnPremises: false, guardianSignature: "" });
     }
     if (window.innerWidth < 1024) window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -285,9 +287,18 @@ export default function TrialBookingPage() {
       return;
     }
     const isKidsClass = getTrialBookingEffectiveAgeGroup(selectedClass.title, selectedClass.age_group) === "kid";
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!isKidsClass) {
       if (!formData.guestPhone.trim()) {
         toast.error("Please enter your phone number");
+        return;
+      }
+      if (!formData.guestEmail.trim()) {
+        toast.error("Please enter your email — your payment receipt is sent there");
+        return;
+      }
+      if (!emailPattern.test(formData.guestEmail.trim())) {
+        toast.error("Please enter a valid email address");
         return;
       }
     }
@@ -308,6 +319,14 @@ export default function TrialBookingPage() {
     if (isKidsClass) {
       if (!guardianData.guardianName.trim() || !guardianData.guardianPhone.trim()) {
         toast.error("Please fill in all guardian information");
+        return;
+      }
+      if (!guardianData.guardianEmail.trim()) {
+        toast.error("Please enter guardian email — your payment receipt is sent there");
+        return;
+      }
+      if (!emailPattern.test(guardianData.guardianEmail.trim())) {
+        toast.error("Please enter a valid guardian email address");
         return;
       }
       if (!guardianData.guardianOnPremises) {
@@ -334,10 +353,12 @@ export default function TrialBookingPage() {
       if (isKidsClass) {
         requestBody.guardianName = guardianData.guardianName.trim();
         requestBody.guardianPhone = guardianData.guardianPhone.trim();
+        requestBody.guardianEmail = guardianData.guardianEmail.trim().toLowerCase();
         requestBody.guardianOnPremises = guardianData.guardianOnPremises;
         requestBody.guestPhone = guardianData.guardianPhone.trim();
       } else {
         requestBody.guestPhone = formData.guestPhone.trim();
+        requestBody.guestEmail = formData.guestEmail.trim().toLowerCase();
       }
 
       const response = await fetch("/api/trial-booking/payment", {
@@ -709,6 +730,27 @@ export default function TrialBookingPage() {
                           </div>
                         )}
 
+                        {getTrialBookingEffectiveAgeGroup(selectedClass.title, selectedClass.age_group) !== "kid" && (
+                          <div className="space-y-2">
+                            <label htmlFor="guestEmail" className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                              Email *
+                            </label>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                              Payment receipt &amp; booking confirmation are sent here
+                            </p>
+                            <input
+                              type="email"
+                              id="guestEmail"
+                              required
+                              autoComplete="email"
+                              value={formData.guestEmail}
+                              onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
+                              className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-sm font-bold tracking-wide focus:border-lime-500 outline-none transition-colors rounded-none normal-case"
+                              placeholder="you@email.com"
+                            />
+                          </div>
+                        )}
+
                         <div className="space-y-2">
                           <label htmlFor="guestAge" className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
                             Age *
@@ -771,6 +813,21 @@ export default function TrialBookingPage() {
                                 onChange={(e) => setGuardianData({ ...guardianData, guardianPhone: e.target.value })}
                                 className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-sm font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
                                 placeholder="GUARDIAN PHONE"
+                              />
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Guardian Email *</label>
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                                Payment receipt &amp; booking confirmation are sent here
+                              </p>
+                              <input
+                                type="email"
+                                required
+                                autoComplete="email"
+                                value={guardianData.guardianEmail}
+                                onChange={(e) => setGuardianData({ ...guardianData, guardianEmail: e.target.value })}
+                                className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-sm font-bold tracking-wide focus:border-lime-500 outline-none transition-colors rounded-none normal-case"
+                                placeholder="you@email.com"
                               />
                             </div>
                           </div>
@@ -882,9 +939,9 @@ export default function TrialBookingPage() {
 // Mobile Bottom Sheet Component
 interface MobileBookingSheetProps {
   selectedClass: Class;
-  formData: { guestName: string; guestPhone: string; age: string; gender: string; waiverAgreed: boolean; nricLast4: string; signature: string; };
+  formData: { guestName: string; guestPhone: string; guestEmail: string; age: string; gender: string; waiverAgreed: boolean; nricLast4: string; signature: string; };
   setFormData: React.Dispatch<React.SetStateAction<any>>;
-  guardianData: { guardianName: string; guardianPhone: string; guardianOnPremises: boolean; guardianSignature: string; };
+  guardianData: { guardianName: string; guardianPhone: string; guardianEmail: string; guardianOnPremises: boolean; guardianSignature: string; };
   setGuardianData: React.Dispatch<React.SetStateAction<any>>;
   onSubmit: (e: React.FormEvent) => void;
   processing: boolean;
@@ -962,6 +1019,24 @@ function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData
             </div>
           )}
 
+          {!effectiveKid && (
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Email *</label>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                Payment receipt &amp; booking confirmation are sent here
+              </p>
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                value={formData.guestEmail}
+                onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
+                className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-gray-900 dark:text-white font-bold tracking-wide focus:border-lime-500 outline-none transition-colors rounded-none normal-case"
+                placeholder="you@email.com"
+              />
+            </div>
+          )}
+
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Age *</label>
             <input
@@ -1011,6 +1086,15 @@ function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData
                 onChange={(e) => setGuardianData({ ...guardianData, guardianPhone: e.target.value })}
                 className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-gray-900 dark:text-white font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
                 placeholder="GUARDIAN PHONE"
+              />
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                value={guardianData.guardianEmail}
+                onChange={(e) => setGuardianData({ ...guardianData, guardianEmail: e.target.value })}
+                className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-gray-900 dark:text-white font-bold tracking-wide focus:border-lime-500 outline-none transition-colors rounded-none normal-case"
+                placeholder="GUARDIAN EMAIL"
               />
               <div className="flex items-start gap-4 p-6 bg-lime-500/10 border border-lime-500/20">
                 <input
