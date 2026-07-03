@@ -8,11 +8,18 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { hasUpcomingOutdoorClasses } from '@/lib/outdoor-availability'
 
 export type DuoBookingMode = 'pay_online' | 'reserve_only' | 'both'
 
 /** How much a visitor pays online up front. */
 export type DuoPaymentTerms = 'full' | 'deposit' | 'none'
+
+/** Outdoor option on /start: auto = when outdoor classes are scheduled. */
+export type OutdoorQuickJoinMode = 'auto' | 'on' | 'off'
+
+/** What the /start sales page books: pay-first 1-for-1 or trial class picker. */
+export type StartPageMode = 'quick_join' | 'trial'
 
 export interface DuoPromoConfig {
   /** Whether the 1-for-1 promo is currently offered at all. */
@@ -29,6 +36,10 @@ export interface DuoPromoConfig {
   depositPercent: number
   /** Optional promo end date (YYYY-MM-DD). null = no expiry. */
   endDate: string | null
+  /** When to show outdoor on /start quick-join. */
+  outdoorQuickJoinMode: OutdoorQuickJoinMode
+  /** Booking flow shown on the /start sales page. */
+  startPageMode: StartPageMode
 }
 
 /** Original hardcoded behaviour — used whenever settings are missing. */
@@ -40,6 +51,8 @@ export const DEFAULT_DUO_PROMO_CONFIG: DuoPromoConfig = {
   paymentTerms: 'full',
   depositPercent: 50,
   endDate: null,
+  outdoorQuickJoinMode: 'auto',
+  startPageMode: 'quick_join',
 }
 
 function isBookingMode(value: unknown): value is DuoBookingMode {
@@ -48,6 +61,14 @@ function isBookingMode(value: unknown): value is DuoBookingMode {
 
 function isPaymentTerms(value: unknown): value is DuoPaymentTerms {
   return value === 'full' || value === 'deposit' || value === 'none'
+}
+
+function isOutdoorQuickJoinMode(value: unknown): value is OutdoorQuickJoinMode {
+  return value === 'auto' || value === 'on' || value === 'off'
+}
+
+function isStartPageMode(value: unknown): value is StartPageMode {
+  return value === 'quick_join' || value === 'trial'
 }
 
 function coercePriceCents(value: unknown, fallback: number): number {
@@ -82,6 +103,12 @@ export function parseDuoPromoConfig(value: Record<string, unknown> | null | unde
     paymentTerms: isPaymentTerms(value.duo_payment_terms) ? value.duo_payment_terms : DEFAULT_DUO_PROMO_CONFIG.paymentTerms,
     depositPercent: coercePercent(value.duo_deposit_percent, DEFAULT_DUO_PROMO_CONFIG.depositPercent),
     endDate,
+    outdoorQuickJoinMode: isOutdoorQuickJoinMode(value.duo_outdoor_quick_join_mode)
+      ? value.duo_outdoor_quick_join_mode
+      : DEFAULT_DUO_PROMO_CONFIG.outdoorQuickJoinMode,
+    startPageMode: isStartPageMode(value.duo_start_page_mode)
+      ? value.duo_start_page_mode
+      : DEFAULT_DUO_PROMO_CONFIG.startPageMode,
   }
 }
 
@@ -110,6 +137,18 @@ export function computeCharge(
   }
   // full
   return { chargeCents: totalCents, balanceCents: 0 }
+}
+
+export function isFastTrialStartAllowed(config: DuoPromoConfig): boolean {
+  if (config.startPageMode === 'trial') return true
+  if (config.startPageMode === 'quick_join' && (!config.active || isDuoPromoExpired(config))) return true
+  return false
+}
+
+export async function isOutdoorQuickJoinAvailable(config: DuoPromoConfig): Promise<boolean> {
+  if (config.outdoorQuickJoinMode === 'on') return true
+  if (config.outdoorQuickJoinMode === 'off') return false
+  return hasUpcomingOutdoorClasses()
 }
 
 /**

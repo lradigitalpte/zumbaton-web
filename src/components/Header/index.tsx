@@ -34,7 +34,9 @@ const Header = () => {
 
   const usePathName = usePathname();
   const lightBackgroundPages = ['/signin', '/signup', '/forgot-password', '/schedule', '/packages'];
-  const isLightBackgroundPage = lightBackgroundPages.some(path => usePathName?.startsWith(path));
+  const isLightBackgroundPage =
+    lightBackgroundPages.some((path) => usePathName?.startsWith(path)) ||
+    usePathName?.endsWith('/success') === true;
   
   const needsBackground = sticky || isLightBackgroundPage;
 

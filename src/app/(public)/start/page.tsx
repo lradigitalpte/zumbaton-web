@@ -35,11 +35,22 @@ export default function StartPage() {
     live: boolean;
     paymentTerms: "full" | "deposit" | "none";
     depositPercent: number;
-  }>({ indoorPriceCents: 2300, outdoorPriceCents: 3500, live: true, paymentTerms: "full", depositPercent: 50 });
+    outdoorAvailable: boolean;
+    startPageMode: "quick_join" | "trial";
+  }>({
+    indoorPriceCents: 2300,
+    outdoorPriceCents: 3500,
+    live: true,
+    paymentTerms: "full",
+    depositPercent: 50,
+    outdoorAvailable: false,
+    startPageMode: "quick_join",
+  });
 
   // The whole "booking": pick a venue + your details, then pay.
   const [venue, setVenue] = useState<"studio" | "outdoor">("studio");
   const [form, setForm] = useState({ name: "", phone: "", email: "", preferredNote: "" });
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // For "no payment" mode: an inline confirmation instead of a HitPay redirect.
@@ -58,6 +69,8 @@ export default function StartPage() {
             live: res.data.live ?? true,
             paymentTerms: res.data.paymentTerms ?? "full",
             depositPercent: res.data.depositPercent ?? 50,
+            outdoorAvailable: res.data.outdoorAvailable === true,
+            startPageMode: res.data.startPageMode === "trial" ? "trial" : "quick_join",
           });
         }
       })
@@ -66,6 +79,12 @@ export default function StartPage() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!promo.outdoorAvailable && venue === "outdoor") {
+      setVenue("studio");
+    }
+  }, [promo.outdoorAvailable, venue]);
 
   const priceCents = venue === "outdoor" ? promo.outdoorPriceCents : promo.indoorPriceCents;
   // What they pay online now vs. owe at the studio.
@@ -77,6 +96,20 @@ export default function StartPage() {
         : priceCents;
   const balanceCents = Math.max(0, priceCents - chargeCents);
   const payOnline = promo.paymentTerms !== "none" && chargeCents > 0;
+  const isDuoBooking = promo.startPageMode === "quick_join" && promo.live;
+  const isFastTrial = !isDuoBooking;
+  const trialPriceCents = promo.indoorPriceCents;
+  const displayPriceCents = isFastTrial ? trialPriceCents : priceCents;
+  const displayChargeCents = isFastTrial
+    ? promo.paymentTerms === "none"
+      ? 0
+      : promo.paymentTerms === "deposit"
+        ? Math.max(1, Math.round((trialPriceCents * promo.depositPercent) / 100))
+        : trialPriceCents
+    : chargeCents;
+  const displayBalanceCents = isFastTrial
+    ? Math.max(0, trialPriceCents - displayChargeCents)
+    : balanceCents;
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,11 +120,15 @@ export default function StartPage() {
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      setError("Please enter a valid email — your receipt is sent there.");
+      setError("Please enter a valid email. Your receipt is sent there.");
       return;
     }
     if (!bookingWindowOpen) {
       setError(BOOKING_WINDOW_CLOSED_MESSAGE);
+      return;
+    }
+    if (!agreedToTerms) {
+      setError("Please agree to the terms and waiver to continue.");
       return;
     }
 
@@ -104,8 +141,10 @@ export default function StartPage() {
           name: form.name.trim(),
           phone: form.phone.trim(),
           email: form.email.trim(),
-          venue,
+          venue: isDuoBooking ? venue : "studio",
+          bookingFlow: isDuoBooking ? "duo" : "trial",
           preferredNote: form.preferredNote.trim() || undefined,
+          termsAgreed: true,
         }),
       });
       const result = await res.json();
@@ -160,35 +199,33 @@ export default function StartPage() {
               <span className="text-lime-500">REPEAT.</span>
             </h1>
             <p className="max-w-xl text-white/85 font-bold text-sm md:text-base uppercase tracking-wider border-l-4 border-lime-500 pl-6 mb-8">
-              Singapore&apos;s dance-fitness studio — certified coaches, playlists that move you,
+              Singapore&apos;s dance-fitness studio with certified coaches, playlists that move you,
               and a room full of good energy. Come try a class and find your rhythm.
             </p>
 
-            {promo.live && (
+            {isDuoBooking && (
               <div className="inline-flex items-center gap-2 bg-lime-500 text-black px-4 py-2 text-[11px] font-black uppercase tracking-widest mb-8">
                 <Sparkles className="w-3.5 h-3.5" />
-                On now · 1-for-1 · bring a friend, one price
+                On now: 1-for-1, bring a friend, one price
+              </div>
+            )}
+            {isFastTrial && (
+              <div className="inline-flex items-center gap-2 bg-lime-500 text-black px-4 py-2 text-[11px] font-black uppercase tracking-widest mb-8">
+                <Sparkles className="w-3.5 h-3.5" />
+                Your first class starts here
               </div>
             )}
 
             <div className="flex flex-col sm:flex-row gap-4">
-              {promo.live ? (
-                <a
-                  href="#join"
-                  className="group inline-flex items-center justify-center gap-3 px-10 py-5 bg-lime-500 text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-white transition-all"
-                >
-                  Try a class — {formatPrice(promo.indoorPriceCents)}
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </a>
-              ) : (
-                <a
-                  href="#classes"
-                  className="group inline-flex items-center justify-center gap-3 px-10 py-5 bg-lime-500 text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-white transition-all"
-                >
-                  See the classes
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </a>
-              )}
+              <a
+                href="#join"
+                className="group inline-flex items-center justify-center gap-3 px-10 py-5 bg-lime-500 text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-white transition-all"
+              >
+                {isDuoBooking
+                  ? `Try a class for ${formatPrice(promo.indoorPriceCents)}`
+                  : `Try your first class`}
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </a>
               <Link
                 href="/schedule"
                 className="inline-flex items-center justify-center gap-3 px-10 py-5 border border-white/30 text-white font-black uppercase tracking-[0.2em] text-sm hover:bg-white hover:text-black transition-all"
@@ -211,37 +248,71 @@ export default function StartPage() {
               viewport={{ once: true }}
             >
               <div className="text-lime-500 font-black text-xs uppercase tracking-[0.3em] mb-4">
-                {promo.live ? "Your First Class" : "Booking"}
+                Your First Class
               </div>
               <h2 className="text-4xl sm:text-5xl md:text-6xl font-black uppercase italic tracking-tighter leading-[0.9] mb-6">
-                BRING YOUR PERSON.<br />
-                <span className="text-lime-500">DANCE TOGETHER.</span>
+                {isDuoBooking ? (
+                  <>
+                    BRING YOUR PERSON.<br />
+                    <span className="text-lime-500">DANCE TOGETHER.</span>
+                  </>
+                ) : (
+                  <>
+                    COME TRY IT.<br />
+                    <span className="text-lime-500">FEEL THE ENERGY.</span>
+                  </>
+                )}
               </h2>
               <p className="text-white/70 font-medium text-sm md:text-base leading-relaxed mb-8">
-                Enjoy a 1-for-1 session with someone you choose — no class to pick, no calendar to decode.
-                Book your first visit at one simple price, and we&apos;ll message you personally to find a
-                day and time that suits you — as soon as possible.
+                {isDuoBooking ? (
+                  <>
+                    Enjoy a 1-for-1 session with someone you choose. No class to pick, no calendar to decode.
+                    Book your first visit at one simple price, and we&apos;ll message you personally to find a
+                    day and time that suits you as soon as possible.
+                  </>
+                ) : (
+                  <>
+                    Your first taste of dance fitness at One Step Fitness. No need to decode the schedule
+                    or pick a class yet. Tell us you&apos;re in and we&apos;ll help you find the right session
+                    to get moving.
+                  </>
+                )}
               </p>
               <ul className="space-y-3">
-                {[
-                  promo.live ? "1-for-1: you + your person, one price" : "Try any class, your pace",
-                  "We reach out to schedule — you just show up",
-                  "Straightforward pricing, no surprises",
-                ].map((t) => (
+                {(isDuoBooking
+                  ? [
+                      "1-for-1: you + your person, one price",
+                      "We reach out to schedule. You just show up",
+                      "Straightforward pricing, no surprises",
+                    ]
+                  : [
+                      "All levels welcome",
+                      "We help you find the right class",
+                      "Good music, great energy, zero pressure",
+                    ]
+                ).map((t) => (
                   <li key={t} className="flex items-center gap-3 text-xs font-black uppercase tracking-widest">
                     <ShieldCheck className="w-4 h-4 text-lime-500" /> {t}
                   </li>
                 ))}
               </ul>
               <p className="mt-8 text-xs font-bold uppercase tracking-widest text-white/50">
-                Curious about the lineup?{" "}
-                <Link href="/classes" className="text-lime-500 hover:underline">Browse all classes</Link>
+                {isFastTrial ? (
+                  <>
+                    Prefer to pick your own class?{" "}
+                    <Link href="/trial-booking" className="text-lime-500 hover:underline">Full trial booking</Link>
+                  </>
+                ) : (
+                  <>
+                    Curious about the lineup?{" "}
+                    <Link href="/classes" className="text-lime-500 hover:underline">Browse all classes</Link>
+                  </>
+                )}
               </p>
             </motion.div>
 
-            {/* The form (or a closed-promo notice / reserved confirmation) */}
-            {promo.live ? (
-              reserved ? (
+            {/* Fast checkout form (1-for-1 or fast trial) */}
+            {reserved ? (
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -256,16 +327,48 @@ export default function StartPage() {
                     class and arrange payment at the studio. No payment needed right now.
                   </p>
                 </motion.div>
-              ) : (
+            ) : (
               <motion.form
                 onSubmit={handleJoin}
                 initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="border border-white/15 bg-zinc-950 p-6 md:p-8 space-y-6"
+                className="border border-white/15 bg-zinc-950 overflow-hidden"
               >
+                <div className="border-b border-white/10 bg-gradient-to-r from-lime-500/15 via-lime-500/5 to-transparent px-6 py-5 md:px-8">
+                  <div className="flex items-end justify-between gap-4">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.25em] text-lime-500 mb-1">
+                        {isDuoBooking
+                          ? promo.outdoorAvailable
+                            ? "Pick your venue"
+                            : "1-for-1 intro class"
+                          : "Your first class"}
+                      </p>
+                      <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter text-white leading-none">
+                        {isDuoBooking
+                          ? promo.outdoorAvailable
+                            ? "Book together"
+                            : "At the studio"
+                          : "Let's get you moving"}
+                      </h3>
+                    </div>
+                    {(!isDuoBooking || !promo.outdoorAvailable) && (
+                      <div className="text-right shrink-0">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-0.5">
+                          {isFastTrial ? "Trial" : "You pay"}
+                        </p>
+                        <p className="text-3xl font-black italic tracking-tighter text-lime-500 leading-none">
+                          {formatPrice(displayPriceCents)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-6 md:p-8 space-y-5">
                 <BookingWindowBanner open={bookingWindowOpen} />
-                {/* Venue choice (sets the price) */}
+                {isDuoBooking && promo.outdoorAvailable && (
                 <div>
                   <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3 block">Where?</label>
                   <div className="grid grid-cols-2 gap-3">
@@ -293,113 +396,130 @@ export default function StartPage() {
                     </button>
                   </div>
                 </div>
+                )}
 
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 block">Your name</label>
-                  <input
-                    type="text"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder="Full name"
-                    className="w-full bg-black border border-white/15 px-5 py-3 text-sm font-bold tracking-wide focus:border-lime-500 outline-none transition-colors"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 block">Phone</label>
+                    <label htmlFor="start-name" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 block">Your name</label>
                     <input
-                      type="tel"
-                      value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      placeholder="+65"
-                      className="w-full bg-black border border-white/15 px-5 py-3 text-sm font-bold tracking-wide focus:border-lime-500 outline-none transition-colors"
+                      id="start-name"
+                      type="text"
+                      value={form.name}
+                      onChange={(e) => setForm({ ...form, name: e.target.value })}
+                      placeholder="Full name"
+                      className="w-full bg-black border border-white/15 px-4 py-3.5 text-sm font-semibold text-white placeholder:text-zinc-600 placeholder:font-medium placeholder:normal-case focus:border-lime-500 outline-none transition-colors"
                     />
                   </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="start-phone" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 block">Phone</label>
+                      <input
+                        id="start-phone"
+                        type="tel"
+                        value={form.phone}
+                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                        placeholder="+65 9123 4567"
+                        className="w-full bg-black border border-white/15 px-4 py-3.5 text-sm font-semibold text-white placeholder:text-zinc-600 placeholder:font-medium placeholder:normal-case focus:border-lime-500 outline-none transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="start-email" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 block">Email</label>
+                      <input
+                        id="start-email"
+                        type="email"
+                        autoComplete="email"
+                        value={form.email}
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        placeholder="you@email.com"
+                        className="w-full bg-black border border-white/15 px-4 py-3.5 text-sm font-semibold text-white placeholder:text-zinc-600 placeholder:font-medium placeholder:normal-case focus:border-lime-500 outline-none transition-colors"
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 block">Email</label>
+                    <label htmlFor="start-when" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 block">
+                      When suits you? <span className="text-zinc-600 normal-case tracking-normal font-medium">(optional)</span>
+                    </label>
                     <input
-                      type="email"
-                      autoComplete="email"
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      placeholder="you@email.com"
-                      className="w-full bg-black border border-white/15 px-5 py-3 text-sm font-bold tracking-wide focus:border-lime-500 outline-none transition-colors normal-case"
+                      id="start-when"
+                      type="text"
+                      value={form.preferredNote}
+                      onChange={(e) => setForm({ ...form, preferredNote: e.target.value })}
+                      placeholder="Weekday evenings, Saturday mornings…"
+                      className="w-full bg-black border border-white/15 px-4 py-3.5 text-sm font-semibold text-white placeholder:text-zinc-600 placeholder:font-medium placeholder:normal-case focus:border-lime-500 outline-none transition-colors"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 block">
-                    When suits you? <span className="text-zinc-600">(optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={form.preferredNote}
-                    onChange={(e) => setForm({ ...form, preferredNote: e.target.value })}
-                    placeholder="e.g. weekday evenings, Saturday mornings…"
-                    className="w-full bg-black border border-white/15 px-5 py-3 text-sm font-bold tracking-wide focus:border-lime-500 outline-none transition-colors"
-                  />
                 </div>
 
                 {error && (
-                  <div role="alert" className="p-3 border border-red-500/60 bg-red-950/40 text-red-200 text-xs font-bold uppercase tracking-wide">
+                  <div role="alert" className="p-3 border border-red-500/60 bg-red-950/40 text-red-200 text-xs font-semibold leading-relaxed">
                     {error}
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={processing || !bookingWindowOpen}
-                  className="w-full py-5 bg-lime-500 text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center gap-3"
-                >
-                  {processing ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : !bookingWindowOpen ? (
-                    <>Booking closed</>
-                  ) : (
-                    <>
+                <div className="pt-1 space-y-3">
+                  <label className="flex items-start gap-3 border border-white/15 bg-black/40 px-4 py-4 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={agreedToTerms}
+                      onChange={(e) => setAgreedToTerms(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-lime-500"
+                    />
+                    <span className="text-xs text-zinc-400 leading-relaxed">
+                      I agree to the{" "}
+                      <Link href="/terms" className="text-lime-500 hover:underline font-semibold" onClick={(e) => e.stopPropagation()}>
+                        Terms &amp; Conditions
+                      </Link>
+                      {" "}and participation waiver.
+                    </span>
+                  </label>
+
+                  <button
+                    type="submit"
+                    disabled={processing || !bookingWindowOpen || !agreedToTerms}
+                    className="w-full py-5 bg-lime-500 text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center gap-3"
+                  >
+                    {processing ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : !bookingWindowOpen ? (
+                      <>Booking closed</>
+                    ) : (
+                      <>
                       {!payOnline
-                        ? "Book my first class"
+                        ? isFastTrial
+                          ? "Reserve my first class"
+                          : "Book my first class"
                         : promo.paymentTerms === "deposit"
-                          ? `Book with ${formatPrice(chargeCents)} deposit`
-                          : `Book for ${formatPrice(chargeCents)}`}
-                      <ArrowRight className="w-4 h-4" />
-                    </>
+                          ? `Book with ${formatPrice(displayChargeCents)} deposit`
+                          : isFastTrial
+                            ? `Try a class for ${formatPrice(displayChargeCents)}`
+                            : `Book for ${formatPrice(displayChargeCents)}`}
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                  <p className="text-xs text-zinc-500 text-center leading-relaxed">
+                    {!payOnline ? (
+                      <>No payment now. Pay at the studio. We&apos;ll message you to schedule.</>
+                    ) : promo.paymentTerms === "deposit" && displayBalanceCents > 0 ? (
+                      <>{formatPrice(displayChargeCents)} to secure your spot, {formatPrice(displayBalanceCents)} at the studio. We&apos;ll message you to confirm your class.</>
+                    ) : (
+                      <>We&apos;ll message you to confirm your class.</>
+                    )}
+                  </p>
+                  {isFastTrial && (
+                    <p className="text-xs text-zinc-500 text-center leading-relaxed pt-1 border-t border-white/10">
+                      Want to choose your own class and time?{" "}
+                      <Link href="/trial-booking" className="text-lime-500 hover:underline font-semibold">
+                        Use full trial booking
+                      </Link>
+                      {" "}(pick from the schedule, waiver included).
+                    </p>
                   )}
-                </button>
-                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 text-center">
-                  {!payOnline
-                    ? "No payment now · pay at the studio · we'll message you to schedule"
-                    : promo.paymentTerms === "deposit" && balanceCents > 0
-                      ? `${formatPrice(chargeCents)} now via HitPay · ${formatPrice(balanceCents)} at the studio`
-                      : "Checkout via HitPay · we'll message you to find a time"}{" "}
-                  · <Link href="/terms" className="text-lime-500 hover:underline">Terms</Link>
-                </p>
-              </motion.form>
-              )
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="border border-white/15 bg-zinc-950 p-8 md:p-10 flex flex-col items-center text-center"
-              >
-                <Sparkles className="w-8 h-8 text-lime-500 mb-5" />
-                <h3 className="text-2xl font-black uppercase italic tracking-tighter mb-3">Our offer is taking a break</h3>
-                <p className="text-sm font-medium text-white/60 leading-relaxed mb-8 max-w-sm">
-                  The current promo is closed for now, but you can still explore our classes and book a
-                  spot. New offers drop regularly — check back soon.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md">
-                  <Link href="/classes" className="flex-1 py-4 bg-lime-500 text-black font-black uppercase tracking-[0.2em] text-xs hover:bg-white transition-all">
-                    Browse classes
-                  </Link>
-                  <Link href="/contact" className="flex-1 py-4 border border-white/30 text-white font-black uppercase tracking-[0.2em] text-xs hover:bg-white hover:text-black transition-all">
-                    Contact us
-                  </Link>
                 </div>
-              </motion.div>
+                </div>
+              </motion.form>
             )}
           </div>
         </div>
@@ -421,7 +541,7 @@ export default function StartPage() {
               PICK YOUR <span className="text-lime-500">VIBE</span>
             </h2>
             <p className="text-gray-600 dark:text-zinc-400 font-medium text-sm md:text-base leading-relaxed">
-              Every class is a 60-minute dance-fitness session — some lean cardio, some lean strength,
+              Every class is a 60-minute dance-fitness session. Some lean cardio, some lean strength,
               all of them fun. Tap any class to see the details, or join above and we&apos;ll help you choose.
             </p>
           </motion.div>
@@ -483,7 +603,7 @@ export default function StartPage() {
                 <Users className="w-7 h-7 sm:w-8 sm:h-8 text-lime-500 mb-3 sm:mb-4" />
                 <h3 className="text-base sm:text-xl font-black uppercase italic tracking-tighter mb-2">Kids &amp; Family?</h3>
                 <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-zinc-400 leading-relaxed mb-4 sm:mb-5">
-                  Bring the little ones to One Familia — our family dance sessions.
+                  Bring the little ones to One Familia, our family dance sessions.
                 </p>
                 <span className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-lime-600 dark:text-lime-400 group-hover:gap-3 transition-all">
                   Explore One Familia <ArrowRight className="w-3.5 h-3.5" />
@@ -501,7 +621,7 @@ export default function StartPage() {
             {[
               { icon: Heart, title: "All Levels Welcome", text: "Never danced before? Perfect. Our coaches give modifications so everyone moves at their own pace." },
               { icon: Sparkles, title: "Certified Coaches", text: "Led by certified instructors with playlists spanning Afrobeats, EDM, Latin, K-Pop and more." },
-              { icon: Users, title: "Better With a Friend", text: "Our 1-for-1 sessions are built for two — bring your partner, mate, or favourite dance buddy and enjoy a full class together, one price." },
+              { icon: Users, title: "Better With a Friend", text: "Our 1-for-1 sessions are built for two. Bring your partner, mate, or favourite dance buddy and enjoy a full class together, one price." },
             ].map((item, i) => (
               <motion.div
                 key={item.title}
@@ -530,9 +650,13 @@ export default function StartPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {[
-              { step: "01", text: "Book your first 1-for-1 session — quick and easy" },
-              { step: "02", text: "We message you to find a time that works" },
-              { step: "03", text: "Show up together and dance" },
+              isDuoBooking
+                ? { step: "01", text: "Book your first 1-for-1 session. Quick and easy." }
+                : { step: "01", text: "Tell us you're in. Quick and easy." },
+              isDuoBooking
+                ? { step: "02", text: "We message you to find a time that works" }
+                : { step: "02", text: "We help you find the right class" },
+              { step: "03", text: isDuoBooking ? "Show up together and dance" : "Show up and dance" },
             ].map((s) => (
               <div key={s.step} className="flex flex-col items-center text-center">
                 <div className="w-14 h-14 bg-black dark:bg-white text-lime-500 dark:text-black flex items-center justify-center font-black text-xl italic mb-4">
@@ -554,14 +678,16 @@ export default function StartPage() {
             <span className="bg-black text-lime-500 px-4 py-1 inline-block">START?</span>
           </h2>
           <a
-            href={promo.live ? "#join" : "#classes"}
+            href="#join"
             className="inline-flex items-center gap-3 px-12 py-6 bg-black text-white font-black uppercase tracking-[0.2em] text-sm hover:bg-zinc-900 transition-all shadow-2xl"
           >
-            {promo.live ? "Try a class now" : "See the classes"}
+            {isDuoBooking ? "Try a class now" : "Try your first class"}
             <ArrowRight className="w-4 h-4" />
           </a>
           <p className="mt-6 text-[11px] font-black uppercase tracking-widest text-black/60">
-            Book first · we sort the schedule together · all levels welcome
+            {isDuoBooking
+              ? "Book first. We sort the schedule together. All levels welcome."
+              : "Your first class is closer than you think. All levels welcome."}
           </p>
         </div>
       </section>

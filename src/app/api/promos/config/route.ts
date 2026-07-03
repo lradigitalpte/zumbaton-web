@@ -8,13 +8,14 @@
  */
 
 import { NextResponse } from 'next/server'
-import { getDuoPromoConfig, isDuoPromoExpired } from '@/lib/duo-promo-config'
+import { getDuoPromoConfig, isDuoPromoExpired, isOutdoorQuickJoinAvailable } from '@/lib/duo-promo-config'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(): Promise<NextResponse> {
   const config = await getDuoPromoConfig()
   const expired = isDuoPromoExpired(config)
+  const outdoorAvailable = await isOutdoorQuickJoinAvailable(config)
 
   return NextResponse.json({
     success: true,
@@ -23,6 +24,7 @@ export async function GET(): Promise<NextResponse> {
       // Convenience for the client: live = active AND not past its end date.
       live: config.active && !expired,
       expired,
+      outdoorAvailable,
     },
   })
 }

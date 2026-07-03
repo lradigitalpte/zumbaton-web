@@ -242,9 +242,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         return NextResponse.json({ received: true, message: 'ZumFamilia booking processed' })
       }
 
-      // Handle Quick Join (pay-first, no class) — staff schedule the guest later
-      if (flowType === 'quick_join') {
-        console.log('[Webhook] Processing Quick Join payment:', payment.id)
+      // Handle Quick Join / Fast Trial (pay-first, no class) — staff schedule the guest later
+      if (flowType === 'quick_join' || flowType === 'quick_trial') {
+        console.log('[Webhook] Processing pay-first lead:', payment.id, flowType)
 
         await supabase
           .from('payments')
@@ -258,7 +258,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         const guestName = (metadata.guest_name as string) || 'Guest'
         const guestEmail = (metadata.guest_email as string) || ''
         const guestPhone = (metadata.guest_phone as string) || ''
-        const venueLabel = (metadata.promo_label as string) || '1-for-1'
+        const venueLabel = (metadata.promo_label as string) || (flowType === 'quick_trial' ? 'Fast trial' : '1-for-1')
         const preferredNote = (metadata.preferred_note as string) || ''
         const balanceCents = typeof metadata.balance_cents === 'number' ? metadata.balance_cents : 0
         const balanceSuffix = balanceCents > 0 ? ` Balance $${(balanceCents / 100).toFixed(2)} due at studio.` : ''
@@ -284,7 +284,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 sent_at: new Date().toISOString(),
                 data: {
                   payment_id: payment.id,
-                  flow_type: 'quick_join',
+                  flow_type: flowType,
                   needs_scheduling: true,
                   venue: metadata.venue,
                   guest_name: guestName,

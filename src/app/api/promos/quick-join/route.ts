@@ -15,7 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
-import { getDuoPromoConfig, isDuoPromoExpired, computeCharge } from '@/lib/duo-promo-config'
+import { getDuoPromoConfig, isDuoPromoExpired, computeCharge, isOutdoorQuickJoinAvailable, isFastTrialStartAllowed } from '@/lib/duo-promo-config'
 import {
   BOOKING_WINDOW_CLOSED_MESSAGE,
   isBookingWindowOpen,
@@ -42,8 +42,9 @@ const QuickJoinSchema = z.object({
     z.string().email('Enter a valid email address').max(200)
   ),
   phone: z.string().min(1, 'Please enter your phone number').max(50),
-  venue: z.enum(['studio', 'outdoor']),
-  // Optional free-text "when works for you" — staff use it when scheduling.
+  venue: z.enum(['studio', 'outdoor']).optional(),
+  bookingFlow: z.enum(['duo', 'trial']).optional(),
+  termsAgreed: z.literal(true, { errorMap: () => ({ message: 'Please agree to the terms and waiver to continue.' }) }),
   preferredNote: z.string().max(500).optional(),
 })
 
@@ -57,7 +58,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { status: 400 }
       )
     }
-    const { name, email, phone, venue, preferredNote } = parsed.data
+    const { name, email, phone, preferredNote } = parsed.data
+    const bookingFlow = parsed.data.bookingFlow ?? 'duo'
+    const isFastTrial = bookingFlow === 'trial'
+    const venue = isFastTrial ? 'studio' : (parsed.data.venue ?? 'studio')
 
     if (!isBookingWindowOpen()) {
       logBookingWindowRejection('quick-join')
@@ -69,22 +73,49 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Promo must be active
     const promoConfig = await getDuoPromoConfig()
-    if (!promoConfig.active || isDuoPromoExpired(promoConfig)) {
+
+    if (isFastTrial) {
+      if (!isFastTrialStartAllowed(promoConfig)) {
+        return NextResponse.json(
+          { error: 'Unavailable', message: 'Fast trial booking is not available right now.' },
+          { status: 400 }
+        )
+      }
+    } else if (!promoConfig.active || isDuoPromoExpired(promoConfig)) {
       return NextResponse.json(
         { error: 'Promo Unavailable', message: 'This offer is not currently available.' },
         { status: 400 }
       )
     }
 
-    const totalCents = venue === 'outdoor' ? promoConfig.outdoorPriceCents : promoConfig.indoorPriceCents
+    if (!isFastTrial && venue === 'outdoor' && !(await isOutdoorQuickJoinAvailable(promoConfig))) {
+      return NextResponse.json(
+        {
+          error: 'Outdoor Unavailable',
+          message: 'Outdoor sessions are not available right now. Please book a studio session.',
+        },
+        { status: 400 }
+      )
+    }
+
+    const totalCents = isFastTrial
+      ? promoConfig.indoorPriceCents
+      : venue === 'outdoor'
+        ? promoConfig.outdoorPriceCents
+        : promoConfig.indoorPriceCents
     const { chargeCents, balanceCents } = computeCharge(promoConfig, totalCents)
-    const venueLabel = venue === 'outdoor' ? 'Outdoor 1-for-1' : 'Studio 1-for-1'
-    const referenceNumber = `JOIN-${venue}-${Date.now()}`
+    const venueLabel = isFastTrial
+      ? 'Fast trial (studio)'
+      : venue === 'outdoor'
+        ? 'Outdoor 1-for-1'
+        : 'Studio 1-for-1'
+    const referenceNumber = isFastTrial
+      ? `TRIAL-FAST-${Date.now()}`
+      : `JOIN-${venue}-${Date.now()}`
     const payOnline = promoConfig.paymentTerms !== 'none' && chargeCents > 0
 
-    // Shared lead metadata
     const leadMetadata = {
-      flow_type: 'quick_join',
+      flow_type: isFastTrial ? 'quick_trial' : 'quick_join',
       needs_scheduling: true,
       lead_status: 'new',
       venue,
@@ -98,6 +129,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       guest_phone: phone,
       preferred_note: preferredNote || '',
       reference_number: referenceNumber,
+      terms_agreed: true,
+      terms_agreed_at: new Date().toISOString(),
     }
 
     // ── No-payment mode: just capture the lead, no HitPay ──
@@ -172,9 +205,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const isDeposit = promoConfig.paymentTerms === 'deposit'
     const purpose = isDeposit
       ? `Deposit — ${venueLabel} (balance $${(balanceCents / 100).toFixed(2)} at studio)`
-      : venue === 'outdoor'
-        ? 'Outdoor 1-for-1 class'
-        : 'Studio 1-for-1 class'
+      : isFastTrial
+        ? 'Studio trial class'
+        : venue === 'outdoor'
+          ? 'Outdoor 1-for-1 class'
+          : 'Studio 1-for-1 class'
 
     const hitpayResponse = await fetch(`${HITPAY_API_URL}/payment-requests`, {
       method: 'POST',
