@@ -6,9 +6,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Users, Sparkles, ShieldCheck, MapPin, Heart, Loader2 } from "lucide-react";
 import { zumbaClasses } from "@/data/classes";
-import { BookingWindowBanner } from "@/components/Booking/BookingWindowBanner";
-import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
-import { BOOKING_WINDOW_CLOSED_MESSAGE } from "@/lib/booking-window";
 
 // Adult lineup featured on this page (kids/family routes to One Familia).
 const ADULT_SLUGS = [
@@ -55,7 +52,6 @@ export default function StartPage() {
   const [error, setError] = useState<string | null>(null);
   // For "no payment" mode: an inline confirmation instead of a HitPay redirect.
   const [reserved, setReserved] = useState(false);
-  const bookingWindowOpen = useBookingWindowOpen();
 
   useEffect(() => {
     let active = true;
@@ -121,10 +117,6 @@ export default function StartPage() {
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
       setError("Please enter a valid email. Your receipt is sent there.");
-      return;
-    }
-    if (!bookingWindowOpen) {
-      setError(BOOKING_WINDOW_CLOSED_MESSAGE);
       return;
     }
     if (!agreedToTerms) {
@@ -367,7 +359,6 @@ export default function StartPage() {
                 </div>
 
                 <div className="p-6 md:p-8 space-y-5">
-                <BookingWindowBanner open={bookingWindowOpen} />
                 {isDuoBooking && promo.outdoorAvailable && (
                 <div>
                   <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3 block">Where?</label>
@@ -477,13 +468,11 @@ export default function StartPage() {
 
                   <button
                     type="submit"
-                    disabled={processing || !bookingWindowOpen || !agreedToTerms}
+                    disabled={processing || !agreedToTerms}
                     className="w-full py-5 bg-lime-500 text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center gap-3"
                   >
                     {processing ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : !bookingWindowOpen ? (
-                      <>Booking closed</>
                     ) : (
                       <>
                       {!payOnline

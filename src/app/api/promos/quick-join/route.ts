@@ -10,17 +10,14 @@
  * The guest's details are saved as a lead (a pending payment row) BEFORE we
  * redirect to HitPay, so even abandoned checkouts are captured. Payment terms
  * (full / deposit / none) are admin-controlled via the promo config.
+ *
+ * The /start sales page uses this route 24/7 (no 08:00–22:00 SGT booking window).
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
 import { getDuoPromoConfig, isDuoPromoExpired, computeCharge, isOutdoorQuickJoinAvailable, isFastTrialStartAllowed } from '@/lib/duo-promo-config'
-import {
-  BOOKING_WINDOW_CLOSED_MESSAGE,
-  isBookingWindowOpen,
-  logBookingWindowRejection,
-} from '@/lib/booking-window'
 
 export const dynamic = 'force-dynamic'
 
@@ -63,15 +60,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const isFastTrial = bookingFlow === 'trial'
     const venue = isFastTrial ? 'studio' : (parsed.data.venue ?? 'studio')
 
-    if (!isBookingWindowOpen()) {
-      logBookingWindowRejection('quick-join')
-      return NextResponse.json(
-        { error: 'Booking Closed', message: BOOKING_WINDOW_CLOSED_MESSAGE },
-        { status: 400 }
-      )
-    }
-
-    // Promo must be active
+    // Promo must be active (or fast trial allowed)
     const promoConfig = await getDuoPromoConfig()
 
     if (isFastTrial) {

@@ -52,6 +52,12 @@ const menuData: Menu[] = [
     newTab: false,
     submenu: [
       {
+        id: 43,
+        title: "Try Your First Class",
+        path: "/start",
+        newTab: false,
+      },
+      {
         id: 41,
         title: "Packages",
         path: "/pricing",
