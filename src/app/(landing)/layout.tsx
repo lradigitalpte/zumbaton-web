@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { WhatsAppModalProvider } from "@/context/WhatsAppModalContext";
-import ScrollToTop from "@/components/ScrollToTop";
+import FloatingSideActions from "@/components/FloatingSideActions";
 import Footer from "@/components/Footer";
 
 export default function LandingLayout({
@@ -24,7 +24,7 @@ export default function LandingLayout({
       </div>
       {children}
       <Footer />
-      <ScrollToTop />
+      <FloatingSideActions />
       </div>
     </WhatsAppModalProvider>
   );

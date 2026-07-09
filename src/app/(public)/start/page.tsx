@@ -4,28 +4,73 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Users, Sparkles, ShieldCheck, MapPin, Heart, Loader2 } from "lucide-react";
-import { zumbaClasses } from "@/data/classes";
+import {
+  ArrowRight,
+  Check,
+  Star,
+  ShieldCheck,
+  MapPin,
+  Loader2,
+  Clock,
+  MessageCircle,
+  Phone,
+  Music,
+  HeartPulse,
+  Timer,
+} from "lucide-react";
+import { HorizontalScrollCarousel } from "@/components/Common/HorizontalScrollCarousel";
 
-// Adult lineup featured on this page (kids/family routes to One Familia).
-const ADULT_SLUGS = [
-  "thunderbolt-bodyweight-steppers",
-  "zumba-step",
-  "groove-stepper",
-  "thunderbolt-resistance-dance",
-  "piloxing",
+// ── Editable marketing constants ──────────────────────────────────────────
+// Anchor price the trial is discounted from (regular single-class rate).
+const REGULAR_PRICE_CENTS = 3000; // $30
+// Social proof — replace with your real figures before scaling ad spend.
+const RATING = "4.9";
+const REVIEW_COUNT = "300+";
+// What the guest is promised after booking.
+const RESPONSE_PROMISE = "within 2 hours (9am to 9pm)";
+// Studio contact (used for the minimal header + footer).
+const PHONE_DISPLAY = "+65 8492 7347";
+const WHATSAPP_URL = "https://wa.me/6584927347";
+
+const TESTIMONIALS = [
+  {
+    quote:
+      "I hadn't danced since school. First class in and I was hooked. Everyone made me feel welcome.",
+    name: "Rachel T.",
+    tag: "First-timer",
+  },
+  {
+    quote:
+      "Best hour of my week. The playlists are unreal and I actually forget I'm working out.",
+    name: "Marcus L.",
+    tag: "Regular",
+  },
+  {
+    quote:
+      "Booked, got a message the same day, and turned up to the friendliest room in Singapore.",
+    name: "Aisyah R.",
+    tag: "Tried the 1-for-1",
+  },
 ];
-const lineup = ADULT_SLUGS.map((s) => zumbaClasses.find((c) => c.slug === s)).filter(
-  (c): c is (typeof zumbaClasses)[number] => Boolean(c)
-);
+
+const CLASS_TASTER = ["Zumba Step", "Groove Stepper", "Piloxing", "Thunderbolt"];
 
 const formatPrice = (cents: number) => {
   const d = cents / 100;
   return `$${Number.isInteger(d) ? d : d.toFixed(2)}`;
 };
 
+function formatOfferEndDate(ymd: string): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  if (!y || !m || !d) return ymd;
+  return new Date(y, m - 1, d).toLocaleDateString("en-SG", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export default function StartPage() {
-  // Live, admin-editable promo price + availability + payment terms.
   const [promo, setPromo] = useState<{
     indoorPriceCents: number;
     outdoorPriceCents: number;
@@ -34,6 +79,7 @@ export default function StartPage() {
     depositPercent: number;
     outdoorAvailable: boolean;
     startPageMode: "quick_join" | "trial";
+    endDate: string | null;
   }>({
     indoorPriceCents: 2300,
     outdoorPriceCents: 3500,
@@ -42,15 +88,14 @@ export default function StartPage() {
     depositPercent: 50,
     outdoorAvailable: false,
     startPageMode: "quick_join",
+    endDate: null,
   });
 
-  // The whole "booking": pick a venue + your details, then pay.
   const [venue, setVenue] = useState<"studio" | "outdoor">("studio");
   const [form, setForm] = useState({ name: "", phone: "", email: "", preferredNote: "" });
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // For "no payment" mode: an inline confirmation instead of a HitPay redirect.
   const [reserved, setReserved] = useState(false);
 
   useEffect(() => {
@@ -67,6 +112,7 @@ export default function StartPage() {
             depositPercent: res.data.depositPercent ?? 50,
             outdoorAvailable: res.data.outdoorAvailable === true,
             startPageMode: res.data.startPageMode === "trial" ? "trial" : "quick_join",
+            endDate: res.data.endDate ?? null,
           });
         }
       })
@@ -77,13 +123,14 @@ export default function StartPage() {
   }, []);
 
   useEffect(() => {
-    if (!promo.outdoorAvailable && venue === "outdoor") {
-      setVenue("studio");
-    }
+    if (!promo.outdoorAvailable && venue === "outdoor") setVenue("studio");
   }, [promo.outdoorAvailable, venue]);
 
-  const priceCents = venue === "outdoor" ? promo.outdoorPriceCents : promo.indoorPriceCents;
-  // What they pay online now vs. owe at the studio.
+  const isDuoBooking = promo.startPageMode === "quick_join" && promo.live;
+  const isFastTrial = !isDuoBooking;
+
+  const priceCents =
+    isFastTrial || venue === "studio" ? promo.indoorPriceCents : promo.outdoorPriceCents;
   const chargeCents =
     promo.paymentTerms === "none"
       ? 0
@@ -92,20 +139,9 @@ export default function StartPage() {
         : priceCents;
   const balanceCents = Math.max(0, priceCents - chargeCents);
   const payOnline = promo.paymentTerms !== "none" && chargeCents > 0;
-  const isDuoBooking = promo.startPageMode === "quick_join" && promo.live;
-  const isFastTrial = !isDuoBooking;
-  const trialPriceCents = promo.indoorPriceCents;
-  const displayPriceCents = isFastTrial ? trialPriceCents : priceCents;
-  const displayChargeCents = isFastTrial
-    ? promo.paymentTerms === "none"
-      ? 0
-      : promo.paymentTerms === "deposit"
-        ? Math.max(1, Math.round((trialPriceCents * promo.depositPercent) / 100))
-        : trialPriceCents
-    : chargeCents;
-  const displayBalanceCents = isFastTrial
-    ? Math.max(0, trialPriceCents - displayChargeCents)
-    : balanceCents;
+  const showAnchor = priceCents < REGULAR_PRICE_CENTS;
+  const savingCents = Math.max(0, REGULAR_PRICE_CENTS - priceCents);
+  const offerEndsLabel = promo.endDate ? formatOfferEndDate(promo.endDate) : null;
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,528 +194,565 @@ export default function StartPage() {
     }
   };
 
+  const ctaLabel = !payOnline
+    ? "Reserve my first class"
+    : promo.paymentTerms === "deposit"
+      ? `Secure my spot, ${formatPrice(chargeCents)} deposit`
+      : `Book my first class, ${formatPrice(chargeCents)}`;
+
   return (
-    <main className="bg-[#f6f4ee] dark:bg-black min-h-screen text-gray-900 dark:text-white">
-      {/* ===== Hero ===== */}
-      <section className="relative min-h-[82vh] flex items-center overflow-hidden bg-black pt-24">
+    <main className="bg-[#f6f4ee] text-gray-900">
+      {/* ── Limited-time strip ── */}
+      <div className="bg-lime-500 text-black">
+        <div className="mx-auto max-w-6xl px-4 py-2.5 text-center sm:py-3">
+          <p className="flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wide sm:text-sm sm:tracking-[0.15em]">
+            <Timer className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+            Limited time offer
+          </p>
+          <p className="mt-0.5 text-[11px] font-bold leading-snug text-black/80 sm:text-xs sm:tracking-wide">
+            {offerEndsLabel ? `Ends ${offerEndsLabel}` : "First class intro pricing. Book while spots last"}
+          </p>
+        </div>
+      </div>
+
+      {/* ── Minimal header ── */}
+      <header className="sticky top-0 z-50 border-b border-black/10 bg-[#f6f4ee]/95 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6 sm:py-4">
+          <div className="relative h-9 w-24 shrink-0 sm:h-11 sm:w-32 md:h-12 md:w-40">
+            <Image
+              src="/logo/One step fitness logo.png"
+              alt="One Step Fitness"
+              fill
+              className="object-contain object-left"
+              sizes="(max-width: 640px) 96px, 160px"
+              priority
+            />
+          </div>
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-600 hover:text-black sm:inline-flex"
+            >
+              <Phone className="h-3.5 w-3.5" /> {PHONE_DISPLAY}
+            </a>
+            <a
+              href="#book"
+              className="whitespace-nowrap bg-lime-500 px-4 py-2.5 text-xs font-black uppercase tracking-wide text-black transition-colors hover:bg-black hover:text-white sm:px-5 sm:text-sm"
+            >
+              Book now
+            </a>
+          </div>
+        </div>
+      </header>
+
+      {/* ── Hero + Form ── */}
+      <section className="relative overflow-hidden border-b border-black/5 bg-[#f6f4ee]">
         <div className="absolute inset-0 -z-10">
           <Image
             src="/images/images/hero1z.jpg"
             alt="One Step Fitness dance class"
             fill
-            className="object-cover opacity-50"
+            className="object-cover opacity-[0.12]"
             priority
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/20" />
         </div>
 
-        <div className="container relative z-10 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 items-start gap-8 px-4 py-6 sm:gap-10 sm:px-6 sm:py-10 lg:grid-cols-2 lg:gap-14 lg:py-16">
+          {/* Pitch — below form on mobile */}
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="max-w-4xl"
+            className="order-2 lg:order-1"
           >
-            <div className="text-lime-500 font-black text-xs md:text-sm uppercase tracking-[0.3em] mb-5 flex items-center gap-4">
-              <span className="w-10 md:w-16 h-[2px] bg-lime-500" />
-              Singapore Dance Fitness
+            <div className="mb-4 hidden items-center gap-2 border border-lime-600/30 bg-lime-500/15 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-lime-800 sm:mb-4 sm:inline-flex sm:text-[11px] sm:tracking-widest lg:mb-4">
+              <Star className="h-3.5 w-3.5 fill-lime-600 text-lime-600" />
+              {RATING}, {REVIEW_COUNT} happy dancers
             </div>
-            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white uppercase italic tracking-tighter leading-[0.82] mb-7">
-              DANCE.<br />
-              SWEAT.<br />
-              <span className="text-lime-500">REPEAT.</span>
+
+            <h1 className="mb-4 hidden text-[2.35rem] font-black uppercase italic leading-[0.9] tracking-tighter text-gray-900 sm:mb-5 sm:text-5xl sm:leading-[0.85] lg:block lg:text-7xl">
+              YOUR FIRST
+              <br />
+              CLASS,{" "}
+              <span className="text-lime-600">SORTED.</span>
             </h1>
-            <p className="max-w-xl text-white/85 font-bold text-sm md:text-base uppercase tracking-wider border-l-4 border-lime-500 pl-6 mb-8">
-              Singapore&apos;s dance-fitness studio with certified coaches, playlists that move you,
-              and a room full of good energy. Come try a class and find your rhythm.
+
+            <p className="mb-5 max-w-md text-sm font-medium leading-relaxed text-gray-700 sm:mb-6 sm:text-base">
+              Singapore&apos;s dance-fitness studio with professional coaches, playlists that move you, and a
+              room full of good energy. Book below and we&apos;ll message you {RESPONSE_PROMISE} to lock in
+              your class.
             </p>
 
-            {isDuoBooking && (
-              <div className="inline-flex items-center gap-2 bg-lime-500 text-black px-4 py-2 text-[11px] font-black uppercase tracking-widest mb-8">
-                <Sparkles className="w-3.5 h-3.5" />
-                On now: 1-for-1, bring a friend, one price
-              </div>
-            )}
-            {isFastTrial && (
-              <div className="inline-flex items-center gap-2 bg-lime-500 text-black px-4 py-2 text-[11px] font-black uppercase tracking-widest mb-8">
-                <Sparkles className="w-3.5 h-3.5" />
-                Your first class starts here
-              </div>
-            )}
+            <ul className="mb-6 space-y-2 sm:mb-8 sm:space-y-2.5">
+              {[
+                "All levels welcome. Never danced? Perfect.",
+                "60-minute class, real coaches, unreal playlists",
+                `We reply ${RESPONSE_PROMISE}. You just show up`,
+              ].map((t) => (
+                <li key={t} className="flex items-start gap-2.5 text-sm font-semibold text-gray-800 sm:items-center sm:gap-3">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-lime-600 sm:mt-0" /> {t}
+                </li>
+              ))}
+            </ul>
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <a
-                href="#join"
-                className="group inline-flex items-center justify-center gap-3 px-10 py-5 bg-lime-500 text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-white transition-all"
-              >
-                {isDuoBooking
-                  ? `Try a class for ${formatPrice(promo.indoorPriceCents)}`
-                  : `Try your first class`}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </a>
-              <Link
-                href="/schedule"
-                className="inline-flex items-center justify-center gap-3 px-10 py-5 border border-white/30 text-white font-black uppercase tracking-[0.2em] text-sm hover:bg-white hover:text-black transition-all"
-              >
-                View schedule
-              </Link>
+            <div className="hidden flex-wrap items-center gap-x-6 gap-y-3 text-[11px] font-bold uppercase tracking-widest text-gray-500 sm:flex">
+              <span className="flex items-center gap-2">
+                <HeartPulse className="h-4 w-4 text-lime-600" /> Professional coaches
+              </span>
+              <span className="flex items-center gap-2">
+                <Music className="h-4 w-4 text-lime-600" /> Afrobeats, EDM, Latin, K-Pop
+              </span>
             </div>
           </motion.div>
-        </div>
-      </section>
 
-      {/* ===== JOIN: pay first, schedule later ===== */}
-      <section id="join" className="py-16 md:py-24 bg-black text-white scroll-mt-20">
-        <div className="container px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-            {/* Pitch */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              <div className="text-lime-500 font-black text-xs uppercase tracking-[0.3em] mb-4">
-                Your First Class
-              </div>
-              <h2 className="text-4xl sm:text-5xl md:text-6xl font-black uppercase italic tracking-tighter leading-[0.9] mb-6">
-                {isDuoBooking ? (
-                  <>
-                    BRING YOUR PERSON.<br />
-                    <span className="text-lime-500">DANCE TOGETHER.</span>
-                  </>
-                ) : (
-                  <>
-                    COME TRY IT.<br />
-                    <span className="text-lime-500">FEEL THE ENERGY.</span>
-                  </>
-                )}
-              </h2>
-              <p className="text-white/70 font-medium text-sm md:text-base leading-relaxed mb-8">
-                {isDuoBooking ? (
-                  <>
-                    Enjoy a 1-for-1 session with someone you choose. No class to pick, no calendar to decode.
-                    Book your first visit at one simple price, and we&apos;ll message you personally to find a
-                    day and time that suits you as soon as possible.
-                  </>
-                ) : (
-                  <>
-                    Your first taste of dance fitness at One Step Fitness. No need to decode the schedule
-                    or pick a class yet. Tell us you&apos;re in and we&apos;ll help you find the right session
-                    to get moving.
-                  </>
-                )}
+          {/* Booking card — first on mobile */}
+          <motion.div
+            id="book"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="order-1 scroll-mt-[4.5rem] sm:scroll-mt-24 lg:order-2"
+          >
+            <div className="mb-4 lg:hidden">
+              <p className="mb-2 text-[10px] font-black uppercase tracking-wide text-lime-700">
+                {RATING} stars, {REVIEW_COUNT} happy dancers
               </p>
-              <ul className="space-y-3">
-                {(isDuoBooking
-                  ? [
-                      "1-for-1: you + your person, one price",
-                      "We reach out to schedule. You just show up",
-                      "Straightforward pricing, no surprises",
-                    ]
-                  : [
-                      "All levels welcome",
-                      "We help you find the right class",
-                      "Good music, great energy, zero pressure",
-                    ]
-                ).map((t) => (
-                  <li key={t} className="flex items-center gap-3 text-xs font-black uppercase tracking-widest">
-                    <ShieldCheck className="w-4 h-4 text-lime-500" /> {t}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-8 text-xs font-bold uppercase tracking-widest text-white/50">
-                {isFastTrial ? (
-                  <>
-                    Prefer to pick your own class?{" "}
-                    <Link href="/trial-booking" className="text-lime-500 hover:underline">Full trial booking</Link>
-                  </>
-                ) : (
-                  <>
-                    Curious about the lineup?{" "}
-                    <Link href="/classes" className="text-lime-500 hover:underline">Browse all classes</Link>
-                  </>
-                )}
-              </p>
-            </motion.div>
-
-            {/* Fast checkout form (1-for-1 or fast trial) */}
+              <h1 className="text-3xl font-black uppercase italic leading-[0.9] tracking-tighter text-gray-900">
+                YOUR FIRST CLASS, <span className="text-lime-600">SORTED.</span>
+              </h1>
+            </div>
             {reserved ? (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="border border-lime-500/40 bg-zinc-950 p-8 md:p-10 flex flex-col items-center text-center"
-                >
-                  <div className="w-16 h-16 bg-lime-500 flex items-center justify-center mb-6">
-                    <ShieldCheck className="w-8 h-8 text-black" />
-                  </div>
-                  <h3 className="text-2xl font-black uppercase italic tracking-tighter mb-3">You&apos;re on the list!</h3>
-                  <p className="text-sm font-medium text-white/60 leading-relaxed max-w-sm">
-                    Thanks, {form.name.split(" ")[0] || "there"}. We&apos;ll message you shortly to confirm your
-                    class and arrange payment at the studio. No payment needed right now.
-                  </p>
-                </motion.div>
+              <div className="border border-lime-500 bg-white p-8 text-center shadow-lg">
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center bg-lime-500">
+                  <Check className="h-8 w-8 text-black" />
+                </div>
+                <h2 className="mb-3 text-2xl font-black uppercase italic tracking-tighter text-gray-900">
+                  You&apos;re in!
+                </h2>
+                <p className="mx-auto max-w-sm text-sm font-medium leading-relaxed text-gray-600">
+                  Thanks, {form.name.split(" ")[0] || "there"}. We&apos;ll message you {RESPONSE_PROMISE}{" "}
+                  to confirm your class. No payment needed right now.
+                </p>
+              </div>
             ) : (
-              <motion.form
-                onSubmit={handleJoin}
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="border border-white/15 bg-zinc-950 overflow-hidden"
-              >
-                <div className="border-b border-white/10 bg-gradient-to-r from-lime-500/15 via-lime-500/5 to-transparent px-6 py-5 md:px-8">
-                  <div className="flex items-end justify-between gap-4">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.25em] text-lime-500 mb-1">
-                        {isDuoBooking
-                          ? promo.outdoorAvailable
-                            ? "Pick your venue"
-                            : "1-for-1 intro class"
-                          : "Your first class"}
-                      </p>
-                      <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter text-white leading-none">
-                        {isDuoBooking
-                          ? promo.outdoorAvailable
-                            ? "Book together"
-                            : "At the studio"
-                          : "Let's get you moving"}
-                      </h3>
+              <form onSubmit={handleJoin} className="overflow-hidden border border-black/10 bg-white shadow-xl">
+                {/* Price comparison — large and impossible to miss */}
+                {showAnchor && (
+                  <div className="border-b border-black/10 bg-lime-500 px-4 py-3.5 sm:px-6 sm:py-5">
+                    <p className="mb-2.5 text-center text-[10px] font-black uppercase tracking-wide text-black/70 sm:text-[11px]">
+                      {isDuoBooking ? "1-for-1 intro, limited time" : "First class, limited time"}
+                    </p>
+                    <div className="mx-auto flex max-w-md items-center justify-center gap-2.5 sm:gap-4">
+                      <span className="text-lg font-black italic leading-none text-black/30 line-through sm:text-2xl">
+                        {formatPrice(REGULAR_PRICE_CENTS)}
+                      </span>
+                      <span className="text-3xl font-black italic leading-none tracking-tighter text-black sm:text-5xl">
+                        {formatPrice(priceCents)}
+                      </span>
+                      <span className="shrink-0 bg-black px-2.5 py-1.5 text-xs font-black uppercase text-lime-500 sm:px-3 sm:py-2 sm:text-sm">
+                        Save {formatPrice(savingCents)}
+                      </span>
                     </div>
-                    {(!isDuoBooking || !promo.outdoorAvailable) && (
-                      <div className="text-right shrink-0">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-0.5">
-                          {isFastTrial ? "Trial" : "You pay"}
-                        </p>
-                        <p className="text-3xl font-black italic tracking-tighter text-lime-500 leading-none">
-                          {formatPrice(displayPriceCents)}
-                        </p>
-                      </div>
+                    {offerEndsLabel && (
+                      <p className="mt-2.5 text-center text-[10px] font-bold uppercase tracking-wide text-black/70 sm:text-xs">
+                        Offer ends {offerEndsLabel}
+                      </p>
                     )}
                   </div>
-                </div>
-
-                <div className="p-6 md:p-8 space-y-5">
-                {isDuoBooking && promo.outdoorAvailable && (
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3 block">Where?</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setVenue("studio")}
-                      className={`p-4 text-left border transition-colors ${
-                        venue === "studio" ? "border-lime-500 bg-lime-500/10" : "border-white/15 hover:border-white/40"
-                      }`}
-                    >
-                      <div className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">Studio</div>
-                      <div className="text-2xl font-black italic tracking-tighter">{formatPrice(promo.indoorPriceCents)}</div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setVenue("outdoor")}
-                      className={`p-4 text-left border transition-colors ${
-                        venue === "outdoor" ? "border-lime-500 bg-lime-500/10" : "border-white/15 hover:border-white/40"
-                      }`}
-                    >
-                      <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">
-                        <MapPin className="w-3 h-3" /> Outdoor
-                      </div>
-                      <div className="text-2xl font-black italic tracking-tighter">{formatPrice(promo.outdoorPriceCents)}</div>
-                    </button>
-                  </div>
-                </div>
                 )}
 
-                <div className="space-y-4">
+                {!showAnchor && (
+                  <div className="border-b border-black/10 bg-lime-500/20 px-6 py-5">
+                    <p className="text-[10px] font-black uppercase tracking-[0.25em] text-lime-800">
+                      {isDuoBooking ? "1-for-1 intro offer" : "First class offer"}
+                    </p>
+                    <p className="text-5xl font-black italic leading-none tracking-tighter text-gray-900">
+                      {formatPrice(priceCents)}
+                    </p>
+                  </div>
+                )}
+
+                <div className="space-y-4 p-4 sm:p-6 md:p-8">
+                  {isDuoBooking && promo.outdoorAvailable && (
+                    <div>
+                      <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-gray-500">
+                        Where?
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setVenue("studio")}
+                          className={`border p-3 text-left transition-colors ${
+                            venue === "studio"
+                              ? "border-lime-600 bg-lime-500/15"
+                              : "border-black/10 hover:border-black/30"
+                          }`}
+                        >
+                          <div className="mb-1 text-[10px] font-black uppercase tracking-widest text-gray-500">
+                            Studio
+                          </div>
+                          <div className="text-xl font-black italic tracking-tighter text-gray-900">
+                            {formatPrice(promo.indoorPriceCents)}
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setVenue("outdoor")}
+                          className={`border p-3 text-left transition-colors ${
+                            venue === "outdoor"
+                              ? "border-lime-600 bg-lime-500/15"
+                              : "border-black/10 hover:border-black/30"
+                          }`}
+                        >
+                          <div className="mb-1 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-gray-500">
+                            <MapPin className="h-3 w-3" /> Outdoor
+                          </div>
+                          <div className="text-xl font-black italic tracking-tighter text-gray-900">
+                            {formatPrice(promo.outdoorPriceCents)}
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div>
-                    <label htmlFor="start-name" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 block">Your name</label>
+                    <label htmlFor="s-name" className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-gray-500">
+                      Your name
+                    </label>
                     <input
-                      id="start-name"
+                      id="s-name"
                       type="text"
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
                       placeholder="Full name"
-                      className="w-full bg-black border border-white/15 px-4 py-3.5 text-sm font-semibold text-white placeholder:text-zinc-600 placeholder:font-medium placeholder:normal-case focus:border-lime-500 outline-none transition-colors"
+                      className="w-full border border-black/15 bg-[#f6f4ee] px-4 py-3 text-sm font-semibold text-gray-900 placeholder:font-medium placeholder:normal-case placeholder:text-gray-400 focus:border-lime-600 focus:outline-none"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                      <label htmlFor="start-phone" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 block">Phone</label>
+                      <label htmlFor="s-phone" className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-gray-500">
+                        Phone
+                      </label>
                       <input
-                        id="start-phone"
+                        id="s-phone"
                         type="tel"
                         value={form.phone}
                         onChange={(e) => setForm({ ...form, phone: e.target.value })}
                         placeholder="+65 9123 4567"
-                        className="w-full bg-black border border-white/15 px-4 py-3.5 text-sm font-semibold text-white placeholder:text-zinc-600 placeholder:font-medium placeholder:normal-case focus:border-lime-500 outline-none transition-colors"
+                        className="w-full border border-black/15 bg-[#f6f4ee] px-4 py-3 text-sm font-semibold text-gray-900 placeholder:font-medium placeholder:normal-case placeholder:text-gray-400 focus:border-lime-600 focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label htmlFor="start-email" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 block">Email</label>
+                      <label htmlFor="s-email" className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-gray-500">
+                        Email
+                      </label>
                       <input
-                        id="start-email"
+                        id="s-email"
                         type="email"
                         autoComplete="email"
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                         placeholder="you@email.com"
-                        className="w-full bg-black border border-white/15 px-4 py-3.5 text-sm font-semibold text-white placeholder:text-zinc-600 placeholder:font-medium placeholder:normal-case focus:border-lime-500 outline-none transition-colors"
+                        className="w-full border border-black/15 bg-[#f6f4ee] px-4 py-3 text-sm font-semibold text-gray-900 placeholder:font-medium placeholder:normal-case placeholder:text-gray-400 focus:border-lime-600 focus:outline-none"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label htmlFor="start-when" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2 block">
-                      When suits you? <span className="text-zinc-600 normal-case tracking-normal font-medium">(optional)</span>
+                    <label htmlFor="s-when" className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-gray-500">
+                      When suits you?{" "}
+                      <span className="font-medium normal-case tracking-normal text-gray-400">(optional)</span>
                     </label>
                     <input
-                      id="start-when"
+                      id="s-when"
                       type="text"
                       value={form.preferredNote}
                       onChange={(e) => setForm({ ...form, preferredNote: e.target.value })}
                       placeholder="Weekday evenings, Saturday mornings…"
-                      className="w-full bg-black border border-white/15 px-4 py-3.5 text-sm font-semibold text-white placeholder:text-zinc-600 placeholder:font-medium placeholder:normal-case focus:border-lime-500 outline-none transition-colors"
+                      className="w-full border border-black/15 bg-[#f6f4ee] px-4 py-3 text-sm font-semibold text-gray-900 placeholder:font-medium placeholder:normal-case placeholder:text-gray-400 focus:border-lime-600 focus:outline-none"
                     />
                   </div>
-                </div>
 
-                {error && (
-                  <div role="alert" className="p-3 border border-red-500/60 bg-red-950/40 text-red-200 text-xs font-semibold leading-relaxed">
-                    {error}
-                  </div>
-                )}
-
-                <div className="pt-1 space-y-3">
-                  <label className="flex items-start gap-3 border border-white/15 bg-black/40 px-4 py-4 cursor-pointer">
+                  <label className="flex cursor-pointer items-start gap-3 border border-black/10 bg-[#f6f4ee] px-4 py-3">
                     <input
                       type="checkbox"
                       checked={agreedToTerms}
                       onChange={(e) => setAgreedToTerms(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 shrink-0 accent-lime-500"
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-lime-600"
                     />
-                    <span className="text-xs text-zinc-400 leading-relaxed">
+                    <span className="text-xs leading-relaxed text-gray-600">
                       I agree to the{" "}
-                      <Link href="/terms" className="text-lime-500 hover:underline font-semibold" onClick={(e) => e.stopPropagation()}>
+                      <Link href="/terms" className="font-semibold text-lime-700 hover:underline">
                         Terms &amp; Conditions
-                      </Link>
-                      {" "}and participation waiver.
+                      </Link>{" "}
+                      and participation waiver.
                     </span>
                   </label>
+
+                  {error && (
+                    <div role="alert" className="border border-red-400 bg-red-50 px-3 py-2.5 text-xs font-semibold leading-relaxed text-red-800">
+                      {error}
+                    </div>
+                  )}
 
                   <button
                     type="submit"
                     disabled={processing || !agreedToTerms}
-                    className="w-full py-5 bg-lime-500 text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center gap-3"
+                    className="flex w-full items-center justify-center gap-2 bg-lime-500 py-4 text-xs font-black uppercase tracking-wide text-black transition-all hover:bg-black hover:text-white disabled:opacity-40 sm:gap-3 sm:text-sm sm:tracking-[0.15em]"
                   >
                     {processing ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2 className="h-5 w-5 animate-spin" />
                     ) : (
                       <>
-                      {!payOnline
-                        ? isFastTrial
-                          ? "Reserve my first class"
-                          : "Book my first class"
-                        : promo.paymentTerms === "deposit"
-                          ? `Book with ${formatPrice(displayChargeCents)} deposit`
-                          : isFastTrial
-                            ? `Try a class for ${formatPrice(displayChargeCents)}`
-                            : `Book for ${formatPrice(displayChargeCents)}`}
-                        <ArrowRight className="w-4 h-4" />
+                        {ctaLabel}
+                        <ArrowRight className="h-4 w-4" />
                       </>
                     )}
                   </button>
-                  <p className="text-xs text-zinc-500 text-center leading-relaxed">
-                    {!payOnline ? (
-                      <>No payment now. Pay at the studio. We&apos;ll message you to schedule.</>
-                    ) : promo.paymentTerms === "deposit" && displayBalanceCents > 0 ? (
-                      <>{formatPrice(displayChargeCents)} to secure your spot, {formatPrice(displayBalanceCents)} at the studio. We&apos;ll message you to confirm your class.</>
-                    ) : (
-                      <>We&apos;ll message you to confirm your class.</>
-                    )}
-                  </p>
-                  {isFastTrial && (
-                    <p className="text-xs text-zinc-500 text-center leading-relaxed pt-1 border-t border-white/10">
-                      Want to choose your own class and time?{" "}
-                      <Link href="/trial-booking" className="text-lime-500 hover:underline font-semibold">
-                        Use full trial booking
-                      </Link>
-                      {" "}(pick from the schedule, waiver included).
+
+                  <div className="space-y-1.5 pt-1 text-center">
+                    <p className="flex items-center justify-center gap-1.5 text-xs text-gray-600">
+                      <Clock className="h-3.5 w-3.5 text-lime-600" />
+                      We&apos;ll message you {RESPONSE_PROMISE} to confirm your class.
                     </p>
-                  )}
+                    {payOnline && promo.paymentTerms === "deposit" && balanceCents > 0 && (
+                      <p className="text-xs text-gray-500">
+                        {formatPrice(chargeCents)} now to secure your spot, {formatPrice(balanceCents)} at
+                        the studio.
+                      </p>
+                    )}
+                    <p className="text-[11px] text-gray-400">
+                      No account needed. Secure checkout. Cancel anytime before your class.
+                    </p>
+                  </div>
                 </div>
-                </div>
-              </motion.form>
+              </form>
             )}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* ===== Classes ===== */}
-      <section id="classes" className="py-16 md:py-24 scroll-mt-20">
-        <div className="container px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-3xl mb-14"
-          >
-            <div className="text-lime-600 dark:text-lime-400 font-black text-xs uppercase tracking-[0.3em] mb-4">
-              The Classes
-            </div>
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-black uppercase italic tracking-tighter leading-[0.9] mb-6">
-              PICK YOUR <span className="text-lime-500">VIBE</span>
-            </h2>
-            <p className="text-gray-600 dark:text-zinc-400 font-medium text-sm md:text-base leading-relaxed">
-              Every class is a 60-minute dance-fitness session. Some lean cardio, some lean strength,
-              all of them fun. Tap any class to see the details, or join above and we&apos;ll help you choose.
-            </p>
-          </motion.div>
+      {/* ── Social proof band ── */}
+      <section className="border-y border-black/10 bg-white py-5 sm:py-6">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 items-center justify-items-center gap-3 px-4 sm:flex sm:flex-row sm:justify-center sm:gap-8 sm:px-6">
+          <div className="flex items-center justify-center gap-2">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className="h-3.5 w-3.5 fill-lime-600 text-lime-600 sm:h-4 sm:w-4" />
+            ))}
+            <span className="ml-1 text-xs font-black uppercase tracking-wide text-gray-900 sm:text-sm sm:tracking-widest">
+              {RATING}/5
+            </span>
+          </div>
+          <p className="text-center text-[10px] font-bold uppercase leading-snug tracking-wide text-gray-600 sm:text-xs sm:tracking-widest">
+            Loved by {REVIEW_COUNT} dancers
+          </p>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
-            {lineup.map((cls, i) => (
+      {/* ── Testimonials — swipe on mobile, grid on desktop ── */}
+      <section className="bg-[#f6f4ee] py-10 sm:py-16">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <h2 className="mb-6 text-center text-2xl font-black uppercase italic tracking-tighter text-gray-900 sm:mb-8 sm:text-4xl">
+            REAL PEOPLE. <span className="text-lime-600">REAL FIRST CLASSES.</span>
+          </h2>
+
+          <div className="md:hidden">
+            <HorizontalScrollCarousel id="start-reviews-carousel" hint="Swipe">
+              {TESTIMONIALS.map((t) => (
+                <div
+                  key={t.name}
+                  data-carousel-card
+                  className="flex w-[min(82vw,300px)] shrink-0 snap-start flex-col border border-black/10 bg-white p-5 shadow-sm"
+                >
+                  <div className="mb-3 flex gap-1">
+                    {[...Array(5)].map((_, s) => (
+                      <Star key={s} className="h-3 w-3 fill-lime-600 text-lime-600" />
+                    ))}
+                  </div>
+                  <p className="mb-4 flex-1 text-sm font-medium leading-relaxed text-gray-700">
+                    &ldquo;{t.quote}&rdquo;
+                  </p>
+                  <div className="text-[10px] font-black uppercase tracking-wide">
+                    <span className="text-gray-900">{t.name}</span>
+                    <span className="text-lime-700">, {t.tag}</span>
+                  </div>
+                </div>
+              ))}
+            </HorizontalScrollCarousel>
+          </div>
+
+          <div className="mx-auto hidden max-w-5xl grid-cols-3 gap-4 md:grid">
+            {TESTIMONIALS.map((t, i) => (
               <motion.div
-                key={cls.slug}
+                key={t.name}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: (i % 3) * 0.08, duration: 0.35 }}
+                transition={{ delay: i * 0.08, duration: 0.35 }}
+                className="flex flex-col border border-black/10 bg-white p-6 shadow-sm"
               >
-                <Link
-                  href={`/classes/${cls.slug}`}
-                  className="group border border-black/10 dark:border-white/10 bg-white dark:bg-zinc-950 overflow-hidden flex flex-col h-full hover:border-lime-500 transition-colors"
-                >
-                  <div className="relative h-32 sm:h-52 overflow-hidden">
-                    <Image
-                      src={cls.image}
-                      alt={cls.name}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="(max-width: 1024px) 50vw, 33vw"
-                    />
-                    <div className="absolute top-0 left-0 bg-lime-500 text-black px-2 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-widest">
-                      {cls.intensity}
-                    </div>
-                  </div>
-                  <div className="p-4 sm:p-6 flex flex-col flex-1">
-                    <h3 className="text-base sm:text-xl font-black uppercase italic tracking-tighter mb-2 leading-none">{cls.name}</h3>
-                    <div className="flex items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest opacity-60 mb-3 sm:mb-4">
-                      <span>{cls.duration}</span>
-                      <span>•</span>
-                      <span>{cls.calories} cal</span>
-                    </div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-zinc-400 leading-relaxed flex-1 line-clamp-4 sm:line-clamp-none">
-                      {cls.shortDescription}
-                    </p>
-                    <span className="mt-4 sm:mt-5 inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-lime-600 dark:text-lime-400 group-hover:gap-3 transition-all">
-                      View class <ArrowRight className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-                </Link>
+                <div className="mb-4 flex gap-1">
+                  {[...Array(5)].map((_, s) => (
+                    <Star key={s} className="h-3.5 w-3.5 fill-lime-600 text-lime-600" />
+                  ))}
+                </div>
+                <p className="mb-6 flex-1 text-sm font-medium leading-relaxed text-gray-700">
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+                <div className="text-[11px] font-black uppercase tracking-widest">
+                  <span className="text-gray-900">{t.name}</span>
+                  <span className="text-lime-700">, {t.tag}</span>
+                </div>
               </motion.div>
             ))}
-
-            {/* Kids & family routes to its own page */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.35 }}
-            >
-              <Link
-                href="/zumfamilia"
-                className="group border border-dashed border-black/20 dark:border-white/20 bg-transparent flex flex-col h-full items-center justify-center text-center p-5 sm:p-8 hover:border-lime-500 transition-colors min-h-full"
-              >
-                <Users className="w-7 h-7 sm:w-8 sm:h-8 text-lime-500 mb-3 sm:mb-4" />
-                <h3 className="text-base sm:text-xl font-black uppercase italic tracking-tighter mb-2">Kids &amp; Family?</h3>
-                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-zinc-400 leading-relaxed mb-4 sm:mb-5">
-                  Bring the little ones to One Familia, our family dance sessions.
-                </p>
-                <span className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-lime-600 dark:text-lime-400 group-hover:gap-3 transition-all">
-                  Explore One Familia <ArrowRight className="w-3.5 h-3.5" />
-                </span>
-              </Link>
-            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* ===== Why us ===== */}
-      <section className="py-16 md:py-24 border-b border-black/10 dark:border-white/10">
-        <div className="container px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {/* ── How it works — 3-col grid even on mobile ── */}
+      <section className="border-t border-black/10 bg-white py-10 sm:py-16">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <h2 className="mb-6 text-center text-2xl font-black uppercase italic tracking-tighter text-gray-900 sm:mb-10 sm:text-4xl">
+            How It Works
+          </h2>
+          <div className="mx-auto grid max-w-lg grid-cols-3 gap-2 sm:max-w-none sm:gap-8">
             {[
-              { icon: Heart, title: "All Levels Welcome", text: "Never danced before? Perfect. Our coaches give modifications so everyone moves at their own pace." },
-              { icon: Sparkles, title: "Certified Coaches", text: "Led by certified instructors with playlists spanning Afrobeats, EDM, Latin, K-Pop and more." },
-              { icon: Users, title: "Better With a Friend", text: "Our 1-for-1 sessions are built for two. Bring your partner, mate, or favourite dance buddy and enjoy a full class together, one price." },
+              { step: "01", text: "Book above. Under a minute" },
+              { step: "02", text: "We message you to lock in a time" },
+              { step: "03", text: "Show up, dance, feel the energy" },
+            ].map((s) => (
+              <div key={s.step} className="flex flex-col items-center rounded border border-black/10 bg-[#f6f4ee] p-2.5 text-center sm:border-0 sm:bg-transparent sm:p-0">
+                <div className="mb-2 flex h-10 w-10 items-center justify-center bg-lime-500 text-sm font-black italic text-black sm:mb-4 sm:h-14 sm:w-14 sm:text-xl">
+                  {s.step}
+                </div>
+                <p className="text-[9px] font-black uppercase leading-snug tracking-wide text-gray-700 sm:max-w-48 sm:text-xs sm:leading-relaxed sm:tracking-widest">
+                  {s.text}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Why us — 2-col mobile grid, 3-col desktop ── */}
+      <section className="bg-[#f6f4ee] py-10 sm:py-16">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mx-auto grid max-w-2xl grid-cols-2 gap-3 md:max-w-none md:grid-cols-3 md:gap-4">
+            {[
+              {
+                icon: ShieldCheck,
+                title: "All Levels Welcome",
+                text: "Never danced before? Perfect. Our coaches give modifications so everyone moves at their own pace.",
+              },
+              {
+                icon: Music,
+                title: "Professional Coaches",
+                text: "Led by professional instructors with playlists spanning Afrobeats, EDM, Latin, K-Pop and more.",
+              },
+              {
+                icon: HeartPulse,
+                title: "A Real Workout",
+                text: "Burn 400 to 800 calories in a 60-minute session that never feels like a chore.",
+              },
             ].map((item, i) => (
               <motion.div
                 key={item.title}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.35 }}
-                className="border border-black/10 dark:border-white/10 bg-white dark:bg-zinc-950 p-8"
+                transition={{ delay: i * 0.08, duration: 0.35 }}
+                className="border border-black/10 bg-white p-5 shadow-sm sm:p-8 md:col-span-1 [&:last-child]:col-span-2 md:[&:last-child]:col-span-1"
               >
-                <div className="w-12 h-12 bg-lime-500 flex items-center justify-center mb-6">
-                  <item.icon className="w-6 h-6 text-black" />
+                <div className="mb-4 flex h-10 w-10 items-center justify-center bg-lime-500 sm:mb-6 sm:h-12 sm:w-12">
+                  <item.icon className="h-5 w-5 text-black sm:h-6 sm:w-6" />
                 </div>
-                <h3 className="text-xl font-black uppercase italic tracking-tight mb-3">{item.title}</h3>
-                <p className="text-sm font-medium text-gray-600 dark:text-zinc-400 leading-relaxed">{item.text}</p>
+                <h3 className="mb-2 text-sm font-black uppercase italic tracking-tight text-gray-900 sm:mb-3 sm:text-xl">{item.title}</h3>
+                <p className="text-xs font-medium leading-relaxed text-gray-600 sm:text-sm">{item.text}</p>
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ===== How it works ===== */}
-      <section className="py-16 md:py-24">
-        <div className="container px-4 sm:px-6 lg:px-8 max-w-4xl">
-          <h2 className="text-2xl md:text-4xl font-black uppercase italic tracking-tighter text-center mb-14">
-            How It Works
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {[
-              isDuoBooking
-                ? { step: "01", text: "Book your first 1-for-1 session. Quick and easy." }
-                : { step: "01", text: "Tell us you're in. Quick and easy." },
-              isDuoBooking
-                ? { step: "02", text: "We message you to find a time that works" }
-                : { step: "02", text: "We help you find the right class" },
-              { step: "03", text: isDuoBooking ? "Show up together and dance" : "Show up and dance" },
-            ].map((s) => (
-              <div key={s.step} className="flex flex-col items-center text-center">
-                <div className="w-14 h-14 bg-black dark:bg-white text-lime-500 dark:text-black flex items-center justify-center font-black text-xl italic mb-4">
-                  {s.step}
-                </div>
-                <p className="text-xs font-black uppercase tracking-widest leading-relaxed max-w-48">{s.text}</p>
-              </div>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 sm:mt-8">
+            <span className="mr-2 text-[11px] font-bold uppercase tracking-widest text-gray-500">
+              Classes you can try:
+            </span>
+            {CLASS_TASTER.map((c) => (
+              <span
+                key={c}
+                className="border border-black/15 bg-white px-3 py-1.5 text-[11px] font-black uppercase tracking-widest text-gray-700"
+              >
+                {c}
+              </span>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ===== Final CTA ===== */}
-      <section className="bg-lime-500 py-16 md:py-24 text-black text-center relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-1/4 h-full bg-black/5 -skew-x-12 -translate-x-1/4" />
-        <div className="container relative z-10 px-4">
-          <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter leading-none mb-8">
-            READY TO <br />
-            <span className="bg-black text-lime-500 px-4 py-1 inline-block">START?</span>
+      {/* ── Final CTA ── */}
+      <section className="relative overflow-hidden bg-lime-500 py-12 text-center text-black sm:py-20">
+        <div className="absolute left-0 top-0 h-full w-1/4 -translate-x-1/4 -skew-x-12 bg-black/5" />
+        <div className="relative z-10 mx-auto max-w-3xl px-4">
+          <h2 className="mb-5 text-3xl font-black uppercase italic leading-none tracking-tighter sm:mb-6 sm:text-6xl">
+            READY TO <span className="bg-black px-2 py-0.5 text-lime-500 sm:px-3 sm:py-1">START?</span>
           </h2>
+          {showAnchor ? (
+            <div className="mb-6 flex flex-wrap items-center justify-center gap-2.5 sm:mb-8 sm:gap-4">
+              <span className="text-lg font-black italic text-black/35 line-through sm:text-2xl">
+                {formatPrice(REGULAR_PRICE_CENTS)}
+              </span>
+              <span className="text-3xl font-black italic tracking-tighter sm:text-5xl">
+                {formatPrice(priceCents)}
+              </span>
+              <span className="bg-black px-3 py-1.5 text-xs font-black uppercase tracking-wide text-lime-500 sm:px-4 sm:py-2 sm:text-sm">
+                Save {formatPrice(savingCents)}
+              </span>
+            </div>
+          ) : (
+            <p className="mb-8 text-sm font-bold uppercase tracking-widest text-black/70">
+              Your first class is closer than you think.
+            </p>
+          )}
+          {offerEndsLabel && (
+            <p className="mb-6 text-xs font-bold uppercase tracking-widest text-black/70">
+              Limited time. Ends {offerEndsLabel}
+            </p>
+          )}
           <a
-            href="#join"
-            className="inline-flex items-center gap-3 px-12 py-6 bg-black text-white font-black uppercase tracking-[0.2em] text-sm hover:bg-zinc-900 transition-all shadow-2xl"
+            href="#book"
+            className="inline-flex items-center gap-3 bg-black px-12 py-5 text-sm font-black uppercase tracking-[0.2em] text-white shadow-2xl transition-all hover:bg-gray-900"
           >
-            {isDuoBooking ? "Try a class now" : "Try your first class"}
-            <ArrowRight className="w-4 h-4" />
+            Book my first class
+            <ArrowRight className="h-4 w-4" />
           </a>
-          <p className="mt-6 text-[11px] font-black uppercase tracking-widest text-black/60">
-            {isDuoBooking
-              ? "Book first. We sort the schedule together. All levels welcome."
-              : "Your first class is closer than you think. All levels welcome."}
-          </p>
         </div>
       </section>
+
+      {/* ── Slim footer ── */}
+      <footer className="border-t border-black/10 bg-white py-8">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-center sm:flex-row sm:text-left sm:px-6">
+          <div className="text-[11px] font-bold uppercase tracking-widest text-gray-500">
+            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="hover:text-gray-900">
+              {PHONE_DISPLAY}
+            </a>
+            <span className="mx-2 text-gray-300">|</span>
+            2 Jalan Klapa, Singapore 199314
+          </div>
+          <div className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-widest text-gray-500">
+            <Link href="/terms" className="hover:text-gray-900">Terms</Link>
+            <Link href="/privacy" className="hover:text-gray-900">Privacy</Link>
+            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-gray-900">
+              <MessageCircle className="h-3.5 w-3.5" /> WhatsApp us
+            </a>
+          </div>
+        </div>
+        <p className="mt-6 text-center text-[10px] font-bold uppercase tracking-widest text-gray-400">
+          © {new Date().getFullYear()} One Step Fitness. All rights reserved.
+        </p>
+      </footer>
     </main>
   );
 }

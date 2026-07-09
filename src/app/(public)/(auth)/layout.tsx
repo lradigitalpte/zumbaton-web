@@ -1,7 +1,7 @@
 "use client";
 
 import Header from "@/components/Header";
-import ScrollToTop from "@/components/ScrollToTop";
+import FloatingSideActions from "@/components/FloatingSideActions";
 
 export default function AuthLayout({
   children,
@@ -12,7 +12,7 @@ export default function AuthLayout({
     <>
       <Header />
       {children}
-      <ScrollToTop />
+      <FloatingSideActions />
     </>
   );
 }
