@@ -14,7 +14,7 @@ export default function PublicLayout({
   const pathname = usePathname();
   const isAuthPage = pathname?.startsWith('/signin') || pathname?.startsWith('/signup');
   // Dedicated conversion landing pages render their own minimal chrome.
-  const isLandingPage = pathname === '/start' || pathname === '/start/success';
+  const isLandingPage = pathname?.startsWith('/start');
 
   return (
     <WhatsAppModalProvider>

@@ -189,7 +189,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    const redirectUrl = `${APP_URL}/start/success?payment_id=${paymentRecord.id}`.replace(/([^:]\/)\/+/g, '$1')
+    const postPaymentPath = isFastTrial
+      ? `/start/pick-class?payment_id=${paymentRecord.id}`
+      : `/start/success?payment_id=${paymentRecord.id}`
+    const redirectUrl = `${APP_URL}${postPaymentPath}`.replace(/([^:]\/)\/+/g, '$1')
     const webhookUrl = `${APP_URL}/api/payments/webhook`.replace(/([^:]\/)\/+/g, '$1')
     const isDeposit = promoConfig.paymentTerms === 'deposit'
     const purpose = isDeposit

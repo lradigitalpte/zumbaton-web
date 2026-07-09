@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import SuccessClient from "./SuccessClient";
+import PickClassClient from "./PickClassClient";
 
-export default function StartSuccessPage() {
+export default function StartPickClassPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-[#f6f4ee]" />}>
-      <SuccessClient />
+      <PickClassClient />
     </Suspense>
   );
 }
