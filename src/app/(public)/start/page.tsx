@@ -218,7 +218,7 @@ export default function StartPage() {
       {/* ── Minimal header ── */}
       <header className="sticky top-0 z-50 border-b border-black/10 bg-[#f6f4ee]/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6 sm:py-4">
-          <div className="relative h-9 w-24 shrink-0 sm:h-11 sm:w-32 md:h-12 md:w-40">
+          <Link href="/explore" className="relative block h-9 w-24 shrink-0 sm:h-11 sm:w-32 md:h-12 md:w-40" aria-label="One Step Fitness home">
             <Image
               src="/logo/One step fitness logo.png"
               alt="One Step Fitness"
@@ -227,7 +227,7 @@ export default function StartPage() {
               sizes="(max-width: 640px) 96px, 160px"
               priority
             />
-          </div>
+          </Link>
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <a
               href={WHATSAPP_URL}
