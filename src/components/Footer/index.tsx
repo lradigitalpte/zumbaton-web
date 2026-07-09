@@ -5,6 +5,12 @@ import Image from "next/image";
 import { ArrowRight, MapPin, Phone, Mail, Clock } from "lucide-react";
 import { SOCIAL_LINKS } from "@/constants/social-links";
 
+const STUDIO_PHONE = "+65 8492 7347";
+const STUDIO_EMAIL = "hello@onestepfitness.sg";
+const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("2 Jalan Klapa, #2-A, Singapore 199314")}`;
+const contactLinkClass =
+  "min-w-0 text-xs font-black uppercase leading-relaxed tracking-widest text-zinc-400 break-words transition-colors hover:text-lime-500";
+
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
@@ -169,21 +175,26 @@ const Footer = () => {
             <div className="space-y-6">
               <div className="flex min-w-0 items-start gap-3">
                 <MapPin className="mt-1 h-5 w-5 shrink-0 text-lime-500" />
-                <p className="min-w-0 text-xs font-black uppercase leading-relaxed tracking-widest text-zinc-400 break-words">
+                <a
+                  href={MAPS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={contactLinkClass}
+                >
                   2 JALAN KLAPA, #2-A, <br /> SINGAPORE 199314
-                </p>
+                </a>
               </div>
               <div className="flex min-w-0 items-center gap-3">
                 <Phone className="h-5 w-5 shrink-0 text-lime-500" />
-                <p className="min-w-0 text-xs font-black uppercase tracking-widest text-zinc-400 break-all sm:break-normal">
-                  +65 8492 7347
-                </p>
+                <a href="tel:+6584927347" className={`${contactLinkClass} break-all sm:break-normal`}>
+                  {STUDIO_PHONE}
+                </a>
               </div>
               <div className="flex min-w-0 items-center gap-3">
                 <Mail className="h-5 w-5 shrink-0 text-lime-500" />
-                <p className="min-w-0 text-xs font-black uppercase tracking-widest text-zinc-400 break-all">
-                  HELLO@ONESTEPFITNESS.SG
-                </p>
+                <a href={`mailto:${STUDIO_EMAIL}`} className={`${contactLinkClass} break-all`}>
+                  {STUDIO_EMAIL.toUpperCase()}
+                </a>
               </div>
               <div className="flex min-w-0 items-center gap-3">
                 <Clock className="h-5 w-5 shrink-0 text-lime-500" />

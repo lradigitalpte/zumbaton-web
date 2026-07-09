@@ -72,9 +72,14 @@ const ContactLocations = () => {
                     </div>
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">Address</p>
-                      <p className="text-base font-black uppercase italic tracking-tighter text-gray-900 dark:text-white leading-relaxed">
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-base font-black uppercase italic tracking-tighter text-gray-900 dark:text-white leading-relaxed hover:text-lime-500 transition-colors"
+                      >
                         {location.address}
-                      </p>
+                      </a>
                     </div>
                   </div>
 
@@ -84,7 +89,7 @@ const ContactLocations = () => {
                     </div>
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">Phone</p>
-                      <a href={`tel:${location.phone}`} className="text-base font-black uppercase italic tracking-tighter text-gray-900 dark:text-white hover:text-lime-500 transition-colors">
+                      <a href="tel:+6584927347" className="text-base font-black uppercase italic tracking-tighter text-gray-900 dark:text-white hover:text-lime-500 transition-colors">
                         {location.phone}
                       </a>
                     </div>

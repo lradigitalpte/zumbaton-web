@@ -19,6 +19,7 @@ import {
   Timer,
 } from "lucide-react";
 import { HorizontalScrollCarousel } from "@/components/Common/HorizontalScrollCarousel";
+import { OfferCountdownBadge, useOfferCountdown } from "@/components/Start/OfferCountdown";
 
 // ── Editable marketing constants ──────────────────────────────────────────
 // Anchor price the trial is discounted from (regular single-class rate).
@@ -31,24 +32,23 @@ const RESPONSE_PROMISE = "within 2 hours (9am to 9pm)";
 // Studio contact (used for the minimal header + footer).
 const PHONE_DISPLAY = "+65 8492 7347";
 const WHATSAPP_URL = "https://wa.me/6584927347";
+const STUDIO_EMAIL = "hello@onestepfitness.sg";
+const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("2 Jalan Klapa, #2-A, Singapore 199314")}`;
 
 const TESTIMONIALS = [
   {
     quote:
       "I hadn't danced since school. First class in and I was hooked. Everyone made me feel welcome.",
-    name: "Rachel T.",
     tag: "First-timer",
   },
   {
     quote:
       "Best hour of my week. The playlists are unreal and I actually forget I'm working out.",
-    name: "Marcus L.",
     tag: "Regular",
   },
   {
     quote:
       "Booked, got a message the same day, and turned up to the friendliest room in Singapore.",
-    name: "Aisyah R.",
     tag: "Tried the 1-for-1",
   },
 ];
@@ -142,6 +142,7 @@ export default function StartPage() {
   const showAnchor = priceCents < REGULAR_PRICE_CENTS;
   const savingCents = Math.max(0, REGULAR_PRICE_CENTS - priceCents);
   const offerEndsLabel = promo.endDate ? formatOfferEndDate(promo.endDate) : null;
+  const countdown = useOfferCountdown();
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,15 +203,25 @@ export default function StartPage() {
 
   return (
     <main className="bg-[#f6f4ee] text-gray-900">
-      {/* ── Limited-time strip ── */}
+      {/* ── Limited-time strip + session countdown ── */}
       <div className="bg-lime-500 text-black">
-        <div className="mx-auto max-w-6xl px-4 py-2.5 text-center sm:py-3">
-          <p className="flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wide sm:text-sm sm:tracking-[0.15em]">
-            <Timer className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-            Limited time offer
-          </p>
-          <p className="mt-0.5 text-[11px] font-bold leading-snug text-black/80 sm:text-xs sm:tracking-wide">
-            {offerEndsLabel ? `Ends ${offerEndsLabel}` : "First class intro pricing. Book while spots last"}
+        <div className="mx-auto max-w-6xl px-4 py-2.5 sm:py-3">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            <p className="flex items-center gap-2 text-xs font-black uppercase tracking-wide sm:text-sm">
+              <Timer className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+              {countdown.expired ? "Claim this intro offer" : "Claim this offer ends in"}
+            </p>
+            <OfferCountdownBadge
+              size="md"
+              className="bg-red-600 text-white shadow-sm ring-2 ring-red-700/20 animate-pulse"
+            />
+          </div>
+          <p className="mt-1 text-center text-[11px] font-bold leading-snug text-black/80 sm:text-xs">
+            {offerEndsLabel
+              ? `Promo ends ${offerEndsLabel}.`
+              : countdown.expired
+                ? "Timer ended. Intro pricing may still be available."
+                : "First class intro pricing. Claim it before the timer ends."}
           </p>
         </div>
       </div>
@@ -342,9 +353,11 @@ export default function StartPage() {
                 {/* Price comparison — large and impossible to miss */}
                 {showAnchor && (
                   <div className="border-b border-black/10 bg-lime-500 px-4 py-3.5 sm:px-6 sm:py-5">
-                    <p className="mb-2.5 text-center text-[10px] font-black uppercase tracking-wide text-black/70 sm:text-[11px]">
-                      {isDuoBooking ? "1-for-1 intro, limited time" : "First class, limited time"}
-                    </p>
+                    <div className="mb-2.5 flex flex-wrap items-center justify-center gap-2">
+                      <p className="text-center text-[10px] font-black uppercase tracking-wide text-black/70 sm:text-[11px]">
+                        {isDuoBooking ? "1-for-1 intro, limited time" : "First class, limited time"}
+                      </p>
+                    </div>
                     <div className="mx-auto flex max-w-md items-center justify-center gap-2.5 sm:gap-4">
                       <span className="text-lg font-black italic leading-none text-black/30 line-through sm:text-2xl">
                         {formatPrice(REGULAR_PRICE_CENTS)}
@@ -557,14 +570,14 @@ export default function StartPage() {
       <section className="bg-[#f6f4ee] py-10 sm:py-16">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <h2 className="mb-6 text-center text-2xl font-black uppercase italic tracking-tighter text-gray-900 sm:mb-8 sm:text-4xl">
-            REAL PEOPLE. <span className="text-lime-600">REAL FIRST CLASSES.</span>
+            WHAT FIRST-TIMERS SAY
           </h2>
 
           <div className="md:hidden">
             <HorizontalScrollCarousel id="start-reviews-carousel" hint="Swipe">
-              {TESTIMONIALS.map((t) => (
+              {TESTIMONIALS.map((t, idx) => (
                 <div
-                  key={t.name}
+                  key={idx}
                   data-carousel-card
                   className="flex w-[min(82vw,300px)] shrink-0 snap-start flex-col border border-black/10 bg-white p-5 shadow-sm"
                 >
@@ -576,9 +589,8 @@ export default function StartPage() {
                   <p className="mb-4 flex-1 text-sm font-medium leading-relaxed text-gray-700">
                     &ldquo;{t.quote}&rdquo;
                   </p>
-                  <div className="text-[10px] font-black uppercase tracking-wide">
-                    <span className="text-gray-900">{t.name}</span>
-                    <span className="text-lime-700">, {t.tag}</span>
+                  <div className="text-[10px] font-black uppercase tracking-wide text-lime-700">
+                    {t.tag}
                   </div>
                 </div>
               ))}
@@ -588,7 +600,7 @@ export default function StartPage() {
           <div className="mx-auto hidden max-w-5xl grid-cols-3 gap-4 md:grid">
             {TESTIMONIALS.map((t, i) => (
               <motion.div
-                key={t.name}
+                key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -603,9 +615,8 @@ export default function StartPage() {
                 <p className="mb-6 flex-1 text-sm font-medium leading-relaxed text-gray-700">
                   &ldquo;{t.quote}&rdquo;
                 </p>
-                <div className="text-[11px] font-black uppercase tracking-widest">
-                  <span className="text-gray-900">{t.name}</span>
-                  <span className="text-lime-700">, {t.tag}</span>
+                <div className="text-[11px] font-black uppercase tracking-widest text-lime-700">
+                  {t.tag}
                 </div>
               </motion.div>
             ))}
@@ -735,11 +746,17 @@ export default function StartPage() {
       <footer className="border-t border-black/10 bg-white py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-center sm:flex-row sm:text-left sm:px-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-gray-500">
-            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="hover:text-gray-900">
+            <a href="tel:+6584927347" className="hover:text-gray-900">
               {PHONE_DISPLAY}
             </a>
             <span className="mx-2 text-gray-300">|</span>
-            2 Jalan Klapa, Singapore 199314
+            <a href={MAPS_URL} target="_blank" rel="noopener noreferrer" className="hover:text-gray-900">
+              2 Jalan Klapa, Singapore 199314
+            </a>
+            <span className="mx-2 text-gray-300">|</span>
+            <a href={`mailto:${STUDIO_EMAIL}`} className="hover:text-gray-900">
+              {STUDIO_EMAIL}
+            </a>
           </div>
           <div className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-widest text-gray-500">
             <Link href="/terms" className="hover:text-gray-900">Terms</Link>
