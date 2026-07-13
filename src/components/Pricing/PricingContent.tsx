@@ -1,6 +1,7 @@
 "use client";
 
 import { useAvailablePackages } from "@/hooks/usePackages";
+import type { Package } from "@/lib/packages-queries";
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
@@ -9,12 +10,30 @@ import { useRef } from "react";
 import { CheckCircle2 } from "lucide-react";
 import LoadingIcon from "@/components/Common/LoadingIcon";
 
-const PricingContent = () => {
+interface PricingContentProps {
+  initialAdultPackages?: Package[];
+  initialKidsPackages?: Package[];
+}
+
+const PricingContent = ({
+  initialAdultPackages = [],
+  initialKidsPackages = [],
+}: PricingContentProps) => {
   const router = useRouter();
   const { openWhatsAppModal } = useWhatsAppModal();
-  const { data: adultPackages = [], isLoading: isLoadingAdults, error: errorAdults } = useAvailablePackages('adults');
-  const { data: kidsPackages = [], isLoading: isLoadingKids, error: errorKids } = useAvailablePackages('kids');
-  const isLoading = isLoadingAdults || isLoadingKids;
+  const {
+    data: adultPackages = initialAdultPackages,
+    isLoading: isLoadingAdults,
+    error: errorAdults,
+  } = useAvailablePackages("adults", initialAdultPackages);
+  const {
+    data: kidsPackages = initialKidsPackages,
+    isLoading: isLoadingKids,
+    error: errorKids,
+  } = useAvailablePackages("kids", initialKidsPackages);
+  const isLoading =
+    (isLoadingAdults && adultPackages.length === 0) ||
+    (isLoadingKids && kidsPackages.length === 0);
   
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.1 });

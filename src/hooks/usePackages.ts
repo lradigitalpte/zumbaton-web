@@ -19,11 +19,16 @@ export const packageKeys = {
 /**
  * Hook to fetch available packages
  * @param packageType - Optional filter by 'adults' or 'kids'
+ * @param initialData - Server-fetched packages for SSR / crawlable HTML
  */
-export function useAvailablePackages(packageType?: 'adults' | 'kids') {
+export function useAvailablePackages(
+  packageType?: 'adults' | 'kids',
+  initialData?: Package[]
+) {
   return useQuery({
     queryKey: [...packageKeys.list(), packageType || 'all'],
     queryFn: () => getAvailablePackages(packageType),
+    initialData,
     refetchOnMount: 'always',
     staleTime: 30 * 1000, // 30 seconds - keep package pricing fresh
     gcTime: 30 * 60 * 1000, // 30 minutes cache retention

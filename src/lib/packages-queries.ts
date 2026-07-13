@@ -20,6 +20,24 @@ export interface Package {
   is_popular?: boolean
 }
 
+export function mapPackageRow(pkg: Record<string, unknown>): Package {
+  return {
+    id: pkg.id as string,
+    name: pkg.name as string,
+    description: (pkg.description as string | null) ?? null,
+    token_count: pkg.token_count as number,
+    price_cents: pkg.price_cents as number,
+    currency: (pkg.currency as string) || 'SGD',
+    validity_days: pkg.validity_days as number,
+    class_types: (pkg.class_types as string[]) || ['all'],
+    package_type: (pkg.package_type as Package['package_type']) || 'adult',
+    age_requirement: (pkg.age_requirement as string | null) ?? null,
+    is_unlimited: Boolean(pkg.is_unlimited),
+    is_active: Boolean(pkg.is_active),
+    is_popular: false,
+  }
+}
+
 /**
  * Get all available packages for purchase
  * @param packageType - Optional filter by 'adults' or 'kids'
@@ -60,21 +78,7 @@ export async function getAvailablePackages(packageType?: 'adults' | 'kids'): Pro
         const result = await response.json()
         if (result.success && result.data) {
           console.log(`📦 Fetched ${result.data.length} packages via API for type: ${packageType || 'all'}`)
-          return (result.data || []).map((pkg: any) => ({
-            id: pkg.id,
-            name: pkg.name,
-            description: pkg.description,
-            token_count: pkg.token_count,
-            price_cents: pkg.price_cents,
-            currency: pkg.currency || 'SGD',
-            validity_days: pkg.validity_days,
-            class_types: pkg.class_types || ['all'],
-            package_type: pkg.package_type || 'adult',
-            age_requirement: pkg.age_requirement || null,
-            is_unlimited: pkg.is_unlimited || false,
-            is_active: pkg.is_active,
-            is_popular: false,
-          }))
+          return (result.data || []).map(mapPackageRow)
         }
 
         throw new Error('Packages API returned invalid payload')
@@ -160,21 +164,6 @@ export async function getAvailablePackages(packageType?: 'adults' | 'kids'): Pro
     console.warn('🔧 To fix: Run fix_packages_rls.sql in Supabase SQL Editor')
   }
 
-  return (data || []).map((pkg: any) => ({
-    id: pkg.id,
-    name: pkg.name,
-    description: pkg.description,
-    token_count: pkg.token_count,
-    price_cents: pkg.price_cents,
-    currency: pkg.currency || 'SGD',
-    validity_days: pkg.validity_days,
-    class_types: pkg.class_types || ['all'],
-    package_type: pkg.package_type || 'adult',
-    age_requirement: pkg.age_requirement || null,
-    is_unlimited: pkg.is_unlimited || false,
-    is_active: pkg.is_active,
-    // Mark as popular if it's the middle package or has most tokens
-    is_popular: false, // Can be calculated based on business logic
-  }))
+  return (data || []).map(mapPackageRow)
 }
 
