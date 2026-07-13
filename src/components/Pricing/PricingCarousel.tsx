@@ -11,8 +11,10 @@ import { useAvailablePackages } from "@/hooks/usePackages";
 import type { Package } from "@/lib/packages-queries";
 import {
   formatPackagePrice,
+  getHomepagePreviewPackages,
   getPackageFeatures,
   getPackageSubtitle,
+  isHomepagePopularPackage,
 } from "@/lib/packages-utils";
 import LoadingIcon from "@/components/Common/LoadingIcon";
 
@@ -29,6 +31,7 @@ const PricingCarousel = ({ initialAdultPackages = [] }: PricingCarouselProps) =>
   } = useAvailablePackages("adults", initialAdultPackages);
 
   const showLoading = isLoading && adultPackages.length === 0;
+  const previewPackages = getHomepagePreviewPackages(adultPackages);
 
   return (
     <section id="pricing" className="relative text-gray-900 dark:text-white py-12 sm:py-16 md:py-20 lg:py-28 overflow-hidden bg-[#f6f4ee] dark:bg-black">
@@ -67,7 +70,7 @@ const PricingCarousel = ({ initialAdultPackages = [] }: PricingCarouselProps) =>
               Error loading packages. Please try again later.
             </p>
           </div>
-        ) : adultPackages.length === 0 ? (
+        ) : previewPackages.length === 0 ? (
           <div className="bg-white dark:bg-zinc-950 border border-black/10 dark:border-white/10 p-12 text-center">
             <p className="text-gray-600 dark:text-zinc-400 font-black uppercase tracking-widest">
               No packages available at the moment
@@ -85,8 +88,8 @@ const PricingCarousel = ({ initialAdultPackages = [] }: PricingCarouselProps) =>
               </p>
             }
           >
-            {adultPackages.map((pkg, index) => {
-              const isPopular = index === Math.floor(adultPackages.length / 2);
+            {previewPackages.map((pkg) => {
+              const isPopular = isHomepagePopularPackage(pkg, previewPackages);
 
               return (
                 <div

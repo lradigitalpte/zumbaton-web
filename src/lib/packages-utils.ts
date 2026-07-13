@@ -1,5 +1,24 @@
 import type { Package } from '@/lib/packages-queries'
 
+export const HOMEPAGE_PREVIEW_PACKAGE_COUNT = 3
+
+/** First N packages for homepage/explore carousel preview (full list on /pricing). */
+export function getHomepagePreviewPackages(packages: Package[]): Package[] {
+  return packages.slice(0, HOMEPAGE_PREVIEW_PACKAGE_COUNT)
+}
+
+/** Highlight the 8-session pack when present, otherwise the middle preview card. */
+export function isHomepagePopularPackage(
+  pkg: Package,
+  previewPackages: Package[]
+): boolean {
+  const eightPack = previewPackages.find((p) => p.token_count === 8)
+  if (eightPack) return pkg.id === eightPack.id
+
+  const middle = previewPackages[Math.floor(previewPackages.length / 2)]
+  return middle ? pkg.id === middle.id : false
+}
+
 export function formatPackagePrice(priceCents: number, currency: string): string {
   return new Intl.NumberFormat('en-SG', {
     style: 'currency',

@@ -7,18 +7,39 @@ import Pricing from "@/components/Pricing";
 import CommunityHighlights from "@/components/Community/CommunityHighlights";
 import Video from "@/components/Video";
 import ExploreClassesShowcase from "@/components/Explore/ExploreClassesShowcase";
+import PricingStructuredData from "@/components/Pricing/PricingStructuredData";
+import {
+  buildPricingMetadataDescription,
+  getPublicPackages,
+} from "@/lib/packages-server";
 import { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "One Step Fitness - one step to change your life",
-  description: "Move, sweat, and smile with One Step Fitness. Group classes for all levels, from dance cardio to step workouts.",
-};
+export const revalidate = 300;
 
-export const dynamic = "force-dynamic";
+export async function generateMetadata(): Promise<Metadata> {
+  const [adultPackages, kidsPackages] = await Promise.all([
+    getPublicPackages("adults"),
+    getPublicPackages("kids"),
+  ]);
 
-export default function ExplorePage() {
+  return {
+    title: "One Step Fitness - one step to change your life",
+    description: buildPricingMetadataDescription(adultPackages, kidsPackages),
+  };
+}
+
+export default async function ExplorePage() {
+  const [adultPackages, kidsPackages] = await Promise.all([
+    getPublicPackages("adults"),
+    getPublicPackages("kids"),
+  ]);
+
   return (
     <>
+      <PricingStructuredData
+        adultPackages={adultPackages}
+        kidsPackages={kidsPackages}
+      />
       <ScrollUp />
       <Hero />
       <AboutSectionOne />
