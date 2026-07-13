@@ -134,35 +134,36 @@ export default function UserOnboardingTour() {
     if (hasChecked) return; // Only check once
     
     setHasChecked(true);
-    
-    // Check onboarding status from database
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
     const checkOnboardingStatus = async () => {
       try {
         const response = await apiFetchJson<{ success: boolean; data?: { completed: boolean } }>(
           '/api/onboarding',
           { method: 'GET', requireAuth: true }
         );
-        
+
         const completed = response.success && response.data?.completed;
-        
+
         if (!completed) {
-          // Start onboarding after a short delay
-          const timer = setTimeout(() => {
+          timer = setTimeout(() => {
             setIsActive(true);
-            // Wait a bit more for DOM to be ready
             setTimeout(() => {
               updateStepPosition(0);
             }, 500);
           }, 1000);
-          return () => clearTimeout(timer);
         }
       } catch (error) {
         console.error('[Onboarding] Error checking status:', error);
-        // On error, don't show onboarding (fail silently)
       }
     };
-    
+
     checkOnboardingStatus();
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user?.id, isLoading, hasChecked]);
 

@@ -77,7 +77,9 @@ export async function getAvailablePackages(packageType?: 'adults' | 'kids'): Pro
       if (response.ok) {
         const result = await response.json()
         if (result.success && result.data) {
-          console.log(`📦 Fetched ${result.data.length} packages via API for type: ${packageType || 'all'}`)
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`📦 Fetched ${result.data.length} packages via API for type: ${packageType || 'all'}`)
+          }
           return (result.data || []).map(mapPackageRow)
         }
 

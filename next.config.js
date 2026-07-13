@@ -3,6 +3,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: "/favicon.ico",
+        destination: "/favicon.png",
+        permanent: true,
+      },
+      {
         source: "/classes/thunderbolt-full-body-workout",
         destination: "/classes/thunderbolt-bodyweight-steppers",
         permanent: true,

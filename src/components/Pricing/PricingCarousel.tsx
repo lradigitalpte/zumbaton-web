@@ -13,7 +13,7 @@ import {
   formatPackagePrice,
   getPackageFeatures,
   getPackageSubtitle,
-} from "@/lib/packages-server";
+} from "@/lib/packages-utils";
 import LoadingIcon from "@/components/Common/LoadingIcon";
 
 interface PricingCarouselProps {

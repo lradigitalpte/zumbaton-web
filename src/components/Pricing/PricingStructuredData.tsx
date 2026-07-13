@@ -1,5 +1,5 @@
 import type { Package } from '@/lib/packages-queries'
-import { formatPackagePrice } from '@/lib/packages-server'
+import { formatPackagePrice } from '@/lib/packages-utils'
 
 interface PricingStructuredDataProps {
   adultPackages: Package[]
