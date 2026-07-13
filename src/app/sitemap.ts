@@ -1,37 +1,37 @@
-import { getAllPublishedBlogSlugs } from "@/lib/blog-queries";
-import { MetadataRoute } from "next";
-
-const siteUrl = process.env.NEXT_PUBLIC_WEB_APP_URL || process.env.NEXT_PUBLIC_APP_URL || "https://onestepfitness.sg";
+import { getAllPublishedBlogSlugs } from '@/lib/blog-queries'
+import {
+  getClassPageEntries,
+  getSiteUrl,
+  PUBLIC_PAGES,
+} from '@/lib/site-discovery'
+import { MetadataRoute } from 'next'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = siteUrl.replace(/\/$/, "");
-  const staticPages = [
-    "",
-    "/explore",
-    "/about",
-    "/classes",
-    "/pricing",
-    "/schedule",
-    "/instructors",
-    "/faq",
-    "/contact",
-    "/blog",
-  ];
+  const base = getSiteUrl()
 
-  const blogSlugs = await getAllPublishedBlogSlugs();
+  const staticEntries: MetadataRoute.Sitemap = PUBLIC_PAGES.map((page) => ({
+    url: `${base}${page.path}`,
+    lastModified: new Date(),
+    changeFrequency: page.changeFrequency ?? 'weekly',
+    priority: page.priority ?? 0.8,
+  }))
 
-  return [
-    ...staticPages.map((path) => ({
-      url: `${base}${path}`,
+  const classEntries: MetadataRoute.Sitemap = getClassPageEntries().map(
+    (page) => ({
+      url: `${base}${page.path}`,
       lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: path === "" || path === "/explore" ? 1 : 0.8,
-    })),
-    ...blogSlugs.map((slug) => ({
-      url: `${base}/blog/${slug}`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
-      priority: 0.7,
-    })),
-  ];
+      changeFrequency: page.changeFrequency ?? 'monthly',
+      priority: page.priority ?? 0.85,
+    })
+  )
+
+  const blogSlugs = await getAllPublishedBlogSlugs()
+  const blogEntries: MetadataRoute.Sitemap = blogSlugs.map((slug) => ({
+    url: `${base}/blog/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly',
+    priority: 0.7,
+  }))
+
+  return [...staticEntries, ...classEntries, ...blogEntries]
 }
