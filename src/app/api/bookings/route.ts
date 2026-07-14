@@ -123,8 +123,12 @@ export async function POST(request: NextRequest) {
 
     // Check if batch booking or single booking
     if (classIds && Array.isArray(classIds) && classIds.length > 0) {
-      // Enforce booking window for batch bookings as well
-      if (!isBookingWindowOpen()) {
+      const { data: batchClasses } = await supabaseAdmin
+        .from('classes')
+        .select('scheduled_at')
+        .in('id', classIds)
+      // Reject the batch if any selected near-term class is outside the window.
+      if (batchClasses?.some((item) => !isBookingWindowOpen(item.scheduled_at))) {
         logBookingWindowRejection('member batch booking')
         return NextResponse.json(
           { success: false, error: { message: BOOKING_WINDOW_CLOSED_MESSAGE } },
@@ -157,14 +161,6 @@ export async function POST(request: NextRequest) {
         )
       }
     } else if (classId) {
-      // Enforce booking window for single bookings
-      if (!isBookingWindowOpen()) {
-        logBookingWindowRejection('member single booking (POST)')
-        return NextResponse.json(
-          { success: false, error: { message: BOOKING_WINDOW_CLOSED_MESSAGE } },
-          { status: 400 }
-        )
-      }
       return await handleSingleBooking(targetUserId, classId)
     } else {
       return NextResponse.json(
@@ -272,7 +268,7 @@ async function handleSingleBooking(userId: string, classId: string) {
     }
 
     // 2.5. Enforce booking window on server-side (SGT)
-    if (!isBookingWindowOpen()) {
+    if (!isBookingWindowOpen(classData.scheduled_at)) {
       logBookingWindowRejection('member single booking')
       return NextResponse.json(
         { success: false, error: { message: BOOKING_WINDOW_CLOSED_MESSAGE } },
@@ -596,7 +592,7 @@ async function handleCourseBooking(userId: string, parentClassId: string, parent
     }
 
     // Enforce booking window for course bookings as well
-    if (!isBookingWindowOpen()) {
+    if (!isBookingWindowOpen(parentClassData.scheduled_at)) {
       logBookingWindowRejection('member course booking')
       return NextResponse.json(
         { success: false, error: { message: BOOKING_WINDOW_CLOSED_MESSAGE } },

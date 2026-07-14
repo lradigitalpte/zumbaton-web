@@ -72,12 +72,14 @@ export default function ZtFiestaPage() {
   const toast = useToast();
   const [selectedPackage, setSelectedPackage] = useState<FiestaPackage>("1_session");
   const [submitting, setSubmitting] = useState(false);
-  const bookingWindowOpen = useBookingWindowOpen();
 
   // Outdoor classes
   const [outdoorClasses, setOutdoorClasses] = useState<OutdoorClass[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+  const bookingWindowOpen = useBookingWindowOpen(
+    outdoorClasses.find((item) => item.id === selectedClassId)?.scheduled_at
+  );
 
   const [form, setForm] = useState({
     customerName: "",

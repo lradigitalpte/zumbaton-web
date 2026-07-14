@@ -68,16 +68,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    if (!isBookingWindowOpen()) {
-      logBookingWindowRejection("zt-fiesta payment");
-      return NextResponse.json({ success: false, message: BOOKING_WINDOW_CLOSED_MESSAGE }, { status: 400 });
-    }
-
     const body = parsed.data;
     const pkg = PACKAGE_MAP[body.packageOption];
 
     // Use the real class ID if a specific outdoor class was selected
     let actualClassId: string | null = body.classId || null;
+
+    if (actualClassId) {
+      const { data: selectedClass } = await supabaseAdmin
+        .from("classes")
+        .select("scheduled_at")
+        .eq("id", actualClassId)
+        .single();
+      if (!selectedClass || !isBookingWindowOpen(selectedClass.scheduled_at)) {
+        logBookingWindowRejection("zt-fiesta payment");
+        return NextResponse.json({ success: false, message: BOOKING_WINDOW_CLOSED_MESSAGE }, { status: 400 });
+      }
+    }
 
     if (!actualClassId) {
       // Fall back to placeholder class for legacy/unlinked bookings

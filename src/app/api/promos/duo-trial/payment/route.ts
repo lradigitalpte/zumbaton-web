@@ -107,14 +107,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    if (!isBookingWindowOpen()) {
-      logBookingWindowRejection('duo-trial payment')
-      return NextResponse.json(
-        { error: 'Booking Closed', message: BOOKING_WINDOW_CLOSED_MESSAGE },
-        { status: 400 }
-      )
-    }
-
     const { classId, promoId, participant1, participant2 } = validationResult.data
 
     // Load admin-editable promo config (price, booking mode, active window)
@@ -163,6 +155,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json(
         { error: 'Class not found', message: 'The selected class is not available' },
         { status: 404 }
+      )
+    }
+
+    if (!isBookingWindowOpen(classData.scheduled_at)) {
+      logBookingWindowRejection('duo-trial payment')
+      return NextResponse.json(
+        { error: 'Booking Closed', message: BOOKING_WINDOW_CLOSED_MESSAGE },
+        { status: 400 }
       )
     }
 

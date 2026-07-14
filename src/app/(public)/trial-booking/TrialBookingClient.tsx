@@ -88,7 +88,7 @@ export default function TrialBookingClient({
     guardianSignature: "",
   });
   const [processing, setProcessing] = useState(false);
-  const bookingWindowOpen = useBookingWindowOpen();
+  const bookingWindowOpen = useBookingWindowOpen(selectedClass?.scheduled_at);
 
   const weekRangeSummary = useMemo(() => {
     if (dateRangeMode !== "week" || !dateFilter) return null;

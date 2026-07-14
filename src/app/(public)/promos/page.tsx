@@ -64,7 +64,6 @@ const PromosPage = () => {
   const [allClasses, setAllClasses] = useState<Class[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const bookingWindowOpen = useBookingWindowOpen();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   
@@ -79,6 +78,8 @@ const PromosPage = () => {
       waiverAgreed: false, nricLast4: "", signature: ""
     },
   });
+  const selectedBookingClass = allClasses.find((item) => item.id === formData.classId);
+  const bookingWindowOpen = useBookingWindowOpen(selectedBookingClass?.scheduled_at);
 
   // Admin-editable promo config (price + booking mode). Defaults mirror the
   // original hardcoded behaviour so the page renders correctly before it loads.
@@ -986,4 +987,3 @@ const PromosPage = () => {
 };
 
 export default PromosPage;
-

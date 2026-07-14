@@ -47,7 +47,6 @@ export default function ZumFamiliaDetailPage() {
   /** Optional: limit the list to one calendar day (client-side); empty = all upcoming in range. */
   const [dayFilter, setDayFilter] = useState("");
   const [processing, setProcessing] = useState(false);
-  const bookingWindowOpen = useBookingWindowOpen();
   const [form, setForm] = useState({
     parentName: "",
     parentPhone: "",
@@ -132,6 +131,7 @@ export default function ZumFamiliaDetailPage() {
     () => classes.find((item) => item.id === selectedClassId) ?? null,
     [classes, selectedClassId],
   );
+  const bookingWindowOpen = useBookingWindowOpen(selectedClass?.scheduled_at);
 
   if (!pkg) {
     return (

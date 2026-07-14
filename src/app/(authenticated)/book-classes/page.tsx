@@ -65,7 +65,9 @@ const ClassesPage = () => {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
 
-  const bookingWindowOpen = useBookingWindowOpen();
+  const bookingWindowOpen = useBookingWindowOpen(
+    classToBook?.scheduled_at ?? selectedClass?.scheduled_at
+  );
 
   // Keep token balance in React Query (avoids stale local state when routes are cached)
   const { data: tokenBalanceData } = useDashboardTokenBalance(user?.id);

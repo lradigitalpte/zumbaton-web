@@ -68,11 +68,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ success: false, message: parsed.error.errors[0]?.message || "Invalid form data." }, { status: 400 });
     }
 
-    if (!isBookingWindowOpen()) {
-      logBookingWindowRejection("zumfamilia payment");
-      return NextResponse.json({ success: false, message: BOOKING_WINDOW_CLOSED_MESSAGE }, { status: 400 });
-    }
-
     const body = parsed.data;
     const parentEmailRaw = (body.parentEmail || "").trim();
     const parentEmail =
@@ -94,6 +89,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       if (classError || !classData) {
         return NextResponse.json({ success: false, message: "Selected class is not available." }, { status: 404 });
+      }
+      if (!isBookingWindowOpen(classData.scheduled_at)) {
+        logBookingWindowRejection("zumfamilia payment");
+        return NextResponse.json({ success: false, message: BOOKING_WINDOW_CLOSED_MESSAGE }, { status: 400 });
       }
       classTitle = classData.title;
     } else {
