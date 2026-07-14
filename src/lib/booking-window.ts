@@ -6,15 +6,15 @@ export const BOOKING_WINDOW_LOOKAHEAD_HOURS = 24
 export const BOOKING_WINDOW_LABEL = '08:00–22:00 SGT'
 
 export const BOOKING_WINDOW_CLOSED_MESSAGE =
-  `Classes starting within 24 hours can only be booked during ${BOOKING_WINDOW_LABEL}. Classes more than 24 hours away remain available.`
+  `Same-day booking is not allowed. For other classes starting within 24 hours, booking is available only during ${BOOKING_WINDOW_LABEL}.`
 
 export function getSingaporeNow(): Date {
   return new Date()
 }
 
 /**
- * Classes more than 24 hours away can be booked at any time. The daily window
- * only applies to a class starting within the next 24 hours.
+ * Same-day classes cannot be booked. Classes more than 24 hours away can be
+ * booked at any time; the daily window applies to other near-term classes.
  */
 export function isBookingWindowOpen(
   classStartsAt?: string | Date | null,
@@ -26,6 +26,16 @@ export function isBookingWindowOpen(
   if (Number.isNaN(start.getTime())) return false
 
   const millisecondsUntilClass = start.getTime() - now.getTime()
+  if (millisecondsUntilClass <= 0) return false
+
+  const singaporeDate = new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: 'Asia/Singapore',
+  })
+  if (singaporeDate.format(start) === singaporeDate.format(now)) return false
+
   if (millisecondsUntilClass > BOOKING_WINDOW_LOOKAHEAD_HOURS * 60 * 60 * 1000) {
     return true
   }

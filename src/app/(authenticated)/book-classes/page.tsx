@@ -317,29 +317,17 @@ const ClassesPage = () => {
         </p>
       </div>
 
-      {/* Booking Window Status Banner */}
-      <div className="mb-4 sm:mb-6">
-        <div className={`rounded-xl p-3 sm:p-4 border ${
-          bookingWindowOpen 
-            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
-            : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-        }`}>
+      {/* Only interrupt the user when their selected near-term class cannot be booked now. */}
+      {!bookingWindowOpen && (
+        <div className="mb-4 sm:mb-6 rounded-xl p-3 sm:p-4 border bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className={`w-2 h-2 rounded-full ${
-              bookingWindowOpen ? 'bg-green-500' : 'bg-red-500'
-            }`}></div>
-            <p className={`text-sm sm:text-base font-medium ${
-              bookingWindowOpen 
-                ? 'text-green-700 dark:text-green-300' 
-                : 'text-red-700 dark:text-red-300'
-            }`}>
-              {bookingWindowOpen 
-                ? 'Booking available. The 08:00–22:00 SGT window applies only to classes starting within 24 hours.' 
-                : 'This class starts within 24 hours. Booking is closed outside 08:00–22:00 SGT.'}
+            <div className="w-2 h-2 rounded-full bg-red-500"></div>
+            <p className="text-sm sm:text-base font-medium text-red-700 dark:text-red-300">
+              Same-day booking is unavailable. Other classes within 24 hours can be booked from 08:00–22:00 SGT.
             </p>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Filters - Mobile Bottom Sheet / Desktop Inline */}
       <div className={`lg:block ${showFilters ? "block" : "hidden"}`}>
@@ -748,7 +736,7 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
                         }
                       }}
                       disabled={isFull || bookClassMutation.isPending || (classItem._isParent && isRecurring)}
-                      title={!bookingWindowOpen ? 'Classes starting within 24 hours can be booked only from 08:00–22:00 SGT' : undefined}
+                      title={!bookingWindowOpen ? 'Same-day booking is unavailable; other near-term classes can be booked from 08:00–22:00 SGT' : undefined}
                       className={`px-4 py-2 rounded-lg text-xs font-bold transition-all active:scale-95 ${
                         isFull || bookClassMutation.isPending
                           ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800"

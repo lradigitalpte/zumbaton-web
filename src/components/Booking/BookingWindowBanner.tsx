@@ -1,6 +1,6 @@
 'use client'
 
-import { BOOKING_WINDOW_LABEL } from '@/lib/booking-window'
+import { BOOKING_WINDOW_CLOSED_MESSAGE } from '@/lib/booking-window'
 
 type BookingWindowBannerProps = {
   open: boolean
@@ -18,7 +18,7 @@ export function BookingWindowBanner({ open, className = '' }: BookingWindowBanne
     >
       <span className="inline-block w-2 h-2 rounded-full shrink-0 bg-red-500" aria-hidden />
       <span className="text-red-800 dark:text-red-200">
-        This class starts within 24 hours. Near-term bookings are available only during {BOOKING_WINDOW_LABEL}.
+        {BOOKING_WINDOW_CLOSED_MESSAGE}
       </span>
     </div>
   )
