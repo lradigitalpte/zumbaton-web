@@ -16,6 +16,7 @@ import { dateOfBirthFromAge, parseAgeYearsInput } from "@/lib/user-age-utils";
 import { BookingWindowBanner } from "@/components/Booking/BookingWindowBanner";
 import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
 import { BOOKING_WINDOW_CLOSED_MESSAGE } from "@/lib/booking-window";
+import { isSameDayClassInSingapore } from "@/lib/booking-window";
 
 interface Class {
   id: string;
@@ -211,6 +212,7 @@ const PromosPage = () => {
 
   // Classes for the selected date that match this promo type
   const filteredClasses = allClasses.filter((c) => {
+    if (isSameDayClassInSingapore(c.scheduled_at)) return false;
     if (!isClassEligibleForPromo(c, selectedPromo?.roomType)) return false;
     return toSGTDate(c.scheduled_at) === selectedDate;
   });

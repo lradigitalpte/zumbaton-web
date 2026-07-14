@@ -13,6 +13,7 @@ import WaiverForm from "@/components/Common/WaiverForm";
 import { BookingWindowBanner } from "@/components/Booking/BookingWindowBanner";
 import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
 import { BOOKING_WINDOW_CLOSED_MESSAGE } from "@/lib/booking-window";
+import { isSameDayClassInSingapore } from "@/lib/booking-window";
 
 interface PublicClass {
   id: string;
@@ -88,6 +89,7 @@ export default function ZumFamiliaDetailPage() {
             booked_count: item.booked_count || 0,
           }))
           .filter((item: PublicClass) => isOneFamiliaScheduledClass(item.title, item.class_type))
+          .filter((item: PublicClass) => !isSameDayClassInSingapore(item.scheduled_at))
           .sort(
             (a: PublicClass, b: PublicClass) =>
               new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime(),

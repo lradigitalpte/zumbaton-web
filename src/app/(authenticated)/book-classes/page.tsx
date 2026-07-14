@@ -12,6 +12,7 @@ import { formatDate, formatDateFull, formatTime } from "@/lib/utils";
 import { handleMutationError } from "@/lib/toast-helper";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
+import { isSameDayClassInSingapore } from "@/lib/booking-window";
 
 const CLASSES_PER_PAGE = 12;
 
@@ -100,6 +101,7 @@ const ClassesPage = () => {
 
   // Apply search + instructor + age group filters
   const classes = useMemo(() => allClasses.filter((classItem) => {
+    if (isSameDayClassInSingapore(classItem.scheduled_at)) return false;
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       const matchesSearch =

@@ -12,6 +12,21 @@ export function getSingaporeNow(): Date {
   return new Date()
 }
 
+export function isSameDayClassInSingapore(
+  classStartsAt: string | Date,
+  now = getSingaporeNow()
+): boolean {
+  const start = new Date(classStartsAt)
+  if (Number.isNaN(start.getTime())) return false
+  const singaporeDate = new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: 'Asia/Singapore',
+  })
+  return singaporeDate.format(start) === singaporeDate.format(now)
+}
+
 /**
  * Same-day classes cannot be booked. Classes more than 24 hours away can be
  * booked at any time; the daily window applies to other near-term classes.
@@ -28,13 +43,7 @@ export function isBookingWindowOpen(
   const millisecondsUntilClass = start.getTime() - now.getTime()
   if (millisecondsUntilClass <= 0) return false
 
-  const singaporeDate = new Intl.DateTimeFormat('en-CA', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    timeZone: 'Asia/Singapore',
-  })
-  if (singaporeDate.format(start) === singaporeDate.format(now)) return false
+  if (isSameDayClassInSingapore(start, now)) return false
 
   if (millisecondsUntilClass > BOOKING_WINDOW_LOOKAHEAD_HOURS * 60 * 60 * 1000) {
     return true

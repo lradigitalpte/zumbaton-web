@@ -19,6 +19,7 @@ import {
 import { BookingWindowBanner } from "@/components/Booking/BookingWindowBanner";
 import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
 import { BOOKING_WINDOW_CLOSED_MESSAGE } from "@/lib/booking-window";
+import { isSameDayClassInSingapore } from "@/lib/booking-window";
 import {
   formatYmdLocal,
   formatYmdSingapore,
@@ -224,6 +225,7 @@ export default function TrialBookingClient({
   }, [ageGroupFilter]);
 
   const filteredClasses = classes.filter((cls) => {
+    if (isSameDayClassInSingapore(cls.scheduled_at)) return false;
     if (ageGroupFilter === "outdoor") return cls.is_outdoor === true;
     // Exclude outdoor classes from All / Adults / Kids tabs
     if (cls.is_outdoor) return false;

@@ -12,6 +12,7 @@ import WaiverForm from "@/components/Common/WaiverForm";
 import { BookingWindowBanner } from "@/components/Booking/BookingWindowBanner";
 import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
 import { BOOKING_WINDOW_CLOSED_MESSAGE } from "@/lib/booking-window";
+import { isSameDayClassInSingapore } from "@/lib/booking-window";
 
 type FiestaPackage = "1_session";
 
@@ -114,6 +115,7 @@ export default function ZtFiestaPage() {
                 (c.status === "scheduled" || c.status === "in-progress") &&
                 !c.parent_class_id &&
                 !(c.recurrence_type === "recurring" || c.recurrence_type === "course") &&
+                !isSameDayClassInSingapore(c.scheduled_at) &&
                 new Date(c.scheduled_at) > new Date()
             )
             .map((c) => ({
