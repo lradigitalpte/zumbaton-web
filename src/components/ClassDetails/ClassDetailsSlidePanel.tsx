@@ -51,12 +51,12 @@ const ClassDetailsSlidePanel = ({
           </div>
           <div className="text-right">
             {!isBookingWindowOpen && (
-              <p className="text-xs text-red-600 dark:text-red-400 mb-2">Bookings are allowed only between 08:00 and 22:00 SGT</p>
+              <p className="text-xs text-red-600 dark:text-red-400 mb-2">This class starts within 24 hours. Booking is available from 08:00 to 22:00 SGT.</p>
             )}
             <button
               onClick={onBookClick}
               disabled={isFull || isBooking || !isBookingWindowOpen}
-              title={!isBookingWindowOpen ? 'Bookings are allowed only between 08:00–22:00 SGT' : undefined}
+              title={!isBookingWindowOpen ? 'Classes starting within 24 hours can be booked only from 08:00–22:00 SGT' : undefined}
               className={`px-6 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isFull || isBooking || !isBookingWindowOpen
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800"

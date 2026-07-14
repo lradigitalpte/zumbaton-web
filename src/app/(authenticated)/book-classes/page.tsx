@@ -334,8 +334,8 @@ const ClassesPage = () => {
                 : 'text-red-700 dark:text-red-300'
             }`}>
               {bookingWindowOpen 
-                ? 'Booking is open (08:00–22:00 SGT)' 
-                : 'Booking is closed (08:00–22:00 SGT)'}
+                ? 'Booking available. The 08:00–22:00 SGT window applies only to classes starting within 24 hours.' 
+                : 'This class starts within 24 hours. Booking is closed outside 08:00–22:00 SGT.'}
             </p>
           </div>
         </div>
@@ -748,7 +748,7 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
                         }
                       }}
                       disabled={isFull || bookClassMutation.isPending || (classItem._isParent && isRecurring)}
-                      title={!bookingWindowOpen ? 'Bookings 08:00–22:00 SGT' : undefined}
+                      title={!bookingWindowOpen ? 'Classes starting within 24 hours can be booked only from 08:00–22:00 SGT' : undefined}
                       className={`px-4 py-2 rounded-lg text-xs font-bold transition-all active:scale-95 ${
                         isFull || bookClassMutation.isPending
                           ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800"

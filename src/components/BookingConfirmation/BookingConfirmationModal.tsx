@@ -83,7 +83,7 @@ const BookingConfirmationModal = ({
           )}
           {!isBookingWindowOpen && (
             <span className="ml-auto px-3 py-1.5 rounded-lg text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-              Bookings 08:00–22:00 SGT
+              Starts within 24h: bookings 08:00–22:00 SGT
             </span>
           )}
         </div>
