@@ -26,6 +26,7 @@ import {
   sendBirthdayEmail,
   sendRegistrationFormEmail,
   sendReferralVoucherEmail,
+  sendLeadFollowUpEmail,
 } from '@/lib/email'
 
 // Secret key to protect this endpoint (should match in admin app)
@@ -52,6 +53,7 @@ const EmailRequestSchema = z.object({
     'birthday',
     'registration-form',
     'referral-voucher',
+    'lead-follow-up',
   ]),
   secret: z.string(),
   data: z.record(z.unknown()),
@@ -282,6 +284,15 @@ export async function POST(request: NextRequest) {
           userName: data.userName as string,
           voucherCode: data.voucherCode as string,
           discountPercent: data.discountPercent as number,
+        })
+        break
+
+      case 'lead-follow-up':
+        result = await sendLeadFollowUpEmail({
+          leadEmail: data.leadEmail as string,
+          leadName: data.leadName as string,
+          subject: data.subject as string,
+          bodyText: data.bodyText as string,
         })
         break
 

@@ -1212,3 +1212,24 @@ export async function sendTrialBookingAdminNotificationEmail(data: {
     text: template.text,
   })
 }
+
+export async function sendLeadFollowUpEmail(data: {
+  leadEmail: string
+  leadName: string
+  subject: string
+  bodyText: string
+}): Promise<EmailResult> {
+  const escaped = data.bodyText
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+  const html = `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111; max-width: 600px;">${escaped.replace(/\n/g, '<br>')}</div>`
+
+  return sendEmail({
+    to: data.leadEmail,
+    subject: data.subject,
+    html,
+    text: data.bodyText,
+    replyTo: process.env.EMAIL_REPLY_TO || undefined,
+  })
+}
