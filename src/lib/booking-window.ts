@@ -1,12 +1,10 @@
-/** Daily online booking hours in Singapore time (inclusive start, exclusive end). */
-export const BOOKING_WINDOW_START_HOUR = 8
-export const BOOKING_WINDOW_END_HOUR = 22
-export const BOOKING_WINDOW_LOOKAHEAD_HOURS = 24
-
-export const BOOKING_WINDOW_LABEL = '08:00–22:00 SGT'
+export const MIN_BOOKING_LEAD_HOURS = 24
 
 export const BOOKING_WINDOW_CLOSED_MESSAGE =
-  `Same-day booking is not allowed. For other classes starting within 24 hours, booking is available only during ${BOOKING_WINDOW_LABEL}.`
+  'Classes must be booked at least 24 hours in advance. Same-day booking is not allowed.'
+
+/** @deprecated Use MIN_BOOKING_LEAD_HOURS — kept for any stale imports */
+export const BOOKING_WINDOW_LOOKAHEAD_HOURS = MIN_BOOKING_LEAD_HOURS
 
 export function getSingaporeNow(): Date {
   return new Date()
@@ -28,8 +26,8 @@ export function isSameDayClassInSingapore(
 }
 
 /**
- * Same-day classes cannot be booked. Classes more than 24 hours away can be
- * booked at any time; the daily window applies to other near-term classes.
+ * Booking is allowed any time of day when the class starts more than 24 hours
+ * from now. Same-day and within-24-hour classes cannot be booked online.
  */
 export function isBookingWindowOpen(
   classStartsAt?: string | Date | null,
@@ -43,27 +41,9 @@ export function isBookingWindowOpen(
   const millisecondsUntilClass = start.getTime() - now.getTime()
   if (millisecondsUntilClass <= 0) return false
 
-  if (isSameDayClassInSingapore(start, now)) return false
-
-  if (millisecondsUntilClass > BOOKING_WINDOW_LOOKAHEAD_HOURS * 60 * 60 * 1000) {
-    return true
-  }
-
-  const hour = Number(new Intl.DateTimeFormat('en-SG', {
-    hour: '2-digit',
-    hour12: false,
-    timeZone: 'Asia/Singapore',
-  }).format(now))
-  return hour >= BOOKING_WINDOW_START_HOUR && hour < BOOKING_WINDOW_END_HOUR
+  return millisecondsUntilClass >= MIN_BOOKING_LEAD_HOURS * 60 * 60 * 1000
 }
 
 export function logBookingWindowRejection(source: string): void {
-  const now = getSingaporeNow()
-  const time = now.toLocaleTimeString('en-SG', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: 'Asia/Singapore',
-  })
-  console.warn(`[Booking Window] Rejected ${source} at ${time} SGT (outside ${BOOKING_WINDOW_LABEL})`)
+  console.warn(`[Booking Window] Rejected ${source}: ${BOOKING_WINDOW_CLOSED_MESSAGE}`)
 }

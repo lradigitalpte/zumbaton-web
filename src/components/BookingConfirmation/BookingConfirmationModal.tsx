@@ -2,6 +2,7 @@
 
 import Modal from "@/components/Modal/Modal";
 import { ClassWithAvailability } from "@/lib/classes-queries";
+import { BOOKING_WINDOW_CLOSED_MESSAGE } from "@/lib/booking-window";
 import { formatDate, formatTime } from "@/lib/utils";
 
 interface BookingConfirmationModalProps {
@@ -83,7 +84,7 @@ const BookingConfirmationModal = ({
           )}
           {!isBookingWindowOpen && (
             <span className="ml-auto px-3 py-1.5 rounded-lg text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-              Same-day booking unavailable; near-term hours 08:00–22:00 SGT
+              {BOOKING_WINDOW_CLOSED_MESSAGE}
             </span>
           )}
         </div>

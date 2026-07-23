@@ -11,7 +11,7 @@
  * redirect to HitPay, so even abandoned checkouts are captured. Payment terms
  * (full / deposit / none) are admin-controlled via the promo config.
  *
- * The /start sales page uses this route 24/7 (no 08:00–22:00 SGT booking window).
+ * The /start sales page uses this route 24/7 (no per-class 24-hour lead-time bypass).
  */
 
 import { NextRequest, NextResponse } from 'next/server'

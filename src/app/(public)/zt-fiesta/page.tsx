@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useToast } from "@/components/Toast";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,8 +11,8 @@ import LoadingIcon from "@/components/Common/LoadingIcon";
 import WaiverForm from "@/components/Common/WaiverForm";
 import { BookingWindowBanner } from "@/components/Booking/BookingWindowBanner";
 import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
-import { BOOKING_WINDOW_CLOSED_MESSAGE } from "@/lib/booking-window";
-import { isSameDayClassInSingapore } from "@/lib/booking-window";
+import { useBookingWindowTick } from "@/hooks/useBookingWindowTick";
+import { BOOKING_WINDOW_CLOSED_MESSAGE, isBookingWindowOpen } from "@/lib/booking-window";
 
 type FiestaPackage = "1_session";
 
@@ -78,8 +78,13 @@ export default function ZtFiestaPage() {
   const [outdoorClasses, setOutdoorClasses] = useState<OutdoorClass[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+  const bookingWindowTick = useBookingWindowTick();
+  const bookableOutdoorClasses = useMemo(
+    () => outdoorClasses.filter((item) => isBookingWindowOpen(item.scheduled_at)),
+    [outdoorClasses, bookingWindowTick],
+  );
   const bookingWindowOpen = useBookingWindowOpen(
-    outdoorClasses.find((item) => item.id === selectedClassId)?.scheduled_at
+    bookableOutdoorClasses.find((item) => item.id === selectedClassId)?.scheduled_at
   );
 
   const [form, setForm] = useState({
@@ -115,7 +120,6 @@ export default function ZtFiestaPage() {
                 (c.status === "scheduled" || c.status === "in-progress") &&
                 !c.parent_class_id &&
                 !(c.recurrence_type === "recurring" || c.recurrence_type === "course") &&
-                !isSameDayClassInSingapore(c.scheduled_at) &&
                 new Date(c.scheduled_at) > new Date()
             )
             .map((c) => ({
@@ -140,7 +144,17 @@ export default function ZtFiestaPage() {
     fetchOutdoorClasses();
   }, []);
 
+  useEffect(() => {
+    if (selectedClassId && !bookableOutdoorClasses.some((item) => item.id === selectedClassId)) {
+      setSelectedClassId(null);
+    }
+  }, [bookableOutdoorClasses, selectedClassId]);
+
   const handleSelectClass = (cls: OutdoorClass) => {
+    if (!isBookingWindowOpen(cls.scheduled_at)) {
+      toast.error(BOOKING_WINDOW_CLOSED_MESSAGE);
+      return;
+    }
     const spotsLeft = cls.capacity - cls.booked_count;
     if (spotsLeft <= 0) return; // full — don't select
     setSelectedClassId(cls.id);
@@ -212,7 +226,7 @@ export default function ZtFiestaPage() {
     }
   };
 
-  const selectedClass = outdoorClasses.find((c) => c.id === selectedClassId);
+  const selectedClass = bookableOutdoorClasses.find((c) => c.id === selectedClassId);
 
   return (
     <div className="bg-[#f6f4ee] dark:bg-black min-h-screen transition-colors duration-300">
@@ -402,7 +416,7 @@ export default function ZtFiestaPage() {
                   <div className="flex items-center justify-center py-16 border border-black/10 dark:border-white/10 bg-white dark:bg-zinc-950">
                     <LoadingIcon size="sm" className="!flex-row gap-2 !mt-0" />
                   </div>
-                ) : outdoorClasses.length === 0 ? (
+                ) : bookableOutdoorClasses.length === 0 ? (
                   <div className="text-center py-16 border border-black/10 dark:border-white/10 bg-white dark:bg-zinc-950">
                     <Calendar className="w-10 h-10 text-zinc-300 dark:text-zinc-700 mx-auto mb-4" />
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500 mb-2">No sessions scheduled yet</p>
@@ -410,12 +424,12 @@ export default function ZtFiestaPage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 border border-black/10 dark:border-white/10">
-                    {outdoorClasses.map((cls, i) => {
+                    {bookableOutdoorClasses.map((cls, i) => {
                       const spotsLeft = cls.capacity - cls.booked_count;
                       const isFull = spotsLeft <= 0;
                       const isSelected = selectedClassId === cls.id;
-                      const isLast = i === outdoorClasses.length - 1;
-                      const isOdd = outdoorClasses.length % 2 !== 0;
+                      const isLast = i === bookableOutdoorClasses.length - 1;
+                      const isOdd = bookableOutdoorClasses.length % 2 !== 0;
                       const isLastOdd = isOdd && isLast;
 
                       return (

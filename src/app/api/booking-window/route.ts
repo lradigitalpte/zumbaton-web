@@ -1,21 +1,19 @@
 import { NextResponse } from 'next/server'
 import {
   BOOKING_WINDOW_CLOSED_MESSAGE,
-  BOOKING_WINDOW_LABEL,
+  MIN_BOOKING_LEAD_HOURS,
   getSingaporeNow,
-  isBookingWindowOpen,
 } from '@/lib/booking-window'
 
 export const dynamic = 'force-dynamic'
 
-/** GET /api/booking-window — current public/member online booking hours (SGT). */
+/** GET /api/booking-window — online booking lead-time policy (SGT). */
 export async function GET() {
   const now = getSingaporeNow()
-  const open = isBookingWindowOpen(now)
 
   return NextResponse.json({
-    open,
-    label: BOOKING_WINDOW_LABEL,
+    open: true,
+    minLeadHours: MIN_BOOKING_LEAD_HOURS,
     closedMessage: BOOKING_WINDOW_CLOSED_MESSAGE,
     singaporeTime: now.toLocaleString('en-SG', {
       timeZone: 'Asia/Singapore',

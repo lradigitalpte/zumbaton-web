@@ -18,8 +18,8 @@ import {
 } from "@/lib/trial-booking-display";
 import { BookingWindowBanner } from "@/components/Booking/BookingWindowBanner";
 import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
-import { BOOKING_WINDOW_CLOSED_MESSAGE } from "@/lib/booking-window";
-import { isSameDayClassInSingapore } from "@/lib/booking-window";
+import { useBookingWindowTick } from "@/hooks/useBookingWindowTick";
+import { BOOKING_WINDOW_CLOSED_MESSAGE, isBookingWindowOpen } from "@/lib/booking-window";
 import {
   formatYmdLocal,
   formatYmdSingapore,
@@ -90,6 +90,13 @@ export default function TrialBookingClient({
   });
   const [processing, setProcessing] = useState(false);
   const bookingWindowOpen = useBookingWindowOpen(selectedClass?.scheduled_at);
+  const bookingWindowTick = useBookingWindowTick();
+
+  useEffect(() => {
+    if (selectedClass && !isBookingWindowOpen(selectedClass.scheduled_at)) {
+      setSelectedClass(null);
+    }
+  }, [selectedClass, bookingWindowTick]);
 
   const weekRangeSummary = useMemo(() => {
     if (dateRangeMode !== "week" || !dateFilter) return null;
@@ -224,8 +231,8 @@ export default function TrialBookingClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ageGroupFilter]);
 
-  const filteredClasses = classes.filter((cls) => {
-    if (isSameDayClassInSingapore(cls.scheduled_at)) return false;
+  const filteredClasses = useMemo(() => classes.filter((cls) => {
+    if (!isBookingWindowOpen(cls.scheduled_at)) return false;
     if (ageGroupFilter === "outdoor") return cls.is_outdoor === true;
     // Exclude outdoor classes from All / Adults / Kids tabs
     if (cls.is_outdoor) return false;
@@ -234,12 +241,16 @@ export default function TrialBookingClient({
     if (ageGroupFilter === "kid") return g === "kid";
     if (ageGroupFilter === "adult") return g === "adult" || g === "all";
     return true;
-  });
+  }), [classes, ageGroupFilter, bookingWindowTick]);
 
   const totalPages = Math.ceil(filteredClasses.length / CLASSES_PER_PAGE);
   const paginatedClasses = filteredClasses.slice((currentPage - 1) * CLASSES_PER_PAGE, currentPage * CLASSES_PER_PAGE);
 
   const handleClassSelect = (classItem: Class) => {
+    if (!isBookingWindowOpen(classItem.scheduled_at)) {
+      toast.error(BOOKING_WINDOW_CLOSED_MESSAGE);
+      return;
+    }
     if (selectedClass?.id === classItem.id) {
       setSelectedClass(null);
       return;
@@ -535,6 +546,11 @@ export default function TrialBookingClient({
                   <p className="text-xl font-black uppercase italic tracking-tighter text-zinc-400">
                     No classes found for this selection.
                   </p>
+                  {classes.length > 0 && (
+                    <p className="mt-4 text-sm text-zinc-500">
+                      {BOOKING_WINDOW_CLOSED_MESSAGE}
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

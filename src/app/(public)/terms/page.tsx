@@ -40,7 +40,7 @@ const TermsPage = () => {
 
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-8">3. Bookings and Cancellations</h2>
             <p>
-              Class booking is available daily from 08:00 to 22:00 via our website. Cancellation of a class after booking must be made at least 24 hours before the class date. A booked class with a &quot;NO SHOW&quot; will be forfeited (no token refund). If you cancel in time, the token will be returned to your account.
+              Class booking is available online at any time via our website, but must be made at least 24 hours before the class start. Same-day booking is not allowed. Cancellation of a class after booking must be made at least 24 hours before the class date. A booked class with a &quot;NO SHOW&quot; will be forfeited (no token refund). If you cancel in time, the token will be returned to your account.
             </p>
 
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-8">4. Freezing, Suspension, Cancellation and Termination</h2>

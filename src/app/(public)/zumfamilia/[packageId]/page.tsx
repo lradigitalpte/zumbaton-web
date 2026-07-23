@@ -12,8 +12,8 @@ import LoadingIcon from "@/components/Common/LoadingIcon";
 import WaiverForm from "@/components/Common/WaiverForm";
 import { BookingWindowBanner } from "@/components/Booking/BookingWindowBanner";
 import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
-import { BOOKING_WINDOW_CLOSED_MESSAGE } from "@/lib/booking-window";
-import { isSameDayClassInSingapore } from "@/lib/booking-window";
+import { useBookingWindowTick } from "@/hooks/useBookingWindowTick";
+import { BOOKING_WINDOW_CLOSED_MESSAGE, isBookingWindowOpen } from "@/lib/booking-window";
 
 interface PublicClass {
   id: string;
@@ -60,6 +60,12 @@ export default function ZumFamiliaDetailPage() {
   });
   const [customDate, setCustomDate] = useState("");
   const [customTime, setCustomTime] = useState("");
+  const bookingWindowTick = useBookingWindowTick();
+
+  const bookableClasses = useMemo(
+    () => classes.filter((item) => isBookingWindowOpen(item.scheduled_at)),
+    [classes, bookingWindowTick],
+  );
 
   useEffect(() => {
     const fetchClasses = async () => {
@@ -89,14 +95,16 @@ export default function ZumFamiliaDetailPage() {
             booked_count: item.booked_count || 0,
           }))
           .filter((item: PublicClass) => isOneFamiliaScheduledClass(item.title, item.class_type))
-          .filter((item: PublicClass) => !isSameDayClassInSingapore(item.scheduled_at))
           .sort(
             (a: PublicClass, b: PublicClass) =>
               new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime(),
           );
 
         setClasses(filtered);
-        const open = filtered.filter((item: PublicClass) => (item.booked_count ?? 0) < item.capacity);
+        const open = filtered.filter(
+          (item: PublicClass) =>
+            isBookingWindowOpen(item.scheduled_at) && (item.booked_count ?? 0) < item.capacity,
+        );
         setSelectedClassId(open[0]?.id ?? "");
       } catch (error) {
         console.error(error);
@@ -110,9 +118,10 @@ export default function ZumFamiliaDetailPage() {
   }, [toast]);
 
   const classesForDisplay = useMemo(() => {
-    if (!dayFilter) return classes;
-    return classes.filter((c) => ymdSingapore(c.scheduled_at) === dayFilter);
-  }, [classes, dayFilter]);
+    const source = bookableClasses;
+    if (!dayFilter) return source;
+    return source.filter((c) => ymdSingapore(c.scheduled_at) === dayFilter);
+  }, [bookableClasses, dayFilter]);
 
   const sessionsByDate = useMemo(() => {
     const map = new Map<string, PublicClass[]>();
@@ -130,10 +139,16 @@ export default function ZumFamiliaDetailPage() {
   }, [classesForDisplay]);
 
   const selectedClass = useMemo(
-    () => classes.find((item) => item.id === selectedClassId) ?? null,
-    [classes, selectedClassId],
+    () => bookableClasses.find((item) => item.id === selectedClassId) ?? null,
+    [bookableClasses, selectedClassId],
   );
   const bookingWindowOpen = useBookingWindowOpen(selectedClass?.scheduled_at);
+
+  useEffect(() => {
+    if (selectedClassId && !bookableClasses.some((item) => item.id === selectedClassId)) {
+      setSelectedClassId(bookableClasses.find((item) => (item.booked_count ?? 0) < item.capacity)?.id ?? "");
+    }
+  }, [bookableClasses, selectedClassId]);
 
   if (!pkg) {
     return (
@@ -154,7 +169,7 @@ export default function ZumFamiliaDetailPage() {
       toast.error("Please choose a session from the schedule (all listed times may be full).");
       return;
     }
-    const chosen = classes.find((c) => c.id === selectedClassId);
+    const chosen = bookableClasses.find((c) => c.id === selectedClassId);
     if (chosen && (chosen.booked_count ?? 0) >= chosen.capacity) {
       toast.error("That session is full. Please pick another time.");
       return;

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Users, MapPin, ShieldCheck, Zap, X, Calendar, Clock, Check } from "lucide-react";
@@ -15,8 +15,8 @@ import WaiverForm from "@/components/Common/WaiverForm";
 import { dateOfBirthFromAge, parseAgeYearsInput } from "@/lib/user-age-utils";
 import { BookingWindowBanner } from "@/components/Booking/BookingWindowBanner";
 import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
-import { BOOKING_WINDOW_CLOSED_MESSAGE } from "@/lib/booking-window";
-import { isSameDayClassInSingapore } from "@/lib/booking-window";
+import { useBookingWindowTick } from "@/hooks/useBookingWindowTick";
+import { BOOKING_WINDOW_CLOSED_MESSAGE, isBookingWindowOpen } from "@/lib/booking-window";
 
 interface Class {
   id: string;
@@ -81,6 +81,7 @@ const PromosPage = () => {
   });
   const selectedBookingClass = allClasses.find((item) => item.id === formData.classId);
   const bookingWindowOpen = useBookingWindowOpen(selectedBookingClass?.scheduled_at);
+  const bookingWindowTick = useBookingWindowTick();
 
   // Admin-editable promo config (price + booking mode). Defaults mirror the
   // original hardcoded behaviour so the page renders correctly before it loads.
@@ -170,6 +171,7 @@ const PromosPage = () => {
         if (promoRoomType) {
           const eligible = data
             .filter((c) => isClassEligibleForPromo(c, promoRoomType))
+            .filter((c) => isBookingWindowOpen(c.scheduled_at))
             .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
           if (eligible.length > 0) {
             setSelectedDate(toSGTDate(eligible[0].scheduled_at));
@@ -211,18 +213,23 @@ const PromosPage = () => {
   }, []);
 
   // Classes for the selected date that match this promo type
-  const filteredClasses = allClasses.filter((c) => {
-    if (isSameDayClassInSingapore(c.scheduled_at)) return false;
+  const filteredClasses = useMemo(() => allClasses.filter((c) => {
+    if (!isBookingWindowOpen(c.scheduled_at)) return false;
     if (!isClassEligibleForPromo(c, selectedPromo?.roomType)) return false;
     return toSGTDate(c.scheduled_at) === selectedDate;
-  });
+  }), [allClasses, selectedPromo?.roomType, selectedDate, bookingWindowTick]);
 
   // Other dates (not selectedDate) that have eligible classes — for the UX hint
-  const otherEligibleDates = [...new Set(
+  const otherEligibleDates = useMemo(() => [...new Set(
     allClasses
-      .filter((c) => isClassEligibleForPromo(c, selectedPromo?.roomType) && toSGTDate(c.scheduled_at) !== selectedDate)
-      .map((c) => toSGTDate(c.scheduled_at))
-  )];
+      .filter(
+        (c) =>
+          isBookingWindowOpen(c.scheduled_at) &&
+          isClassEligibleForPromo(c, selectedPromo?.roomType) &&
+          toSGTDate(c.scheduled_at) !== selectedDate,
+      )
+      .map((c) => toSGTDate(c.scheduled_at)),
+  )], [allClasses, selectedPromo?.roomType, selectedDate, bookingWindowTick]);
 
   useEffect(() => {
     if (!formData.classId || !selectedPromo) return;

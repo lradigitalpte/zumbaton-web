@@ -12,7 +12,8 @@ import { formatDate, formatDateFull, formatTime } from "@/lib/utils";
 import { handleMutationError } from "@/lib/toast-helper";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
-import { isSameDayClassInSingapore } from "@/lib/booking-window";
+import { useBookingWindowTick } from "@/hooks/useBookingWindowTick";
+import { BOOKING_WINDOW_CLOSED_MESSAGE, isBookingWindowOpen } from "@/lib/booking-window";
 
 const CLASSES_PER_PAGE = 12;
 
@@ -69,6 +70,7 @@ const ClassesPage = () => {
   const bookingWindowOpen = useBookingWindowOpen(
     classToBook?.scheduled_at ?? selectedClass?.scheduled_at
   );
+  const bookingWindowTick = useBookingWindowTick();
 
   // Keep token balance in React Query (avoids stale local state when routes are cached)
   const { data: tokenBalanceData } = useDashboardTokenBalance(user?.id);
@@ -101,7 +103,7 @@ const ClassesPage = () => {
 
   // Apply search + instructor + age group filters
   const classes = useMemo(() => allClasses.filter((classItem) => {
-    if (isSameDayClassInSingapore(classItem.scheduled_at)) return false;
+    if (!isBookingWindowOpen(classItem.scheduled_at)) return false;
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       const matchesSearch =
@@ -124,7 +126,7 @@ const ClassesPage = () => {
       if (ag !== filter.ageGroup) return false;
     }
     return true;
-  }), [allClasses, searchQuery, filter.instructorId, filter.ageGroup]);
+  }), [allClasses, searchQuery, filter.instructorId, filter.ageGroup, bookingWindowTick]);
 
   // Pagination: reset to page 1 when filters/classes change
   useEffect(() => {
@@ -325,7 +327,7 @@ const ClassesPage = () => {
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="w-2 h-2 rounded-full bg-red-500"></div>
             <p className="text-sm sm:text-base font-medium text-red-700 dark:text-red-300">
-              Same-day booking is unavailable. Other classes within 24 hours can be booked from 08:00–22:00 SGT.
+              {BOOKING_WINDOW_CLOSED_MESSAGE}
             </p>
           </div>
         </div>
@@ -738,7 +740,7 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
                         }
                       }}
                       disabled={isFull || bookClassMutation.isPending || (classItem._isParent && isRecurring)}
-                      title={!bookingWindowOpen ? 'Same-day booking is unavailable; other near-term classes can be booked from 08:00–22:00 SGT' : undefined}
+                      title={!bookingWindowOpen ? BOOKING_WINDOW_CLOSED_MESSAGE : undefined}
                       className={`px-4 py-2 rounded-lg text-xs font-bold transition-all active:scale-95 ${
                         isFull || bookClassMutation.isPending
                           ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800"
@@ -969,11 +971,7 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
             <div className="flex-1 overflow-y-auto p-6">
               <div className="space-y-3">
                 {sessionsPanel.sessions
-                  .filter((session) => {
-                    // Filter out past sessions
-                    const sessionDate = new Date(session.scheduled_at)
-                    return sessionDate > new Date()
-                  })
+                  .filter((session) => isBookingWindowOpen(session.scheduled_at))
                   .map((session) => {
                   const sessionSpots = session.capacity - (session.booked_count ?? 0);
                   const sessionIsFull = sessionSpots <= 0;
