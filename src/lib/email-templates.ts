@@ -11,7 +11,11 @@ export interface EmailTemplateData {
 /**
  * Base email template with consistent styling and mobile responsiveness
  */
-function getBaseTemplate(content: string, preheader?: string): string {
+function getBaseTemplate(content: string, preheader?: string, options?: { logoUrl?: string }): string {
+  const logoBlock = options?.logoUrl
+    ? `<img src="${options.logoUrl}" alt="One Step Fitness" width="150" style="display: block; margin: 0 auto 18px; max-width: 150px; height: auto; border-radius: 14px; background-color: #ffffff; padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />`
+    : ''
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -139,6 +143,7 @@ function getBaseTemplate(content: string, preheader?: string): string {
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 40px 30px; text-align: center;" class="email-header">
+              ${logoBlock}
               <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">One Step Fitness</h1>
               <p style="margin: 8px 0 0 0; color: #d1fae5; font-size: 14px; font-weight: 500;">Dance Your Way to Fitness</p>
             </td>
@@ -1474,6 +1479,156 @@ Booking ID: ${data.bookingId}
 
 Action Required:
 Please create a user account for this guest if they want to become a member. The guest information is provided above.
+
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
+  `.trim()
+
+  return { html, text }
+}
+
+const LEAD_OUTREACH_PHONE_DISPLAY = '+65 8492 7347'
+const LEAD_OUTREACH_PHONE_TEL = '+6584927347'
+const LEAD_OUTREACH_WHATSAPP_URL = 'https://wa.me/6584927347'
+const LEAD_OUTREACH_EMAIL = 'hello@onestepfitness.sg'
+
+function getOutreachSiteUrl(): string {
+  const url =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_WEB_URL ||
+    'https://onestepfitness.sg'
+  return url.replace(/\/$/, '')
+}
+
+function getOutreachLogoUrl(): string {
+  return `${getOutreachSiteUrl()}/logo/One%20step%20fitness%20logo.png`
+}
+
+function bodyTextToHtmlParagraphs(text: string): string {
+  return text
+    .split(/\n\n+/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+    .map(
+      (paragraph) =>
+        `<p style="margin: 0 0 18px 0; color: #374151; font-size: 16px; line-height: 1.75;" class="mobile-text">${escapeHtml(paragraph).replace(/\n/g, '<br>')}</p>`
+    )
+    .join('')
+}
+
+/**
+ * Branded lead marketing / follow-up email template
+ */
+export function getLeadFollowUpEmailTemplate(data: {
+  leadName: string
+  bodyText: string
+  subject?: string
+}): { html: string; text: string } {
+  const siteUrl = getOutreachSiteUrl()
+  const trialUrl = `${siteUrl}/trial-booking`
+  const scheduleUrl = `${siteUrl}/schedule`
+  const firstName = data.leadName.trim().split(/\s+/)[0] || 'there'
+  const preheader = (data.subject || 'A message from One Step Fitness').slice(0, 120)
+
+  const html = getBaseTemplate(
+    `
+    <div style="text-align: center; margin-bottom: 28px;" class="mobile-spacing">
+      <p style="margin: 0 0 8px 0; color: #16a34a; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">One Step Fitness</p>
+      <h2 style="margin: 0; color: #111827; font-size: 26px; font-weight: 700; line-height: 1.3;" class="mobile-title">We would love to dance with you!</h2>
+    </div>
+
+    <div style="height: 4px; width: 64px; background: linear-gradient(90deg, #16a34a, #22c55e); border-radius: 999px; margin: 0 auto 28px;"></div>
+
+    ${bodyTextToHtmlParagraphs(data.bodyText)}
+
+    <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 32px 0;" class="mobile-table">
+      <tr>
+        <td style="width: 33.33%; padding: 8px; vertical-align: top;">
+          <div style="background-color: #f0fdf4; border-radius: 12px; padding: 18px 12px; text-align: center; border: 1px solid #bbf7d0; height: 100%;">
+            <p style="margin: 0 0 6px; color: #16a34a; font-size: 18px; font-weight: 800; line-height: 1;">01</p>
+            <p style="margin: 0; color: #15803d; font-size: 13px; font-weight: 700;">Zumba &amp; Dance</p>
+            <p style="margin: 6px 0 0; color: #6b7280; font-size: 12px; line-height: 1.4;">Fun, energetic classes</p>
+          </div>
+        </td>
+        <td style="width: 33.33%; padding: 8px; vertical-align: top;">
+          <div style="background-color: #eff6ff; border-radius: 12px; padding: 18px 12px; text-align: center; border: 1px solid #bfdbfe; height: 100%;">
+            <p style="margin: 0 0 6px; color: #1d4ed8; font-size: 18px; font-weight: 800; line-height: 1;">02</p>
+            <p style="margin: 0; color: #1d4ed8; font-size: 13px; font-weight: 700;">All Levels</p>
+            <p style="margin: 6px 0 0; color: #6b7280; font-size: 12px; line-height: 1.4;">Beginners welcome</p>
+          </div>
+        </td>
+        <td style="width: 33.33%; padding: 8px; vertical-align: top;">
+          <div style="background-color: #fdf4ff; border-radius: 12px; padding: 18px 12px; text-align: center; border: 1px solid #e9d5ff; height: 100%;">
+            <p style="margin: 0 0 6px; color: #7e22ce; font-size: 18px; font-weight: 800; line-height: 1;">03</p>
+            <p style="margin: 0; color: #7e22ce; font-size: 13px; font-weight: 700;">Great Community</p>
+            <p style="margin: 6px 0 0; color: #6b7280; font-size: 12px; line-height: 1.4;">Supportive instructors</p>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <div style="text-align: center; margin: 36px 0 20px;">
+      <a href="${trialUrl}" class="mobile-button" style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff !important; text-decoration: none; padding: 16px 40px; border-radius: 50px; font-weight: 700; font-size: 16px; box-shadow: 0 6px 20px rgba(22, 163, 74, 0.35); letter-spacing: 0.2px;">
+        Book Your Trial Class
+      </a>
+    </div>
+
+    <p style="text-align: center; margin: 0 0 28px;">
+      <a href="${scheduleUrl}" style="color: #16a34a; font-size: 14px; font-weight: 600; text-decoration: underline;">View class schedule</a>
+    </p>
+
+    <div style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border-radius: 14px; padding: 26px 24px; border: 1px solid #bbf7d0;">
+      <p style="margin: 0 0 18px; text-align: center; color: #15803d; font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">Questions? We are here to help</p>
+      <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 10px 0; text-align: center;">
+            <a href="tel:${LEAD_OUTREACH_PHONE_TEL}" style="color: #111827; font-size: 15px; font-weight: 600; text-decoration: none;">
+              Call: ${LEAD_OUTREACH_PHONE_DISPLAY}
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; text-align: center;">
+            <a href="${LEAD_OUTREACH_WHATSAPP_URL}" style="color: #16a34a; font-size: 15px; font-weight: 600; text-decoration: none;">
+              WhatsApp: Chat with us
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; text-align: center;">
+            <a href="mailto:${LEAD_OUTREACH_EMAIL}" style="color: #16a34a; font-size: 15px; font-weight: 600; text-decoration: none;">
+              Email: ${LEAD_OUTREACH_EMAIL}
+            </a>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <p style="margin: 28px 0 0; text-align: center; color: #9ca3af; font-size: 13px; line-height: 1.6;" class="mobile-text">
+      Simply reply to this email and our team will get back to you shortly.
+    </p>
+  `,
+    preheader,
+    { logoUrl: getOutreachLogoUrl() }
+  )
+
+  const text = `
+Hi ${firstName},
+
+${data.bodyText}
+
+---
+BOOK YOUR TRIAL CLASS
+${trialUrl}
+
+VIEW CLASS SCHEDULE
+${scheduleUrl}
+
+GET IN TOUCH
+Phone: ${LEAD_OUTREACH_PHONE_DISPLAY}
+WhatsApp: ${LEAD_OUTREACH_WHATSAPP_URL}
+Email: ${LEAD_OUTREACH_EMAIL}
+
+Reply to this email and our team will get back to you shortly.
 
 © ${new Date().getFullYear()} One Step Fitness. All rights reserved.
   `.trim()
