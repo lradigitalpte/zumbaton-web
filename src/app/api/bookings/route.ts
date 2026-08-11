@@ -22,6 +22,7 @@ import {
   isBookingWindowOpen,
   logBookingWindowRejection,
 } from '@/lib/booking-window'
+import { sendMemberBookingStaffNotifications } from '@/lib/member-booking-notifications'
 
 export const dynamic = 'force-dynamic'
 
@@ -532,6 +533,13 @@ async function handleSingleBooking(userId: string, classId: string) {
       })
       .eq('id', selectedPackage.id)
 
+    await sendMemberBookingStaffNotifications(supabaseAdmin, {
+      memberUserId: userId,
+      classData,
+      tokensUsed: tokenCost,
+      bookingId,
+    })
+
     return NextResponse.json({
       success: true,
       data: {
@@ -803,6 +811,14 @@ async function handleCourseBooking(userId: string, parentClassId: string, parent
         updated_at: new Date().toISOString(),
       })
       .eq('id', selectedPackage.id)
+
+    await sendMemberBookingStaffNotifications(supabaseAdmin, {
+      memberUserId: userId,
+      classData: parentClassData,
+      tokensUsed: totalTokensNeeded,
+      bookingId: createdBookings[0].id,
+      bookingNote: `${futureSessions.length} session${futureSessions.length !== 1 ? 's' : ''} booked`,
+    })
 
     return NextResponse.json({
       success: true,

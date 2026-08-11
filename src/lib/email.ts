@@ -137,8 +137,25 @@ function getConfiguredPaymentAlertRecipients(): string[] {
     .filter(Boolean)
 }
 
+async function resolvePaymentAlertRecipients(): Promise<string[]> {
+  try {
+    const { getSupabaseAdminClient } = await import('./supabase')
+    const { getStaffAlertRecipients } = await import('./alert-email-recipients')
+    const supabase = getSupabaseAdminClient()
+    const recipients = await getStaffAlertRecipients(supabase)
+
+    if (recipients.length > 0) {
+      return recipients
+    }
+  } catch (error) {
+    console.error('[Email] Failed to resolve payment alert recipients from settings:', error)
+  }
+
+  return getConfiguredPaymentAlertRecipients()
+}
+
 export async function sendPaymentAlertEmail(data: PaymentAlertEmailData): Promise<EmailResult> {
-  const recipients = getConfiguredPaymentAlertRecipients()
+  const recipients = await resolvePaymentAlertRecipients()
 
   if (recipients.length === 0) {
     return { success: true }
@@ -1209,6 +1226,78 @@ export async function sendTrialBookingAdminNotificationEmail(data: {
   return sendEmail({
     to: data.adminEmails,
     subject: `New Trial Booking: ${data.guestName} - ${data.className}`,
+    html: template.html,
+    text: template.text,
+  })
+}
+
+/**
+ * Send member booking admin notification email
+ */
+export async function sendMemberBookingAdminNotificationEmail(data: {
+  adminEmails: string[]
+  memberName: string
+  memberEmail: string
+  memberPhone?: string
+  className: string
+  classDate: string
+  classTime: string
+  classLocation: string
+  instructorName?: string
+  tokensUsed: number
+  bookingId?: string
+  bookingNote?: string
+}): Promise<EmailResult> {
+  const { getMemberBookingAdminNotificationEmailTemplate } = await import('./email-templates')
+  const template = getMemberBookingAdminNotificationEmailTemplate({
+    memberName: data.memberName,
+    memberEmail: data.memberEmail,
+    memberPhone: data.memberPhone,
+    className: data.className,
+    classDate: data.classDate,
+    classTime: data.classTime,
+    classLocation: data.classLocation,
+    instructorName: data.instructorName,
+    tokensUsed: data.tokensUsed,
+    bookingId: data.bookingId,
+    bookingNote: data.bookingNote,
+  })
+
+  return sendEmail({
+    to: data.adminEmails,
+    subject: `New Booking: ${data.memberName} - ${data.className}`,
+    html: template.html,
+    text: template.text,
+  })
+}
+
+/**
+ * Send member booking tutor notification email
+ */
+export async function sendMemberBookingTutorNotificationEmail(data: {
+  tutorEmail: string
+  memberName: string
+  className: string
+  classDate: string
+  classTime: string
+  classLocation: string
+  tokensUsed?: number
+  bookingNote?: string
+}): Promise<EmailResult> {
+  const { getMemberBookingTutorNotificationEmailTemplate } = await import('./email-templates')
+  const template = getMemberBookingTutorNotificationEmailTemplate({
+    memberName: data.memberName,
+    className: data.className,
+    classDate: data.classDate,
+    classTime: data.classTime,
+    classLocation: data.classLocation,
+    tokensUsed: data.tokensUsed,
+    bookingNote: data.bookingNote,
+  })
+
+  return sendEmail({
+    to: data.tutorEmail,
+    subject: `New student booked: ${data.className}`,
     html: template.html,
     text: template.text,
   })

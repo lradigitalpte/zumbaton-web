@@ -27,6 +27,8 @@ import {
   sendRegistrationFormEmail,
   sendReferralVoucherEmail,
   sendLeadFollowUpEmail,
+  sendMemberBookingAdminNotificationEmail,
+  sendMemberBookingTutorNotificationEmail,
 } from '@/lib/email'
 
 // Secret key to protect this endpoint (should match in admin app)
@@ -54,6 +56,8 @@ const EmailRequestSchema = z.object({
     'registration-form',
     'referral-voucher',
     'lead-follow-up',
+    'member-booking-admin',
+    'member-booking-tutor',
   ]),
   secret: z.string(),
   data: z.record(z.unknown()),
@@ -293,6 +297,36 @@ export async function POST(request: NextRequest) {
           leadName: data.leadName as string,
           subject: data.subject as string,
           bodyText: data.bodyText as string,
+        })
+        break
+
+      case 'member-booking-admin':
+        result = await sendMemberBookingAdminNotificationEmail({
+          adminEmails: data.adminEmails as string[],
+          memberName: data.memberName as string,
+          memberEmail: data.memberEmail as string,
+          memberPhone: data.memberPhone as string | undefined,
+          className: data.className as string,
+          classDate: data.classDate as string,
+          classTime: data.classTime as string,
+          classLocation: data.classLocation as string,
+          instructorName: data.instructorName as string | undefined,
+          tokensUsed: data.tokensUsed as number,
+          bookingId: data.bookingId as string | undefined,
+          bookingNote: data.bookingNote as string | undefined,
+        })
+        break
+
+      case 'member-booking-tutor':
+        result = await sendMemberBookingTutorNotificationEmail({
+          tutorEmail: data.tutorEmail as string,
+          memberName: data.memberName as string,
+          className: data.className as string,
+          classDate: data.classDate as string,
+          classTime: data.classTime as string,
+          classLocation: data.classLocation as string,
+          tokensUsed: data.tokensUsed as number | undefined,
+          bookingNote: data.bookingNote as string | undefined,
         })
         break
 

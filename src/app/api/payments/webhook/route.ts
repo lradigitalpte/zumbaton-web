@@ -525,45 +525,38 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
         // Send notification email to admins
         try {
-          const { data: adminUsers } = await supabase
-            .from('user_profiles')
-            .select('id, email, name')
-            .in('role', ['admin', 'super_admin'])
-            .eq('is_active', true)
+          const { getStaffAlertRecipients } = await import('@/lib/alert-email-recipients')
+          const adminEmails = await getStaffAlertRecipients(supabase)
 
-          if (adminUsers && adminUsers.length > 0) {
+          if (adminEmails.length > 0) {
             const { sendTrialBookingAdminNotificationEmail } = await import('@/lib/email')
-            const adminEmails = adminUsers.map(u => u.email).filter(Boolean) as string[]
-            
-            if (adminEmails.length > 0) {
-              await sendTrialBookingAdminNotificationEmail({
-                adminEmails,
-                guestName,
-                guestEmail,
-                guestPhone,
-                guestDateOfBirth: guestDateOfBirth || undefined,
-                className: classData.title,
-                classDate: new Date(classData.scheduled_at).toLocaleDateString('en-SG', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric',
-                  timeZone: 'Asia/Singapore',
-                }),
-                classTime: new Date(classData.scheduled_at).toLocaleTimeString('en-SG', { 
-                  hour: '2-digit', 
-                  minute: '2-digit',
-                  hour12: true,
-                  timeZone: 'Asia/Singapore',
-                }),
-                classLocation: classData.location || 'TBA',
-                instructorName: classData.instructor_name || undefined,
-                amount: payment.amount_cents / 100,
-                currency: payment.currency,
-                bookingId: firstBooking.id,
-              })
-              console.log('[Webhook] Trial booking admin notification sent to:', adminEmails.length, 'admins')
-            }
+            await sendTrialBookingAdminNotificationEmail({
+              adminEmails,
+              guestName,
+              guestEmail,
+              guestPhone,
+              guestDateOfBirth: guestDateOfBirth || undefined,
+              className: classData.title,
+              classDate: new Date(classData.scheduled_at).toLocaleDateString('en-SG', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                timeZone: 'Asia/Singapore',
+              }),
+              classTime: new Date(classData.scheduled_at).toLocaleTimeString('en-SG', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true,
+                timeZone: 'Asia/Singapore',
+              }),
+              classLocation: classData.location || 'TBA',
+              instructorName: classData.instructor_name || undefined,
+              amount: payment.amount_cents / 100,
+              currency: payment.currency,
+              bookingId: firstBooking.id,
+            })
+            console.log('[Webhook] Trial booking admin notification sent to:', adminEmails.length, 'admins')
           }
         } catch (adminEmailError) {
           console.error('[Webhook] Failed to send admin notification:', adminEmailError)

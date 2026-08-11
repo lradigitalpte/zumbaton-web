@@ -1511,6 +1511,186 @@ Please create a user account for this guest if they want to become a member. The
   return { html, text }
 }
 
+/**
+ * Member Booking Admin Notification Email Template
+ */
+export function getMemberBookingAdminNotificationEmailTemplate(data: {
+  memberName: string
+  memberEmail: string
+  memberPhone?: string
+  className: string
+  classDate: string
+  classTime: string
+  classLocation: string
+  instructorName?: string
+  tokensUsed: number
+  bookingId?: string
+  bookingNote?: string
+}): { html: string; text: string } {
+  const html = getBaseTemplate(`
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">New Class Booking</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">A member has booked a class</p>
+    </div>
+    
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 25px; border-radius: 8px; margin: 30px 0;">
+      <h3 style="margin: 0 0 20px 0; color: #92400e; font-size: 20px; font-weight: 600;" class="mobile-subtitle">Member Information</h3>
+      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Name:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.memberName)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Email:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.memberEmail)}</td>
+        </tr>
+        ${data.memberPhone ? `
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Phone:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.memberPhone)}</td>
+        </tr>
+        ` : ''}
+      </table>
+    </div>
+    
+    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 25px; border-radius: 8px; margin: 30px 0;">
+      <h3 style="margin: 0 0 20px 0; color: #15803d; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
+      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Time:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classTime)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Location:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classLocation)}</td>
+        </tr>
+        ${data.instructorName ? `
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Instructor:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.instructorName)}</td>
+        </tr>
+        ` : ''}
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Tokens Used:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${data.tokensUsed}</td>
+        </tr>
+        ${data.bookingNote ? `
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Note:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.bookingNote)}</td>
+        </tr>
+        ` : ''}
+        ${data.bookingId ? `
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Booking ID:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.bookingId)}</td>
+        </tr>
+        ` : ''}
+      </table>
+    </div>
+  `, `New booking: ${data.memberName} - ${data.className}`)
+
+  const text = `
+New Class Booking
+
+A member has booked a class:
+
+Member Information:
+Name: ${data.memberName}
+Email: ${data.memberEmail}
+${data.memberPhone ? `Phone: ${data.memberPhone}` : ''}
+
+Class Details:
+Class: ${data.className}
+Date: ${data.classDate}
+Time: ${data.classTime}
+Location: ${data.classLocation}
+${data.instructorName ? `Instructor: ${data.instructorName}` : ''}
+Tokens Used: ${data.tokensUsed}
+${data.bookingNote ? `Note: ${data.bookingNote}` : ''}
+${data.bookingId ? `Booking ID: ${data.bookingId}` : ''}
+
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
+  `.trim()
+
+  return { html, text }
+}
+
+/**
+ * Member Booking Tutor Notification Email Template
+ */
+export function getMemberBookingTutorNotificationEmailTemplate(data: {
+  memberName: string
+  className: string
+  classDate: string
+  classTime: string
+  classLocation: string
+  tokensUsed?: number
+  bookingNote?: string
+}): { html: string; text: string } {
+  const html = getBaseTemplate(`
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">New Student Booked</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">${escapeHtml(data.memberName)} has booked your class</p>
+    </div>
+    
+    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 25px; border-radius: 8px; margin: 30px 0;">
+      <h3 style="margin: 0 0 20px 0; color: #15803d; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
+      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Student:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.memberName)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Date:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Time:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classTime)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Location:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classLocation)}</td>
+        </tr>
+        ${typeof data.tokensUsed === 'number' ? `
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Tokens Used:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${data.tokensUsed}</td>
+        </tr>
+        ` : ''}
+        ${data.bookingNote ? `
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Note:</td>
+          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.bookingNote)}</td>
+        </tr>
+        ` : ''}
+      </table>
+    </div>
+  `, `New student booked: ${data.className}`)
+
+  const text = `
+New Student Booked
+
+${data.memberName} has booked your class:
+
+Class: ${data.className}
+Date: ${data.classDate}
+Time: ${data.classTime}
+Location: ${data.classLocation}
+${typeof data.tokensUsed === 'number' ? `Tokens Used: ${data.tokensUsed}` : ''}
+${data.bookingNote ? `Note: ${data.bookingNote}` : ''}
+
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
+  `.trim()
+
+  return { html, text }
+}
+
 const LEAD_OUTREACH_PHONE_DISPLAY = '+65 8492 7347'
 const LEAD_OUTREACH_PHONE_TEL = '+6584927347'
 const LEAD_OUTREACH_WHATSAPP_URL = 'https://wa.me/6584927347'
