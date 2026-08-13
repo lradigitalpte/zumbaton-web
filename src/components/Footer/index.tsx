@@ -204,12 +204,31 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Bottom Section: Copyright */}
-        <div className="flex flex-col flex-wrap items-center gap-6 border-t border-white/10 py-10 sm:flex-row sm:justify-between">
-          <p className="min-w-0 text-center text-xs font-black uppercase tracking-widest text-zinc-500 sm:text-left">
+        {/* Bottom Section: Copyright + GeBIZ badge */}
+        <div className="flex flex-col items-center gap-8 border-t border-white/10 py-8 sm:py-10 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
+          <p className="min-w-0 order-2 text-center text-xs font-black uppercase tracking-widest text-zinc-500 lg:order-1 lg:text-left">
             © {currentYear} ONE STEP FITNESS. ALL RIGHTS RESERVED.
           </p>
-          <div className="flex min-w-0 flex-wrap items-center justify-center gap-6 sm:gap-8">
+
+          <a
+            href="https://www.gebiz.gov.sg/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="order-1 inline-flex w-full max-w-[240px] shrink-0 items-center justify-center rounded-md bg-white p-2 shadow-[0_0_0_1px_rgba(255,255,255,0.08)] transition-opacity hover:opacity-90 sm:max-w-[260px] sm:p-2.5 md:max-w-[280px] lg:order-2 lg:w-auto"
+            aria-label="Singapore Government Registered Supplier on GeBIZ"
+          >
+            <Image
+              src="/images/badges/gebiz-registered-supplier.jpg"
+              alt="GeBIZ vendors@gov — Singapore Government Registered Supplier"
+              width={1290}
+              height={705}
+              quality={90}
+              sizes="(max-width: 640px) 224px, (max-width: 768px) 260px, 280px"
+              className="h-auto w-full"
+            />
+          </a>
+
+          <div className="order-3 flex min-w-0 flex-wrap items-center justify-center gap-6 sm:gap-8 lg:justify-end">
             <p className="text-xs font-black uppercase tracking-widest text-zinc-500">
               DESIGNED BY <span className="text-white">LRA DIGITAL</span>
             </p>
