@@ -136,17 +136,17 @@ const WeeklySchedule = ({
     const start = new Date(dateString);
     const end = new Date(start.getTime() + durationMinutes * 60000);
 
-    const startTime = start.toLocaleTimeString("en-SG", {
-      hour: "2-digit",
+    const startTime = start.toLocaleTimeString("en-US", {
+      hour: "numeric",
       minute: "2-digit",
-      hour12: false,
+      hour12: true,
       timeZone: "Asia/Singapore",
     });
 
-    const endTime = end.toLocaleTimeString("en-SG", {
-      hour: "2-digit",
+    const endTime = end.toLocaleTimeString("en-US", {
+      hour: "numeric",
       minute: "2-digit",
-      hour12: false,
+      hour12: true,
       timeZone: "Asia/Singapore",
     });
 

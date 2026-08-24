@@ -39,8 +39,9 @@ export function formatTime(dateString: string): string {
   const date = new Date(dateString);
   // Always display in Singapore timezone (SGT) regardless of user's location
   return date.toLocaleTimeString("en-US", {
-    hour: "2-digit",
+    hour: "numeric",
     minute: "2-digit",
+    hour12: true,
     timeZone: "Asia/Singapore",
   });
 }

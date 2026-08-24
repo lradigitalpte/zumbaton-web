@@ -32,10 +32,10 @@ interface ScheduleMonthCalendarProps {
 }
 
 function formatClassStartTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-SG", {
-    hour: "2-digit",
+  return new Date(iso).toLocaleTimeString("en-US", {
+    hour: "numeric",
     minute: "2-digit",
-    hour12: false,
+    hour12: true,
     timeZone: "Asia/Singapore",
   });
 }
