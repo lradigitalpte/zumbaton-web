@@ -30,7 +30,7 @@ const instructors: Instructor[] = [
     role: "Dance Fitness Instructor",
     bio: "Coach Lavs (Laavania) leads an active, wellness-driven lifestyle and believes fitness should be fun, empowering, and sustainable. With a performance background from Mediacorp Vasantham, her journey as a dance fitness instructor stems from her love for dance, music, and helping people move with confidence. She creates high-energy yet welcoming classes where participants can sweat, smile, and feel good in their bodies.",
     image: "/images/coach-lavs.jfif",
-    specialties: ["Groove Stepper", "Lil Steppers", "One Familia"],
+    specialties: ["Lil Steppers", "One Familia"],
   },
   {
     id: "2",
@@ -38,7 +38,7 @@ const instructors: Instructor[] = [
     role: "Certified Dance Fitness Instructor",
     bio: "Robert is a 30-year-old certified dance fitness instructor, registered both in Singapore and internationally. He has been part of the dance fitness community for over a year and has had the opportunity to teach in the Philippines.\n\nNow continuing his journey in Singapore, Robert invites you to join him at One Step Fitness. Don't be fooled by his size or appearance. Dance fitness is his forte and a true passion. To him, dance fitness is more than just a workout; it's about self-expression, embracing who you are, and moving freely without judgment from others or even yourself.\n\nWhat Robert loves most about dance fitness is the sense of freedom, joy, and community it creates, and he is excited to share that experience with others. Join him at One Step Fitness, take that step forward, and move together.",
     image: "/images/robert.jfif",
-    specialties: ["Zumba Step", "Thunderbolt (Bodyweight & Steppers)"],
+    specialties: ["Groove Stepper Synchronized Dance", "Zumba Step", "Thunderbolt (Bodyweight & Steppers)"],
     certifications: ["/images/zumba.png"],
   },
   {

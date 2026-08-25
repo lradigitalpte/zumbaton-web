@@ -16,10 +16,10 @@ export function HorizontalScrollCarousel({
   id,
   label,
   hint = "Use arrows to browse",
-  gap = 16,
+  gap = 24,
   itemSelector = "[data-carousel-card]",
-  outerClassName = "-mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0",
-  trackClassName = "flex gap-4 overflow-x-auto pb-8 scrollbar-hide snap-x snap-mandatory",
+  outerClassName = "lg:mx-0 lg:px-0",
+  trackClassName = "flex gap-5 overflow-x-auto overflow-y-hidden px-1 pb-10 pt-3 scrollbar-hide snap-x snap-mandatory scroll-px-1 sm:gap-6",
   children,
 }: {
   id: string;
@@ -60,14 +60,14 @@ export function HorizontalScrollCarousel({
     const el = scrollRef.current;
     if (!el) return;
     const card = el.querySelector<HTMLElement>(itemSelector);
-    const amount = card ? card.offsetWidth + gap : 296;
+    const amount = card ? card.offsetWidth + gap : 360;
     el.scrollBy({ left: direction === "left" ? -amount : amount, behavior: "smooth" });
   };
 
   const showNav = canScrollLeft || canScrollRight;
 
   return (
-    <div className={outerClassName}>
+    <div className={`@container ${outerClassName}`}>
       {(label || showNav) && (
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3 sm:mb-4">
           {label ? (

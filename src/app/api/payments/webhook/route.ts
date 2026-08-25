@@ -146,9 +146,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const metadata = (payment.metadata as Record<string, any>) || {}
       const flowType = metadata.flow_type
 
-      // Handle ZumFiesta guest checkout flow
+      // Handle outdoor Thunderbolt Tabata guest checkout flow
       if (flowType === 'zt_fiesta') {
-        console.log('[Webhook] Processing ZumFiesta payment:', payment.id)
+        console.log('[Webhook] Processing outdoor Thunderbolt payment:', payment.id)
 
         await supabase
           .from('payments')
@@ -175,8 +175,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             .eq('id', enrollmentId)
         }
 
-        console.log('[Webhook] ZumFiesta booking completed:', payment.id)
-        return NextResponse.json({ received: true, message: 'ZumFiesta booking processed' })
+        try {
+          const { sendSuccessfulPaymentAlertEmail } = await import('@/lib/email')
+          await sendSuccessfulPaymentAlertEmail({
+            paymentId: payment.id,
+            paymentType: 'trial-booking',
+            source: 'webhook',
+            amount: payment.amount_cents / 100,
+            currency: payment.currency,
+            guestName: (metadata.customer_name as string) || 'Guest',
+            guestEmail: (metadata.customer_email as string) || '',
+            className:
+              (metadata.class_title as string) ||
+              'Thunderbolt Tabata Full Body Workout (Outdoor)',
+          })
+        } catch (notifyErr) {
+          console.error('[Webhook] Non-critical: outdoor Thunderbolt staff email failed:', notifyErr)
+        }
+
+        console.log('[Webhook] Outdoor Thunderbolt booking completed:', payment.id)
+        return NextResponse.json({ received: true, message: 'Outdoor Thunderbolt booking processed' })
       }
 
       // Handle ZumFamilia flow (class booking with guest details + payment, or custom schedule)
@@ -236,6 +254,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           }).catch((err: unknown) => {
             console.error('[Webhook] Non-critical: failed to create ZumFamilia token transaction:', err)
           })
+        }
+
+        try {
+          const { sendSuccessfulPaymentAlertEmail } = await import('@/lib/email')
+          await sendSuccessfulPaymentAlertEmail({
+            paymentId: payment.id,
+            paymentType: 'trial-booking',
+            source: 'webhook',
+            amount: payment.amount_cents / 100,
+            currency: payment.currency,
+            guestName: (metadata.parent_name as string) || zumBooking?.guest_name || 'Guest',
+            guestEmail: (metadata.parent_email as string) || zumBooking?.guest_email || '',
+            className: (metadata.class_title as string) || 'ZumFamilia',
+          })
+        } catch (notifyErr) {
+          console.error('[Webhook] Non-critical: ZumFamilia staff email failed:', notifyErr)
         }
 
         console.log('[Webhook] ZumFamilia booking completed:', payment.id)

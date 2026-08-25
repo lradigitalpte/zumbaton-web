@@ -91,15 +91,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       let { data: placeholderClass } = await supabaseAdmin
         .from("classes")
         .select("id")
-        .eq("title", "ZumFiesta Guest Booking")
+        .eq("title", "Thunderbolt Tabata Guest Booking")
         .maybeSingle();
 
       if (!placeholderClass) {
         const { data: newClass } = await supabaseAdmin
           .from("classes")
           .insert({
-            title: "ZumFiesta Guest Booking",
-            description: "System placeholder class for ZumFiesta guest checkout.",
+            title: "Thunderbolt Tabata Guest Booking",
+            description: "System placeholder class for outdoor Thunderbolt Tabata guest checkout.",
             class_type: "dance",
             scheduled_at: new Date().toISOString(),
             capacity: 999,
@@ -110,6 +110,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         placeholderClass = newClass;
       }
       actualClassId = placeholderClass?.id || null;
+    }
+
+    // Prefer legacy ZumFiesta placeholder if a newer one was never created
+    if (!actualClassId) {
+      const { data: legacyPlaceholder } = await supabaseAdmin
+        .from("classes")
+        .select("id")
+        .eq("title", "ZumFiesta Guest Booking")
+        .maybeSingle();
+      actualClassId = legacyPlaceholder?.id || null;
     }
 
     const validFrom = new Date();
@@ -158,7 +168,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .from("payments")
       .insert({
         class_id: actualClassId,
-        is_trial_booking: false,
+        // Guest checkout has no user_id; DB requires is_trial_booking=true for that case
+        is_trial_booking: true,
         amount_cents: pkg.priceCents,
         currency: "SGD",
         status: "pending",
@@ -181,7 +192,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           signature: body.signature,
           waiver_agreed: true,
           notes: body.notes || "",
-          class_title: "ZumFiesta",
+          class_title: "Thunderbolt Tabata Full Body Workout",
+          location: "OCBC Arena, Kallang Gate 20",
         },
       })
       .select()
@@ -203,7 +215,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       currency: "SGD",
       email: body.customerEmail.toLowerCase(),
       name: body.customerName,
-      purpose: `ZumFiesta: ${pkg.label}`,
+      purpose: `Thunderbolt Tabata: ${pkg.label}`,
       reference_number: referenceNumber,
       redirect_url: cleanRedirectUrl,
       send_email: true,

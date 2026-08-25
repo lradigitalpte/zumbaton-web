@@ -231,19 +231,18 @@ const ClassCard = ({ classItem, index, sectionInView, cellVariant = "default" }:
       className={`group relative overflow-hidden bg-white dark:bg-zinc-950 ${edgeClasses}`}
     >
       <div className="flex flex-col h-full">
-        {/* Main Clickable Area */}
-        <Link href={`/classes/${classItem.slug}`} className="absolute inset-0 z-0" aria-label={`View details for ${classItem.name}`} />
-        
+        <Link href={`/classes/${classItem.slug}`} className="absolute inset-0 z-[1]" aria-label={`View details for ${classItem.name}`} />
+
         {/* Image Section */}
-        <div className="relative h-72 md:h-80 overflow-hidden bg-zinc-100 dark:bg-zinc-900">
+        <div className="pointer-events-none relative h-72 md:h-80 overflow-hidden bg-zinc-100 dark:bg-zinc-900">
           <Image
             src={classItem.image}
             alt={classItem.name}
             fill
-            className={`object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ${classItem.slug === "zumbuddies" ? "object-[50%_20%]" : "object-center"}`}
+            className={`object-cover grayscale transition-all duration-500 group-hover:grayscale-0 group-hover:scale-[1.02] ${classItem.slug === "zumbuddies" ? "object-[50%_20%]" : "object-center"}`}
             sizes="(max-width: 1024px) 100vw, 50vw"
           />
-          
+
           {/* Intensity Badge */}
           <div className="absolute right-0 top-0 z-10">
             <span className="inline-flex items-center px-6 py-3 bg-lime-500 text-black text-xs font-black uppercase tracking-widest">
@@ -253,19 +252,19 @@ const ClassCard = ({ classItem, index, sectionInView, cellVariant = "default" }:
         </div>
 
         {/* Content Section */}
-        <div className="relative z-10 flex flex-1 flex-col p-6 md:p-10 pointer-events-none">
+        <div className="pointer-events-none relative z-0 flex flex-1 flex-col p-6 md:p-10">
           {isThunderboltClassSlug(classItem.slug) ? (
             <p className="mb-2 text-[10px] font-black uppercase tracking-[0.28em] text-lime-600 dark:text-lime-400">
               Thunderbolt format
             </p>
           ) : null}
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-            <h3 className="text-2xl font-black uppercase italic tracking-tighter text-gray-900 transition-colors group-hover:text-lime-500 dark:text-white md:text-3xl">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+            <h3 className="min-w-0 flex-1 text-2xl font-black uppercase italic tracking-tighter text-gray-900 transition-colors group-hover:text-lime-500 dark:text-white md:text-3xl">
               {classItem.name}
             </h3>
-            <LightningRating filled={CLASS_ENERGY[classItem.slug] ?? 4} size="md" aria-hidden />
+            <LightningRating filled={CLASS_ENERGY[classItem.slug] ?? 4} size="md" className="shrink-0" />
           </div>
-          
+
           <p className="mb-6 line-clamp-3 text-sm font-medium uppercase leading-relaxed tracking-tight text-gray-600 dark:text-zinc-400">
             {highlightCoachInText(classItem.shortDescription)}
           </p>
@@ -283,14 +282,14 @@ const ClassCard = ({ classItem, index, sectionInView, cellVariant = "default" }:
           </div>
 
           {/* CTA */}
-          <div className="flex items-center justify-between gap-4 pointer-events-auto">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-6">
               <span className="text-black dark:text-white font-black text-xs uppercase tracking-[0.3em] group-hover:text-lime-500 transition-colors">
                 View Details
               </span>
-              <Link 
-                href="/trial-booking" 
-                className="hidden sm:block text-[10px] font-black uppercase tracking-[0.2em] text-lime-600 dark:text-lime-400 hover:underline"
+              <Link
+                href="/trial-booking"
+                className="pointer-events-auto relative z-[2] hidden sm:block text-[10px] font-black uppercase tracking-[0.2em] text-lime-600 dark:text-lime-400 hover:underline"
               >
                 Book Trial
               </Link>

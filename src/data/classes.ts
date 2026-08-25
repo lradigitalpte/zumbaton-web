@@ -39,7 +39,8 @@ export const CLASS_ENERGY: Record<string, number> = {
   "thunderbolt-bodyweight-steppers": 4,
   "thunderbolt-resistance-dance": 4,
   piloxing: 3,
-  zumfiesta: 2.5,
+  "thunderbolt-tabata-outdoor": 4,
+  zumfiesta: 4,
   "one-familia": 1,
 };
 
@@ -47,43 +48,46 @@ export const zumbaClasses: ZumbaClass[] = [
   {
     id: "1",
     slug: "groove-stepper",
-    name: "Groove Stepper",
-    shortDescription: "Structured dance routines performed using steppers to enhance movement, coordination, and strength. Perfect for those who enjoy learning choreography while improving endurance.",
-    fullDescription: "This class focuses on structured dance routines performed using steppers to enhance movement, coordination, and strength. Each session combines rhythm, precision, and cardio, making it perfect for those who enjoy learning choreography while improving endurance and lower-body strength.",
-    image: "/images/hero/hero.jpeg",
+    name: "Groove Stepper Synchronized Dance",
+    shortDescription:
+      "Synchronized stepper choreography that moves as one unit. Learn clean formations, timing, and groove while building endurance and lower-body strength.",
+    fullDescription:
+      "Groove Stepper Synchronized Dance blends structured stepper choreography with group synchronization. Led by Robert and Micky, each session trains you to hit counts together—formations, timing, and musicality—while elevating cardio and lower-body strength. Expect precise step work, dance-driven flow, and a team energy that makes every routine feel like a performance.",
+    image: "/OSF%20IMAGES/ZT3.jpg",
     featured: true,
     duration: "60 min",
     intensity: "All Levels",
     calories: "400-600",
-    instructor: "Laavania",
+    instructor: "Robert & Micky",
     energy: 1.5,
     highlights: [
       {
-        title: "Improves Coordination and Balance",
-        description: "Master structured choreography while enhancing your coordination and balance with stepper movements."
+        title: "Synchronized Formations",
+        description: "Train timing and spatial awareness so the whole class moves as one clean unit.",
       },
       {
-        title: "Builds Leg Strength and Stamina",
-        description: "Step exercises target your lower body, building strength and endurance in your legs and glutes."
+        title: "Stepper Strength & Stamina",
+        description: "Step patterns target quads, glutes, and calves while building lasting endurance.",
       },
       {
-        title: "Boosts Cardiovascular Fitness",
-        description: "Continuous movement and dance routines provide an excellent cardio workout that gets your heart pumping."
+        title: "Dance-Led Cardio",
+        description: "Choreography keeps your heart rate high without sacrificing groove or musicality.",
       },
       {
-        title: "Great for Dance-Based Workouts",
-        description: "Perfect for those who love combining dance with fitness in a structured, groove-based format."
+        title: "Robert & Micky Coaching",
+        description: "Learn from a coaching duo that focuses on clarity, energy, and performance-ready sync.",
       },
       {
         title: "Vibrant Music Mix",
-        description: "Both classes feature a vibrant mix of music genres which includes Afrobeats, EDM, R&B, Hip-Hop, K-Pop, Bollywood, Salsa, and Reggaeton, ensuring every session is energetic, engaging, and never repetitive."
-      }
+        description:
+          "Afrobeats, EDM, R&B, Hip-Hop, K-Pop, Bollywood, Salsa, and Reggaeton keep every session fresh.",
+      },
     ],
     schedule: [
       { day: "Monday", time: "10:00 AM" },
       { day: "Wednesday", time: "6:00 PM" },
-      { day: "Saturday", time: "11:30 AM" }
-    ]
+      { day: "Saturday", time: "11:30 AM" },
+    ],
   },
   {
     id: "2",
@@ -136,7 +140,7 @@ export const zumbaClasses: ZumbaClass[] = [
     name: "Lil Steppers",
     shortDescription: "Fun and energetic dance fitness classes designed especially for kids! Dance, play, and get fit while making new friends in a safe, supportive environment.",
     fullDescription: "Lil Steppers is our special dance fitness program for kids, combining fun dance moves with games and activities designed to keep children active, healthy, and happy. Each class is packed with energy, creativity, and age-appropriate choreography that kids love. It's the perfect way for children to develop coordination, confidence, and a love for movement in a party-like atmosphere!",
-    image: "/images/hero/kids.png",
+    image: "/images/hero/kids1.png",
     featured: true,
     duration: "60 min",
     intensity: "Beginner",
@@ -272,7 +276,7 @@ export const zumbaClasses: ZumbaClass[] = [
       "A high-energy HIIT fusion of Pilates, boxing, and dance. Build core strength, burn calories, and find your balance in one powerful session.",
     fullDescription:
       "Piloxing is the ultimate high-intensity fusion workout that blends the power and speed of boxing with the sculpting and flexibility of Pilates, all tied together with fun dance cardio. This HIIT-style session is designed to challenge your core, improve endurance, and boost your agility. Led by Coach Fizah, it's a stress-relieving, full-body workout that leaves you feeling strong, toned, and empowered.",
-    image: "/images/hero/hero.jpeg",
+    image: "/OSF%20IMAGES/piloxing04.jpg",
     featured: true,
     duration: "60 min",
     intensity: "All Levels",

@@ -9,8 +9,8 @@ import { CLASS_ENERGY } from "@/data/classes";
 
 const classes = [
   {
-    title: "Groove Stepper",
-    description: "Structured step choreography with serious groove. Master the moves.",
+    title: "Groove Stepper Synchronized Dance",
+    description: "Synchronized stepper choreography with Robert & Micky. Move as one.",
     accent: "bg-lime-500",
     slug: "groove-stepper",
   },
@@ -85,7 +85,7 @@ const ClassesV2 = () => {
           id="home-classes-carousel"
           gap={24}
           hint="Browse all sessions"
-          trackClassName="flex gap-6 overflow-x-auto pb-12 scrollbar-hide snap-x snap-mandatory"
+          trackClassName="flex gap-6 overflow-x-auto overflow-y-hidden px-1 pb-12 pt-3 scrollbar-hide snap-x snap-mandatory scroll-px-1"
           label={
             <p className="text-sm font-black uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
               Featured sessions
@@ -93,20 +93,27 @@ const ClassesV2 = () => {
           }
         >
             {classes.map((cls, index) => (
-              <div key={index} data-carousel-card className="w-[300px] flex-shrink-0 snap-start sm:w-[360px] md:w-[400px]">
-                <div className="group relative h-full border-2 border-black/10 bg-white transition-all duration-500 hover:-translate-y-2 hover:border-lime-500 hover:shadow-2xl dark:border-white/10 dark:bg-zinc-950 dark:hover:border-lime-500/60">
-                  {/* Main Clickable Area */}
-                  <Link href={`/classes/${cls.slug}`} className="absolute inset-0 z-0" aria-label={`View details for ${cls.title}`} />
-                  
-                  <div className="flex h-full flex-col justify-between p-8 sm:p-10">
+              <div
+                key={index}
+                data-carousel-card
+                className="w-[min(78vw,300px)] min-w-[260px] flex-shrink-0 snap-start sm:w-[300px] md:w-[320px] @min-[900px]:w-[calc((100cqw-4.5rem)/3.5)]"
+              >
+                <div className="group relative h-full border-2 border-black/10 bg-white transition-colors duration-300 hover:border-lime-500 dark:border-white/10 dark:bg-zinc-950 dark:hover:border-lime-500/60">
+                  <Link
+                    href={`/classes/${cls.slug}`}
+                    className="absolute inset-0 z-[1]"
+                    aria-label={`View details for ${cls.title}`}
+                  />
+
+                  <div className="pointer-events-none relative z-0 flex h-full flex-col justify-between p-8 sm:p-10">
                     <div>
                       <div
                         className={`mb-6 inline-flex px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-black sm:text-[11px] shadow-sm ${cls.accent}`}
                       >
                         Featured Class
                       </div>
-                      <div className="flex items-start justify-between gap-4 mb-4">
-                        <h3 className="text-2xl font-black uppercase italic leading-[0.9] tracking-tighter text-gray-900 transition-colors duration-300 group-hover:text-lime-500 dark:text-white sm:text-4xl">
+                      <div className="mb-4 flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+                        <h3 className="min-w-0 flex-1 text-2xl font-black uppercase italic leading-[0.9] tracking-tighter text-gray-900 transition-colors duration-300 group-hover:text-lime-500 dark:text-white sm:text-4xl">
                           {cls.title}
                         </h3>
                         <LightningRating filled={CLASS_ENERGY[cls.slug] ?? 4} size="md" className="shrink-0" />
@@ -116,14 +123,14 @@ const ClassesV2 = () => {
                       </p>
                     </div>
 
-                    <div className="relative z-10 mt-10 flex items-center justify-between border-t-2 border-black/5 pt-8 dark:border-white/5 sm:mt-12">
+                    <div className="mt-10 flex items-center justify-between border-t-2 border-black/5 pt-8 dark:border-white/5 sm:mt-12">
                       <div className="flex items-center gap-6">
                         <span className="text-xs font-black uppercase tracking-[0.2em] text-lime-600 transition-colors duration-300 dark:text-lime-500 sm:text-sm">
                           View Details
                         </span>
-                        <Link 
-                          href="/trial-booking" 
-                          className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-lime-500 transition-colors"
+                        <Link
+                          href="/trial-booking"
+                          className="pointer-events-auto relative z-[2] text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 transition-colors hover:text-lime-500"
                         >
                           Book Trial
                         </Link>

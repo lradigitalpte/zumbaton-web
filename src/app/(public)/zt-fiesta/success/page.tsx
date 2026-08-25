@@ -56,7 +56,7 @@ function ZtFiestaSuccessContent() {
             href="/zt-fiesta"
             className="inline-flex mt-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6"
           >
-            Back to ZumFiesta
+            Back to Outdoor Thunderbolt
           </Link>
         </div>
       </div>
@@ -68,7 +68,7 @@ function ZtFiestaSuccessContent() {
       <div className="max-w-2xl w-full bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-2xl p-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white text-center">Booking Confirmed</h1>
         <p className="mt-3 text-center text-gray-600 dark:text-gray-400">
-          Your ZumFiesta booking is confirmed. See you in class.
+          Your Thunderbolt Tabata Full Body Workout booking is confirmed. See you at OCBC Arena, Kallang Gate 20.
         </p>
 
         {details && (

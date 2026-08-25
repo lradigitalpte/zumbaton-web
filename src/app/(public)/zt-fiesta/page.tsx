@@ -5,7 +5,7 @@ import { useToast } from "@/components/Toast";
 import Link from "next/link";
 import Image from "next/image";
 import { ClassesHero, ClassesCTA } from "@/components/Classes";
-import { ArrowRight, CalendarClock, Sparkles, CheckCircle2, Calendar, Clock, Users } from "lucide-react";
+import { ArrowRight, CalendarClock, Sparkles, CheckCircle2, Calendar, Clock, Users, MapPin } from "lucide-react";
 import { motion, useInView } from "framer-motion";
 import LoadingIcon from "@/components/Common/LoadingIcon";
 import WaiverForm from "@/components/Common/WaiverForm";
@@ -15,6 +15,9 @@ import { useBookingWindowTick } from "@/hooks/useBookingWindowTick";
 import { BOOKING_WINDOW_CLOSED_MESSAGE, isBookingWindowOpen } from "@/lib/booking-window";
 
 type FiestaPackage = "1_session";
+
+const OUTDOOR_CLASS_NAME = "Thunderbolt Tabata Full Body Workout";
+const OUTDOOR_LOCATION = "OCBC Arena, Kallang Gate 20";
 
 const FIESTA_PACKAGES: Record<FiestaPackage, { sessions: number; priceCents: number; label: string }> = {
   "1_session": { sessions: 1, priceCents: 2800, label: "1 session" },
@@ -136,7 +139,7 @@ export default function ZtFiestaPage() {
           setOutdoorClasses(upcoming);
         }
       } catch (e) {
-        console.error("[ZumFiesta] Could not load outdoor classes:", e);
+        console.error("[Outdoor Thunderbolt] Could not load outdoor classes:", e);
       } finally {
         setLoadingClasses(false);
       }
@@ -231,95 +234,98 @@ export default function ZtFiestaPage() {
   return (
     <div className="bg-[#f6f4ee] dark:bg-black min-h-screen transition-colors duration-300">
       <ClassesHero
-        title="ZumFiesta"
-        description="High-energy outdoor dance fitness under the open sky. Join our vibrant community for effective workout routines in the fresh air."
+        title="Thunderbolt Tabata Full Body Workout"
+        description="High-intensity outdoor Tabata under the open sky at OCBC Arena, Kallang Gate 20. Explosive full-body rounds designed for serious calorie burn and afterburn."
         breadcrumbs={[
           { label: "Home", href: "/explore" },
           { label: "Classes", href: "/classes" },
-          { label: "ZumFiesta" },
+          { label: "Thunderbolt Tabata" },
         ]}
       />
 
-      <section ref={sectionRef} className="py-20 md:py-32 bg-[#f6f4ee] dark:bg-black overflow-hidden">
-        <div className="container px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <section ref={sectionRef} className="overflow-x-hidden bg-[#f6f4ee] py-20 dark:bg-black md:py-32">
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
           {/* TOP SECTION: EDITORIAL LAYOUT */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-center mb-32">
+          <div className="mb-24 grid grid-cols-1 items-center gap-12 lg:mb-32 lg:grid-cols-12 lg:gap-16 xl:gap-20">
             <div className="lg:col-span-6">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
                 transition={{ duration: 0.4 }}
               >
-                <div className="inline-block bg-lime-500 text-black px-4 py-1 text-xs font-black uppercase tracking-[0.3em] mb-8">
-                  West Side Outdoor
+                <div className="mb-8 inline-block bg-lime-500 px-4 py-1 text-xs font-black uppercase tracking-[0.3em] text-black">
+                  OCBC Arena · Kallang Gate 20
                 </div>
 
-                <h2 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 dark:text-white leading-[0.85] uppercase italic tracking-tighter mb-10">
+                <h2 className="mb-10 text-5xl font-black uppercase italic leading-[0.85] tracking-tighter text-gray-900 dark:text-white md:text-7xl lg:text-8xl">
                   THE <br />
-                  <span className="text-lime-500 underline decoration-4 underline-offset-8">FIESTA</span> <br />
+                  <span className="text-lime-500 underline decoration-4 underline-offset-8">TABATA</span> <br />
                   EXPERIENCE.
                 </h2>
 
-                <p className="text-lg md:text-xl text-gray-600 dark:text-zinc-400 font-medium leading-relaxed mb-12 uppercase tracking-tight">
-                  Join our vibrant outdoor community. High-energy dance fitness under the open sky, designed for all fitness levels.
+                <p className="mb-12 text-lg font-medium uppercase leading-relaxed tracking-tight text-gray-600 dark:text-zinc-400 md:text-xl">
+                  Outdoor Thunderbolt Tabata Full Body Workout at OCBC Arena, Kallang Gate 20. High-intensity intervals under the open sky for all who want to push harder.
                 </p>
 
                 <div className="space-y-8">
-                  <div className="flex gap-6 group">
-                    <div className="w-12 h-12 bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shrink-0 transition-colors group-hover:bg-lime-500 group-hover:text-black">
-                      <CalendarClock className="w-6 h-6" />
+                  <div className="group flex gap-6">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center bg-black text-white transition-colors group-hover:bg-lime-500 group-hover:text-black dark:bg-white dark:text-black">
+                      <CalendarClock className="h-6 w-6" />
                     </div>
                     <div>
-                      <h4 className="text-xl font-black text-gray-900 dark:text-white uppercase italic tracking-tight mb-2">Book & Pay Instantly</h4>
-                      <p className="text-gray-600 dark:text-zinc-400 font-medium leading-relaxed">Choose your preferred slot, add your details, and proceed directly to secure payment.</p>
+                      <h4 className="mb-2 text-xl font-black uppercase italic tracking-tight text-gray-900 dark:text-white">Book & Pay Instantly</h4>
+                      <p className="font-medium leading-relaxed text-gray-600 dark:text-zinc-400">Choose your preferred slot, add your details, and proceed directly to secure payment.</p>
                     </div>
                   </div>
-                  <div className="flex gap-6 group">
-                    <div className="w-12 h-12 bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shrink-0 transition-colors group-hover:bg-lime-500 group-hover:text-black">
-                      <Sparkles className="w-6 h-6" />
+                  <div className="group flex gap-6">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center bg-black text-white transition-colors group-hover:bg-lime-500 group-hover:text-black dark:bg-white dark:text-black">
+                      <Sparkles className="h-6 w-6" />
                     </div>
                     <div>
-                      <h4 className="text-xl font-black text-gray-900 dark:text-white uppercase italic tracking-tight mb-2">1-Month Validity</h4>
-                      <p className="text-gray-600 dark:text-zinc-400 font-medium leading-relaxed">Flexible packages that fit your schedule perfectly.</p>
+                      <h4 className="mb-2 text-xl font-black uppercase italic tracking-tight text-gray-900 dark:text-white">1-Month Validity</h4>
+                      <p className="font-medium leading-relaxed text-gray-600 dark:text-zinc-400">Flexible packages that fit your schedule perfectly.</p>
                     </div>
                   </div>
                 </div>
               </motion.div>
             </div>
 
-            <div className="lg:col-span-6 relative">
-              <div className="relative aspect-square w-full max-w-2xl ml-auto">
-                <div className="absolute top-12 right-12 w-full h-full bg-lime-500/10 border border-lime-500/20"></div>
+            <div className="lg:col-span-6">
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+                transition={{ duration: 0.5, delay: 0.15 }}
+                className="relative mx-auto w-full max-w-xl lg:ml-auto"
+              >
+                <div
+                  className="pointer-events-none absolute inset-y-6 -right-3 left-8 hidden border border-lime-500/20 bg-lime-500/10 lg:block"
+                  aria-hidden
+                />
 
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  className="absolute top-0 left-0 w-[85%] aspect-[4/3] z-10 border-4 border-white dark:border-zinc-900 shadow-2xl overflow-hidden"
-                >
-                  <Image
-                    src="/images/fiesta/Screen7.png"
-                    alt="ZumFiesta Outdoor"
-                    fill
-                    className="object-cover grayscale hover:grayscale-0 transition-all duration-700"
-                  />
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
-                  transition={{ duration: 0.5, delay: 0.4 }}
-                  className="absolute bottom-0 right-0 w-[60%] aspect-square z-20 border-4 border-lime-500 shadow-2xl overflow-hidden"
-                >
-                  <Image
-                    src="/images/fiesta/Screen6.png"
-                    alt="ZumFiesta Energy"
-                    fill
-                    className="object-cover grayscale hover:grayscale-0 transition-all duration-700"
-                  />
-                </motion.div>
-              </div>
+                {/* Fixed-height collage so portrait OSF shots don't tower over the copy */}
+                <div className="relative grid h-[380px] grid-cols-12 grid-rows-6 gap-3 sm:h-[440px] md:h-[500px]">
+                  <div className="relative col-span-8 row-span-6 overflow-hidden border-4 border-white bg-zinc-900 shadow-2xl dark:border-zinc-900">
+                    <Image
+                      src="/OSF%20IMAGES/OS2.jpg"
+                      alt="Outdoor Thunderbolt Tabata Full Body Workout"
+                      fill
+                      sizes="(max-width: 1024px) 70vw, 32vw"
+                      className="object-cover object-[center_20%] grayscale transition-all duration-700 hover:grayscale-0"
+                      priority
+                    />
+                  </div>
+                  <div className="relative col-span-4 row-span-4 row-start-3 overflow-hidden border-4 border-lime-500 bg-zinc-900 shadow-2xl">
+                    <Image
+                      src="/OSF%20IMAGES/OS1.jpg"
+                      alt="Outdoor Thunderbolt Tabata at OCBC Arena"
+                      fill
+                      sizes="(max-width: 1024px) 35vw, 16vw"
+                      className="object-cover object-[center_15%] grayscale transition-all duration-700 hover:grayscale-0"
+                    />
+                  </div>
+                </div>
+              </motion.div>
             </div>
           </div>
 
@@ -377,7 +383,7 @@ export default function ZtFiestaPage() {
                   <div className="relative z-10">
                     <h4 className="text-lg font-black mb-4 uppercase italic tracking-tight">Other Classes</h4>
                     <div className="grid grid-cols-1 gap-2">
-                      {["Groove Stepper", "Zumba Step", "Lil Steppers", "One Familia"].map((name) => (
+                      {["Groove Stepper Synchronized Dance", "Zumba Step", "Lil Steppers", "One Familia"].map((name) => (
                         <Link
                           key={name}
                           href={
@@ -463,7 +469,7 @@ export default function ZtFiestaPage() {
                           <h4 className={`text-lg font-black uppercase italic tracking-tight leading-tight mb-4 pr-8 ${
                             isSelected ? "text-black" : "text-gray-900 dark:text-white"
                           }`}>
-                            {cls.title}
+                            {OUTDOOR_CLASS_NAME}
                           </h4>
 
                           <div className={`flex flex-wrap gap-4 text-xs font-bold uppercase tracking-widest ${
@@ -472,6 +478,10 @@ export default function ZtFiestaPage() {
                             <span className="flex items-center gap-1.5">
                               <Clock className="w-3.5 h-3.5" />
                               {formatClassTime(cls.scheduled_at)} · {cls.duration_minutes} MIN
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                              <MapPin className="w-3.5 h-3.5" />
+                              {OUTDOOR_LOCATION}
                             </span>
                             <span className="flex items-center gap-1.5">
                               <Users className="w-3.5 h-3.5" />
@@ -500,9 +510,9 @@ export default function ZtFiestaPage() {
                   <div className="mt-6 px-6 py-4 bg-black text-white flex items-center justify-between gap-4">
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-lime-500 mb-1">Selected Session</p>
-                      <p className="font-black uppercase italic text-sm tracking-tight">{selectedClass.title}</p>
+                      <p className="font-black uppercase italic text-sm tracking-tight">{OUTDOOR_CLASS_NAME}</p>
                       <p className="text-[10px] text-white/50 uppercase tracking-widest mt-0.5">
-                        {formatClassDate(selectedClass.scheduled_at)} · {formatClassTime(selectedClass.scheduled_at)}
+                        {formatClassDate(selectedClass.scheduled_at)} · {formatClassTime(selectedClass.scheduled_at)} · {OUTDOOR_LOCATION}
                       </p>
                     </div>
                     <CheckCircle2 className="w-6 h-6 text-lime-500 shrink-0" />
@@ -632,9 +642,9 @@ export default function ZtFiestaPage() {
                         {selectedClass ? (
                           <div className="p-5 border border-lime-500/30 bg-lime-500/5">
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-lime-600 dark:text-lime-400 mb-2">Booked Session</p>
-                            <p className="font-black uppercase italic text-sm text-gray-900 dark:text-white tracking-tight">{selectedClass.title}</p>
-                            <p className="text-xs text-zinc-500 uppercase tracking-widest mt-1">
-                              {formatClassDate(selectedClass.scheduled_at)} · {formatClassTime(selectedClass.scheduled_at)}
+                            <p className="font-black uppercase italic text-sm text-gray-900 dark:text-white tracking-tight">{OUTDOOR_CLASS_NAME}</p>
+                            <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">
+                              {formatClassDate(selectedClass.scheduled_at)} · {formatClassTime(selectedClass.scheduled_at)} · {OUTDOOR_LOCATION}
                             </p>
                           </div>
                         ) : (

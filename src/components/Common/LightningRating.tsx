@@ -58,7 +58,7 @@ export function LightningRating({
             className={`${c.base} shrink-0 transition-all duration-300 drop-shadow-[0_1.5px_1.5px_rgba(0,0,0,0.4)] ${
               isFull || isHalf
                 ? "fill-yellow-400 text-white"
-                : "fill-none text-white/40 dark:text-white/30"
+                : "fill-none text-zinc-300 dark:text-white/30"
             }`}
             strokeWidth={c.stroke}
             style={isHalf ? { fill: `url(#${id})` } : {}}
