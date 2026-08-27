@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getSupabaseClient } from "@/lib/supabase";
 import { useToast } from "@/components/Toast";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -27,7 +26,7 @@ type PaymentStatus = "idle" | "creating" | "error";
 
 /**
  * Payment Modal - Simple Redirect Flow
- * Shows package details then redirects to HitPay for payment
+ * Shows package details, optional voucher code, then redirects to HitPay
  * After payment, HitPay redirects back to /payment/success
  */
 export default function PaymentModal({
@@ -40,17 +39,86 @@ export default function PaymentModal({
   const toast = useToast();
   const [status, setStatus] = useState<PaymentStatus>("idle");
   const [error, setError] = useState<string | null>(null);
- 
-  const originalPrice = selectedPackage?.price_cents || 0
-  const finalPrice = originalPrice
+
+  const [voucherInput, setVoucherInput] = useState("");
+  const [appliedVoucherCode, setAppliedVoucherCode] = useState<string | null>(null);
+  const [discountPercent, setDiscountPercent] = useState(0);
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+  const [isValidatingVoucher, setIsValidatingVoucher] = useState(false);
+
+  const originalPrice = selectedPackage?.price_cents || 0;
+  const discountAmountCents =
+    discountPercent > 0 ? Math.round((originalPrice * discountPercent) / 100) : 0;
+  const finalPrice = originalPrice - discountAmountCents;
 
   // Reset state when modal opens/closes
   useEffect(() => {
     if (isOpen && selectedPackage) {
       setStatus("idle");
       setError(null);
+      setVoucherInput("");
+      setAppliedVoucherCode(null);
+      setDiscountPercent(0);
+      setVoucherError(null);
+      setIsValidatingVoucher(false);
     }
   }, [isOpen, selectedPackage]);
+
+  const handleApplyVoucher = async () => {
+    const code = voucherInput.trim().toUpperCase();
+    if (!code) {
+      setVoucherError("Enter a voucher code");
+      return;
+    }
+    if (!isAuthenticated) {
+      toast.info("Sign in required", "Please sign in to apply a voucher code.");
+      return;
+    }
+
+    setIsValidatingVoucher(true);
+    setVoucherError(null);
+
+    try {
+      const { apiFetchJson } = await import("@/lib/api-fetch");
+      const data = await apiFetchJson<{
+        success: boolean;
+        valid?: boolean;
+        discountPercent?: number;
+        error?: string;
+      }>("/api/promos/voucher/validate", {
+        method: "POST",
+        body: JSON.stringify({ voucherCode: code }),
+        requireAuth: true,
+        retryOn401: false,
+        cache: "no-store",
+      });
+
+      if (!data.success || !data.valid || !data.discountPercent) {
+        setAppliedVoucherCode(null);
+        setDiscountPercent(0);
+        setVoucherError(data.error || "Invalid or already used voucher code");
+        return;
+      }
+
+      setAppliedVoucherCode(code);
+      setDiscountPercent(data.discountPercent);
+      setVoucherInput(code);
+      toast.success(`Voucher applied`, `${data.discountPercent}% off this package`);
+    } catch (err) {
+      setAppliedVoucherCode(null);
+      setDiscountPercent(0);
+      setVoucherError(err instanceof Error ? err.message : "Failed to validate voucher");
+    } finally {
+      setIsValidatingVoucher(false);
+    }
+  };
+
+  const handleRemoveVoucher = () => {
+    setVoucherInput("");
+    setAppliedVoucherCode(null);
+    setDiscountPercent(0);
+    setVoucherError(null);
+  };
 
   // Create payment request and redirect to HitPay
   const handlePay = async () => {
@@ -70,9 +138,15 @@ export default function PaymentModal({
       const controller = new AbortController();
       timeoutId = setTimeout(() => controller.abort(), 35000);
 
-      // Use centralized API fetch with automatic token refresh
-      const { apiFetchJson } = await import('@/lib/api-fetch');
-      
+      const { apiFetchJson } = await import("@/lib/api-fetch");
+
+      const payload: { packageId: string; voucherCode?: string } = {
+        packageId: selectedPackage.id,
+      };
+      if (appliedVoucherCode) {
+        payload.voucherCode = appliedVoucherCode;
+      }
+
       const data = await apiFetchJson<{
         success: boolean;
         paymentUrl?: string;
@@ -83,32 +157,33 @@ export default function PaymentModal({
         message?: string;
       }>("/api/payments", {
         method: "POST",
-        body: JSON.stringify({ 
-          packageId: selectedPackage.id
-        }),
+        body: JSON.stringify(payload),
         requireAuth: true,
         retryOn401: false,
-        cache: 'no-store',
+        cache: "no-store",
         signal: controller.signal,
       });
 
       if (!data.success) {
-        const apiError = typeof data.error === 'string'
-          ? data.error
-          : data.error?.message || data.message || 'Payment request failed';
+        const apiError =
+          typeof data.error === "string"
+            ? data.error
+            : data.error?.message || data.message || "Payment request failed";
         throw new Error(apiError);
       }
 
-      // Redirect to HitPay checkout
       if (data.paymentUrl) {
         window.location.href = data.paymentUrl;
       } else {
         throw new Error("No payment URL received");
       }
     } catch (err) {
-      const message = err instanceof Error
-        ? (err.name === 'AbortError' ? 'Payment request timed out while contacting gateway. Please try again.' : err.message)
-        : "Payment failed";
+      const message =
+        err instanceof Error
+          ? err.name === "AbortError"
+            ? "Payment request timed out while contacting gateway. Please try again."
+            : err.message
+          : "Payment failed";
       setError(message);
       setStatus("error");
       toast.error(message);
@@ -117,7 +192,6 @@ export default function PaymentModal({
     }
   };
 
-  // Format price
   const formatPrice = (priceCents: number, currency: string) => {
     return new Intl.NumberFormat("en-SG", {
       style: "currency",
@@ -133,7 +207,7 @@ export default function PaymentModal({
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full p-6 shadow-xl"
+        className="bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full p-6 shadow-xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -144,6 +218,7 @@ export default function PaymentModal({
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            aria-label="Close"
           >
             <svg
               className="w-6 h-6"
@@ -168,26 +243,112 @@ export default function PaymentModal({
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
             {selectedPackage.description ||
-              (selectedPackage.is_unlimited ? "Unlimited class access" : `${selectedPackage.token_count} class tokens`)}
+              (selectedPackage.is_unlimited
+                ? "Unlimited class access"
+                : `${selectedPackage.token_count} class tokens`)}
           </p>
           <div className="flex items-center justify-between">
             <div>
               <span className="text-2xl font-bold text-green-600">
-                {selectedPackage.is_unlimited ? "Unlimited" : selectedPackage.token_count}
+                {selectedPackage.is_unlimited
+                  ? "Unlimited"
+                  : selectedPackage.token_count}
               </span>
               <span className="text-gray-600 dark:text-gray-400 ml-1">
                 {selectedPackage.is_unlimited ? "" : "tokens"}
               </span>
             </div>
             <div className="text-right">
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                {formatPrice(originalPrice, selectedPackage.currency)}
-              </span>
+              {discountPercent > 0 ? (
+                <>
+                  <p className="text-sm text-gray-400 line-through">
+                    {formatPrice(originalPrice, selectedPackage.currency)}
+                  </p>
+                  <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {formatPrice(finalPrice, selectedPackage.currency)}
+                  </span>
+                  <p className="text-xs font-medium text-green-600 mt-0.5">
+                    {discountPercent}% off applied
+                  </p>
+                </>
+              ) : (
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatPrice(originalPrice, selectedPackage.currency)}
+                </span>
+              )}
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-2">
             Valid for {selectedPackage.validity_days} days
           </p>
+        </div>
+
+        {/* Voucher code */}
+        <div className="mb-6">
+          <label
+            htmlFor="voucher-code"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
+            Have a voucher code?
+          </label>
+          {appliedVoucherCode ? (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20 px-3 py-2.5">
+              <div className="min-w-0">
+                <p className="font-mono text-sm font-semibold text-green-800 dark:text-green-200 truncate">
+                  {appliedVoucherCode}
+                </p>
+                <p className="text-xs text-green-700 dark:text-green-300">
+                  {discountPercent}% discount applied
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleRemoveVoucher}
+                disabled={status === "creating"}
+                className="shrink-0 text-sm font-medium text-green-800 dark:text-green-200 hover:underline disabled:opacity-50"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                id="voucher-code"
+                type="text"
+                value={voucherInput}
+                onChange={(e) => {
+                  setVoucherInput(e.target.value.toUpperCase());
+                  if (voucherError) setVoucherError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleApplyVoucher();
+                  }
+                }}
+                placeholder="e.g. ZUMB-V-XXXXXX-XXXX"
+                autoComplete="off"
+                spellCheck={false}
+                disabled={status === "creating" || isValidatingVoucher}
+                className="flex-1 min-w-0 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm font-mono text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
+              />
+              <button
+                type="button"
+                onClick={handleApplyVoucher}
+                disabled={
+                  status === "creating" ||
+                  isValidatingVoucher ||
+                  !voucherInput.trim()
+                }
+                className="shrink-0 rounded-xl bg-gray-900 dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isValidatingVoucher ? "Checking…" : "Apply"}
+              </button>
+            </div>
+          )}
+          {voucherError && (
+            <p className="mt-2 text-sm text-red-600 dark:text-red-400">{voucherError}</p>
+          )}
         </div>
 
         {/* Payment Methods Info */}
@@ -263,11 +424,7 @@ export default function PaymentModal({
                 />
               </svg>
               <span>
-                Pay{" "}
-                {formatPrice(
-                  finalPrice,
-                  selectedPackage.currency
-                )}
+                Pay {formatPrice(finalPrice, selectedPackage.currency)}
               </span>
             </>
           )}
@@ -276,4 +433,3 @@ export default function PaymentModal({
     </div>
   );
 }
-
