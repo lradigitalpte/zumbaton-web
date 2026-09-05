@@ -307,7 +307,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
           if (adminUsers && adminUsers.length > 0) {
             const noteSuffix = preferredNote ? ` · Prefers: ${preferredNote}` : ''
-            await supabase.from('notifications').insert(
+            const { error: notificationError } = await supabase.from('notifications').insert(
               adminUsers.map((admin) => ({
                 user_id: admin.id,
                 type: 'trial_booking',
@@ -329,6 +329,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 },
               }))
             )
+            if (notificationError) {
+              console.error('[Webhook] Failed to create pay-first admin notifications:', notificationError)
+            }
           }
 
           // Email alert to staff so they act even without opening the dashboard

@@ -89,7 +89,7 @@ export default function StartPage() {
     paymentTerms: "full",
     depositPercent: 50,
     outdoorAvailable: false,
-    startPageMode: "quick_join",
+    startPageMode: "trial",
     endDate: null,
   });
 
@@ -99,6 +99,7 @@ export default function StartPage() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reserved, setReserved] = useState(false);
+  const [configLoaded, setConfigLoaded] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -117,8 +118,14 @@ export default function StartPage() {
             endDate: res.data.endDate ?? null,
           });
         }
+        if (active) setConfigLoaded(true);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (active) {
+          setError("We couldn't load the current offer. Please refresh and try again.");
+          setConfigLoaded(true);
+        }
+      });
     return () => {
       active = false;
     };
@@ -149,6 +156,11 @@ export default function StartPage() {
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!configLoaded) {
+      setError("Please wait while we load the current offer.");
+      return;
+    }
 
     if (!form.name.trim() || !form.phone.trim() || !form.email.trim()) {
       setError("Please enter your name, phone and email.");

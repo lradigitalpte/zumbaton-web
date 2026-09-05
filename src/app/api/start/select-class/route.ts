@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     const { data: payment, error: paymentError } = await supabase
       .from("payments")
-      .select("id, status, metadata, class_id")
+      .select("id, status, amount_cents, currency, metadata, class_id")
       .eq("id", paymentId)
       .eq("is_trial_booking", true)
       .maybeSingle();
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     // Validate class exists and has space
     const { data: cls, error: classErr } = await supabase
       .from("classes")
-      .select("id, title, scheduled_at, capacity, status, is_outdoor, age_group")
+      .select("id, title, scheduled_at, capacity, status, is_outdoor, age_group, location, instructor_name")
       .eq("id", classId)
       .eq("status", "scheduled")
       .single();
@@ -126,15 +126,103 @@ export async function POST(request: NextRequest) {
 
     const newMeta = {
       ...meta,
+      needs_scheduling: false,
+      lead_status: "scheduled",
       selected_class_id: classId,
       selected_class_at: new Date().toISOString(),
       selected_class_source: "start_pick",
+      booked_booking_id: booking.id,
+      booked_class_id: classId,
+      booked_class_title: cls.title,
+      booked_class_at: cls.scheduled_at,
     };
 
-    await supabase
+    const { error: paymentUpdateError } = await supabase
       .from("payments")
       .update({ class_id: classId, metadata: newMeta, updated_at: new Date().toISOString() })
       .eq("id", paymentId);
+    if (paymentUpdateError) {
+      console.error("[Start Select Class] Failed to update payment:", paymentUpdateError);
+    }
+
+    // Resolve the earlier "needs scheduling" alert now that the guest chose a class.
+    const resolvedAt = new Date().toISOString();
+    const { error: resolveNotificationError } = await supabase
+      .from("notifications")
+      .update({ status: "read", read_at: resolvedAt })
+      .contains("data", { payment_id: paymentId, needs_scheduling: true })
+      .is("read_at", null);
+    if (resolveNotificationError) {
+      console.error("[Start Select Class] Failed to resolve scheduling alerts:", resolveNotificationError);
+    }
+
+    const scheduledAt = new Date(cls.scheduled_at);
+    const classDate = scheduledAt.toLocaleDateString("en-SG", {
+      weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "Asia/Singapore",
+    });
+    const classTime = scheduledAt.toLocaleTimeString("en-SG", {
+      hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Singapore",
+    });
+    const classLocation = cls.location || "One Step Fitness studio";
+
+    // Notify active admins in-app that no manual scheduling action is required.
+    const { data: adminUsers, error: adminError } = await supabase
+      .from("user_profiles")
+      .select("id")
+      .in("role", ["admin", "super_admin"])
+      .eq("is_active", true);
+    if (adminError) {
+      console.error("[Start Select Class] Failed to load admin recipients:", adminError);
+    } else if (adminUsers?.length) {
+      const { error: notificationError } = await supabase.from("notifications").insert(
+        adminUsers.map((admin) => ({
+          user_id: admin.id,
+          type: "trial_booking",
+          channel: "in_app",
+          subject: "CLASS SELECTED — trial booking confirmed",
+          body: `${guestName} selected ${cls.title} on ${classDate} at ${classTime}. No scheduling follow-up is needed.`,
+          status: "sent",
+          sent_at: resolvedAt,
+          data: {
+            payment_id: paymentId,
+            booking_id: booking.id,
+            class_id: classId,
+            needs_scheduling: false,
+            guest_name: guestName,
+            class_name: cls.title,
+            class_at: cls.scheduled_at,
+          },
+        }))
+      );
+      if (notificationError) {
+        console.error("[Start Select Class] Failed to create class-selected notifications:", notificationError);
+      }
+    }
+
+    // Email both the guest and configured staff. Email failures must not undo a valid booking.
+    try {
+      const { sendTrialBookingConfirmationEmail, sendTrialBookingAdminNotificationEmail } = await import("@/lib/email");
+      const { getStaffAlertRecipients } = await import("@/lib/alert-email-recipients");
+      const amount = Number(payment.amount_cents || 0) / 100;
+      const currency = payment.currency || "SGD";
+      if (guestEmail.includes("@") && !guestEmail.includes("@guest.")) {
+        const guestResult = await sendTrialBookingConfirmationEmail({
+          guestEmail, guestName, className: cls.title, classDate, classTime,
+          classLocation, instructorName: cls.instructor_name || undefined, amount, currency,
+        });
+        if (!guestResult.success) console.error("[Start Select Class] Guest confirmation email failed:", guestResult.error);
+      }
+      const adminEmails = await getStaffAlertRecipients(supabase);
+      if (adminEmails.length) {
+        const adminResult = await sendTrialBookingAdminNotificationEmail({
+          adminEmails, guestName, guestEmail, guestPhone, className: cls.title, classDate, classTime,
+          classLocation, instructorName: cls.instructor_name || undefined, amount, currency, bookingId: booking.id,
+        });
+        if (!adminResult.success) console.error("[Start Select Class] Staff class-selected email failed:", adminResult.error);
+      }
+    } catch (emailError) {
+      console.error("[Start Select Class] Non-critical confirmation email error:", emailError);
+    }
 
     return NextResponse.json({
       success: true,
