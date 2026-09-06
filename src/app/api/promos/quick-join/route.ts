@@ -250,6 +250,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       })
       .eq('id', paymentRecord.id)
 
+    // Alert staff that checkout has started. This is not confirmation of payment;
+    // the webhook sends a separate successful-payment alert after HitPay confirms it.
+    try {
+      const { sendPaymentAlertEmail } = await import('@/lib/email')
+      await sendPaymentAlertEmail({
+        paymentId: paymentRecord.id,
+        paymentType: 'trial-booking',
+        event: 'initiated',
+        source: 'checkout-created',
+        amount: chargeCents / 100,
+        currency: 'SGD',
+        guestName: name,
+        guestEmail: email,
+        className: isFastTrial ? 'Class not selected yet' : `${venueLabel} — staff scheduling required`,
+      })
+    } catch (alertError) {
+      console.error('[Quick Join] Non-critical: failed to send initiated payment alert:', alertError)
+    }
+
     return NextResponse.json({ success: true, paymentUrl: hitpayData.url, paymentId: paymentRecord.id })
   } catch (error) {
     console.error('[Quick Join] Unexpected error:', error)

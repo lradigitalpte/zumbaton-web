@@ -169,6 +169,11 @@ export async function sendPaymentAlertEmail(data: PaymentAlertEmailData): Promis
   const paymentTitle = data.paymentType === 'trial-booking'
     ? `Trial Booking Payment ${eventLabel}`
     : `Package Payment ${eventLabel}`
+  const eventMessage = data.event === 'initiated'
+    ? 'A customer started checkout. Payment has not been confirmed yet.'
+    : data.event === 'failed'
+      ? 'The payment attempt failed or was cancelled. No successful payment was recorded.'
+      : 'The payment was completed successfully in One Step Fitness.'
   const customerName = data.userName || data.guestName || 'Unknown'
   const customerEmail = data.userEmail || data.guestEmail || 'Not available'
   const description = data.paymentType === 'trial-booking'
@@ -186,7 +191,7 @@ export async function sendPaymentAlertEmail(data: PaymentAlertEmailData): Promis
           <h2 style="margin: 0; font-size: 20px;">${paymentTitle}</h2>
         </div>
         <div style="border: 1px solid #e5e7eb; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">
-          <p style="margin-top: 0;">A payment was completed successfully in One Step Fitness.</p>
+          <p style="margin-top: 0;">${eventMessage}</p>
           <p><strong>Customer:</strong> ${customerName}</p>
           <p><strong>Email:</strong> ${customerEmail}</p>
           <p><strong>Amount:</strong> ${data.amount} ${data.currency || 'SGD'}</p>
@@ -202,6 +207,7 @@ export async function sendPaymentAlertEmail(data: PaymentAlertEmailData): Promis
     `,
     text: [
       paymentTitle,
+      eventMessage,
       `Customer: ${customerName}`,
       `Email: ${customerEmail}`,
       `Amount: ${data.amount} ${data.currency || 'SGD'}`,
