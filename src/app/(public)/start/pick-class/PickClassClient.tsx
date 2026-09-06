@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Check, ChevronRight, Clock, ShieldAlert } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 import { getTrialBookingDisplayTitle, getTrialBookingEffectiveAgeGroup } from "@/lib/trial-booking-display";
+import { isBookingWindowOpen } from "@/lib/booking-window";
 
 type PublicClass = {
   id: string;
@@ -426,6 +427,7 @@ export default function PickClassClient() {
     return classes
       .filter((c) => c.is_outdoor !== true)
       .filter((c) => getTrialBookingEffectiveAgeGroup(c.title, c.age_group) !== "kid")
+      .filter((c) => isBookingWindowOpen(c.scheduled_at))
       .filter((c) => (c.capacity ?? 0) - (c.booked_count ?? 0) > 0)
       .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
   }, [classes]);

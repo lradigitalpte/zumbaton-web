@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase";
+import {
+  BOOKING_WINDOW_CLOSED_MESSAGE,
+  isBookingWindowOpen,
+  logBookingWindowRejection,
+} from "@/lib/booking-window";
 
 export const dynamic = "force-dynamic";
 
@@ -81,6 +86,16 @@ export async function POST(request: NextRequest) {
     if (cls.age_group === "kid") {
       return NextResponse.json(
         { success: false, error: "Kids classes are not available for this offer" },
+        { status: 400 }
+      );
+    }
+
+    // Match the regular trial-booking rule. Client filtering is only UX;
+    // this server check prevents stale pages or direct requests bypassing it.
+    if (!isBookingWindowOpen(cls.scheduled_at)) {
+      logBookingWindowRejection("start trial class selection");
+      return NextResponse.json(
+        { success: false, error: BOOKING_WINDOW_CLOSED_MESSAGE },
         { status: 400 }
       );
     }
