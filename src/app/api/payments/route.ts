@@ -321,7 +321,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     if (insertError) {
       console.error('[Payment] Failed to save payment:', insertError)
-      // Don't fail the request - payment was created in HitPay
+      // Don't fail the request - payment was created in HitPay and the
+      // customer must still be able to pay. But this must never fail silently:
+      // alert staff immediately so they can follow up before the customer notices.
+      void Promise.resolve().then(async () => {
+        const { sendPaymentAlertEmail } = await import('@/lib/email')
+        await sendPaymentAlertEmail({
+          paymentId: hitpayData.id,
+          event: 'failed',
+          paymentType: 'package-purchase',
+          source: 'checkout-db-save-failed',
+          amount: finalAmountCents / 100,
+          currency,
+          packageName: pkg.name,
+          tokenCount: pkg.is_unlimited ? UNLIMITED_TOKEN_BALANCE : pkg.token_count,
+          userName: user.name,
+          userEmail: emailForPayment,
+          failureReason: `Payment succeeded in HitPay but was NOT recorded in Supabase: ${insertError.message}. Reference: ${referenceNumber}. HitPay payment request: ${hitpayData.id}. Tokens must be issued manually and the underlying DB error fixed.`,
+        })
+      }).catch((alertErr: unknown) => {
+        console.error('[Payment] Non-critical: failed to send DB-save-failure alert:', alertErr)
+      })
     }
 
     console.log(`[Payment] Created payment request for user ${user.id}, package ${pkg.name}`)
