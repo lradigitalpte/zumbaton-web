@@ -325,7 +325,7 @@ export default function StartPage() {
                   aria-label="Inside a One Step Fitness class"
                 >
                   <source
-                    src="/videos/1784880267014-4ab2896b-c8e1-4a99-ba68-c73c2e8951bd.mp4#t=0.1"
+                    src="/videos/synced-zumba-steps.mp4#t=0.1"
                     type="video/mp4"
                   />
                   Your browser does not support embedded video.

@@ -12,7 +12,7 @@ const TrialBookingHero = () => {
   return (
     <section 
       ref={sectionRef}
-      className="relative min-h-[60vh] md:h-[60vh] flex items-center overflow-hidden bg-black pt-32 sm:pt-40 lg:pt-48 pb-12 md:pb-0"
+      className="relative min-h-[60vh] flex items-center overflow-hidden bg-black pt-32 sm:pt-40 lg:pt-48 pb-12 md:pb-16"
     >
       {/* High-Impact Background Image */}
       <div className="absolute inset-0 -z-10">
