@@ -258,11 +258,11 @@ const ClassCard = ({ classItem, index, sectionInView, cellVariant = "default" }:
               Thunderbolt format
             </p>
           ) : null}
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
-            <h3 className="min-w-0 flex-1 text-2xl font-black uppercase italic tracking-tighter text-gray-900 transition-colors group-hover:text-lime-500 dark:text-white md:text-3xl">
-              {classItem.name}
-            </h3>
-            <LightningRating filled={CLASS_ENERGY[classItem.slug] ?? 4} size="md" className="shrink-0" />
+          <h3 className="mb-2 text-2xl font-black uppercase italic tracking-tighter text-gray-900 transition-colors group-hover:text-lime-500 dark:text-white md:text-3xl">
+            {classItem.name}
+          </h3>
+          <div className="mb-4 inline-flex w-fit items-center rounded-full border border-black/10 bg-[#f6f4ee] px-3 py-1.5 dark:border-white/10 dark:bg-zinc-900">
+            <LightningRating filled={CLASS_ENERGY[classItem.slug] ?? 4} size="sm" />
           </div>
 
           <p className="mb-6 line-clamp-3 text-sm font-medium uppercase leading-relaxed tracking-tight text-gray-600 dark:text-zinc-400">

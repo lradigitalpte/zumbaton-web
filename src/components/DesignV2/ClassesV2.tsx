@@ -107,17 +107,19 @@ const ClassesV2 = () => {
 
                   <div className="pointer-events-none relative z-0 flex h-full flex-col justify-between p-8 sm:p-10">
                     <div>
-                      <div
-                        className={`mb-6 inline-flex px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-black sm:text-[11px] shadow-sm ${cls.accent}`}
-                      >
-                        Featured Class
+                      <div className="mb-6 flex items-center justify-between gap-3">
+                        <div
+                          className={`inline-flex px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-black sm:text-[11px] shadow-sm ${cls.accent}`}
+                        >
+                          Featured Class
+                        </div>
+                        <div className="inline-flex shrink-0 items-center rounded-full border border-black/10 bg-[#f6f4ee] px-3 py-1.5 dark:border-white/10 dark:bg-zinc-900">
+                          <LightningRating filled={CLASS_ENERGY[cls.slug] ?? 4} size="sm" />
+                        </div>
                       </div>
-                      <div className="mb-4 flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
-                        <h3 className="min-w-0 flex-1 text-2xl font-black uppercase italic leading-[0.9] tracking-tighter text-gray-900 transition-colors duration-300 group-hover:text-lime-500 dark:text-white sm:text-4xl">
-                          {cls.title}
-                        </h3>
-                        <LightningRating filled={CLASS_ENERGY[cls.slug] ?? 4} size="md" className="shrink-0" />
-                      </div>
+                      <h3 className="mb-4 text-2xl font-black uppercase italic leading-[0.9] tracking-tighter text-gray-900 transition-colors duration-300 group-hover:text-lime-500 dark:text-white sm:text-4xl">
+                        {cls.title}
+                      </h3>
                       <p className="line-clamp-3 text-base font-medium leading-relaxed text-gray-700 transition-colors duration-300 dark:text-zinc-400 sm:text-lg">
                         {cls.description}
                       </p>
