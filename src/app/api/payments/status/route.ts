@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
       currency: string
       hitpay_payment_request_id?: string | null
       promo_type?: string | null
+      original_amount_cents?: number | null
       discount_percent?: number | null
       discount_amount_cents?: number | null
       referral_voucher_id?: string | null
@@ -338,6 +339,9 @@ export async function GET(request: NextRequest) {
               currency: payment.currency,
               description: `${pkg.name} — ${tokenLabel} tokens`,
               userId: payment.user_id,
+              originalAmountCents: payment.original_amount_cents,
+              discountPercent: payment.discount_percent,
+              discountAmountCents: payment.discount_amount_cents,
             })
           }
         } catch (emailErr) {

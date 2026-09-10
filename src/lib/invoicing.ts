@@ -18,6 +18,9 @@ export interface CreateAndSendInvoiceInput {
   guestName?: string | null
   guestEmail?: string | null
   guestPhone?: string | null
+  originalAmountCents?: number | null
+  discountPercent?: number | null
+  discountAmountCents?: number | null
 }
 
 export interface InvoiceRecord {
@@ -30,6 +33,9 @@ export interface InvoiceRecord {
   billToName: string
   billToEmail: string
   issuedAt: string
+  originalAmountCents?: number | null
+  discountPercent?: number | null
+  discountAmountCents?: number | null
 }
 
 /**
@@ -76,16 +82,56 @@ export async function getOrCreateInvoice(input: CreateAndSendInvoiceInput): Prom
         console.error('[Invoicing] Existing invoice has no PDF yet:', existing.id)
         return null
       }
+
+      const billToNameExisting = existing.guest_name || resolvedName
+      const billToEmailExisting = existing.guest_email || resolvedEmail
+      const descriptionExisting = existing.description || input.description
+
+      // Re-render the PDF against the current input so a re-opened invoice
+      // (e.g. admin "View Invoice") always reflects the latest breakdown —
+      // discount fields aren't persisted as separate columns, only baked
+      // into the PDF, so this keeps it in sync rather than showing stale data.
+      let pdfUrl = existing.pdf_url
+      try {
+        const pdfBuffer = await generateInvoicePDF({
+          invoiceNumber: existing.invoice_number,
+          issuedAt: existing.issued_at || existing.created_at,
+          billToName: billToNameExisting,
+          billToEmail: billToEmailExisting,
+          billToPhone: input.userId ? null : input.guestPhone,
+          description: descriptionExisting,
+          amountCents: existing.amount_cents,
+          currency: existing.currency,
+          paymentReference: input.hitpayPaymentId,
+          originalAmountCents: input.originalAmountCents,
+          discountPercent: input.discountPercent,
+          discountAmountCents: input.discountAmountCents,
+        })
+        const filePath = `invoices/${existing.invoice_number}.pdf`
+        const { error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(filePath, pdfBuffer, { contentType: 'application/pdf', upsert: true })
+        if (!uploadError) {
+          const { data: urlData } = supabase.storage.from('documents').getPublicUrl(filePath)
+          pdfUrl = urlData.publicUrl
+        }
+      } catch (regenError) {
+        console.error('[Invoicing] Failed to refresh existing invoice PDF, returning cached copy:', regenError)
+      }
+
       return {
         id: existing.id,
         invoiceNumber: existing.invoice_number,
-        pdfUrl: existing.pdf_url,
+        pdfUrl,
         amountCents: existing.amount_cents,
         currency: existing.currency,
-        description: existing.description || input.description,
-        billToName: existing.guest_name || resolvedName,
-        billToEmail: existing.guest_email || resolvedEmail,
+        description: descriptionExisting,
+        billToName: billToNameExisting,
+        billToEmail: billToEmailExisting,
         issuedAt: existing.issued_at || existing.created_at,
+        originalAmountCents: input.originalAmountCents,
+        discountPercent: input.discountPercent,
+        discountAmountCents: input.discountAmountCents,
       }
     }
 
@@ -140,6 +186,9 @@ export async function getOrCreateInvoice(input: CreateAndSendInvoiceInput): Prom
       amountCents: input.amountCents,
       currency: input.currency,
       paymentReference: input.hitpayPaymentId,
+      originalAmountCents: input.originalAmountCents,
+      discountPercent: input.discountPercent,
+      discountAmountCents: input.discountAmountCents,
     })
 
     const filePath = `invoices/${invoiceNumber}.pdf`
@@ -170,6 +219,9 @@ export async function getOrCreateInvoice(input: CreateAndSendInvoiceInput): Prom
       billToName: resolvedName,
       billToEmail: resolvedEmail,
       issuedAt,
+      originalAmountCents: input.originalAmountCents,
+      discountPercent: input.discountPercent,
+      discountAmountCents: input.discountAmountCents,
     }
   } catch (error) {
     console.error('[Invoicing] Unexpected error creating invoice:', error)
@@ -231,6 +283,9 @@ export async function deriveInvoiceInputFromPayment(
     hitpayPaymentId: payment.hitpay_payment_id as string | null,
     amountCents: payment.amount_cents as number,
     currency: payment.currency as string,
+    originalAmountCents: (payment.original_amount_cents as number | null) ?? null,
+    discountPercent: (payment.discount_percent as number | null) ?? null,
+    discountAmountCents: (payment.discount_amount_cents as number | null) ?? null,
   }
 
   // Registered-user package purchase

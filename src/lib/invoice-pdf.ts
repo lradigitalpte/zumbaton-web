@@ -18,6 +18,9 @@ export interface InvoicePDFData {
   amountCents: number
   currency: string
   paymentReference?: string | null
+  originalAmountCents?: number | null
+  discountPercent?: number | null
+  discountAmountCents?: number | null
 }
 
 const BRAND_GREEN: [number, number, number] = [22, 163, 74]
@@ -101,8 +104,28 @@ export async function generateInvoicePDF(data: InvoicePDFData): Promise<Buffer> 
       }
       y += 16
 
+      // Discount breakdown (only when the payment actually had one)
+      const originalAmountCents =
+        data.originalAmountCents && data.originalAmountCents > data.amountCents
+          ? data.originalAmountCents
+          : null
+      const discountAmountCents =
+        data.discountAmountCents && data.discountAmountCents > 0
+          ? data.discountAmountCents
+          : originalAmountCents
+            ? originalAmountCents - data.amountCents
+            : 0
+      const hasDiscount = discountAmountCents > 0 && originalAmountCents !== null
+      const discountPercent =
+        data.discountPercent && data.discountPercent > 0
+          ? data.discountPercent
+          : hasDiscount && originalAmountCents
+            ? Math.round((discountAmountCents / originalAmountCents) * 100)
+            : 0
+
       // Line item table header
       const amount = (data.amountCents / 100).toFixed(2)
+      const lineItemAmount = hasDiscount && originalAmountCents ? (originalAmountCents / 100).toFixed(2) : amount
       doc.setDrawColor(230, 230, 230)
       doc.setFillColor(245, 245, 245)
       doc.rect(20, y, 170, 8, 'F')
@@ -113,7 +136,7 @@ export async function generateInvoicePDF(data: InvoicePDFData): Promise<Buffer> 
       doc.text('AMOUNT', 178, y + 5.5, { align: 'right' })
       y += 8
 
-      // Line item row
+      // Line item row (list price when a discount applies)
       doc.setDrawColor(230, 230, 230)
       doc.line(20, y + 10, 190, y + 10)
       doc.setFontSize(10)
@@ -121,8 +144,18 @@ export async function generateInvoicePDF(data: InvoicePDFData): Promise<Buffer> 
       doc.setFont('helvetica', 'normal')
       const descLines = doc.splitTextToSize(data.description, 130)
       doc.text(descLines, 24, y + 7)
-      doc.text(`${data.currency} ${amount}`, 178, y + 7, { align: 'right' })
+      doc.text(`${data.currency} ${lineItemAmount}`, 178, y + 7, { align: 'right' })
       y += 10 + Math.max(0, descLines.length - 1) * 5 + 8
+
+      // Discount row
+      if (hasDiscount) {
+        doc.setFontSize(10)
+        doc.setTextColor(...BRAND_GREEN)
+        doc.setFont('helvetica', 'normal')
+        doc.text(`Discount${discountPercent ? ` (${discountPercent}%)` : ''}`, 24, y)
+        doc.text(`- ${data.currency} ${(discountAmountCents / 100).toFixed(2)}`, 178, y, { align: 'right' })
+        y += 10
+      }
 
       // Total
       doc.setDrawColor(0, 0, 0)
@@ -131,6 +164,7 @@ export async function generateInvoicePDF(data: InvoicePDFData): Promise<Buffer> 
       y += 8
       doc.setFontSize(12)
       doc.setFont('helvetica', 'bold')
+      doc.setTextColor(0, 0, 0)
       doc.text('TOTAL PAID', 120, y)
       doc.text(`${data.currency} ${amount}`, 178, y, { align: 'right' })
       y += 16

@@ -971,6 +971,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 currency: payment.currency,
                 description: `${pkg.name} — ${tokenLabel} tokens`,
                 userId: payment.user_id,
+                originalAmountCents: payment.original_amount_cents,
+                discountPercent: payment.discount_percent,
+                discountAmountCents: payment.discount_amount_cents,
               })
             }
           } catch (bgError) {
