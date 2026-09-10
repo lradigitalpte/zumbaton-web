@@ -280,20 +280,6 @@ export async function GET(request: NextRequest) {
           await supabaseAdmin.rpc('increment_user_stat', { p_user_id: payment.user_id, p_field: 'total_spent_cents', p_amount: payment.amount_cents })
         } catch (_) { /* non-critical */ }
 
-        // 8. Create invoice
-        await supabaseAdmin.from('invoices').insert({
-          user_id: payment.user_id,
-          payment_id: payment.id,
-          invoice_number: `INV-${Date.now()}`,
-          amount_cents: payment.amount_cents,
-          tax_cents: 0,
-          total_cents: payment.amount_cents,
-          currency: payment.currency,
-          status: 'paid',
-          issued_at: new Date().toISOString(),
-          paid_at: new Date().toISOString(),
-        })
-
         // 9. In-app notification
         await supabaseAdmin.from('notifications').insert({
           user_id: payment.user_id,
@@ -310,7 +296,7 @@ export async function GET(request: NextRequest) {
         try {
           const { data: userProfile } = await supabaseAdmin
             .from('user_profiles')
-            .select('email, name')
+            .select('email, name, phone')
             .eq('id', payment.user_id)
             .single()
 
@@ -338,9 +324,20 @@ export async function GET(request: NextRequest) {
                 tokenCount: issuedTokenCount,
                 userName: userProfile.name || 'User',
                 userEmail: userProfile.email,
+                userPhone: userProfile.phone || undefined,
               })
             }).catch((alertErr: unknown) => {
               console.error('[PaymentStatus] Payment alert send failed:', alertErr)
+            })
+
+            const { createAndSendInvoice } = await import('@/lib/invoicing')
+            await createAndSendInvoice({
+              paymentId: payment.id,
+              hitpayPaymentId,
+              amountCents: payment.amount_cents,
+              currency: payment.currency,
+              description: `${pkg.name} — ${tokenLabel} tokens`,
+              userId: payment.user_id,
             })
           }
         } catch (emailErr) {

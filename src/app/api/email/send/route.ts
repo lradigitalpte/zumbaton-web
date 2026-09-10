@@ -29,6 +29,7 @@ import {
   sendLeadFollowUpEmail,
   sendMemberBookingAdminNotificationEmail,
   sendMemberBookingTutorNotificationEmail,
+  sendInvoiceEmail,
 } from '@/lib/email'
 
 // Secret key to protect this endpoint (should match in admin app)
@@ -58,6 +59,7 @@ const EmailRequestSchema = z.object({
     'lead-follow-up',
     'member-booking-admin',
     'member-booking-tutor',
+    'invoice',
   ]),
   secret: z.string(),
   data: z.record(z.unknown()),
@@ -129,8 +131,10 @@ export async function POST(request: NextRequest) {
           tokenCount: data.tokenCount as number | undefined,
           userName: data.userName as string | undefined,
           userEmail: data.userEmail as string | undefined,
+          userPhone: data.userPhone as string | undefined,
           guestName: data.guestName as string | undefined,
           guestEmail: data.guestEmail as string | undefined,
+          guestPhone: data.guestPhone as string | undefined,
           className: data.className as string | undefined,
           failureReason: data.failureReason as string | undefined,
         })
@@ -327,6 +331,19 @@ export async function POST(request: NextRequest) {
           classLocation: data.classLocation as string,
           tokensUsed: data.tokensUsed as number | undefined,
           bookingNote: data.bookingNote as string | undefined,
+        })
+        break
+
+      case 'invoice':
+        result = await sendInvoiceEmail({
+          toEmail: data.toEmail as string,
+          toName: data.toName as string,
+          invoiceNumber: data.invoiceNumber as string,
+          amount: data.amount as number,
+          currency: data.currency as string,
+          description: data.description as string,
+          pdfUrl: data.pdfUrl as string,
+          issuedAt: data.issuedAt as string,
         })
         break
 

@@ -185,6 +185,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             currency: payment.currency,
             guestName: (metadata.customer_name as string) || 'Guest',
             guestEmail: (metadata.customer_email as string) || '',
+            guestPhone: (metadata.customer_phone as string) || '',
             className:
               (metadata.class_title as string) ||
               'Thunderbolt Tabata Full Body Workout (Outdoor)',
@@ -192,6 +193,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         } catch (notifyErr) {
           console.error('[Webhook] Non-critical: outdoor Thunderbolt staff email failed:', notifyErr)
         }
+
+        void (async () => {
+          const { createAndSendInvoice } = await import('@/lib/invoicing')
+          await createAndSendInvoice({
+            paymentId: payment.id,
+            hitpayPaymentId: payment_id,
+            amountCents: payment.amount_cents,
+            currency: payment.currency,
+            description: `${(metadata.package_label as string) || 'Outdoor Tabata'} — Outdoor Session`,
+            guestName: (metadata.customer_name as string) || 'Guest',
+            guestEmail: (metadata.customer_email as string) || '',
+            guestPhone: (metadata.customer_phone as string) || '',
+          })
+        })()
 
         console.log('[Webhook] Outdoor Thunderbolt booking completed:', payment.id)
         return NextResponse.json({ received: true, message: 'Outdoor Thunderbolt booking processed' })
@@ -266,11 +281,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             currency: payment.currency,
             guestName: (metadata.parent_name as string) || zumBooking?.guest_name || 'Guest',
             guestEmail: (metadata.parent_email as string) || zumBooking?.guest_email || '',
+            guestPhone: (metadata.parent_phone as string) || '',
             className: (metadata.class_title as string) || 'ZumFamilia',
           })
         } catch (notifyErr) {
           console.error('[Webhook] Non-critical: ZumFamilia staff email failed:', notifyErr)
         }
+
+        void (async () => {
+          const { createAndSendInvoice } = await import('@/lib/invoicing')
+          await createAndSendInvoice({
+            paymentId: payment.id,
+            hitpayPaymentId: payment_id,
+            amountCents: payment.amount_cents,
+            currency: payment.currency,
+            description: `${(metadata.class_title as string) || 'One Familia'} — Family Trial`,
+            guestName: (metadata.parent_name as string) || zumBooking?.guest_name || 'Guest',
+            guestEmail: (metadata.parent_email as string) || zumBooking?.guest_email || '',
+            guestPhone: (metadata.parent_phone as string) || '',
+          })
+        })()
 
         console.log('[Webhook] ZumFamilia booking completed:', payment.id)
         return NextResponse.json({ received: true, message: 'ZumFamilia booking processed' })
@@ -344,11 +374,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             currency: payment.currency,
             guestName,
             guestEmail,
+            guestPhone,
             className: `${venueLabel} — NEEDS SCHEDULING${balanceSuffix}${preferredNote ? ` (prefers: ${preferredNote})` : ''}`,
           })
         } catch (notifyErr) {
           console.error('[Webhook] Non-critical: quick_join staff notification failed:', notifyErr)
         }
+
+        void (async () => {
+          const { createAndSendInvoice } = await import('@/lib/invoicing')
+          await createAndSendInvoice({
+            paymentId: payment.id,
+            hitpayPaymentId: payment_id,
+            amountCents: payment.amount_cents,
+            currency: payment.currency,
+            description: `${venueLabel} — Trial Booking`,
+            guestName,
+            guestEmail,
+            guestPhone,
+          })
+        })()
 
         console.log('[Webhook] Quick Join payment completed:', payment.id)
         return NextResponse.json({ received: true, message: 'Quick Join processed' })
@@ -668,11 +713,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             currency: payment.currency,
             guestName,
             guestEmail,
+            guestPhone,
             className: classData.title,
           })
         }).catch((err: unknown) => {
           console.error('[Webhook] Non-critical: failed to send payment alert email:', err)
         })
+
+        void (async () => {
+          const { createAndSendInvoice } = await import('@/lib/invoicing')
+          await createAndSendInvoice({
+            paymentId: payment.id,
+            hitpayPaymentId: payment_id,
+            amountCents: payment.amount_cents,
+            currency: payment.currency,
+            description: `${classData.title} — Trial Class`,
+            guestName,
+            guestEmail,
+            guestPhone,
+          })
+        })()
 
         return NextResponse.json({ received: true, message: 'Trial booking processed' })
       }
@@ -848,22 +908,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               }),
             ])
 
-            // Create invoice
-            await supabase
-              .from('invoices')
-              .insert({
-                user_id: payment.user_id,
-                payment_id: payment.id,
-                invoice_number: `INV-${Date.now()}`,
-                amount_cents: payment.amount_cents,
-                tax_cents: 0,
-                total_cents: payment.amount_cents,
-                currency: payment.currency,
-                status: 'paid',
-                issued_at: new Date().toISOString(),
-                paid_at: new Date().toISOString(),
-              })
-
             // Send in-app notification
             await supabase
               .from('notifications')
@@ -887,7 +931,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             // Send email confirmation (slowest operation — SMTP)
             const { data: userProfile } = await supabase
               .from('user_profiles')
-              .select('email, name')
+              .select('email, name, phone')
               .eq('id', payment.user_id)
               .single()
 
@@ -915,8 +959,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                   tokenCount: issuedTokenCount,
                   userName: userProfile.name || 'User',
                   userEmail: userProfile.email,
+                  userPhone: userProfile.phone || undefined,
                 })
               )
+
+              const { createAndSendInvoice } = await import('@/lib/invoicing')
+              await createAndSendInvoice({
+                paymentId: payment.id,
+                hitpayPaymentId: payment_id,
+                amountCents: payment.amount_cents,
+                currency: payment.currency,
+                description: `${pkg.name} — ${tokenLabel} tokens`,
+                userId: payment.user_id,
+              })
             }
           } catch (bgError) {
             console.error('[Webhook] Non-critical background work error:', bgError)
@@ -933,7 +988,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     } else if (status === 'failed') {
       const { data: failedPayment } = await supabase
         .from('payments')
-        .select('id, amount_cents, currency, package_id, is_trial_booking, metadata')
+        .select('id, amount_cents, currency, package_id, is_trial_booking, user_id, guest_phone, metadata')
         .eq('hitpay_payment_request_id', payment_request_id)
         .maybeSingle()
 
@@ -949,8 +1004,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       if (failedPayment) {
         const metadata = (failedPayment.metadata as Record<string, unknown> | null) || {}
+        const guestPhone =
+          (typeof metadata.guest_phone === 'string' && metadata.guest_phone) ||
+          (typeof metadata.parent_phone === 'string' && metadata.parent_phone) ||
+          (typeof metadata.customer_phone === 'string' && metadata.customer_phone) ||
+          failedPayment.guest_phone ||
+          undefined
+
         void Promise.resolve().then(async () => {
           const { sendPaymentAlertEmail } = await import('@/lib/email')
+
+          let userPhone: string | undefined
+          if (!failedPayment.is_trial_booking && failedPayment.user_id) {
+            const { data: failedUserProfile } = await supabase
+              .from('user_profiles')
+              .select('phone')
+              .eq('id', failedPayment.user_id)
+              .single()
+            userPhone = failedUserProfile?.phone || undefined
+          }
+
           await sendPaymentAlertEmail({
             paymentId: failedPayment.id,
             event: 'failed',
@@ -962,6 +1035,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             tokenCount: typeof metadata.token_count === 'number' ? metadata.token_count : undefined,
             guestName: typeof metadata.guest_name === 'string' ? metadata.guest_name : undefined,
             guestEmail: typeof metadata.guest_email === 'string' ? metadata.guest_email : undefined,
+            guestPhone,
+            userPhone,
             className: typeof metadata.class_name === 'string' ? metadata.class_name : undefined,
             failureReason: 'HitPay reported payment failed',
           })

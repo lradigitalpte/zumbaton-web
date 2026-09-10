@@ -435,6 +435,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           currency: paymentRecord.currency,
           guestName,
           guestEmail,
+          guestPhone,
           className: classData.title,
           failureReason: `HitPay API error: ${hitpayResponse.statusText}`,
         })
@@ -479,6 +480,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           currency: paymentRecord.currency,
           guestName,
           guestEmail,
+          guestPhone,
           className: classData.title,
           failureReason: (hitpayData.message || hitpayData.error || `HitPay API error: ${hitpayResponse.statusText}`) as string,
         })
@@ -522,6 +524,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         currency: paymentRecord.currency,
         guestName,
         guestEmail,
+        guestPhone,
         className: classData.title,
       })
     }).catch((alertErr: unknown) => {

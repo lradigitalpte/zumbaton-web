@@ -263,6 +263,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         currency: 'SGD',
         guestName: name,
         guestEmail: email,
+        guestPhone: phone,
         className: isFastTrial ? 'Class not selected yet' : `${venueLabel} — staff scheduling required`,
       })
     } catch (alertError) {

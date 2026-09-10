@@ -12,6 +12,8 @@ import { Calendar, Users, Clock, MapPin, ArrowRight, X, ChevronLeft, ChevronRigh
 import Image from "next/image";
 import LoadingIcon from "@/components/Common/LoadingIcon";
 import WaiverForm from "@/components/Common/WaiverForm";
+import { TrialAlreadyBookedBanner } from "@/components/Common/TrialAlreadyBookedBanner";
+import { useTrialEligibilityCheck } from "@/hooks/useTrialEligibilityCheck";
 import {
   getTrialBookingDisplayTitle,
   getTrialBookingEffectiveAgeGroup,
@@ -89,6 +91,7 @@ export default function TrialBookingClient({
     guardianSignature: "",
   });
   const [processing, setProcessing] = useState(false);
+  const trialEligibility = useTrialEligibilityCheck();
   const bookingWindowOpen = useBookingWindowOpen(selectedClass?.scheduled_at);
   const bookingWindowTick = useBookingWindowTick();
 
@@ -275,6 +278,10 @@ export default function TrialBookingClient({
     }
     if (!bookingWindowOpen) {
       toast.error(BOOKING_WINDOW_CLOSED_MESSAGE);
+      return;
+    }
+    if (trialEligibility.status === "blocked") {
+      toast.error("This email/phone has already used a trial. Please sign up to book a class.");
       return;
     }
     if (!formData.guestName.trim()) {
@@ -728,7 +735,11 @@ export default function TrialBookingClient({
                               id="guestPhone"
                               required
                               value={formData.guestPhone}
-                              onChange={(e) => setFormData({ ...formData, guestPhone: e.target.value })}
+                              onChange={(e) => {
+                                setFormData({ ...formData, guestPhone: e.target.value });
+                                trialEligibility.reset();
+                              }}
+                              onBlur={() => trialEligibility.check(formData.guestEmail, formData.guestPhone)}
                               className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-sm font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
                               placeholder="+65"
                             />
@@ -749,10 +760,15 @@ export default function TrialBookingClient({
                               required
                               autoComplete="email"
                               value={formData.guestEmail}
-                              onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
+                              onChange={(e) => {
+                                setFormData({ ...formData, guestEmail: e.target.value });
+                                trialEligibility.reset();
+                              }}
+                              onBlur={() => trialEligibility.check(formData.guestEmail, formData.guestPhone)}
                               className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-sm font-bold tracking-wide focus:border-lime-500 outline-none transition-colors rounded-none normal-case"
                               placeholder="you@email.com"
                             />
+                            {trialEligibility.status === "blocked" && <TrialAlreadyBookedBanner />}
                           </div>
                         )}
 
@@ -897,7 +913,7 @@ export default function TrialBookingClient({
                     <div className="pt-10 flex flex-col items-center gap-8">
                       <button
                         type="submit"
-                        disabled={!selectedClass || processing || !bookingWindowOpen}
+                        disabled={!selectedClass || processing || !bookingWindowOpen || trialEligibility.status === "blocked"}
                         className="w-full max-w-md py-8 bg-lime-500 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black text-black font-black uppercase tracking-[0.4em] transition-all duration-300 shadow-2xl disabled:opacity-30 flex items-center justify-center gap-4 text-lg"
                       >
                         {processing ? (
@@ -937,6 +953,7 @@ export default function TrialBookingClient({
             processing={processing}
             bookingWindowOpen={bookingWindowOpen}
             onClose={() => setSelectedClass(null)}
+            trialEligibility={trialEligibility}
           />
         )}
       </AnimatePresence>
@@ -955,9 +972,10 @@ interface MobileBookingSheetProps {
   processing: boolean;
   bookingWindowOpen: boolean;
   onClose: () => void;
+  trialEligibility: ReturnType<typeof useTrialEligibilityCheck>;
 }
 
-function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData, setGuardianData, onSubmit, processing, bookingWindowOpen, onClose }: MobileBookingSheetProps) {
+function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData, setGuardianData, onSubmit, processing, bookingWindowOpen, onClose, trialEligibility }: MobileBookingSheetProps) {
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -1023,7 +1041,11 @@ function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData
                 type="tel"
                 required
                 value={formData.guestPhone}
-                onChange={(e) => setFormData({ ...formData, guestPhone: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, guestPhone: e.target.value });
+                  trialEligibility.reset();
+                }}
+                onBlur={() => trialEligibility.check(formData.guestEmail, formData.guestPhone)}
                 className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-gray-900 dark:text-white font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none"
                 placeholder="PHONE"
               />
@@ -1041,10 +1063,15 @@ function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData
                 required
                 autoComplete="email"
                 value={formData.guestEmail}
-                onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, guestEmail: e.target.value });
+                  trialEligibility.reset();
+                }}
+                onBlur={() => trialEligibility.check(formData.guestEmail, formData.guestPhone)}
                 className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-gray-900 dark:text-white font-bold tracking-wide focus:border-lime-500 outline-none transition-colors rounded-none normal-case"
                 placeholder="you@email.com"
               />
+              {trialEligibility.status === "blocked" && <TrialAlreadyBookedBanner />}
             </div>
           )}
 
@@ -1151,7 +1178,7 @@ function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData
 
           <button
             type="submit"
-            disabled={processing || !bookingWindowOpen}
+            disabled={processing || !bookingWindowOpen || trialEligibility.status === "blocked"}
             className="w-full py-6 bg-lime-500 text-black font-black uppercase tracking-[0.3em] shadow-2xl disabled:opacity-30 flex items-center justify-center gap-4"
           >
             {processing ? (

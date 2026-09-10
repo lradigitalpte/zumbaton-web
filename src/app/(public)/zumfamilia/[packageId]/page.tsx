@@ -10,6 +10,8 @@ import { formatDate, formatDateFull, formatTime } from "@/lib/utils";
 import { Calendar, Check, MapPin, ArrowRight } from "lucide-react";
 import LoadingIcon from "@/components/Common/LoadingIcon";
 import WaiverForm from "@/components/Common/WaiverForm";
+import { TrialAlreadyBookedBanner } from "@/components/Common/TrialAlreadyBookedBanner";
+import { useTrialEligibilityCheck } from "@/hooks/useTrialEligibilityCheck";
 import { BookingWindowBanner } from "@/components/Booking/BookingWindowBanner";
 import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
 import { useBookingWindowTick } from "@/hooks/useBookingWindowTick";
@@ -48,6 +50,7 @@ export default function ZumFamiliaDetailPage() {
   /** Optional: limit the list to one calendar day (client-side); empty = all upcoming in range. */
   const [dayFilter, setDayFilter] = useState("");
   const [processing, setProcessing] = useState(false);
+  const trialEligibility = useTrialEligibilityCheck();
   const [form, setForm] = useState({
     parentName: "",
     parentPhone: "",
@@ -165,6 +168,10 @@ export default function ZumFamiliaDetailPage() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (trialEligibility.status === "blocked") {
+      toast.error("This phone number has already used a trial. Please sign up to book a class.");
+      return;
+    }
     if (classes.length > 0 && !selectedClassId) {
       toast.error("Please choose a session from the schedule (all listed times may be full).");
       return;
@@ -497,10 +504,19 @@ export default function ZumFamiliaDetailPage() {
                                 required
                                 type="tel"
                                 value={form.parentPhone}
-                                onChange={(e) => setForm((p) => ({ ...p, parentPhone: e.target.value }))}
+                                onChange={(e) => {
+                                  setForm((p) => ({ ...p, parentPhone: e.target.value }));
+                                  trialEligibility.reset();
+                                }}
+                                onBlur={() => trialEligibility.check(null, form.parentPhone)}
                                 className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-sm font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-all"
                                 placeholder="+65"
                               />
+                              {trialEligibility.status === "blocked" && (
+                                <div className="pt-2">
+                                  <TrialAlreadyBookedBanner />
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -594,7 +610,8 @@ export default function ZumFamiliaDetailPage() {
                             processing ||
                             !bookingWindowOpen ||
                             (classes.length > 0 && !selectedClassId) ||
-                            (classes.length === 0 && (!customDate || !customTime))
+                            (classes.length === 0 && (!customDate || !customTime)) ||
+                            trialEligibility.status === "blocked"
                           }
                           className="w-full max-w-2xl py-6 bg-lime-500 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black disabled:opacity-30 text-black font-black uppercase tracking-[0.3em] text-sm transition-all shadow-2xl flex items-center justify-center gap-4"
                         >

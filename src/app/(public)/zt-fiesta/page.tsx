@@ -9,6 +9,8 @@ import { ArrowRight, CalendarClock, Sparkles, CheckCircle2, Calendar, Clock, Use
 import { motion, useInView } from "framer-motion";
 import LoadingIcon from "@/components/Common/LoadingIcon";
 import WaiverForm from "@/components/Common/WaiverForm";
+import { TrialAlreadyBookedBanner } from "@/components/Common/TrialAlreadyBookedBanner";
+import { useTrialEligibilityCheck } from "@/hooks/useTrialEligibilityCheck";
 import { BookingWindowBanner } from "@/components/Booking/BookingWindowBanner";
 import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
 import { useBookingWindowTick } from "@/hooks/useBookingWindowTick";
@@ -105,6 +107,8 @@ export default function ZtFiestaPage() {
     signature: "",
   });
 
+  const trialEligibility = useTrialEligibilityCheck();
+
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.1 });
 
@@ -171,6 +175,10 @@ export default function ZtFiestaPage() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
+    if (trialEligibility.status === "blocked") {
+      toast.error("This email/phone has already used a trial. Please sign up to book a class.");
+      return;
+    }
     if (!form.preferredDate || !form.preferredTime) {
       toast.error("Please select a class session before proceeding.");
       return;
@@ -568,7 +576,11 @@ export default function ZtFiestaPage() {
                             type="email"
                             required
                             value={form.customerEmail}
-                            onChange={(e) => setForm((prev) => ({ ...prev, customerEmail: e.target.value }))}
+                            onChange={(e) => {
+                              setForm((prev) => ({ ...prev, customerEmail: e.target.value }));
+                              trialEligibility.reset();
+                            }}
+                            onBlur={() => trialEligibility.check(form.customerEmail, form.customerPhone)}
                             className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-sm font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-all"
                             placeholder="EMAIL"
                           />
@@ -579,10 +591,19 @@ export default function ZtFiestaPage() {
                             type="tel"
                             required
                             value={form.customerPhone}
-                            onChange={(e) => setForm((prev) => ({ ...prev, customerPhone: e.target.value }))}
+                            onChange={(e) => {
+                              setForm((prev) => ({ ...prev, customerPhone: e.target.value }));
+                              trialEligibility.reset();
+                            }}
+                            onBlur={() => trialEligibility.check(form.customerEmail, form.customerPhone)}
                             className="w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 text-sm font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-all"
                             placeholder="+65"
                           />
+                          {trialEligibility.status === "blocked" && (
+                            <div className="pt-2">
+                              <TrialAlreadyBookedBanner />
+                            </div>
+                          )}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
@@ -685,7 +706,7 @@ export default function ZtFiestaPage() {
                   <div className="pt-12 flex flex-col items-center">
                     <button
                       type="submit"
-                      disabled={submitting || !selectedClassId || !bookingWindowOpen}
+                      disabled={submitting || !selectedClassId || !bookingWindowOpen || trialEligibility.status === "blocked"}
                       className="w-full max-w-2xl py-6 bg-lime-500 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black disabled:opacity-30 disabled:cursor-not-allowed text-black font-black uppercase tracking-[0.3em] text-sm transition-all shadow-2xl flex items-center justify-center gap-4"
                     >
                       {submitting ? (

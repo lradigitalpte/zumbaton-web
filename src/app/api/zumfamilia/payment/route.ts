@@ -240,6 +240,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           currency: paymentRecord.currency,
           guestName: body.childName,
           guestEmail: parentEmail,
+          guestPhone: body.parentPhone,
           className: classTitle,
           failureReason: (hitpayData?.message || hitpayData?.error || "HitPay request failed") as string,
         });
@@ -270,6 +271,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         currency: paymentRecord.currency,
         guestName: body.childName,
         guestEmail: parentEmail,
+        guestPhone: body.parentPhone,
         className: classTitle,
       });
     }).catch((alertErr: unknown) => {

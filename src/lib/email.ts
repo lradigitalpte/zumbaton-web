@@ -36,8 +36,10 @@ export interface PaymentAlertEmailData {
   tokenCount?: number
   userName?: string
   userEmail?: string
+  userPhone?: string
   guestName?: string
   guestEmail?: string
+  guestPhone?: string
   className?: string
   failureReason?: string
 }
@@ -176,6 +178,10 @@ export async function sendPaymentAlertEmail(data: PaymentAlertEmailData): Promis
       : 'The payment was completed successfully in One Step Fitness.'
   const customerName = data.userName || data.guestName || 'Unknown'
   const customerEmail = data.userEmail || data.guestEmail || 'Not available'
+  const customerPhone = data.userPhone || data.guestPhone || null
+  const phoneLine = customerPhone
+    ? `<p><strong>Phone:</strong> <a href="tel:${escapeHtml(customerPhone)}">${escapeHtml(customerPhone)}</a></p>`
+    : ''
   const description = data.paymentType === 'trial-booking'
     ? `Trial class: ${data.className || 'Unknown class'}`
     : `Package: ${data.packageName || 'Unknown package'}`
@@ -194,6 +200,7 @@ export async function sendPaymentAlertEmail(data: PaymentAlertEmailData): Promis
           <p style="margin-top: 0;">${eventMessage}</p>
           <p><strong>Customer:</strong> ${customerName}</p>
           <p><strong>Email:</strong> ${customerEmail}</p>
+          ${phoneLine}
           <p><strong>Amount:</strong> ${data.amount} ${data.currency || 'SGD'}</p>
           <p><strong>Payment ID:</strong> ${data.paymentId}</p>
           <p><strong>Event:</strong> ${data.event}</p>
@@ -210,6 +217,7 @@ export async function sendPaymentAlertEmail(data: PaymentAlertEmailData): Promis
       eventMessage,
       `Customer: ${customerName}`,
       `Email: ${customerEmail}`,
+      customerPhone ? `Phone: ${customerPhone}` : null,
       `Amount: ${data.amount} ${data.currency || 'SGD'}`,
       `Payment ID: ${data.paymentId}`,
       `Event: ${data.event}`,
@@ -1327,5 +1335,119 @@ export async function sendLeadFollowUpEmail(data: {
     html: template.html,
     text: template.text,
     replyTo: process.env.EMAIL_REPLY_TO || undefined,
+  })
+}
+
+/**
+ * Send an invoice email (registered-user purchase or guest trial booking).
+ * Links to the hosted PDF rather than attaching it.
+ */
+export async function sendInvoiceEmail(data: {
+  toEmail: string
+  toName: string
+  invoiceNumber: string
+  amount: number
+  currency: string
+  description: string
+  pdfUrl: string
+  issuedAt: string
+}): Promise<EmailResult> {
+  const amountLabel = `${data.currency} ${data.amount.toFixed(2)}`
+  const issuedDateLabel = new Date(data.issuedAt).toLocaleDateString('en-SG', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 26px;">One Step Fitness</h1>
+          <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Invoice ${escapeHtml(data.invoiceNumber)}</p>
+        </div>
+
+        <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none;">
+          <p style="font-size: 16px; margin-bottom: 20px;">Hi <strong>${escapeHtml(data.toName)}</strong>,</p>
+
+          <p style="margin-bottom: 20px;">
+            Thanks for your payment. Here's your invoice for <strong>${escapeHtml(data.description)}</strong>.
+          </p>
+
+          <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 24px 0;">
+            <table role="presentation" style="width: 100%; font-size: 14px;">
+              <tr>
+                <td style="padding: 6px 0; color: #6b7280;">Invoice Number</td>
+                <td style="padding: 6px 0; text-align: right; font-weight: 600;">${escapeHtml(data.invoiceNumber)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #6b7280;">Issued</td>
+                <td style="padding: 6px 0; text-align: right; font-weight: 600;">${issuedDateLabel}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #6b7280;">Description</td>
+                <td style="padding: 6px 0; text-align: right; font-weight: 600;">${escapeHtml(data.description)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0 0; color: #111827; font-size: 16px; font-weight: bold; border-top: 1px solid #e5e7eb;">Total Paid</td>
+                <td style="padding: 10px 0 0; text-align: right; color: #15803d; font-size: 16px; font-weight: bold; border-top: 1px solid #e5e7eb;">${amountLabel}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${data.pdfUrl}"
+               style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+                      color: white;
+                      padding: 14px 36px;
+                      text-decoration: none;
+                      border-radius: 25px;
+                      font-weight: bold;
+                      display: inline-block;
+                      font-size: 15px;">
+              Download Invoice (PDF)
+            </a>
+          </div>
+
+          <p style="margin-top: 24px; font-size: 14px; color: #6b7280;">
+            If the button above doesn't work, copy and paste this link into your browser:<br>
+            <a href="${data.pdfUrl}" style="color: #16a34a; word-break: break-all;">${data.pdfUrl}</a>
+          </p>
+        </div>
+
+        <div style="text-align: center; padding: 20px; font-size: 12px; color: #9ca3af;">
+          <p>© ${new Date().getFullYear()} One Step Fitness. All rights reserved.</p>
+        </div>
+      </body>
+    </html>
+  `
+
+  const text = `
+Invoice ${data.invoiceNumber} — One Step Fitness
+
+Hi ${data.toName},
+
+Thanks for your payment. Here's your invoice for ${data.description}.
+
+Invoice Number: ${data.invoiceNumber}
+Issued: ${issuedDateLabel}
+Description: ${data.description}
+Total Paid: ${amountLabel}
+
+Download your invoice: ${data.pdfUrl}
+
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
+  `
+
+  return sendEmail({
+    to: data.toEmail,
+    subject: `Invoice ${data.invoiceNumber} — One Step Fitness`,
+    html,
+    text: text.trim(),
   })
 }

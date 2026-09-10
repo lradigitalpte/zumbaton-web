@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { HorizontalScrollCarousel } from "@/components/Common/HorizontalScrollCarousel";
 import { OfferCountdownBadge, useOfferCountdown } from "@/components/Start/OfferCountdown";
+import { TrialAlreadyBookedBanner } from "@/components/Common/TrialAlreadyBookedBanner";
+import { useTrialEligibilityCheck } from "@/hooks/useTrialEligibilityCheck";
 
 // ── Editable marketing constants ──────────────────────────────────────────
 // Anchor price the trial is discounted from (regular single-class rate).
@@ -95,6 +97,7 @@ export default function StartPage() {
 
   const [venue, setVenue] = useState<"studio" | "outdoor">("studio");
   const [form, setForm] = useState({ name: "", phone: "", email: "", preferredNote: "" });
+  const trialEligibility = useTrialEligibilityCheck();
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -159,6 +162,11 @@ export default function StartPage() {
 
     if (!configLoaded) {
       setError("Please wait while we load the current offer.");
+      return;
+    }
+
+    if (trialEligibility.status === "blocked") {
+      setError("This email/phone has already used a trial. Please sign up to book a class.");
       return;
     }
 
@@ -473,7 +481,11 @@ export default function StartPage() {
                         id="s-phone"
                         type="tel"
                         value={form.phone}
-                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                        onChange={(e) => {
+                          setForm({ ...form, phone: e.target.value });
+                          trialEligibility.reset();
+                        }}
+                        onBlur={() => trialEligibility.check(form.email, form.phone)}
                         placeholder="+65 9123 4567"
                         className="w-full border border-black/15 bg-[#f6f4ee] px-4 py-3 text-sm font-semibold text-gray-900 placeholder:font-medium placeholder:normal-case placeholder:text-gray-400 focus:border-lime-600 focus:outline-none"
                       />
@@ -487,12 +499,18 @@ export default function StartPage() {
                         type="email"
                         autoComplete="email"
                         value={form.email}
-                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        onChange={(e) => {
+                          setForm({ ...form, email: e.target.value });
+                          trialEligibility.reset();
+                        }}
+                        onBlur={() => trialEligibility.check(form.email, form.phone)}
                         placeholder="you@email.com"
                         className="w-full border border-black/15 bg-[#f6f4ee] px-4 py-3 text-sm font-semibold text-gray-900 placeholder:font-medium placeholder:normal-case placeholder:text-gray-400 focus:border-lime-600 focus:outline-none"
                       />
                     </div>
                   </div>
+
+                  {trialEligibility.status === "blocked" && <TrialAlreadyBookedBanner />}
 
                   <div>
                     <label htmlFor="s-when" className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-gray-500">
@@ -533,7 +551,7 @@ export default function StartPage() {
 
                   <button
                     type="submit"
-                    disabled={processing || !agreedToTerms}
+                    disabled={processing || !agreedToTerms || trialEligibility.status === "blocked"}
                     className="flex w-full items-center justify-center gap-2 bg-lime-500 py-4 text-xs font-black uppercase tracking-wide text-black transition-all hover:bg-black hover:text-white disabled:opacity-40 sm:gap-3 sm:text-sm sm:tracking-[0.15em]"
                   >
                     {processing ? (

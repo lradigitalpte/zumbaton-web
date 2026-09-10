@@ -132,11 +132,26 @@ export async function GET(request: NextRequest) {
               currency: payment.currency,
                 guestName: typeof alertMetadata.guest_name === 'string' ? alertMetadata.guest_name : undefined,
                 guestEmail: typeof alertMetadata.guest_email === 'string' ? alertMetadata.guest_email : undefined,
+                guestPhone: typeof alertMetadata.guest_phone === 'string' ? alertMetadata.guest_phone : undefined,
               className: payment.classes?.title,
             })
           }).catch((alertErr: unknown) => {
             console.error('[Trial Booking Status] Payment alert send failed:', alertErr)
           })
+
+          void (async () => {
+            const { createAndSendInvoice } = await import('@/lib/invoicing')
+            await createAndSendInvoice({
+              paymentId: payment.id,
+              hitpayPaymentId: payment.hitpay_payment_id,
+              amountCents: payment.amount_cents,
+              currency: payment.currency,
+              description: `${payment.classes?.title || 'Trial Class'} — Trial Class`,
+              guestName: typeof alertMetadata.guest_name === 'string' ? alertMetadata.guest_name : 'Guest',
+              guestEmail: typeof alertMetadata.guest_email === 'string' ? alertMetadata.guest_email : '',
+              guestPhone: typeof alertMetadata.guest_phone === 'string' ? alertMetadata.guest_phone : '',
+            })
+          })()
         }
       } catch (syncErr) {
         console.error('[Trial Booking Status] HitPay sync error:', syncErr)

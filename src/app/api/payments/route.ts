@@ -58,7 +58,7 @@ async function getAuthenticatedUser(request: NextRequest) {
     // Get user profile for name and guardian_email (child accounts: use for payment receipts)
     const { data: profile } = await supabaseAdmin
       .from('user_profiles')
-      .select('name, email, guardian_email')
+      .select('name, email, guardian_email, phone')
       .eq('id', user.id)
       .single()
 
@@ -68,6 +68,7 @@ async function getAuthenticatedUser(request: NextRequest) {
       id: user.id,
       email,
       name: profile?.name || 'Customer',
+      phone: (profile?.phone as string | null | undefined) ?? undefined,
       guardianEmail: guardianEmail && guardianEmail.trim() ? guardianEmail.trim().toLowerCase() : null,
     }
   } catch (err) {
@@ -337,6 +338,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           tokenCount: pkg.is_unlimited ? UNLIMITED_TOKEN_BALANCE : pkg.token_count,
           userName: user.name,
           userEmail: emailForPayment,
+          userPhone: user.phone,
           failureReason: `Payment succeeded in HitPay but was NOT recorded in Supabase: ${insertError.message}. Reference: ${referenceNumber}. HitPay payment request: ${hitpayData.id}. Tokens must be issued manually and the underlying DB error fixed.`,
         })
       }).catch((alertErr: unknown) => {
@@ -359,6 +361,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         tokenCount: pkg.is_unlimited ? UNLIMITED_TOKEN_BALANCE : pkg.token_count,
         userName: user.name,
         userEmail: emailForPayment,
+        userPhone: user.phone,
       })
     }).catch((alertErr: unknown) => {
       console.error('[Payment] Non-critical: failed to send initiated payment alert:', alertErr)
