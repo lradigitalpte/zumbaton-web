@@ -90,6 +90,17 @@ export default function TrialBookingClient({
     guardianOnPremises: false,
     guardianSignature: "",
   });
+  // Optional free plus-one (adult classes only) — covered by the primary
+  // guest's waiver, but counts as a 2nd spot against class capacity.
+  const [companionEnabled, setCompanionEnabled] = useState(false);
+  const [companionData, setCompanionData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    age: "",
+    gender: "prefer_not_to_say",
+  });
+  const companionEligibility = useTrialEligibilityCheck();
   const [processing, setProcessing] = useState(false);
   const trialEligibility = useTrialEligibilityCheck();
   const bookingWindowOpen = useBookingWindowOpen(selectedClass?.scheduled_at);
@@ -266,6 +277,11 @@ export default function TrialBookingClient({
     setSelectedClass(classItem);
     if (getTrialBookingEffectiveAgeGroup(classItem.title, classItem.age_group) !== "kid") {
       setGuardianData({ guardianName: "", guardianPhone: "", guardianEmail: "", guardianOnPremises: false, guardianSignature: "" });
+    } else {
+      // Bringing a free friend isn't offered for kids classes — clear any
+      // companion state from a previously selected adult class.
+      setCompanionEnabled(false);
+      companionEligibility.reset();
     }
     if (window.innerWidth < 1024) window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -348,6 +364,45 @@ export default function TrialBookingClient({
       return;
     }
 
+    let companionDateOfBirthIso: string | null = null;
+    if (companionEnabled) {
+      const availableSpots = selectedClass.capacity - (selectedClass.booked_count || 0);
+      if (availableSpots < 2) {
+        toast.error("This class doesn't have enough spots for two people. Uncheck \"bring a friend\" or pick another class.");
+        return;
+      }
+      if (companionEligibility.status === "blocked") {
+        toast.error("Your friend has already used a trial. They can sign up to book a class.");
+        return;
+      }
+      if (!companionData.name.trim()) {
+        toast.error("Please enter your friend's name");
+        return;
+      }
+      if (!companionData.phone.trim()) {
+        toast.error("Please enter your friend's phone number");
+        return;
+      }
+      if (!companionData.email.trim() || !emailPattern.test(companionData.email.trim())) {
+        toast.error("Please enter a valid email for your friend");
+        return;
+      }
+      if (companionData.email.trim().toLowerCase() === formData.guestEmail.trim().toLowerCase()) {
+        toast.error("Your friend needs their own email address");
+        return;
+      }
+      const companionAgeYears = parseAgeYearsInput(companionData.age);
+      if (companionAgeYears == null) {
+        toast.error("Please enter a valid age for your friend (1–120)");
+        return;
+      }
+      companionDateOfBirthIso = dateOfBirthFromAge(companionAgeYears);
+      if (!companionDateOfBirthIso) {
+        toast.error("Could not process your friend's age. Please try again.");
+        return;
+      }
+    }
+
     setProcessing(true);
     try {
       const requestBody: any = {
@@ -365,6 +420,15 @@ export default function TrialBookingClient({
       } else {
         requestBody.guestPhone = formData.guestPhone.trim();
         requestBody.guestEmail = formData.guestEmail.trim().toLowerCase();
+      }
+      if (companionEnabled && companionDateOfBirthIso) {
+        requestBody.companion = {
+          name: companionData.name.trim(),
+          phone: companionData.phone.trim(),
+          email: companionData.email.trim().toLowerCase(),
+          dateOfBirth: companionDateOfBirthIso,
+          gender: companionData.gender,
+        };
       }
 
       const response = await fetch("/api/trial-booking/payment", {
@@ -563,6 +627,8 @@ export default function TrialBookingClient({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {paginatedClasses.map((classItem) => {
                     const isSelected = selectedClass?.id === classItem.id;
+                    const availableSpots = classItem.capacity - (classItem.booked_count || 0);
+                    const isFull = availableSpots <= 0;
                     const instructorProfile = (classItem.instructor_id && instructorProfiles[classItem.instructor_id]) || (classItem.instructor_name && instructorProfiles[classItem.instructor_name]) || null;
                     const instructorAvatar = instructorProfile?.avatar_url ?? classItem.instructor_avatar ?? null;
                     const instructorInitials = getInitials(classItem.instructor_name);
@@ -573,19 +639,26 @@ export default function TrialBookingClient({
                         layout
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className={`group border-2 p-6 cursor-pointer transition-all duration-300 relative overflow-hidden ${
-                          isSelected
-                            ? "border-lime-500 bg-white dark:bg-zinc-900 shadow-[8px_8px_0px_0px_rgba(163,230,53,1)]"
-                            : "border-black/10 dark:border-white/10 bg-white/50 dark:bg-zinc-900/50 hover:border-lime-500/50 hover:shadow-[4px_4px_0px_0px_rgba(163,230,53,0.2)]"
+                        className={`group border-2 p-6 transition-all duration-300 relative overflow-hidden ${
+                          isFull
+                            ? "border-black/10 dark:border-white/10 bg-zinc-100/60 dark:bg-zinc-900/30 opacity-60 grayscale cursor-not-allowed"
+                            : isSelected
+                            ? "border-lime-500 bg-white dark:bg-zinc-900 shadow-[8px_8px_0px_0px_rgba(163,230,53,1)] cursor-pointer"
+                            : "border-black/10 dark:border-white/10 bg-white/50 dark:bg-zinc-900/50 hover:border-lime-500/50 hover:shadow-[4px_4px_0px_0px_rgba(163,230,53,0.2)] cursor-pointer"
                         }`}
-                        onClick={() => handleClassSelect(classItem)}
+                        onClick={() => !isFull && handleClassSelect(classItem)}
+                        aria-disabled={isFull}
                       >
-                        {isSelected && (
+                        {isFull ? (
+                          <div className="absolute top-0 right-0 bg-zinc-700 dark:bg-zinc-600 text-white px-3 py-1 text-[8px] font-black uppercase tracking-widest">
+                            Class Full
+                          </div>
+                        ) : isSelected && (
                           <div className="absolute top-0 right-0 bg-lime-500 text-black px-3 py-1 text-[8px] font-black uppercase tracking-widest flex items-center gap-2">
                             <Check className="w-3 h-3" /> SELECTED
                           </div>
                         )}
-                        
+
                         <div className="space-y-4">
                           <div className="flex items-center gap-3">
                             <span className="w-6 h-[2px] bg-lime-500"></span>
@@ -867,6 +940,16 @@ export default function TrialBookingClient({
                           </div>
                         </div>
                       )}
+
+                      {getTrialBookingEffectiveAgeGroup(selectedClass.title, selectedClass.age_group) !== "kid" && (
+                        <CompanionSection
+                          enabled={companionEnabled}
+                          onToggle={setCompanionEnabled}
+                          data={companionData}
+                          onChange={setCompanionData}
+                          eligibility={companionEligibility}
+                        />
+                      )}
                     </div>
 
                     {/* Waiver Section */}
@@ -913,7 +996,7 @@ export default function TrialBookingClient({
                     <div className="pt-10 flex flex-col items-center gap-8">
                       <button
                         type="submit"
-                        disabled={!selectedClass || processing || !bookingWindowOpen || trialEligibility.status === "blocked"}
+                        disabled={!selectedClass || processing || !bookingWindowOpen || trialEligibility.status === "blocked" || (companionEnabled && companionEligibility.status === "blocked")}
                         className="w-full max-w-md py-8 bg-lime-500 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black text-black font-black uppercase tracking-[0.4em] transition-all duration-300 shadow-2xl disabled:opacity-30 flex items-center justify-center gap-4 text-lg"
                       >
                         {processing ? (
@@ -949,6 +1032,11 @@ export default function TrialBookingClient({
             setFormData={setFormData}
             guardianData={guardianData}
             setGuardianData={setGuardianData}
+            companionEnabled={companionEnabled}
+            setCompanionEnabled={setCompanionEnabled}
+            companionData={companionData}
+            setCompanionData={setCompanionData}
+            companionEligibility={companionEligibility}
             onSubmit={handleSubmit}
             processing={processing}
             bookingWindowOpen={bookingWindowOpen}
@@ -961,6 +1049,130 @@ export default function TrialBookingClient({
   );
 }
 
+type CompanionData = { name: string; phone: string; email: string; age: string; gender: string };
+
+// Shared by the desktop form and the mobile bottom sheet: an optional free
+// plus-one, covered by the primary guest's waiver but counted as a 2nd
+// booked spot (enforced server-side against class capacity).
+function CompanionSection({
+  enabled,
+  onToggle,
+  data,
+  onChange,
+  eligibility,
+  inputTextClass = "",
+}: {
+  enabled: boolean;
+  onToggle: (enabled: boolean) => void;
+  data: CompanionData;
+  onChange: (data: CompanionData) => void;
+  eligibility: ReturnType<typeof useTrialEligibilityCheck>;
+  inputTextClass?: string;
+}) {
+  const inputClass = `w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 ${inputTextClass} font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none`;
+  const emailClass = `w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 ${inputTextClass} font-bold tracking-wide focus:border-lime-500 outline-none transition-colors rounded-none normal-case`;
+
+  return (
+    <div className="space-y-6 pt-8 border-t border-black/10 dark:border-white/10">
+      <label className="flex items-start gap-4 p-6 bg-lime-500/10 border border-lime-500/20 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={(e) => onToggle(e.target.checked)}
+          className="mt-1 w-6 h-6 accent-lime-500"
+        />
+        <span className="text-xs font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 leading-relaxed">
+          + Bring a friend for free — add a second person to this booking at no extra cost
+        </span>
+      </label>
+
+      {enabled && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Friend&apos;s Name *</label>
+            <input
+              type="text"
+              required={enabled}
+              value={data.name}
+              onChange={(e) => onChange({ ...data, name: e.target.value })}
+              className={inputClass}
+              placeholder="FRIEND'S FULL NAME"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Friend&apos;s Phone *</label>
+            <input
+              type="tel"
+              required={enabled}
+              value={data.phone}
+              onChange={(e) => {
+                onChange({ ...data, phone: e.target.value });
+                eligibility.reset();
+              }}
+              onBlur={() => eligibility.check(data.email, data.phone)}
+              className={inputClass}
+              placeholder="+65"
+            />
+          </div>
+
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Friend&apos;s Email *</label>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+              Their own confirmation is sent here
+            </p>
+            <input
+              type="email"
+              required={enabled}
+              autoComplete="email"
+              value={data.email}
+              onChange={(e) => {
+                onChange({ ...data, email: e.target.value });
+                eligibility.reset();
+              }}
+              onBlur={() => eligibility.check(data.email, data.phone)}
+              className={emailClass}
+              placeholder="friend@email.com"
+            />
+            {eligibility.status === "blocked" && <TrialAlreadyBookedBanner />}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Friend&apos;s Age *</label>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={120}
+              step={1}
+              required={enabled}
+              value={data.age}
+              onChange={(e) => onChange({ ...data, age: e.target.value })}
+              className={inputClass}
+              placeholder="YEARS"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Friend&apos;s Gender *</label>
+            <select
+              required={enabled}
+              value={data.gender}
+              onChange={(e) => onChange({ ...data, gender: e.target.value })}
+              className={inputClass}
+            >
+              <option value="prefer_not_to_say">Prefer not to say</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Mobile Bottom Sheet Component
 interface MobileBookingSheetProps {
   selectedClass: Class;
@@ -968,6 +1180,11 @@ interface MobileBookingSheetProps {
   setFormData: React.Dispatch<React.SetStateAction<any>>;
   guardianData: { guardianName: string; guardianPhone: string; guardianEmail: string; guardianOnPremises: boolean; guardianSignature: string; };
   setGuardianData: React.Dispatch<React.SetStateAction<any>>;
+  companionEnabled: boolean;
+  setCompanionEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  companionData: CompanionData;
+  setCompanionData: React.Dispatch<React.SetStateAction<CompanionData>>;
+  companionEligibility: ReturnType<typeof useTrialEligibilityCheck>;
   onSubmit: (e: React.FormEvent) => void;
   processing: boolean;
   bookingWindowOpen: boolean;
@@ -975,7 +1192,7 @@ interface MobileBookingSheetProps {
   trialEligibility: ReturnType<typeof useTrialEligibilityCheck>;
 }
 
-function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData, setGuardianData, onSubmit, processing, bookingWindowOpen, onClose, trialEligibility }: MobileBookingSheetProps) {
+function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData, setGuardianData, companionEnabled, setCompanionEnabled, companionData, setCompanionData, companionEligibility, onSubmit, processing, bookingWindowOpen, onClose, trialEligibility }: MobileBookingSheetProps) {
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -1106,6 +1323,17 @@ function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData
             </select>
           </div>
 
+          {!effectiveKid && (
+            <CompanionSection
+              enabled={companionEnabled}
+              onToggle={setCompanionEnabled}
+              data={companionData}
+              onChange={setCompanionData}
+              eligibility={companionEligibility}
+              inputTextClass="text-gray-900 dark:text-white"
+            />
+          )}
+
           {effectiveKid && (
             <div className="space-y-6 pt-6 border-t border-black/10 dark:border-white/10">
               <h3 className="text-xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white">Guardian Info</h3>
@@ -1178,7 +1406,7 @@ function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData
 
           <button
             type="submit"
-            disabled={processing || !bookingWindowOpen || trialEligibility.status === "blocked"}
+            disabled={processing || !bookingWindowOpen || trialEligibility.status === "blocked" || (companionEnabled && companionEligibility.status === "blocked")}
             className="w-full py-6 bg-lime-500 text-black font-black uppercase tracking-[0.3em] shadow-2xl disabled:opacity-30 flex items-center justify-center gap-4"
           >
             {processing ? (

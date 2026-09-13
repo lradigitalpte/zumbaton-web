@@ -186,12 +186,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Server Error', message: 'Failed to create reservation record' }, { status: 500 })
     }
 
-    // Hold the two spots: confirmed bookings flagged as awaiting payment at studio
-    const bookingIds: string[] = []
-    for (const p of participants) {
-      const { data: booking, error: bookingError } = await supabaseAdmin
-        .from('bookings')
-        .insert({
+    // Hold both spots in a single multi-row INSERT so they succeed or fail
+    // together — otherwise a capacity race on the last spot (two sequential
+    // single-row inserts) could confirm one participant without their partner.
+    const { data: bookings, error: bookingError } = await supabaseAdmin
+      .from('bookings')
+      .insert(
+        participants.map((p) => ({
           class_id: classId,
           guest_name: p.name,
           guest_email: p.email.toLowerCase(),
@@ -203,16 +204,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           booked_at: new Date().toISOString(),
           payment_id: paymentRecord.id,
           cancellation_reason: `RESERVED — PAY AT STUDIO ($${(amountCents / 100).toFixed(2)} duo) | NRIC: ${p.nricLast4 || 'N/A'} | Sign: ${p.signature || 'N/A'} | Gender: ${p.gender}`,
-        })
-        .select('id')
-        .single()
+        }))
+      )
+      .select('id')
 
-      if (bookingError || !booking) {
-        console.error('[Duo Reserve] Error creating booking:', bookingError)
-        return NextResponse.json({ error: 'Server Error', message: 'Failed to create reservation' }, { status: 500 })
-      }
-      bookingIds.push(booking.id)
+    if (bookingError || !bookings || bookings.length !== participants.length) {
+      console.error('[Duo Reserve] Error creating booking:', bookingError)
+      const isFull = bookingError?.message === 'This class is full'
+      return NextResponse.json(
+        { error: isFull ? 'Class Full' : 'Server Error', message: isFull ? 'This class filled up while you were reserving. Please pick another session.' : 'Failed to create reservation' },
+        { status: isFull ? 400 : 500 }
+      )
     }
+    const bookingIds = bookings.map((b) => b.id)
 
     return NextResponse.json({
       success: true,

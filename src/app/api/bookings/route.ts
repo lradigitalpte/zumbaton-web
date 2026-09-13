@@ -26,6 +26,13 @@ import { sendMemberBookingStaffNotifications } from '@/lib/member-booking-notifi
 
 export const dynamic = 'force-dynamic'
 
+// Raised by the `trg_enforce_booking_capacity` DB trigger when a confirmed
+// booking would exceed class capacity — a race the app-level count check
+// above can miss under concurrent requests for the last spot.
+function isCapacityError(error: { message?: string } | null | undefined): boolean {
+  return error?.message === 'This class is full'
+}
+
 // Initialize Supabase client for auth
 const supabaseAuth = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -478,9 +485,10 @@ async function handleSingleBooking(userId: string, classId: string) {
           })
           .eq('id', selectedPackage.id)
 
+        const isFull = isCapacityError(updateError)
         return NextResponse.json(
-          { success: false, error: { message: 'Failed to create booking' } },
-          { status: 500 }
+          { success: false, error: { message: isFull ? 'Class is full' : 'Failed to create booking' } },
+          { status: isFull ? 400 : 500 }
         )
       }
 
@@ -502,9 +510,10 @@ async function handleSingleBooking(userId: string, classId: string) {
           })
           .eq('id', selectedPackage.id)
 
+        const isFull = isCapacityError(insertError)
         return NextResponse.json(
-          { success: false, error: { message: 'Failed to create booking' } },
-          { status: 500 }
+          { success: false, error: { message: isFull ? 'Class is full' : 'Failed to create booking' } },
+          { status: isFull ? 400 : 500 }
         )
       }
 
@@ -766,9 +775,10 @@ async function handleCourseBooking(userId: string, parentClassId: string, parent
         })
         .eq('id', selectedPackage.id)
 
+      const isFull = isCapacityError(bookingsError)
       return NextResponse.json(
-        { success: false, error: { message: 'Failed to create course bookings' } },
-        { status: 500 }
+        { success: false, error: { message: isFull ? 'One of the sessions in this course just filled up. Please try again.' : 'Failed to create course bookings' } },
+        { status: isFull ? 400 : 500 }
       )
     }
 

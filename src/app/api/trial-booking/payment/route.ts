@@ -44,6 +44,23 @@ const emailField = z.preprocess(
   z.string().email('Enter a valid email address').max(200)
 )
 
+// Optional free plus-one (adult classes only). Covered by the primary
+// guest's waiver signature, so no waiver fields of their own — but does
+// need a real email (their own confirmation) and counts as a 2nd spot.
+const CompanionSchema = z.object({
+  name: z.string().min(1, 'Companion name is required').max(200),
+  phone: z.string().min(1, 'Companion phone number is required').max(50),
+  email: emailField,
+  dateOfBirth: z.string().min(1, 'Companion date of birth is required').refine(
+    (date) => {
+      const dob = new Date(date)
+      return !isNaN(dob.getTime()) && dob <= new Date()
+    },
+    { message: 'Invalid companion date of birth' }
+  ),
+  gender: z.enum(['male', 'female', 'other', 'prefer_not_to_say']),
+})
+
 // Request schema
 const TrialBookingPaymentSchema = z.object({
   classId: z.string().uuid('Invalid class ID'),
@@ -68,6 +85,7 @@ const TrialBookingPaymentSchema = z.object({
   guardianPhone: z.string().min(1, 'Guardian phone number is required').max(50).optional(),
   guardianOnPremises: z.boolean().optional(),
   guardianSignature: z.string().min(1, 'Guardian signature is required').optional(),
+  companion: CompanionSchema.optional(),
 })
 
 /**
@@ -109,6 +127,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       guardianPhone,
       guardianOnPremises,
       guardianSignature,
+      companion,
     } = d
 
     // 1. Get class details and validate availability
@@ -143,12 +162,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!isClassTypeCompatible(rawAgeGroup, userType)) {
       const userTypeLabel = userType === 'adult' ? 'adults' : 'children'
       const classTypeLabel = rawAgeGroup === 'adult' ? 'adult' : rawAgeGroup === 'kid' ? 'kids' : 'all'
-      
+
       return NextResponse.json(
-        { 
-          error: 'Age Restriction', 
-          message: `This class is for ${classTypeLabel} only. ${userTypeLabel === 'adults' ? 'Adults' : 'Children'} cannot book ${classTypeLabel} classes.` 
+        {
+          error: 'Age Restriction',
+          message: `This class is for ${classTypeLabel} only. ${userTypeLabel === 'adults' ? 'Adults' : 'Children'} cannot book ${classTypeLabel} classes.`
         },
+        { status: 400 }
+      )
+    }
+
+    if (companion && effectiveAgeGroup === 'kid') {
+      return NextResponse.json(
+        { error: 'Not Available', message: 'Adding a companion is only available for adult classes' },
+        { status: 400 }
+      )
+    }
+
+    if (companion && companion.email.toLowerCase() === (d.guestEmail || '').toLowerCase()) {
+      return NextResponse.json(
+        { error: 'Validation Error', message: 'Your companion needs their own email address' },
         { status: 400 }
       )
     }
@@ -224,9 +257,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const bookedCount = existingBookings?.length || 0
-    if (bookedCount >= classData.capacity) {
+    const spotsNeeded = companion ? 2 : 1
+    if (bookedCount + spotsNeeded > classData.capacity) {
       return NextResponse.json(
-        { error: 'Class Full', message: 'This class is fully booked' },
+        {
+          error: 'Class Full',
+          message: companion
+            ? 'This class does not have enough spots left for two people'
+            : 'This class is fully booked',
+        },
         { status: 400 }
       )
     }
@@ -244,6 +283,41 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { error: 'Already Booked', message: 'You have already booked this trial class' },
         { status: 400 }
       )
+    }
+
+    if (companion) {
+      // Same abuse check the primary guest gets: don't let the free +1
+      // slot become a way to dodge the one-trial-per-person rule.
+      const { data: companionHasPriorTrial, error: companionEligibilityError } = await supabaseAdmin.rpc(
+        'has_prior_paid_trial',
+        { p_email: companion.email, p_phone: companion.phone }
+      )
+      if (companionEligibilityError) {
+        console.error('[Trial Booking] Companion eligibility RPC error:', companionEligibilityError)
+        // Fail open — never block a real booking because the check itself broke.
+      } else if (companionHasPriorTrial) {
+        return NextResponse.json(
+          {
+            error: 'Companion Already Trialed',
+            message: 'Your companion has already used a trial class. They can sign up and purchase a package to join you.',
+          },
+          { status: 400 }
+        )
+      }
+
+      const { data: companionExistingBooking } = await supabaseAdmin
+        .from('bookings')
+        .select('id')
+        .eq('class_id', classId)
+        .eq('guest_email', companion.email)
+        .in('status', ['confirmed', 'attended'])
+
+      if (companionExistingBooking && companionExistingBooking.length > 0) {
+        return NextResponse.json(
+          { error: 'Already Booked', message: 'Your companion has already booked this trial class' },
+          { status: 400 }
+        )
+      }
     }
 
     // 2. Create draft booking first (lead capture)
@@ -291,6 +365,41 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     console.log('[Trial Booking] Created draft booking:', draftBooking.id)
 
+    // 2.5. Companion is a real second booking row (free, no waiver of their
+    // own) so it counts toward class capacity like any other confirmed spot.
+    let companionDraftBooking: { id: string } | null = null
+    if (companion) {
+      const { data: companionBooking, error: companionBookingError } = await supabaseAdmin
+        .from('bookings')
+        .insert({
+          class_id: classId,
+          guest_name: companion.name,
+          guest_email: companion.email,
+          guest_phone: companion.phone,
+          guest_date_of_birth: companion.dateOfBirth,
+          is_trial_booking: true,
+          status: 'draft',
+          tokens_used: 0,
+          booked_at: new Date().toISOString(),
+          // Tagged "DUO COMPANION" so the admin trial-bookings list hides this
+          // row (same convention the list already uses) — the pair is shown
+          // together as one row via payment.metadata.participant2 instead.
+          cancellation_reason: `DUO COMPANION — Free companion of ${guestName} | Gender: ${companion.gender}`,
+        })
+        .select('id')
+        .single()
+
+      if (companionBookingError || !companionBooking) {
+        console.error('[Trial Booking] Error creating companion draft booking:', companionBookingError)
+        return NextResponse.json(
+          { error: 'Server Error', message: 'Failed to create companion booking record' },
+          { status: 500 }
+        )
+      }
+      companionDraftBooking = companionBooking
+      console.log('[Trial Booking] Created companion draft booking:', companionBooking.id)
+    }
+
     // 3. Create payment record (linked to draft booking)
     const amount = (amountCents / 100).toFixed(2)
     const currency = 'SGD'
@@ -318,6 +427,31 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           class_title: classData.title,
           class_scheduled_at: classData.scheduled_at,
           draft_booking_id: draftBooking.id, // Link to draft booking
+          // The webhook and status-sync fallback both already know how to
+          // confirm every id in draft_booking_ids (built for the duo-trial
+          // promo), so listing the companion here is all that's needed to
+          // get both rows confirmed together when payment succeeds.
+          //
+          // `participant2` uses the same shape the admin's own "Add 2nd
+          // Guest" tool already writes, so the admin trial-bookings list
+          // picks this up for free and shows one row with the companion
+          // attached, instead of two separate rows (the companion's own
+          // booking row is hidden from that list via the "DUO COMPANION"
+          // tag on its cancellation_reason, same convention already used
+          // there).
+          ...(companionDraftBooking
+            ? {
+                draft_booking_ids: [draftBooking.id, companionDraftBooking.id],
+                has_companion: true,
+                participant2: {
+                  name: companion!.name,
+                  phone: companion!.phone,
+                  email: companion!.email,
+                  dateOfBirth: companion!.dateOfBirth,
+                  gender: companion!.gender,
+                },
+              }
+            : {}),
         },
       })
       .select()
@@ -360,11 +494,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    // 4. Link draft booking to payment
+    // 4. Link draft booking(s) to payment
+    const draftBookingIds = companionDraftBooking ? [draftBooking.id, companionDraftBooking.id] : [draftBooking.id]
     const { error: updateBookingError } = await supabaseAdmin
       .from('bookings')
       .update({ payment_id: paymentRecord.id })
-      .eq('id', draftBooking.id)
+      .in('id', draftBookingIds)
 
     if (updateBookingError) {
       console.error('[Trial Booking] Error linking booking to payment:', updateBookingError)
@@ -398,7 +533,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         currency: currency.toUpperCase(), // Ensure uppercase currency code
         email: guestEmail.trim(),
         name: guestName.trim(),
-        purpose: `Trial Class: ${classData.title}`,
+        purpose: `Trial Class: ${classData.title}${companion ? ' (+1 companion)' : ''}`,
         reference_number: referenceNumber,
         redirect_url: cleanRedirectUrl,
         webhook: cleanWebhookUrl,

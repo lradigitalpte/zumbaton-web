@@ -165,7 +165,13 @@ export async function GET(request: NextRequest) {
       .select('*')
       .eq('payment_id', paymentId)
 
-    const booking = bookings && bookings.length > 0 ? bookings[0] : null
+    // A companion booking shares this payment_id too — when both exist,
+    // make sure we surface the primary guest's booking, not whichever
+    // row the query happens to return first.
+    const primaryMeta = (payment.metadata as Record<string, unknown>) || {}
+    const booking =
+      (bookings && bookings.find((b) => b.guest_email && b.guest_email === primaryMeta.guest_email)) ||
+      (bookings && bookings.length > 0 ? bookings[0] : null)
     const classData = payment.classes as any
 
     // Has the post-payment waiver (NRIC + signature) been completed yet?
