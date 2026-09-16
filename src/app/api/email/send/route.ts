@@ -27,6 +27,7 @@ import {
   sendRegistrationFormEmail,
   sendReferralVoucherEmail,
   sendLeadFollowUpEmail,
+  sendPickClassLinkEmail,
   sendMemberBookingAdminNotificationEmail,
   sendMemberBookingTutorNotificationEmail,
   sendInvoiceEmail,
@@ -57,6 +58,7 @@ const EmailRequestSchema = z.object({
     'registration-form',
     'referral-voucher',
     'lead-follow-up',
+    'pick-class-link',
     'member-booking-admin',
     'member-booking-tutor',
     'invoice',
@@ -301,6 +303,15 @@ export async function POST(request: NextRequest) {
           leadName: data.leadName as string,
           subject: data.subject as string,
           bodyText: data.bodyText as string,
+        })
+        break
+
+      case 'pick-class-link':
+        result = await sendPickClassLinkEmail({
+          guestEmail: data.guestEmail as string,
+          guestName: data.guestName as string,
+          venueLabel: data.venueLabel as string,
+          pickClassUrl: data.pickClassUrl as string,
         })
         break
 

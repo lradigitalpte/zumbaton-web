@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -190,7 +190,7 @@ function PickClassCalendar({
             className="border border-black/15 px-3 py-1.5 text-xs font-black uppercase tracking-widest text-gray-700 hover:border-black disabled:opacity-30"
             aria-label="Previous month"
           >
-            ←
+            â†
           </button>
           <button
             type="button"
@@ -203,7 +203,7 @@ function PickClassCalendar({
             className="border border-black/15 px-3 py-1.5 text-xs font-black uppercase tracking-widest text-gray-700 hover:border-black disabled:opacity-30"
             aria-label="Next month"
           >
-            →
+            â†’
           </button>
         </div>
       </div>
@@ -265,10 +265,11 @@ export default function PickClassClient() {
     loading: boolean;
     ok: boolean;
     isPaid: boolean;
-    isQuickTrial: boolean;
+    canSelectClass: boolean;
+    venue: string | null;
     selectedClassId: string | null;
     error?: string;
-  }>({ loading: true, ok: false, isPaid: false, isQuickTrial: false, selectedClassId: null });
+  }>({ loading: true, ok: false, isPaid: false, canSelectClass: false, venue: null, selectedClassId: null });
 
   const [classes, setClasses] = useState<PublicClass[]>([]);
   const [instructorProfiles, setInstructorProfiles] = useState<Record<string, InstructorProfile>>({});
@@ -288,7 +289,8 @@ export default function PickClassClient() {
         loading: false,
         ok: false,
         isPaid: false,
-        isQuickTrial: false,
+        canSelectClass: false,
+        venue: null,
         selectedClassId: null,
         error: "Missing payment id",
       });
@@ -303,7 +305,8 @@ export default function PickClassClient() {
             loading: false,
             ok: false,
             isPaid: false,
-            isQuickTrial: false,
+            canSelectClass: false,
+            venue: null,
             selectedClassId: null,
             error: res?.error || "Unable to verify payment",
           });
@@ -313,7 +316,8 @@ export default function PickClassClient() {
           loading: false,
           ok: true,
           isPaid: res.data?.isPaid === true,
-          isQuickTrial: res.data?.isQuickTrial === true,
+          canSelectClass: res.data?.canSelectClass === true,
+          venue: res.data?.venue ?? null,
           selectedClassId: res.data?.selectedClassId ?? null,
         });
       })
@@ -323,7 +327,8 @@ export default function PickClassClient() {
           loading: false,
           ok: false,
           isPaid: false,
-          isQuickTrial: false,
+          canSelectClass: false,
+          venue: null,
           selectedClassId: null,
           error: "Unable to verify payment",
         });
@@ -335,7 +340,7 @@ export default function PickClassClient() {
 
   useEffect(() => {
     let active = true;
-    if (!status.ok || !status.isPaid || !status.isQuickTrial || status.selectedClassId) return;
+    if (!status.ok || !status.isPaid || !status.canSelectClass || status.selectedClassId) return;
 
     const from = formatYmdLocal(new Date());
     const toDate = new Date();
@@ -360,7 +365,7 @@ export default function PickClassClient() {
     return () => {
       active = false;
     };
-  }, [status.ok, status.isPaid, status.isQuickTrial, status.selectedClassId]);
+  }, [status.ok, status.isPaid, status.canSelectClass, status.selectedClassId]);
 
   useEffect(() => {
     let active = true;
@@ -424,13 +429,14 @@ export default function PickClassClient() {
   }, [classes]);
 
   const eligible = useMemo(() => {
+    const wantsOutdoor = status.venue === "outdoor";
     return classes
-      .filter((c) => c.is_outdoor !== true)
+      .filter((c) => Boolean(c.is_outdoor) === wantsOutdoor)
       .filter((c) => getTrialBookingEffectiveAgeGroup(c.title, c.age_group) !== "kid")
       .filter((c) => isBookingWindowOpen(c.scheduled_at))
       .filter((c) => (c.capacity ?? 0) - (c.booked_count ?? 0) > 0)
       .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
-  }, [classes]);
+  }, [classes, status.venue]);
 
   const availableDates = useMemo(() => {
     const dates = new Set<string>();
@@ -519,7 +525,7 @@ export default function PickClassClient() {
 
         {status.loading ? (
           <div className="border border-black/10 bg-white p-6 text-sm font-semibold text-gray-600">
-            Checking payment…
+            Checking paymentâ€¦
           </div>
         ) : !status.ok ? (
           <div className="border border-red-300 bg-red-50 p-6 text-sm font-semibold text-red-800">
@@ -530,7 +536,7 @@ export default function PickClassClient() {
               Back to start
             </Link>
           </div>
-        ) : !status.isQuickTrial ? (
+        ) : !status.canSelectClass ? (
           <div className="border border-black/10 bg-white p-6 text-sm font-semibold text-gray-700">
             This payment is not eligible for trial class selection.
           </div>
@@ -579,7 +585,7 @@ export default function PickClassClient() {
                     availableDates={availableDates}
                   />
                   <div className="mt-2 flex items-center justify-between text-[11px] font-medium text-gray-500">
-                    <span>Swipe to see more dates →</span>
+                    <span>Swipe to see more dates â†’</span>
                     <span className="inline-flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-lime-600" aria-hidden="true" />
                       Days with classes
@@ -613,7 +619,7 @@ export default function PickClassClient() {
                   </div>
                   <p className="shrink-0 text-xs font-bold text-gray-500">
                     {loadingClasses
-                      ? "Loading…"
+                      ? "Loadingâ€¦"
                       : selectedDate
                         ? `${filtered.length} class${filtered.length === 1 ? "" : "es"}`
                         : ""}
@@ -684,7 +690,7 @@ export default function PickClassClient() {
 
                         <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-gray-500 lg:mt-2 lg:gap-x-3 lg:text-[11px] lg:font-bold lg:uppercase lg:tracking-widest">
                           <span>{c.duration_minutes} min</span>
-                          <span className="text-gray-300">·</span>
+                          <span className="text-gray-300">Â·</span>
                           <span>{c.location || "Studio"}</span>
                         </p>
 
@@ -739,7 +745,7 @@ export default function PickClassClient() {
                   <span className="font-bold text-gray-900">
                     {formatTime(selected.scheduled_at)}
                   </span>
-                  {" · "}
+                  {" Â· "}
                   {getTrialBookingDisplayTitle(selected.title)}
                 </p>
               )}
@@ -749,7 +755,7 @@ export default function PickClassClient() {
                 disabled={!selected || submitting}
                 className="w-full bg-black py-4 text-sm font-black uppercase tracking-widest text-white transition-colors hover:bg-lime-500 hover:text-black disabled:opacity-40 lg:w-auto lg:px-10"
               >
-                {submitting ? "Confirming…" : selected ? "Confirm this class" : "Tap a class above"}
+                {submitting ? "Confirmingâ€¦" : selected ? "Confirm this class" : "Tap a class above"}
               </button>
               <Link
                 href={`/start/success?payment_id=${encodeURIComponent(paymentId)}`}

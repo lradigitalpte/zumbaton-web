@@ -35,7 +35,8 @@ export async function GET(request: NextRequest) {
 
     const meta = (payment.metadata as Record<string, unknown>) || {};
     const flowType = typeof meta.flow_type === "string" ? meta.flow_type : null;
-    const isQuickTrial = flowType === "quick_trial";
+    const venue = typeof meta.venue === "string" ? meta.venue : null;
+    const canSelectClass = flowType === "quick_trial" || flowType === "quick_join";
 
     // If pending, attempt a lightweight HitPay poll (same as other flows)
     if (
@@ -92,7 +93,8 @@ export async function GET(request: NextRequest) {
         status: payment.status,
         isPaid: isPaid(payment.status),
         flowType,
-        isQuickTrial,
+        venue,
+        canSelectClass,
         guestName: typeof meta.guest_name === "string" ? meta.guest_name : "",
         guestEmail: typeof meta.guest_email === "string" ? meta.guest_email : "",
         guestPhone: typeof meta.guest_phone === "string" ? meta.guest_phone : "",

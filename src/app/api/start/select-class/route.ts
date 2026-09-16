@@ -39,7 +39,10 @@ export async function POST(request: NextRequest) {
     }
 
     const meta = (payment.metadata as Record<string, unknown>) || {};
-    if (meta.flow_type !== "quick_trial") {
+    const flowType = meta.flow_type;
+    const venue = typeof meta.venue === "string" ? meta.venue : null;
+    const canSelectClass = flowType === "quick_trial" || flowType === "quick_join";
+    if (!canSelectClass) {
       return NextResponse.json(
         { success: false, error: "This payment is not eligible for trial class selection" },
         { status: 400 }
@@ -76,10 +79,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Class not available" }, { status: 404 });
     }
 
-    // Must be an indoor adult/all trial option (no outdoor, no kids)
-    if (cls.is_outdoor === true) {
+    // Class venue must match what the guest paid for (indoor vs outdoor pricing differs).
+    const wantsOutdoor = venue === "outdoor";
+    if (Boolean(cls.is_outdoor) !== wantsOutdoor) {
       return NextResponse.json(
-        { success: false, error: "Outdoor classes are not available for this offer" },
+        {
+          success: false,
+          error: wantsOutdoor
+            ? "Please choose one of our outdoor sessions."
+            : "Outdoor classes are not available for this offer.",
+        },
         { status: 400 }
       );
     }
@@ -106,38 +115,68 @@ export async function POST(request: NextRequest) {
       .eq("class_id", classId)
       .in("status", ["confirmed", "attended"]);
 
-    const bookedCount = bookings?.length ?? 0;
-    if (bookedCount >= (cls.capacity ?? 0)) {
-      return NextResponse.json({ success: false, error: "This class is full" }, { status: 400 });
-    }
-
     const guestName = typeof meta.guest_name === "string" ? meta.guest_name : "Guest";
     const guestEmail = typeof meta.guest_email === "string" ? meta.guest_email : "";
     const guestPhone = typeof meta.guest_phone === "string" ? meta.guest_phone : "";
+    const companionName = typeof meta.companion_name === "string" ? meta.companion_name : "";
+    const companionEmail = typeof meta.companion_email === "string" ? meta.companion_email : "";
+    const companionPhone = typeof meta.companion_phone === "string" ? meta.companion_phone : "";
+    const hasCompanion = Boolean(companionName && companionEmail);
 
-    const { data: booking, error: bookingErr } = await supabase
-      .from("bookings")
-      .insert({
+    const bookedCount = bookings?.length ?? 0;
+    const spotsNeeded = hasCompanion ? 2 : 1;
+    if (bookedCount + spotsNeeded > (cls.capacity ?? 0)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: hasCompanion ? "Not enough spots left in this class for both guests" : "This class is full",
+        },
+        { status: 400 }
+      );
+    }
+
+    const bookingsToInsert = [
+      {
         class_id: classId,
         guest_name: guestName,
         guest_email: guestEmail,
         guest_phone: guestPhone,
         is_trial_booking: true,
-        status: "confirmed",
+        status: "confirmed" as const,
         tokens_used: 0,
         booked_at: new Date().toISOString(),
         payment_id: paymentId,
-        cancellation_reason: "START QUICK TRIAL — PAID (class chosen by guest)",
-      })
-      .select("id")
-      .single();
+        cancellation_reason: "START TRIAL — PAID (class chosen by guest)",
+      },
+    ];
+    if (hasCompanion) {
+      bookingsToInsert.push({
+        class_id: classId,
+        guest_name: companionName,
+        guest_email: companionEmail,
+        guest_phone: companionPhone,
+        is_trial_booking: true,
+        status: "confirmed" as const,
+        tokens_used: 0,
+        booked_at: new Date().toISOString(),
+        payment_id: paymentId,
+        cancellation_reason: "START TRIAL — PAID (companion, class chosen by guest)",
+      });
+    }
 
-    if (bookingErr || !booking) {
+    const { data: insertedBookings, error: bookingErr } = await supabase
+      .from("bookings")
+      .insert(bookingsToInsert)
+      .select("id");
+
+    if (bookingErr || !insertedBookings || insertedBookings.length === 0) {
       return NextResponse.json(
         { success: false, error: bookingErr?.message || "Failed to record booking" },
         { status: 500 }
       );
     }
+    const booking = insertedBookings[0]
+    const companionBooking = hasCompanion ? insertedBookings[1] : null
 
     const newMeta = {
       ...meta,
@@ -147,6 +186,7 @@ export async function POST(request: NextRequest) {
       selected_class_at: new Date().toISOString(),
       selected_class_source: "start_pick",
       booked_booking_id: booking.id,
+      booked_companion_booking_id: companionBooking?.id || null,
       booked_class_id: classId,
       booked_class_title: cls.title,
       booked_class_at: cls.scheduled_at,
@@ -195,7 +235,7 @@ export async function POST(request: NextRequest) {
           type: "trial_booking",
           channel: "in_app",
           subject: "CLASS SELECTED — trial booking confirmed",
-          body: `${guestName} selected ${cls.title} on ${classDate} at ${classTime}. No scheduling follow-up is needed.`,
+          body: `${guestName}${hasCompanion ? ` (+1: ${companionName})` : ""} selected ${cls.title} on ${classDate} at ${classTime}. No scheduling follow-up is needed.`,
           status: "sent",
           sent_at: resolvedAt,
           data: {
@@ -226,6 +266,13 @@ export async function POST(request: NextRequest) {
           classLocation, instructorName: cls.instructor_name || undefined, amount, currency,
         });
         if (!guestResult.success) console.error("[Start Select Class] Guest confirmation email failed:", guestResult.error);
+      }
+      if (hasCompanion && companionEmail.includes("@") && !companionEmail.includes("@guest.")) {
+        const companionResult = await sendTrialBookingConfirmationEmail({
+          guestEmail: companionEmail, guestName: companionName, className: cls.title, classDate, classTime,
+          classLocation, instructorName: cls.instructor_name || undefined, amount: 0, currency,
+        });
+        if (!companionResult.success) console.error("[Start Select Class] Companion confirmation email failed:", companionResult.error);
       }
       const adminEmails = await getStaffAlertRecipients(supabase);
       if (adminEmails.length) {

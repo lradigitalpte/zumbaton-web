@@ -96,7 +96,20 @@ export default function StartPage() {
   });
 
   const [venue, setVenue] = useState<"studio" | "outdoor">("studio");
-  const [form, setForm] = useState({ name: "", phone: "", email: "", preferredNote: "" });
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    preferredNote: "",
+    gender: "prefer_not_to_say",
+  });
+  const [bringFriend, setBringFriend] = useState(false);
+  const [companion, setCompanion] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    gender: "prefer_not_to_say",
+  });
   const trialEligibility = useTrialEligibilityCheck();
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -178,6 +191,16 @@ export default function StartPage() {
       setError("Please enter a valid email. Your receipt is sent there.");
       return;
     }
+    if (bringFriend) {
+      if (!companion.name.trim() || !companion.phone.trim() || !companion.email.trim()) {
+        setError("Please enter your friend's name, phone and email, or uncheck “bring a friend”.");
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(companion.email.trim())) {
+        setError("Please enter a valid email for your friend.");
+        return;
+      }
+    }
     if (!agreedToTerms) {
       setError("Please agree to the terms and waiver to continue.");
       return;
@@ -192,10 +215,20 @@ export default function StartPage() {
           name: form.name.trim(),
           phone: form.phone.trim(),
           email: form.email.trim(),
+          gender: form.gender,
           venue: isDuoBooking ? venue : "studio",
           bookingFlow: isDuoBooking ? "duo" : "trial",
           preferredNote: form.preferredNote.trim() || undefined,
           termsAgreed: true,
+          companion:
+            bringFriend && isDuoBooking
+              ? {
+                  name: companion.name.trim(),
+                  phone: companion.phone.trim(),
+                  email: companion.email.trim(),
+                  gender: companion.gender,
+                }
+              : undefined,
         }),
       });
       const result = await res.json();
@@ -367,8 +400,12 @@ export default function StartPage() {
                   You&apos;re in!
                 </h2>
                 <p className="mx-auto max-w-sm text-sm font-medium leading-relaxed text-gray-600">
-                  Thanks, {form.name.split(" ")[0] || "there"}. We&apos;ll message you {RESPONSE_PROMISE}{" "}
-                  to confirm your class. No payment needed right now.
+                  Thanks, {form.name.split(" ")[0] || "there"}
+                  {bringFriend && companion.name.trim()
+                    ? ` and ${companion.name.trim().split(" ")[0]}`
+                    : ""}
+                  . We&apos;ll message you {RESPONSE_PROMISE} to confirm your class. No payment
+                  needed right now.
                 </p>
               </div>
             ) : (
@@ -526,6 +563,117 @@ export default function StartPage() {
                       className="w-full border border-black/15 bg-[#f6f4ee] px-4 py-3 text-sm font-semibold text-gray-900 placeholder:font-medium placeholder:normal-case placeholder:text-gray-400 focus:border-lime-600 focus:outline-none"
                     />
                   </div>
+
+                  <div>
+                    <label htmlFor="s-gender" className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-gray-500">
+                      Gender{" "}
+                      <span className="font-medium normal-case tracking-normal text-gray-400">(optional)</span>
+                    </label>
+                    <select
+                      id="s-gender"
+                      value={form.gender}
+                      onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                      className="w-full border border-black/15 bg-[#f6f4ee] px-4 py-3 text-sm font-semibold text-gray-900 focus:border-lime-600 focus:outline-none"
+                    >
+                      <option value="prefer_not_to_say">Prefer not to say</option>
+                      <option value="female">Female</option>
+                      <option value="male">Male</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  {isDuoBooking && (
+                    <div className="space-y-4 border border-lime-600/30 bg-lime-500/10 p-4">
+                      <label className="flex cursor-pointer items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={bringFriend}
+                          onChange={(e) => setBringFriend(e.target.checked)}
+                          className="mt-0.5 h-4 w-4 shrink-0 accent-lime-600"
+                        />
+                        <span className="text-xs font-black uppercase tracking-wide text-gray-800">
+                          + Bring a friend for free — same {formatPrice(priceCents)}, two of you try
+                          it
+                        </span>
+                      </label>
+
+                      {bringFriend && (
+                        <div className="space-y-4">
+                          <div>
+                            <label
+                              htmlFor="s-f-name"
+                              className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-gray-500"
+                            >
+                              Friend&apos;s name
+                            </label>
+                            <input
+                              id="s-f-name"
+                              type="text"
+                              value={companion.name}
+                              onChange={(e) => setCompanion({ ...companion, name: e.target.value })}
+                              placeholder="Full name"
+                              className="w-full border border-black/15 bg-white px-4 py-3 text-sm font-semibold text-gray-900 placeholder:font-medium placeholder:normal-case placeholder:text-gray-400 focus:border-lime-600 focus:outline-none"
+                            />
+                          </div>
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                              <label
+                                htmlFor="s-f-phone"
+                                className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-gray-500"
+                              >
+                                Friend&apos;s phone
+                              </label>
+                              <input
+                                id="s-f-phone"
+                                type="tel"
+                                value={companion.phone}
+                                onChange={(e) => setCompanion({ ...companion, phone: e.target.value })}
+                                placeholder="+65 9123 4567"
+                                className="w-full border border-black/15 bg-white px-4 py-3 text-sm font-semibold text-gray-900 placeholder:font-medium placeholder:normal-case placeholder:text-gray-400 focus:border-lime-600 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label
+                                htmlFor="s-f-email"
+                                className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-gray-500"
+                              >
+                                Friend&apos;s email
+                              </label>
+                              <input
+                                id="s-f-email"
+                                type="email"
+                                autoComplete="email"
+                                value={companion.email}
+                                onChange={(e) => setCompanion({ ...companion, email: e.target.value })}
+                                placeholder="friend@email.com"
+                                className="w-full border border-black/15 bg-white px-4 py-3 text-sm font-semibold text-gray-900 placeholder:font-medium placeholder:normal-case placeholder:text-gray-400 focus:border-lime-600 focus:outline-none"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label
+                              htmlFor="s-f-gender"
+                              className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-gray-500"
+                            >
+                              Friend&apos;s gender{" "}
+                              <span className="font-medium normal-case tracking-normal text-gray-400">(optional)</span>
+                            </label>
+                            <select
+                              id="s-f-gender"
+                              value={companion.gender}
+                              onChange={(e) => setCompanion({ ...companion, gender: e.target.value })}
+                              className="w-full border border-black/15 bg-white px-4 py-3 text-sm font-semibold text-gray-900 focus:border-lime-600 focus:outline-none"
+                            >
+                              <option value="prefer_not_to_say">Prefer not to say</option>
+                              <option value="female">Female</option>
+                              <option value="male">Male</option>
+                              <option value="other">Other</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <label className="flex cursor-pointer items-start gap-3 border border-black/10 bg-[#f6f4ee] px-4 py-3">
                     <input

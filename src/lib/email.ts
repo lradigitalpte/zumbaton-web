@@ -1204,6 +1204,32 @@ export async function sendTrialBookingConfirmationEmail(data: {
 }
 
 /**
+ * Send a "pick your class" link to an already-paid pay-first guest who hasn't
+ * been scheduled yet, so they can self-serve instead of waiting on staff.
+ */
+export async function sendPickClassLinkEmail(data: {
+  guestEmail: string
+  guestName: string
+  venueLabel: string
+  pickClassUrl: string
+}): Promise<EmailResult> {
+  const { getPickClassLinkEmailTemplate } = await import('./email-templates')
+  const template = getPickClassLinkEmailTemplate({
+    guestName: data.guestName,
+    venueLabel: data.venueLabel,
+    pickClassUrl: data.pickClassUrl,
+  })
+
+  return sendEmail({
+    to: data.guestEmail,
+    subject: `Pick Your Trial Class — ${data.venueLabel}`,
+    html: template.html,
+    text: template.text,
+    replyTo: process.env.EMAIL_REPLY_TO || undefined,
+  })
+}
+
+/**
  * Send trial booking admin notification email
  */
 export async function sendTrialBookingAdminNotificationEmail(data: {

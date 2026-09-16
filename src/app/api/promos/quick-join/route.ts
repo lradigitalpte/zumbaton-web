@@ -39,10 +39,22 @@ const QuickJoinSchema = z.object({
     z.string().email('Enter a valid email address').max(200)
   ),
   phone: z.string().min(1, 'Please enter your phone number').max(50),
+  gender: z.enum(['male', 'female', 'other', 'prefer_not_to_say']).optional(),
   venue: z.enum(['studio', 'outdoor']).optional(),
   bookingFlow: z.enum(['duo', 'trial']).optional(),
   termsAgreed: z.literal(true, { errorMap: () => ({ message: 'Please agree to the terms and waiver to continue.' }) }),
   preferredNote: z.string().max(500).optional(),
+  companion: z
+    .object({
+      name: z.string().min(1, "Please enter your friend's name").max(200),
+      phone: z.string().min(1, "Please enter your friend's phone number").max(50),
+      email: z.preprocess(
+        (v) => (typeof v === 'string' ? v.trim().toLowerCase() : v),
+        z.string().email("Enter a valid email for your friend").max(200)
+      ),
+      gender: z.enum(['male', 'female', 'other', 'prefer_not_to_say']).optional(),
+    })
+    .optional(),
 })
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -55,7 +67,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { status: 400 }
       )
     }
-    const { name, email, phone, preferredNote } = parsed.data
+    const { name, email, phone, gender, preferredNote, companion } = parsed.data
     const bookingFlow = parsed.data.bookingFlow ?? 'duo'
     const isFastTrial = bookingFlow === 'trial'
     const venue = isFastTrial ? 'studio' : (parsed.data.venue ?? 'studio')
@@ -87,6 +99,45 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
+    // Server-side enforcement — the client-side check on /start (on blur) can be
+    // bypassed by calling this endpoint directly, and fails open on error.
+    const { data: hasPriorTrial, error: eligibilityError } = await supabaseAdmin.rpc('has_prior_paid_trial', {
+      p_email: email,
+      p_phone: phone,
+    })
+    if (eligibilityError) {
+      console.error('[Quick Join] Eligibility RPC error:', eligibilityError)
+      // Fail open — never block a real booking because the check itself broke.
+    } else if (hasPriorTrial) {
+      return NextResponse.json(
+        {
+          error: 'Already Trialed',
+          message: 'This email/phone has already used a trial class. Please sign up to book a class.',
+        },
+        { status: 400 }
+      )
+    }
+
+    if (companion) {
+      // Same abuse check the primary guest gets: don't let the free +1 slot
+      // become a way to dodge the one-trial-per-person rule.
+      const { data: companionHasPriorTrial, error: companionEligibilityError } = await supabaseAdmin.rpc(
+        'has_prior_paid_trial',
+        { p_email: companion.email, p_phone: companion.phone }
+      )
+      if (companionEligibilityError) {
+        console.error('[Quick Join] Companion eligibility RPC error:', companionEligibilityError)
+      } else if (companionHasPriorTrial) {
+        return NextResponse.json(
+          {
+            error: 'Companion Already Trialed',
+            message: 'Your friend has already used a trial class. They can sign up and purchase a package to join you.',
+          },
+          { status: 400 }
+        )
+      }
+    }
+
     const totalCents = isFastTrial
       ? promoConfig.indoorPriceCents
       : venue === 'outdoor'
@@ -103,6 +154,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       : `JOIN-${venue}-${Date.now()}`
     const payOnline = promoConfig.paymentTerms !== 'none' && chargeCents > 0
 
+    // Companion ("bring a friend") is only offered on the duo flow, and rides on the
+    // same $23 payment — staff create a second booking row for them at scheduling time.
+    const companionNote = companion
+      ? `Bringing a friend: ${companion.name} (${companion.phone}, ${companion.email})`
+      : ''
+    const combinedNote = [companionNote, preferredNote].filter(Boolean).join(' | ')
+
     const leadMetadata = {
       flow_type: isFastTrial ? 'quick_trial' : 'quick_join',
       needs_scheduling: true,
@@ -116,7 +174,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       guest_name: name,
       guest_email: email,
       guest_phone: phone,
-      preferred_note: preferredNote || '',
+      guest_gender: gender || 'prefer_not_to_say',
+      preferred_note: combinedNote,
+      has_companion: Boolean(companion),
+      companion_name: companion?.name || '',
+      companion_phone: companion?.phone || '',
+      companion_email: companion?.email || '',
+      companion_gender: companion?.gender || 'prefer_not_to_say',
+      guest_count: companion ? 2 : 1,
       reference_number: referenceNumber,
       terms_agreed: true,
       terms_agreed_at: new Date().toISOString(),
@@ -264,7 +329,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         guestName: name,
         guestEmail: email,
         guestPhone: phone,
-        className: isFastTrial ? 'Class not selected yet' : `${venueLabel} — staff scheduling required`,
+        className: isFastTrial
+          ? 'Class not selected yet'
+          : `${venueLabel} — staff scheduling required${companion ? ` · +1: ${companion.name}` : ''}`,
       })
     } catch (alertError) {
       console.error('[Quick Join] Non-critical: failed to send initiated payment alert:', alertError)

@@ -270,6 +270,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
+    // Server-side enforcement — the client-side check on this page (on blur) can be
+    // bypassed by calling this endpoint directly, and fails open on error.
+    const { data: guestHasPriorTrial, error: guestEligibilityError } = await supabaseAdmin.rpc(
+      'has_prior_paid_trial',
+      { p_email: guestEmail, p_phone: guestPhone }
+    )
+    if (guestEligibilityError) {
+      console.error('[Trial Booking] Guest eligibility RPC error:', guestEligibilityError)
+      // Fail open — never block a real booking because the check itself broke.
+    } else if (guestHasPriorTrial) {
+      return NextResponse.json(
+        {
+          error: 'Already Trialed',
+          message: 'This email/phone has already used a trial class. Please sign up to book a class.',
+        },
+        { status: 400 }
+      )
+    }
+
     // Check if guest already booked this class
     const { data: existingGuestBooking } = await supabaseAdmin
       .from('bookings')

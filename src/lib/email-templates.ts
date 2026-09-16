@@ -1396,6 +1396,60 @@ If you enjoy the class, our team can help you set up a membership account. Just 
 }
 
 /**
+ * Pick-Your-Class Link Email Template
+ * Sent to an already-paid pay-first (Studio 1-for-1 / Fast Trial) guest who
+ * hasn't picked a class yet, so they can self-schedule instead of waiting on staff.
+ */
+export function getPickClassLinkEmailTemplate(data: {
+  guestName: string
+  venueLabel: string
+  pickClassUrl: string
+}): { html: string; text: string } {
+  const firstName = data.guestName.trim().split(/\s+/)[0] || 'there'
+  const html = getBaseTemplate(`
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">You're Paid Up — Pick Your Class!</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">${escapeHtml(data.venueLabel)}</p>
+    </div>
+
+    <p style="margin: 0 0 24px; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
+      Hi ${escapeHtml(firstName)}, your payment is confirmed. Choose your session now, or reply to this email and our team will schedule it for you.
+    </p>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin: 28px 0;">
+      <tr>
+        <td align="center" style="padding: 0 16px;">
+          <table role="presentation" cellspacing="0" cellpadding="0" style="width: 100%; max-width: 320px; margin: 0 auto;">
+            <tr>
+              <td align="center" style="border-radius: 999px; background-color: #16a34a; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);">
+                <a href="${data.pickClassUrl}" style="display: block; width: 100%; max-width: 100%; box-sizing: border-box; color: #ffffff !important; text-decoration: none; padding: 16px 20px; border-radius: 999px; font-weight: 700; font-size: 16px; line-height: 1.3; text-align: center;">
+                  Pick My Trial Class
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  `, `Pick your class — ${data.venueLabel}`)
+
+  const text = `
+You're Paid Up — Pick Your Class!
+
+Hi ${firstName},
+
+Your payment for ${data.venueLabel} is confirmed. Choose your session now, or reply to this email and our team will schedule it for you.
+
+PICK MY TRIAL CLASS
+${data.pickClassUrl}
+
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
+  `.trim()
+
+  return { html, text }
+}
+
+/**
  * Trial Booking Admin Notification Email Template
  */
 export function getTrialBookingAdminNotificationEmailTemplate(data: {

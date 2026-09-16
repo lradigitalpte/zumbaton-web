@@ -21,7 +21,7 @@ type SelectedClass = {
 type PaymentStatus = {
   loading: boolean;
   isPaid: boolean;
-  isQuickTrial: boolean;
+  canSelectClass: boolean;
   selectedClass: SelectedClass | null;
 };
 
@@ -31,13 +31,13 @@ export default function SuccessClient() {
   const [status, setStatus] = useState<PaymentStatus>({
     loading: !!paymentId,
     isPaid: false,
-    isQuickTrial: false,
+    canSelectClass: false,
     selectedClass: null,
   });
 
   useEffect(() => {
     if (!paymentId) {
-      setStatus({ loading: false, isPaid: false, isQuickTrial: false, selectedClass: null });
+      setStatus({ loading: false, isPaid: false, canSelectClass: false, selectedClass: null });
       return;
     }
 
@@ -49,19 +49,19 @@ export default function SuccessClient() {
       .then((res) => {
         if (!active) return;
         if (!res?.success) {
-          setStatus({ loading: false, isPaid: false, isQuickTrial: false, selectedClass: null });
+          setStatus({ loading: false, isPaid: false, canSelectClass: false, selectedClass: null });
           return;
         }
         setStatus({
           loading: false,
           isPaid: res.data?.isPaid === true,
-          isQuickTrial: res.data?.isQuickTrial === true,
+          canSelectClass: res.data?.canSelectClass === true,
           selectedClass: res.data?.selectedClass ?? null,
         });
       })
       .catch(() => {
         if (!active) return;
-        setStatus({ loading: false, isPaid: false, isQuickTrial: false, selectedClass: null });
+        setStatus({ loading: false, isPaid: false, canSelectClass: false, selectedClass: null });
       });
 
     return () => {
@@ -70,7 +70,7 @@ export default function SuccessClient() {
   }, [paymentId]);
 
   const hasSelectedClass = !!status.selectedClass;
-  const showPickClassCta = !!paymentId && !hasSelectedClass && !status.loading;
+  const showPickClassCta = !!paymentId && !hasSelectedClass && !status.loading && status.canSelectClass;
   const awaitingPaymentConfirm =
     !!paymentId && !status.loading && !status.isPaid && !hasSelectedClass;
 
