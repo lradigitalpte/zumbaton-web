@@ -3,6 +3,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingSideActions from "@/components/FloatingSideActions";
+import AIChatWidget from "@/components/AIChatWidget";
 import { WhatsAppModalProvider } from "@/context/WhatsAppModalContext";
 import { usePathname } from "next/navigation";
 
@@ -22,7 +23,9 @@ export default function PublicLayout({
         {!isLandingPage && <Header />}
         {children}
         {!isAuthPage && !isLandingPage && <Footer />}
-        {!isLandingPage && <FloatingSideActions />}      </div>
+        {!isLandingPage && <FloatingSideActions />}
+        {!isLandingPage && <AIChatWidget />}
+      </div>
     </WhatsAppModalProvider>
   );
 }
