@@ -6,7 +6,7 @@ import Image from "next/image";
 type CoachAvatar = { name: string; image?: string };
 
 const coaches: CoachAvatar[] = [
-  { name: "Laavania", image: "/images/coach-lavs.jfif" },
+  { name: "Micky", image: "/unnamed8.jpg" },
   { name: "Robert", image: "/images/robert.jfif" },
   { name: "Fizah" },
 ];

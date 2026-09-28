@@ -26,11 +26,11 @@ function instructorBookName(name: string): string {
 const instructors: Instructor[] = [
   {
     id: "1",
-    name: "Coach Lavs (Laavania)",
+    name: "Micky",
     role: "Dance Fitness Instructor",
-    bio: "Coach Lavs (Laavania) leads an active, wellness-driven lifestyle and believes fitness should be fun, empowering, and sustainable. With a performance background from Mediacorp Vasantham, her journey as a dance fitness instructor stems from her love for dance, music, and helping people move with confidence. She creates high-energy yet welcoming classes where participants can sweat, smile, and feel good in their bodies.",
-    image: "/images/coach-lavs.jfif",
-    specialties: ["Lil Steppers", "One Familia"],
+    bio: "A dancer at heart, exploring Hip-Hop, Dancehall and Afro Fusion. I love movement that feels grounded, expressive and full of groove, using dance as a space to connect with music, energy and my own individuality.",
+    image: "/unnamed8.jpg",
+    specialties: ["Groove Stepper Synchronized Dance"],
   },
   {
     id: "2",

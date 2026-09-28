@@ -15,7 +15,7 @@ Slogan: **one step to change your life**
 
 ### Class Offerings
 - **Zumba Step** (Coach: Robert)
-- **Groove Stepper** (Coach: Laavania)
+- **Groove Stepper** (Coaches: Robert & Micky)
 - **ThunderBolt Full Body Workout** (Tabata style)
 - **Lil Steppers** (Kids)
 - **ZumFiesta** (Outdoor class)
@@ -107,7 +107,7 @@ Add a dedicated section/page describing ThunderBolt Tabata workout with benefits
 - Update header, footer, homepage hero, About, metadata, and SEO title/description.
 - Replace class cards and schedule labels with new class names.
 - Add ThunderBolt info content block/page.
-- Add instructor attribution where needed (Robert, Laavania).
+- Add instructor attribution where needed (Robert, Micky, Fizah).
 
 **Exit criteria**
 - No stale "Zumbaton" branding in visible pages (except optional legal/internal references).

@@ -145,7 +145,7 @@ export const zumbaClasses: ZumbaClass[] = [
     duration: "60 min",
     intensity: "Beginner",
     calories: "200-300",
-    instructor: "Laavania",
+    instructor: "One Step Fitness Team",
     energy: 1,
     highlights: [
       {
