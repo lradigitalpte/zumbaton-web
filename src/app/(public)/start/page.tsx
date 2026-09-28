@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { HorizontalScrollCarousel } from "@/components/Common/HorizontalScrollCarousel";
 import { OfferCountdownBadge, useOfferCountdown } from "@/components/Start/OfferCountdown";
+import StartClassPickModal from "@/components/Start/StartClassPickModal";
 import { TrialAlreadyBookedBanner } from "@/components/Common/TrialAlreadyBookedBanner";
 import { useTrialEligibilityCheck } from "@/hooks/useTrialEligibilityCheck";
 
@@ -116,6 +117,8 @@ export default function StartPage() {
   const [error, setError] = useState<string | null>(null);
   const [reserved, setReserved] = useState(false);
   const [configLoaded, setConfigLoaded] = useState(false);
+  const [classModalOpen, setClassModalOpen] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -169,44 +172,47 @@ export default function StartPage() {
   const offerEndsLabel = promo.endDate ? formatOfferEndDate(promo.endDate) : null;
   const countdown = useOfferCountdown();
 
-  const handleJoin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const validateForm = (): boolean => {
     setError(null);
 
     if (!configLoaded) {
       setError("Please wait while we load the current offer.");
-      return;
+      return false;
     }
 
     if (trialEligibility.status === "blocked") {
       setError("This email/phone has already used a trial. Please sign up to book a class.");
-      return;
+      return false;
     }
 
     if (!form.name.trim() || !form.phone.trim() || !form.email.trim()) {
       setError("Please enter your name, phone and email.");
-      return;
+      return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
       setError("Please enter a valid email. Your receipt is sent there.");
-      return;
+      return false;
     }
     if (bringFriend) {
       if (!companion.name.trim() || !companion.phone.trim() || !companion.email.trim()) {
         setError("Please enter your friend's name, phone and email, or uncheck “bring a friend”.");
-        return;
+        return false;
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(companion.email.trim())) {
         setError("Please enter a valid email for your friend.");
-        return;
+        return false;
       }
     }
     if (!agreedToTerms) {
       setError("Please agree to the terms and waiver to continue.");
-      return;
+      return false;
     }
+    return true;
+  };
 
+  const submitQuickJoin = async (classId?: string) => {
     setProcessing(true);
+    setModalError(null);
     try {
       const res = await fetch("/api/promos/quick-join", {
         method: "POST",
@@ -220,6 +226,7 @@ export default function StartPage() {
           bookingFlow: isDuoBooking ? "duo" : "trial",
           preferredNote: form.preferredNote.trim() || undefined,
           termsAgreed: true,
+          classId: isFastTrial ? classId : undefined,
           companion:
             bringFriend && isDuoBooking
               ? {
@@ -238,23 +245,57 @@ export default function StartPage() {
           return;
         }
         if (result.reserved) {
+          setClassModalOpen(false);
           setReserved(true);
           return;
         }
       }
-      setError(result.message || result.error || "Something went wrong. Please try again.");
+      const message = result.message || result.error || "Something went wrong. Please try again.";
+      if (isFastTrial && classModalOpen) {
+        setModalError(message);
+      } else {
+        setError(message);
+      }
     } catch {
-      setError("Something went wrong. Please try again.");
+      const message = "Something went wrong. Please try again.";
+      if (isFastTrial && classModalOpen) {
+        setModalError(message);
+      } else {
+        setError(message);
+      }
     } finally {
       setProcessing(false);
     }
   };
 
+  const handleJoin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    if (isFastTrial) {
+      setModalError(null);
+      setClassModalOpen(true);
+      return;
+    }
+
+    void submitQuickJoin();
+  };
+
+  const handleClassConfirm = (classId: string) => {
+    void submitQuickJoin(classId);
+  };
+
   const ctaLabel = !payOnline
-    ? "Reserve my risk-free trial"
+    ? isFastTrial
+      ? "Choose class & reserve"
+      : "Reserve my risk-free trial"
     : promo.paymentTerms === "deposit"
-      ? `Claim my trial, ${formatPrice(chargeCents)} deposit`
-      : `Claim my risk-free trial, ${formatPrice(chargeCents)}`;
+      ? isFastTrial
+        ? `Choose class & pay ${formatPrice(chargeCents)} deposit`
+        : `Claim my trial, ${formatPrice(chargeCents)} deposit`
+      : isFastTrial
+        ? `Choose class & pay ${formatPrice(chargeCents)}`
+        : `Claim my risk-free trial, ${formatPrice(chargeCents)}`;
 
   return (
     <main className="bg-[#f6f4ee] text-gray-900">
@@ -431,7 +472,7 @@ export default function StartPage() {
                     </div>
                     <p className="mt-3 text-center text-xs font-bold text-black/75">
                       {isDuoBooking ? "Bring a friend for the same price. " : ""}
-                      Book now, attend an eligible class within 12 months.
+                      Pick your class, then pay securely online.
                     </p>
                     {offerEndsLabel && (
                       <p className="mt-2.5 text-center text-[10px] font-bold uppercase tracking-wide text-black/70 sm:text-xs">
@@ -719,7 +760,9 @@ export default function StartPage() {
                     </p>
                     <p className="flex items-center justify-center gap-1.5 text-xs text-gray-600">
                       <Clock className="h-3.5 w-3.5 text-lime-600" />
-                      We&apos;ll message you {RESPONSE_PROMISE} to confirm your class.
+                      {isFastTrial
+                        ? "You'll choose your class next, then complete checkout."
+                        : `We'll message you ${RESPONSE_PROMISE} to confirm your class.`}
                     </p>
                     {payOnline && promo.paymentTerms === "deposit" && balanceCents > 0 && (
                       <p className="text-xs text-gray-500">
@@ -756,7 +799,7 @@ export default function StartPage() {
             {[
               { icon: ShieldCheck, title: "Risk-free", text: "Full refund if you do not enjoy class." },
               { icon: Users, title: "Bring a friend", text: "Two first-timers can join for the same price." },
-              { icon: CalendarDays, title: "12 months", text: "Plenty of time to choose an eligible class." },
+              { icon: CalendarDays, title: "Pick your slot", text: "Choose an eligible class before you pay." },
               { icon: Flame, title: "Beginner ready", text: "Follow modifications and move at your pace." },
             ].map((item) => (
               <div key={item.title} className="border-b border-r border-white/20 p-4 sm:p-6">
@@ -892,8 +935,8 @@ export default function StartPage() {
           </h2>
           <div className="mx-auto grid max-w-lg grid-cols-3 gap-2 sm:max-w-none sm:gap-8">
             {[
-              { step: "01", text: "Reserve and pay online in under a minute" },
-              { step: "02", text: "Choose any eligible class within 12 months" },
+              { step: "01", text: "Enter your details and agree to the terms" },
+              { step: "02", text: "Pick your trial class, then pay online" },
               { step: "03", text: "Dance risk free. Love it or get a refund" },
             ].map((s) => (
               <div key={s.step} className="flex flex-col items-center rounded border border-black/10 bg-[#f6f4ee] p-2.5 text-center sm:border-0 sm:bg-transparent sm:p-0">
@@ -1030,6 +1073,19 @@ export default function StartPage() {
           © {new Date().getFullYear()} One Step Fitness. All rights reserved.
         </p>
       </footer>
+
+      {isFastTrial && (
+        <StartClassPickModal
+          isOpen={classModalOpen}
+          onClose={() => {
+            if (!processing) setClassModalOpen(false);
+          }}
+          venue="studio"
+          onConfirm={handleClassConfirm}
+          confirming={processing}
+          confirmError={modalError}
+        />
+      )}
     </main>
   );
 }

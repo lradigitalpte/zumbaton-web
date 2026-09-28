@@ -18,6 +18,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
 import { getDuoPromoConfig, isDuoPromoExpired, computeCharge, isOutdoorQuickJoinAvailable, isFastTrialStartAllowed } from '@/lib/duo-promo-config'
+import { getTrialBookingEffectiveAgeGroup } from '@/lib/trial-booking-display'
+import {
+  BOOKING_WINDOW_CLOSED_MESSAGE,
+  isBookingWindowOpen,
+  logBookingWindowRejection,
+} from '@/lib/booking-window'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,6 +50,7 @@ const QuickJoinSchema = z.object({
   bookingFlow: z.enum(['duo', 'trial']).optional(),
   termsAgreed: z.literal(true, { errorMap: () => ({ message: 'Please agree to the terms and waiver to continue.' }) }),
   preferredNote: z.string().max(500).optional(),
+  classId: z.string().uuid('Invalid class ID').optional(),
   companion: z
     .object({
       name: z.string().min(1, "Please enter your friend's name").max(200),
@@ -68,9 +75,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
     const { name, email, phone, gender, preferredNote, companion } = parsed.data
+    const classId = parsed.data.classId
     const bookingFlow = parsed.data.bookingFlow ?? 'duo'
     const isFastTrial = bookingFlow === 'trial'
     const venue = isFastTrial ? 'studio' : (parsed.data.venue ?? 'studio')
+
+    if (isFastTrial && !classId) {
+      return NextResponse.json(
+        { error: 'Validation Error', message: 'Please choose a class before paying.' },
+        { status: 400 }
+      )
+    }
 
     // Promo must be active (or fast trial allowed)
     const promoConfig = await getDuoPromoConfig()
@@ -154,6 +169,85 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       : `JOIN-${venue}-${Date.now()}`
     const payOnline = promoConfig.paymentTerms !== 'none' && chargeCents > 0
 
+    let classData: {
+      id: string
+      title: string
+      scheduled_at: string
+      capacity: number
+      is_outdoor: boolean | null
+      age_group: string | null
+      location: string | null
+      instructor_name: string | null
+    } | null = null
+
+    if (isFastTrial && classId) {
+      const { data: cls, error: classErr } = await supabaseAdmin
+        .from('classes')
+        .select('id, title, scheduled_at, capacity, status, is_outdoor, age_group, location, instructor_name')
+        .eq('id', classId)
+        .eq('status', 'scheduled')
+        .single()
+
+      if (classErr || !cls) {
+        return NextResponse.json(
+          { error: 'Class not found', message: 'That class is no longer available. Please pick another.' },
+          { status: 404 }
+        )
+      }
+
+      if (Boolean(cls.is_outdoor)) {
+        return NextResponse.json(
+          { error: 'Class not eligible', message: 'Outdoor classes are not available for this offer.' },
+          { status: 400 }
+        )
+      }
+
+      if (getTrialBookingEffectiveAgeGroup(cls.title, cls.age_group) === 'kid') {
+        return NextResponse.json(
+          { error: 'Class not eligible', message: 'Kids classes are not available for this offer.' },
+          { status: 400 }
+        )
+      }
+
+      if (!isBookingWindowOpen(cls.scheduled_at)) {
+        logBookingWindowRejection('start quick trial payment')
+        return NextResponse.json(
+          { error: 'Booking Closed', message: BOOKING_WINDOW_CLOSED_MESSAGE },
+          { status: 400 }
+        )
+      }
+
+      const { data: existingBookings } = await supabaseAdmin
+        .from('bookings')
+        .select('id')
+        .eq('class_id', classId)
+        .in('status', ['confirmed', 'attended'])
+
+      const bookedCount = existingBookings?.length ?? 0
+      if (bookedCount + 1 > (cls.capacity ?? 0)) {
+        return NextResponse.json(
+          { error: 'Class Full', message: 'This class is full. Please choose another session.' },
+          { status: 400 }
+        )
+      }
+
+      const { data: duplicateGuest } = await supabaseAdmin
+        .from('bookings')
+        .select('id')
+        .eq('class_id', classId)
+        .eq('guest_email', email)
+        .in('status', ['confirmed', 'attended', 'draft'])
+
+      if (duplicateGuest && duplicateGuest.length > 0) {
+        return NextResponse.json(
+          { error: 'Already Booked', message: 'You already have a booking for this class.' },
+          { status: 400 }
+        )
+      }
+
+      classData = cls
+    }
+
     // Companion ("bring a friend") is only offered on the duo flow, and rides on the
     // same $23 payment — staff create a second booking row for them at scheduling time.
     const companionNote = companion
@@ -161,10 +255,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       : ''
     const combinedNote = [companionNote, preferredNote].filter(Boolean).join(' | ')
 
+    const classPreselected = isFastTrial && classData != null
     const leadMetadata = {
       flow_type: isFastTrial ? 'quick_trial' : 'quick_join',
-      needs_scheduling: true,
-      lead_status: 'new',
+      needs_scheduling: !classPreselected,
+      lead_status: classPreselected ? 'class_selected' : 'new',
       venue,
       promo_label: venueLabel,
       payment_terms: promoConfig.paymentTerms,
@@ -185,11 +280,48 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       reference_number: referenceNumber,
       terms_agreed: true,
       terms_agreed_at: new Date().toISOString(),
+      ...(classPreselected && classData
+        ? {
+            selected_class_id: classData.id,
+            class_title: classData.title,
+            class_scheduled_at: classData.scheduled_at,
+          }
+        : {}),
+    }
+
+    let draftBookingId: string | null = null
+    if (classPreselected && classData) {
+      const { data: draftBooking, error: draftErr } = await supabaseAdmin
+        .from('bookings')
+        .insert({
+          class_id: classData.id,
+          guest_name: name,
+          guest_email: email,
+          guest_phone: phone,
+          is_trial_booking: true,
+          status: 'draft',
+          tokens_used: 0,
+          booked_at: new Date().toISOString(),
+          cancellation_reason: 'START TRIAL — class chosen before payment',
+        })
+        .select('id')
+        .single()
+
+      if (draftErr || !draftBooking) {
+        console.error('[Quick Join] Error creating draft booking:', draftErr)
+        return NextResponse.json(
+          { error: 'Server Error', message: draftErr?.message || 'Failed to hold your class spot' },
+          { status: 500 }
+        )
+      }
+      draftBookingId = draftBooking.id
+      Object.assign(leadMetadata, { draft_booking_id: draftBooking.id })
     }
 
     // ── No-payment mode: just capture the lead, no HitPay ──
     if (!payOnline) {
       const { error: leadError } = await supabaseAdmin.from('payments').insert({
+        class_id: classPreselected ? classData?.id ?? null : null,
         is_trial_booking: true,
         amount_cents: totalCents, // amount owed (collected at studio)
         currency: 'SGD',
@@ -228,6 +360,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const { data: paymentRecord, error: paymentError } = await supabaseAdmin
       .from('payments')
       .insert({
+        class_id: classPreselected ? classData?.id ?? null : null,
         is_trial_booking: true,
         amount_cents: chargeCents, // amount charged online now (full or deposit)
         currency: 'SGD',
@@ -254,19 +387,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    const postPaymentPath = isFastTrial
-      ? `/start/pick-class?payment_id=${paymentRecord.id}`
-      : `/start/success?payment_id=${paymentRecord.id}`
+    if (draftBookingId) {
+      await supabaseAdmin
+        .from('bookings')
+        .update({ payment_id: paymentRecord.id })
+        .eq('id', draftBookingId)
+    }
+
+    const postPaymentPath = `/start/success?payment_id=${paymentRecord.id}`
     const redirectUrl = `${APP_URL}${postPaymentPath}`.replace(/([^:]\/)\/+/g, '$1')
     const webhookUrl = `${APP_URL}/api/payments/webhook`.replace(/([^:]\/)\/+/g, '$1')
     const isDeposit = promoConfig.paymentTerms === 'deposit'
     const purpose = isDeposit
       ? `Deposit — ${venueLabel} (balance $${(balanceCents / 100).toFixed(2)} at studio)`
-      : isFastTrial
-        ? 'Studio trial class'
-        : venue === 'outdoor'
-          ? 'Outdoor 1-for-1 class'
-          : 'Studio 1-for-1 class'
+      : classPreselected && classData
+        ? `Trial — ${classData.title}`
+        : isFastTrial
+          ? 'Studio trial class'
+          : venue === 'outdoor'
+            ? 'Outdoor 1-for-1 class'
+            : 'Studio 1-for-1 class'
 
     const hitpayResponse = await fetch(`${HITPAY_API_URL}/payment-requests`, {
       method: 'POST',
@@ -329,9 +469,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         guestName: name,
         guestEmail: email,
         guestPhone: phone,
-        className: isFastTrial
-          ? 'Class not selected yet'
-          : `${venueLabel} — staff scheduling required${companion ? ` · +1: ${companion.name}` : ''}`,
+        className:
+          classPreselected && classData
+            ? classData.title
+            : isFastTrial
+              ? 'Class not selected yet'
+              : `${venueLabel} — staff scheduling required${companion ? ` · +1: ${companion.name}` : ''}`,
       })
     } catch (alertError) {
       console.error('[Quick Join] Non-critical: failed to send initiated payment alert:', alertError)

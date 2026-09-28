@@ -306,8 +306,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         return NextResponse.json({ received: true, message: 'ZumFamilia booking processed' })
       }
 
-      // Handle Quick Join / Fast Trial (pay-first, no class) — staff schedule the guest later
-      if (flowType === 'quick_join' || flowType === 'quick_trial') {
+      // Handle Quick Join / Fast Trial without a pre-selected class — staff schedule later
+      const quickTrialNeedsScheduling =
+        flowType === 'quick_trial' && !payment.class_id && !metadata.selected_class_id
+      if (flowType === 'quick_join' || quickTrialNeedsScheduling) {
         console.log('[Webhook] Processing pay-first lead:', payment.id, flowType)
 
         await supabase
