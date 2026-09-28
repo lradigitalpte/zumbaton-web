@@ -226,7 +226,7 @@ export default function StartPage() {
           bookingFlow: isDuoBooking ? "duo" : "trial",
           preferredNote: form.preferredNote.trim() || undefined,
           termsAgreed: true,
-          classId: isFastTrial ? classId : undefined,
+          classId,
           companion:
             bringFriend && isDuoBooking
               ? {
@@ -251,14 +251,14 @@ export default function StartPage() {
         }
       }
       const message = result.message || result.error || "Something went wrong. Please try again.";
-      if (isFastTrial && classModalOpen) {
+      if (classModalOpen) {
         setModalError(message);
       } else {
         setError(message);
       }
     } catch {
       const message = "Something went wrong. Please try again.";
-      if (isFastTrial && classModalOpen) {
+      if (classModalOpen) {
         setModalError(message);
       } else {
         setError(message);
@@ -272,13 +272,8 @@ export default function StartPage() {
     e.preventDefault();
     if (!validateForm()) return;
 
-    if (isFastTrial) {
-      setModalError(null);
-      setClassModalOpen(true);
-      return;
-    }
-
-    void submitQuickJoin();
+    setModalError(null);
+    setClassModalOpen(true);
   };
 
   const handleClassConfirm = (classId: string) => {
@@ -286,16 +281,10 @@ export default function StartPage() {
   };
 
   const ctaLabel = !payOnline
-    ? isFastTrial
-      ? "Choose class & reserve"
-      : "Reserve my risk-free trial"
+    ? "Choose class & reserve"
     : promo.paymentTerms === "deposit"
-      ? isFastTrial
-        ? `Choose class & pay ${formatPrice(chargeCents)} deposit`
-        : `Claim my trial, ${formatPrice(chargeCents)} deposit`
-      : isFastTrial
-        ? `Choose class & pay ${formatPrice(chargeCents)}`
-        : `Claim my risk-free trial, ${formatPrice(chargeCents)}`;
+      ? `Choose class & pay ${formatPrice(chargeCents)} deposit`
+      : `Choose class & pay ${formatPrice(chargeCents)}`;
 
   return (
     <main className="bg-[#f6f4ee] text-gray-900">
@@ -760,9 +749,7 @@ export default function StartPage() {
                     </p>
                     <p className="flex items-center justify-center gap-1.5 text-xs text-gray-600">
                       <Clock className="h-3.5 w-3.5 text-lime-600" />
-                      {isFastTrial
-                        ? "You'll choose your class next, then complete checkout."
-                        : `We'll message you ${RESPONSE_PROMISE} to confirm your class.`}
+                      You&apos;ll choose your class next, then complete checkout.
                     </p>
                     {payOnline && promo.paymentTerms === "deposit" && balanceCents > 0 && (
                       <p className="text-xs text-gray-500">
@@ -1074,18 +1061,16 @@ export default function StartPage() {
         </p>
       </footer>
 
-      {isFastTrial && (
-        <StartClassPickModal
-          isOpen={classModalOpen}
-          onClose={() => {
-            if (!processing) setClassModalOpen(false);
-          }}
-          venue="studio"
-          onConfirm={handleClassConfirm}
-          confirming={processing}
-          confirmError={modalError}
-        />
-      )}
+      <StartClassPickModal
+        isOpen={classModalOpen}
+        onClose={() => {
+          if (!processing) setClassModalOpen(false);
+        }}
+        venue={isDuoBooking ? venue : "studio"}
+        onConfirm={handleClassConfirm}
+        confirming={processing}
+        confirmError={modalError}
+      />
     </main>
   );
 }

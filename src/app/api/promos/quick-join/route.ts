@@ -80,7 +80,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const isFastTrial = bookingFlow === 'trial'
     const venue = isFastTrial ? 'studio' : (parsed.data.venue ?? 'studio')
 
-    if (isFastTrial && !classId) {
+    if (!classId) {
       return NextResponse.json(
         { error: 'Validation Error', message: 'Please choose a class before paying.' },
         { status: 400 }
@@ -180,7 +180,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       instructor_name: string | null
     } | null = null
 
-    if (isFastTrial && classId) {
+    const wantsOutdoor = venue === 'outdoor'
+    const spotsNeeded = companion ? 2 : 1
+
+    {
       const { data: cls, error: classErr } = await supabaseAdmin
         .from('classes')
         .select('id, title, scheduled_at, capacity, status, is_outdoor, age_group, location, instructor_name')
@@ -195,9 +198,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         )
       }
 
-      if (Boolean(cls.is_outdoor)) {
+      if (Boolean(cls.is_outdoor) !== wantsOutdoor) {
         return NextResponse.json(
-          { error: 'Class not eligible', message: 'Outdoor classes are not available for this offer.' },
+          {
+            error: 'Class not eligible',
+            message: wantsOutdoor
+              ? 'Please choose one of our outdoor sessions.'
+              : 'That session is not eligible for this offer. Pick a studio class.',
+          },
           { status: 400 }
         )
       }
@@ -210,7 +218,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
 
       if (!isBookingWindowOpen(cls.scheduled_at)) {
-        logBookingWindowRejection('start quick trial payment')
+        logBookingWindowRejection('start quick-join payment')
         return NextResponse.json(
           { error: 'Booking Closed', message: BOOKING_WINDOW_CLOSED_MESSAGE },
           { status: 400 }
@@ -224,9 +232,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         .in('status', ['confirmed', 'attended'])
 
       const bookedCount = existingBookings?.length ?? 0
-      if (bookedCount + 1 > (cls.capacity ?? 0)) {
+      if (bookedCount + spotsNeeded > (cls.capacity ?? 0)) {
         return NextResponse.json(
-          { error: 'Class Full', message: 'This class is full. Please choose another session.' },
+          {
+            error: 'Class Full',
+            message: companion
+              ? 'Not enough spots left for you and your friend. Please choose another session.'
+              : 'This class is full. Please choose another session.',
+          },
           { status: 400 }
         )
       }
@@ -245,17 +258,32 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         )
       }
 
+      if (companion) {
+        const { data: duplicateCompanion } = await supabaseAdmin
+          .from('bookings')
+          .select('id')
+          .eq('class_id', classId)
+          .eq('guest_email', companion.email)
+          .in('status', ['confirmed', 'attended', 'draft'])
+
+        if (duplicateCompanion && duplicateCompanion.length > 0) {
+          return NextResponse.json(
+            { error: 'Already Booked', message: 'Your friend already has a booking for this class.' },
+            { status: 400 }
+          )
+        }
+      }
+
       classData = cls
     }
 
-    // Companion ("bring a friend") is only offered on the duo flow, and rides on the
-    // same $23 payment — staff create a second booking row for them at scheduling time.
+    // Companion ("bring a friend") on duo flow — second draft booking at checkout.
     const companionNote = companion
       ? `Bringing a friend: ${companion.name} (${companion.phone}, ${companion.email})`
       : ''
     const combinedNote = [companionNote, preferredNote].filter(Boolean).join(' | ')
 
-    const classPreselected = isFastTrial && classData != null
+    const classPreselected = classData != null
     const leadMetadata = {
       flow_type: isFastTrial ? 'quick_trial' : 'quick_join',
       needs_scheduling: !classPreselected,
@@ -289,8 +317,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         : {}),
     }
 
-    let draftBookingId: string | null = null
+    const draftBookingIds: string[] = []
     if (classPreselected && classData) {
+      const draftReason = isFastTrial
+        ? 'START TRIAL — class chosen before payment'
+        : 'START QUICK JOIN — class chosen before payment'
+
       const { data: draftBooking, error: draftErr } = await supabaseAdmin
         .from('bookings')
         .insert({
@@ -302,7 +334,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           status: 'draft',
           tokens_used: 0,
           booked_at: new Date().toISOString(),
-          cancellation_reason: 'START TRIAL — class chosen before payment',
+          cancellation_reason: draftReason,
         })
         .select('id')
         .single()
@@ -314,8 +346,40 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           { status: 500 }
         )
       }
-      draftBookingId = draftBooking.id
-      Object.assign(leadMetadata, { draft_booking_id: draftBooking.id })
+      draftBookingIds.push(draftBooking.id)
+
+      if (companion) {
+        const { data: companionDraft, error: companionDraftErr } = await supabaseAdmin
+          .from('bookings')
+          .insert({
+            class_id: classData.id,
+            guest_name: companion.name,
+            guest_email: companion.email,
+            guest_phone: companion.phone,
+            is_trial_booking: true,
+            status: 'draft',
+            tokens_used: 0,
+            booked_at: new Date().toISOString(),
+            cancellation_reason: `START QUICK JOIN — companion of ${name}`,
+          })
+          .select('id')
+          .single()
+
+        if (companionDraftErr || !companionDraft) {
+          console.error('[Quick Join] Error creating companion draft booking:', companionDraftErr)
+          await supabaseAdmin.from('bookings').delete().eq('id', draftBooking.id)
+          return NextResponse.json(
+            { error: 'Server Error', message: companionDraftErr?.message || 'Failed to hold spots for both guests' },
+            { status: 500 }
+          )
+        }
+        draftBookingIds.push(companionDraft.id)
+      }
+
+      Object.assign(leadMetadata, {
+        draft_booking_id: draftBookingIds[0],
+        ...(draftBookingIds.length > 1 ? { draft_booking_ids: draftBookingIds } : {}),
+      })
     }
 
     // ── No-payment mode: just capture the lead, no HitPay ──
@@ -387,11 +451,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    if (draftBookingId) {
+    if (draftBookingIds.length > 0) {
       await supabaseAdmin
         .from('bookings')
         .update({ payment_id: paymentRecord.id })
-        .eq('id', draftBookingId)
+        .in('id', draftBookingIds)
     }
 
     const postPaymentPath = `/start/success?payment_id=${paymentRecord.id}`
