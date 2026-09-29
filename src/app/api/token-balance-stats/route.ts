@@ -35,21 +35,31 @@ async function getTokenBalanceStatsHandler(request: NextRequest) {
   }
 
   let available = 0
-  let pending = 0
   for (const pkg of userPackages || []) {
     available += (pkg.tokens_remaining || 0) - (pkg.tokens_held || 0)
-    pending += pkg.tokens_held || 0
   }
+
+  // Tokens already spent on upcoming classes (tokens are charged at booking time)
+  const { data: upcomingRows } = await supabase
+    .from(TABLES.BOOKINGS)
+    .select('tokens_used, class:classes!inner(scheduled_at)')
+    .eq('user_id', userId)
+    .eq('status', 'confirmed')
+    .not('user_package_id', 'is', null)
+    .gt('class.scheduled_at', now)
+
+  const pending = (upcomingRows || []).reduce((sum, b) => sum + (b.tokens_used || 0), 0)
 
   const { data: usedRows } = await supabase
     .from(TABLES.TOKEN_TRANSACTIONS)
-    .select('tokens_change')
+    .select('tokens_change, transaction_type')
     .eq('user_id', userId)
-    .in('transaction_type', ['attendance-consume', 'no-show-consume', 'late-cancel-consume'])
-    .lt('tokens_change', 0)
+    .in('transaction_type', ['booking-consume', 'attendance-consume', 'no-show-consume', 'late-cancel-consume', 'refund'])
 
-  const used = Math.abs(
-    (usedRows || []).reduce((sum, tx) => sum + (tx.tokens_change || 0), 0)
+  // Charges minus refunds for bookings cancelled in time
+  const used = Math.max(
+    0,
+    -(usedRows || []).reduce((sum, tx) => sum + (tx.tokens_change || 0), 0)
   )
 
   const { data: expiredRows } = await supabase

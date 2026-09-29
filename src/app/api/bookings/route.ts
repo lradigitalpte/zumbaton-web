@@ -23,6 +23,7 @@ import {
   logBookingWindowRejection,
 } from '@/lib/booking-window'
 import { sendMemberBookingStaffNotifications } from '@/lib/member-booking-notifications'
+import { chargePackage, recordBookingCharges, refundBookingTokens } from '@/lib/token-ledger'
 
 export const dynamic = 'force-dynamic'
 
@@ -435,21 +436,26 @@ async function handleSingleBooking(userId: string, classId: string) {
       )
     }
 
-    // 7. Hold tokens
-    const { error: holdError } = await supabaseAdmin
-      .from('user_packages')
-      .update({
-        tokens_held: (selectedPackage.tokens_held || 0) + tokenCost,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', selectedPackage.id)
+    // 7. Charge tokens (spent at booking; refunded if cancelled by 23:59 the day before)
+    const tokensBefore = selectedPackage.tokens_remaining || 0
+    const charged = await chargePackage(supabaseAdmin, selectedPackage.id, tokensBefore, tokenCost)
 
-    if (holdError) {
+    if (!charged) {
       return NextResponse.json(
-        { success: false, error: { message: 'Failed to reserve tokens' } },
-        { status: 500 }
+        { success: false, error: { message: 'Your token balance changed while booking. Please try again.' } },
+        { status: 409 }
       )
     }
+
+    const rollbackCharge = () =>
+      refundBookingTokens(supabaseAdmin, {
+        userId,
+        userPackageId: selectedPackage.id,
+        bookingId: null,
+        tokens: tokenCost,
+        description: 'Rollback: booking creation failed',
+        recordLedger: false,
+      })
 
     // 8. Create booking
     const bookingData = {
@@ -476,14 +482,7 @@ async function handleSingleBooking(userId: string, classId: string) {
         .single()
 
       if (updateError) {
-        // Rollback token hold
-        await supabaseAdmin
-          .from('user_packages')
-          .update({
-            tokens_held: selectedPackage.tokens_held || 0,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', selectedPackage.id)
+        await rollbackCharge()
 
         const isFull = isCapacityError(updateError)
         return NextResponse.json(
@@ -501,14 +500,7 @@ async function handleSingleBooking(userId: string, classId: string) {
         .single()
 
       if (insertError) {
-        // Rollback token hold
-        await supabaseAdmin
-          .from('user_packages')
-          .update({
-            tokens_held: selectedPackage.tokens_held || 0,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', selectedPackage.id)
+        await rollbackCharge()
 
         const isFull = isCapacityError(insertError)
         return NextResponse.json(
@@ -520,27 +512,13 @@ async function handleSingleBooking(userId: string, classId: string) {
       bookingId = newBooking.id
     }
 
-    // 9. Create token transaction
-    await supabaseAdmin
-      .from('token_transactions')
-      .insert({
-        user_id: userId,
-        user_package_id: selectedPackage.id,
-        transaction_type: 'booking',
-        amount: -tokenCost,
-        description: `Booking for class: ${classData.title || classData.name}`,
-        booking_id: bookingId,
-      })
-
-    // 10. Update package tokens (reduce tokens_remaining, release held tokens)
-    await supabaseAdmin
-      .from('user_packages')
-      .update({
-        tokens_remaining: (selectedPackage.tokens_remaining || 0) - tokenCost,
-        tokens_held: (selectedPackage.tokens_held || 0) - tokenCost,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', selectedPackage.id)
+    // 9. Record the charge in the token history
+    await recordBookingCharges(supabaseAdmin, {
+      userId,
+      userPackageId: selectedPackage.id,
+      tokensBefore,
+      charges: [{ bookingId, tokens: tokenCost, description: `Booked class: ${classData.title || classData.name}` }],
+    })
 
     await sendMemberBookingStaffNotifications(supabaseAdmin, {
       memberUserId: userId,
@@ -734,21 +712,26 @@ async function handleCourseBooking(userId: string, parentClassId: string, parent
       )
     }
 
-    // 8. Hold tokens for the entire course
-    const { error: holdError } = await supabaseAdmin
-      .from('user_packages')
-      .update({
-        tokens_held: (selectedPackage.tokens_held || 0) + totalTokensNeeded,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', selectedPackage.id)
+    // 8. Charge tokens for the entire course (one ledger row per session once bookings exist)
+    const tokensBefore = selectedPackage.tokens_remaining || 0
+    const charged = await chargePackage(supabaseAdmin, selectedPackage.id, tokensBefore, totalTokensNeeded)
 
-    if (holdError) {
+    if (!charged) {
       return NextResponse.json(
-        { success: false, error: { message: 'Failed to reserve tokens' } },
-        { status: 500 }
+        { success: false, error: { message: 'Your token balance changed while booking. Please try again.' } },
+        { status: 409 }
       )
     }
+
+    const rollbackCharge = () =>
+      refundBookingTokens(supabaseAdmin, {
+        userId,
+        userPackageId: selectedPackage.id,
+        bookingId: null,
+        tokens: totalTokensNeeded,
+        description: 'Rollback: course booking creation failed',
+        recordLedger: false,
+      })
 
     // 9. Create bookings for all future sessions
     const bookingsToCreate = futureSessions.map((session: any) => ({
@@ -766,14 +749,7 @@ async function handleCourseBooking(userId: string, parentClassId: string, parent
       .select('id')
 
     if (bookingsError) {
-      // Rollback: release tokens
-      await supabaseAdmin
-        .from('user_packages')
-        .update({
-          tokens_held: selectedPackage.tokens_held || 0,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', selectedPackage.id)
+      await rollbackCharge()
 
       const isFull = isCapacityError(bookingsError)
       return NextResponse.json(
@@ -783,14 +759,7 @@ async function handleCourseBooking(userId: string, parentClassId: string, parent
     }
 
     if (!createdBookings || createdBookings.length === 0) {
-      // Rollback: release tokens
-      await supabaseAdmin
-        .from('user_packages')
-        .update({
-          tokens_held: selectedPackage.tokens_held || 0,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', selectedPackage.id)
+      await rollbackCharge()
 
       return NextResponse.json(
         { success: false, error: { message: 'Failed to create course bookings' } },
@@ -798,29 +767,17 @@ async function handleCourseBooking(userId: string, parentClassId: string, parent
       )
     }
 
-    // 10. Create token transactions for each booking
-    for (const booking of createdBookings) {
-      await supabaseAdmin
-        .from('token_transactions')
-        .insert({
-          user_id: userId,
-          user_package_id: selectedPackage.id,
-          transaction_type: 'booking',
-          amount: -tokenCostPerSession,
-          description: `Course booking: ${parentClassData.title || parentClassData.name}`,
-          booking_id: booking.id,
-        })
-    }
-
-    // 11. Update package tokens (reduce tokens_remaining, release held tokens)
-    await supabaseAdmin
-      .from('user_packages')
-      .update({
-        tokens_remaining: (selectedPackage.tokens_remaining || 0) - totalTokensNeeded,
-        tokens_held: (selectedPackage.tokens_held || 0) - totalTokensNeeded,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', selectedPackage.id)
+    // 10. Record one charge per session in the token history
+    await recordBookingCharges(supabaseAdmin, {
+      userId,
+      userPackageId: selectedPackage.id,
+      tokensBefore,
+      charges: createdBookings.map((booking) => ({
+        bookingId: booking.id,
+        tokens: tokenCostPerSession,
+        description: `Booked course session: ${parentClassData.title || parentClassData.name}`,
+      })),
+    })
 
     await sendMemberBookingStaffNotifications(supabaseAdmin, {
       memberUserId: userId,

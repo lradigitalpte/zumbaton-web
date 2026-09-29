@@ -157,7 +157,7 @@ const BookingConfirmationModal = ({
                   {classItem.tokens_required} token{classItem.tokens_required !== 1 ? 's' : ''}
                 </p>
                 <p className="text-xs text-body-color dark:text-gray-400 mt-0.5">
-                  {isCourse ? `for all ${totalSessions} sessions` : 'will be reserved'}
+                  {isCourse ? `for all ${totalSessions} sessions` : 'used when you book'}
                 </p>
               </div>
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
