@@ -1083,10 +1083,12 @@ async function joinWaitlist(
 }
 
 /**
- * Cancel a booking - handles cancellation window and token refund/penalty
+ * Cancel a booking. Runs on the server (/api/bookings/[id]/cancel): cancelling by
+ * 23:59 the day before the class refunds the token; same-day cancellation is not allowed.
+ * Throws with the server's message if the booking can't be cancelled.
  */
 export async function cancelBooking(
-  userId: string,
+  _userId: string,
   bookingId: string,
   reason?: string
 ): Promise<{
@@ -1095,194 +1097,26 @@ export async function cancelBooking(
   tokensRefunded?: number
   penalty?: boolean
 }> {
-  // Use one direct local cancellation path for consistency and reliability.
-  const supabase = getSupabaseClient()
+  const { apiFetchJson } = await import('./api-fetch')
+  const result = await apiFetchJson<{
+    success: boolean
+    data?: { tokensRefunded: number; message: string }
+    error?: { message?: string }
+  }>(`/api/bookings/${bookingId}/cancel`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+    requireAuth: true,
+  })
 
-  try {
-    // Get booking settings
-    const settings = await getBookingSettings()
+  if (!result.success || !result.data) {
+    throw new Error(result.error?.message || 'Failed to cancel booking')
+  }
 
-    // 1. Get booking with class details
-    const { data: booking, error: fetchError } = await supabase
-      .from(TABLES.BOOKINGS)
-      .select(`
-        *,
-        class:classes (
-          scheduled_at,
-          title
-        )
-      `)
-      .eq('id', bookingId)
-      .eq('user_id', userId)
-      .maybeSingle()
-
-    if (fetchError || !booking) {
-      return {
-        success: false,
-        message: 'Booking not found',
-      }
-    }
-
-    if (booking.status !== 'confirmed') {
-      return {
-        success: false,
-        message: `Cannot cancel booking with status: ${booking.status}`,
-      }
-    }
-
-    const classData = Array.isArray((booking as any).class) 
-      ? (booking as any).class[0] 
-      : (booking as any).class
-
-    if (!classData) {
-      return {
-        success: false,
-        message: 'Class information not found',
-      }
-    }
-
-    // 2. Check if class has already started
-    const classTime = new Date(classData.scheduled_at)
-    const now = new Date()
-    
-    if (classTime <= now) {
-      return {
-        success: false,
-        message: 'Cannot cancel after class has started',
-      }
-    }
-
-    // 3. Check cancellation window
-    // Policy: refundable token only if cancellation is done the day before class, latest by 23:59 of the previous day.
-    // Disallow same-day cancellations (no cancellation on class date).
-    const classDateStart = new Date(classTime)
-    classDateStart.setHours(0, 0, 0, 0)
-
-    // End of previous day (23:59:59.999 before class date)
-    const previousDayEnd = new Date(classDateStart.getTime() - 1)
-
-    // If now is on the same calendar date as class -> disallow cancellation
-    const nowDate = new Date(now)
-    nowDate.setHours(0, 0, 0, 0)
-    const classDayDate = new Date(classDateStart)
-    classDayDate.setHours(0, 0, 0, 0)
-
-    if (nowDate.getTime() === classDayDate.getTime()) {
-      return {
-        success: false,
-        message: 'Same-day cancellations are not allowed. Please cancel by 23:59 the day before the class to receive a refund.',
-      }
-    }
-
-    // If now is before or equal to previousDayEnd => free cancellation (refund)
-    const isWithinWindow = now.getTime() <= previousDayEnd.getTime()
-    // If now is after previousDayEnd but before class start, treat as late cancellation (penalty)
-    const isLateCancel = now.getTime() > previousDayEnd.getTime() && now.getTime() < classTime.getTime()
-
-    let newStatus: 'cancelled' | 'cancelled-late'
-    let tokensRefunded = 0
-
-    // Get current package state
-    const { data: userPackage } = await supabase
-      .from(TABLES.USER_PACKAGES)
-      .select('tokens_remaining, tokens_held')
-      .eq('id', booking.user_package_id)
-      .maybeSingle()
-
-    if (!userPackage) {
-      return {
-        success: false,
-        message: 'User package not found',
-      }
-    }
-
-    if (isWithinWindow) {
-      // Free cancellation - release tokens
-      newStatus = 'cancelled'
-      tokensRefunded = booking.tokens_used
-
-      // Release held tokens (refund to available)
-      const newTokensHeld = Math.max(0, (userPackage.tokens_held || 0) - booking.tokens_used)
-      const { error: releaseError } = await supabase
-        .from(TABLES.USER_PACKAGES)
-        .update({
-          tokens_held: newTokensHeld,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', booking.user_package_id)
-
-      if (releaseError) {
-        console.error('Error releasing tokens:', releaseError)
-        // Continue with cancellation even if token release fails
-      }
-    } else if (isLateCancel) {
-      // Late cancellation - consume tokens as penalty
-      newStatus = 'cancelled-late'
-      tokensRefunded = 0
-
-      // Consume tokens (reduce tokens_remaining and tokens_held)
-      const newTokensRemaining = Math.max(0, (userPackage.tokens_remaining || 0) - booking.tokens_used)
-      const newTokensHeld = Math.max(0, (userPackage.tokens_held || 0) - booking.tokens_used)
-      
-      const { error: consumeError } = await supabase
-        .from(TABLES.USER_PACKAGES)
-        .update({
-          tokens_remaining: newTokensRemaining,
-          tokens_held: newTokensHeld,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', booking.user_package_id)
-
-      if (consumeError) {
-        console.error('Error consuming tokens:', consumeError)
-        // Continue with cancellation even if token consumption fails
-      }
-    } else {
-      return {
-        success: false,
-        message: 'Cannot cancel after class has started',
-      }
-    }
-
-    // 4. Update booking status
-    const { error: updateError } = await supabase
-      .from(TABLES.BOOKINGS)
-      .update({
-        status: newStatus,
-        cancelled_at: new Date().toISOString(),
-        cancellation_reason: reason || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', bookingId)
-
-    if (updateError) {
-      return {
-        success: false,
-        message: 'Failed to cancel booking',
-      }
-    }
-
-    // 5. Process waitlist if enabled (notify next person)
-    if (settings.waitlistEnabled) {
-      // This would ideally be done server-side, but we can trigger it here
-      // For now, we'll just note that waitlist processing should happen
-      // In production, this should be a server-side function or webhook
-    }
-
-    return {
-      success: true,
-      message: isLateCancel
-        ? `Booking cancelled. ${booking.tokens_used} token(s) consumed as late cancellation penalty (cancelled after 23:59 the day before the class).`
-        : `Booking cancelled. ${tokensRefunded} token(s) refunded.`,
-      tokensRefunded,
-      penalty: isLateCancel,
-    }
-  } catch (error) {
-    console.error('Error cancelling booking:', error)
-    return {
-      success: false,
-      message: 'An unexpected error occurred while cancelling',
-    }
+  return {
+    success: true,
+    message: result.data.message,
+    tokensRefunded: result.data.tokensRefunded,
+    penalty: false,
   }
 }
 

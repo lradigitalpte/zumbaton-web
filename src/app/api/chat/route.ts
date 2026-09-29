@@ -86,7 +86,7 @@ Q: Are there packages available?
 A: Yes — single-class passes and multi-class token packages. Point them to the Pricing page for current options.
 
 Q: Can I cancel or reschedule?
-A: Cancel at least 24 hours before class to get the token back. Late cancellations and no-shows forfeit the token. Full details are in the Terms of Service and Refund Policy.
+A: The token is used at booking. Cancel by 23:59 the day before the class to get it back. Same-day cancellations are not possible and no-shows forfeit the token. Full details are in the Terms of Service and Refund Policy.
 
 Q: Is it suitable for all ages?
 A: Most classes suit adults of all ages. Kids must be supervised by a guardian/parent in age-specific classes.

@@ -51,8 +51,8 @@ export async function getTokenTransactions(
   if (filter && filter !== 'all') {
     const typeMap: Record<string, string[]> = {
       purchase: ['purchase'],
-      used: ['attendance-consume', 'no-show-consume', 'late-cancel-consume'],
-      refund: ['booking-release'],
+      used: ['booking-consume', 'attendance-consume', 'no-show-consume', 'late-cancel-consume'],
+      refund: ['booking-release', 'refund'],
       bonus: ['admin-adjust'],
       expired: ['expire'],
     }
@@ -143,7 +143,7 @@ export async function getTokenBalanceStats(userId: string): Promise<TokenBalance
         .from(TABLES.TOKEN_TRANSACTIONS)
         .select('tokens_change')
         .eq('user_id', userId)
-        .in('transaction_type', ['attendance-consume', 'no-show-consume', 'late-cancel-consume'])
+        .in('transaction_type', ['booking-consume', 'attendance-consume', 'no-show-consume', 'late-cancel-consume'])
         .lt('tokens_change', 0),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Query timeout after 15s')), QUERY_TIMEOUT)
@@ -192,11 +192,12 @@ function getDefaultDescription(transactionType: string): string {
     purchase: 'Token package purchased',
     'booking-hold': 'Tokens reserved for booking',
     'booking-release': 'Tokens released from cancelled booking',
+    'booking-consume': 'Token used to book a class',
     'attendance-consume': 'Tokens used for class attendance',
     'no-show-consume': 'Tokens consumed for no-show',
     'late-cancel-consume': 'Tokens consumed for late cancellation',
     expire: 'Tokens expired',
-    refund: 'Token refund',
+    refund: 'Token refunded for cancelled booking',
     'admin-adjust': 'Admin adjustment',
   }
   return descriptions[transactionType] || 'Token transaction'

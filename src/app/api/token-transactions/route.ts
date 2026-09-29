@@ -32,8 +32,8 @@ async function getTokenTransactionsHandler(request: NextRequest) {
   if (filter && filter !== 'all') {
     const typeMap: Record<string, string[]> = {
       purchase: ['purchase'],
-      used: ['attendance-consume', 'no-show-consume', 'late-cancel-consume'],
-      refund: ['booking-release'],
+      used: ['booking-consume', 'attendance-consume', 'no-show-consume', 'late-cancel-consume'],
+      refund: ['booking-release', 'refund'],
       bonus: ['admin-adjust'],
       expired: ['expire'],
     }
@@ -52,11 +52,12 @@ async function getTokenTransactionsHandler(request: NextRequest) {
     purchase: 'Token package purchased',
     'booking-hold': 'Tokens reserved for booking',
     'booking-release': 'Tokens released from cancelled booking',
+    'booking-consume': 'Token used to book a class',
     'attendance-consume': 'Tokens used for class attendance',
     'no-show-consume': 'Tokens consumed for no-show',
     'late-cancel-consume': 'Tokens consumed for late cancellation',
     expire: 'Tokens expired',
-    refund: 'Token refund',
+    refund: 'Token refunded for cancelled booking',
     'admin-adjust': 'Admin adjustment',
   }
 

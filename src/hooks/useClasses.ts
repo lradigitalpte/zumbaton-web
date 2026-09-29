@@ -154,9 +154,7 @@ export function useCancelBooking() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       
       // Show success toast
-      const message = data.penalty
-        ? `Booking cancelled. ${data.tokensRefunded} token(s) consumed as late cancellation penalty.`
-        : `Booking cancelled. ${data.tokensRefunded} token(s) refunded.`
+      const message = data.message
       handleApiResponse({ success: true, message }, toast, {
         successTitle: 'Booking Cancelled',
         successMessage: message,

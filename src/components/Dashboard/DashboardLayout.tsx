@@ -6,7 +6,6 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import Sidebar from "@/components/Dashboard/Sidebar";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
-import CheckInButton from "@/components/CheckInButton";
 import UserOnboardingTour from "@/components/onboarding/UserOnboardingTour";
 
 interface DashboardLayoutProps {
@@ -218,9 +217,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           {children}
         </div>
       </div>
-      
-      {/* Check-In Button - Only on authenticated pages */}
-      <CheckInButton />
       
       {/* User Onboarding Tour */}
       <UserOnboardingTour />

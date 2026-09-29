@@ -5,19 +5,12 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useTokenTransactions, useTokenBalanceStats } from "@/hooks/useTokenTransactions";
 import { useDashboardUpcomingBookings } from "@/hooks/useDashboard";
-import { apiFetchJson } from "@/lib/api-fetch";
-import { useToast } from "@/components/Toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { dashboardKeys } from "@/hooks/useDashboard";
 
 type FilterType = "all" | "purchase" | "used" | "refund" | "bonus" | "expired";
 
 const TokensPage = () => {
   const { user } = useAuth();
-  const toast = useToast();
-  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<FilterType>("all");
-  const [checkingIn, setCheckingIn] = useState<string | null>(null);
 
   // React Query hooks
   const { data: transactions = [], isLoading: isLoadingTransactions } = useTokenTransactions(
@@ -26,54 +19,6 @@ const TokensPage = () => {
   );
   const { data: tokenBalance, isLoading: isLoadingBalance } = useTokenBalanceStats(user?.id);
   const { data: upcomingBookings = [], isLoading: isLoadingBookings } = useDashboardUpcomingBookings(user?.id);
-
-  const handleCheckIn = async (bookingId: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (checkingIn) return;
-    
-    setCheckingIn(bookingId);
-    
-    try {
-      const result = await apiFetchJson<{
-        success: boolean;
-        data?: any;
-        error?: { code?: string; message?: string };
-      }>("/api/attendance/check-in", {
-        method: "POST",
-        body: JSON.stringify({
-          bookingId,
-        }),
-        requireAuth: true,
-      });
-
-      if (!result.success) {
-        throw new Error(result.error?.message || "Failed to check in");
-      }
-
-      toast.success("Checked in successfully!", "Your attendance has been marked.");
-      
-      // Invalidate dashboard and token queries to refresh data
-      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
-      queryClient.invalidateQueries({ queryKey: ['tokenTransactions'] });
-      
-      // Reset checking in state after a short delay
-      setTimeout(() => setCheckingIn(null), 1000);
-    } catch (error: any) {
-      console.error("[Tokens] Check-in error:", error);
-      toast.error("Check-in failed", error?.message || "Failed to check in. Please try again.");
-      setCheckingIn(null);
-    }
-  };
-
-  const canCheckIn = (scheduledAt: string) => {
-    const classTime = new Date(scheduledAt);
-    const now = new Date();
-    // Can check in 30 minutes before class starts
-    const thirtyMinutesBefore = new Date(classTime.getTime() - 30 * 60 * 1000);
-    return now >= thirtyMinutesBefore && now <= new Date(classTime.getTime() + 2 * 60 * 60 * 1000); // Allow up to 2 hours after class start
-  };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -85,6 +30,7 @@ const TokensPage = () => {
             </svg>
           </div>
         );
+      case "booking-consume":
       case "attendance-consume":
       case "no-show-consume":
       case "late-cancel-consume":
@@ -95,6 +41,7 @@ const TokensPage = () => {
             </svg>
           </div>
         );
+      case "refund":
       case "booking-release":
         return (
           <div className="w-8 h-8 xl:w-10 xl:h-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center shrink-0">
@@ -138,9 +85,11 @@ const TokensPage = () => {
   const getTransactionTypeLabel = (type: string): string => {
     const typeMap: Record<string, string> = {
       purchase: "purchase",
+      "booking-consume": "used",
       "attendance-consume": "used",
       "no-show-consume": "used",
       "late-cancel-consume": "used",
+      "refund": "refund",
       "booking-release": "refund",
       "admin-adjust": "bonus",
       expire: "expired",
@@ -190,11 +139,11 @@ const TokensPage = () => {
                 </svg>
               </div>
               <span className="text-[9px] xl:text-xs font-medium text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 px-1.5 xl:px-2 py-0.5 xl:py-1 rounded-full">
-                Pending
+                Booked
               </span>
             </div>
             <p className="text-2xl xl:text-3xl font-bold text-dark dark:text-white">{tokenBalance?.pending || 0}</p>
-            <p className="text-[10px] xl:text-sm text-body-color dark:text-gray-400">In booked classes</p>
+            <p className="text-[10px] xl:text-sm text-body-color dark:text-gray-400">In upcoming classes</p>
           </div>
 
           <div className="bg-white dark:bg-dark rounded-xl xl:rounded-xl rounded-2xl shadow-sm xl:shadow-sm shadow-md border border-gray-100 dark:border-gray-800 p-3 xl:p-5">
@@ -337,8 +286,6 @@ const TokensPage = () => {
           </div>
           <div className="divide-y divide-gray-100 dark:divide-gray-800">
             {upcomingBookings.slice(0, 5).map((booking) => {
-              const isCheckingIn = checkingIn === booking.id;
-              const showCheckIn = canCheckIn(booking.scheduled_at);
               
               return (
                 <div
@@ -369,30 +316,6 @@ const TokensPage = () => {
                           {new Date(booking.scheduled_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                         </p>
                       </div>
-                      {showCheckIn && (
-                        <button
-                          onClick={(e) => handleCheckIn(booking.id, e)}
-                          disabled={isCheckingIn}
-                          className="px-3 xl:px-4 py-1.5 xl:py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-400 disabled:cursor-not-allowed text-white text-xs xl:text-sm font-semibold rounded-lg transition-colors flex items-center gap-1.5 xl:gap-2 whitespace-nowrap"
-                        >
-                          {isCheckingIn ? (
-                            <>
-                              <svg className="animate-spin h-3 w-3 xl:h-4 xl:w-4" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                              <span className="hidden xl:inline">Checking In...</span>
-                            </>
-                          ) : (
-                            <>
-                              <svg className="w-3 h-3 xl:w-4 xl:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                              <span>Check In</span>
-                            </>
-                          )}
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>

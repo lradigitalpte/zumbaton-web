@@ -58,10 +58,8 @@ export function useCancelBooking() {
       queryClient.invalidateQueries({ queryKey: ['my-packages'] }) // Refresh package balance
       queryClient.invalidateQueries({ queryKey: ['token-transactions'] }) // Refresh transaction history
       
-      // Show success toast with penalty or refund message
-      const message = data.penalty
-        ? `Booking cancelled. ${data.tokensRefunded} token(s) consumed as late cancellation penalty.`
-        : `Booking cancelled. ${data.tokensRefunded} token(s) refunded.`
+      // Show the server message (refund amount, or course sessions kept today)
+      const message = data.message
       handleApiResponse({ success: true, message }, toast, {
         successTitle: 'Booking Cancelled'
       })

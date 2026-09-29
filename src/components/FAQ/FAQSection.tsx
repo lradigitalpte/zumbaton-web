@@ -57,7 +57,7 @@ const faqCategories = [
       },
       {
         q: "Can I cancel or reschedule a class?",
-        a: "Yes. Cancel at least 24 hours before the class to have your token returned to your account. Late cancellations and no-shows result in the token being forfeited. See our Terms of Service and Refund Policy for full details."
+        a: "Yes. Your token is used when you book. Cancel by 23:59 the day before the class to have it returned to your account. Same-day cancellations are not possible, and no-shows forfeit the token. See our Terms of Service and Refund Policy for full details."
       }
     ]
   },

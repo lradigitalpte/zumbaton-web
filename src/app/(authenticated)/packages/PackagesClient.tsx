@@ -477,7 +477,7 @@ export default function PackagesClient({ initialPromo }: { initialPromo?: { hasE
               How do tokens work?
             </h3>
             <p className="text-xs xl:text-sm text-body-color dark:text-gray-400 leading-relaxed">
-              Each token allows you to book one class. Tokens are automatically reserved when you book and used when you attend. Cancel at least 24 hours before the class to have your token returned to your account.
+              Each token allows you to book one class. A token is used as soon as you book. Cancel by 23:59 the day before the class to have it returned to your account — same-day cancellations are not possible.
             </p>
           </div>
           <div className="bg-white dark:bg-dark rounded-xl xl:rounded-xl rounded-2xl shadow-sm xl:shadow-sm shadow-md border border-gray-100 dark:border-gray-800 p-4 xl:p-5">

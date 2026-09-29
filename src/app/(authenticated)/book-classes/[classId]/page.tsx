@@ -332,7 +332,7 @@ const ClassDetailPage = () => {
             )}
 
             <p className="text-xs xl:text-sm text-body-color dark:text-gray-400 text-center mt-4">
-              Cancel at least 24 hours before class to have your token returned.
+              Your token is used when you book. Cancel by 23:59 the day before the class to get it back.
             </p>
           </div>
         </div>
