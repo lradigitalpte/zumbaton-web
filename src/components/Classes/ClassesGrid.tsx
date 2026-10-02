@@ -103,7 +103,7 @@ const ClassesGrid = () => {
           </motion.div>
         </div>
 
-        {/* Classes grid + Thunderbolt category (two formats) */}
+        {/* Classes grid + Thunderbolt category */}
         <div className="mx-auto max-w-7xl overflow-hidden border border-black/10 dark:border-white/10">
           <div className="grid grid-cols-1 gap-0 lg:grid-cols-2">
             {paginatedRegular.map((classItem, index) => (
@@ -131,7 +131,7 @@ const ClassesGrid = () => {
                     </h3>
                     <p className="mt-5 max-w-3xl text-sm font-medium uppercase leading-relaxed tracking-tight text-gray-600 dark:text-zinc-400 md:text-base md:normal-case md:tracking-normal">
                       {highlightCoachInText(
-                        "High-intensity Tabata-style rounds in two coached formats: power and stamina on the step with Coach Robert, or resistance bands and dance-led cardio with Coach Fizah. Choose the session that fits how you like to train."
+                        "High-intensity Tabata-style rounds on the step with Coach Robert: short bursts of power and stamina for full-body conditioning and the afterburn effect."
                       )}
                     </p>
                   </div>

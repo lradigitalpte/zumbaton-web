@@ -12,6 +12,11 @@ const nextConfig = {
         destination: "/classes/thunderbolt-bodyweight-steppers",
         permanent: true,
       },
+      {
+        source: "/classes/thunderbolt-resistance-dance",
+        destination: "/classes/pilates-flow",
+        permanent: true,
+      },
     ];
   },
   images: {

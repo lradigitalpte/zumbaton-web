@@ -20,6 +20,7 @@ const Header = () => {
     setSticky(window.scrollY >= 80);
   };
   useEffect(() => {
+    handleStickyNavbar();
     window.addEventListener("scroll", handleStickyNavbar);
     return () => window.removeEventListener("scroll", handleStickyNavbar);
   }, []);
@@ -34,18 +35,29 @@ const Header = () => {
 
   const usePathName = usePathname();
   const lightBackgroundPages = ['/signin', '/signup', '/forgot-password', '/schedule', '/packages'];
+  const isClassDetailPage = Boolean(usePathName?.match(/^\/classes\/[^/]+/));
   const isLightBackgroundPage =
     lightBackgroundPages.some((path) => usePathName?.startsWith(path)) ||
-    usePathName?.endsWith('/success') === true;
-  
+    usePathName?.endsWith('/success') === true ||
+    isClassDetailPage;
+
   const needsBackground = sticky || isLightBackgroundPage;
+  const navLinkMuted = needsBackground ? "text-white/70 hover:text-white" : "text-gray-900/80 hover:text-black dark:text-white/70 dark:hover:text-white";
+  const navLinkActive = "text-lime-500";
+  const actionLinkClass = needsBackground
+    ? "text-white hover:text-lime-400 xl:text-white/70 xl:hover:text-lime-500"
+    : "text-gray-900 hover:text-lime-600 xl:text-gray-800 xl:hover:text-lime-600 dark:text-white/70 dark:hover:text-white";
+  const menuButtonClass = needsBackground
+    ? "border-white/10 bg-white/5 hover:bg-white/10"
+    : "border-black/10 bg-black/5 hover:bg-black/10 dark:border-white/10 dark:bg-white/5";
+  const menuIconClass = needsBackground ? "text-white" : "text-gray-900 dark:text-white";
 
   return (
     <>
       <header
         className={`header top-0 left-0 z-50 w-full flex flex-col transition-all duration-500 ${
           needsBackground
-            ? "bg-black shadow-2xl fixed z-9999 border-b border-white/10"
+            ? "fixed z-9999 border-b border-white/10 bg-black shadow-2xl"
             : "absolute bg-transparent"
         }`}
       >
@@ -82,10 +94,8 @@ const Header = () => {
                     {menuItem.path ? (
                       <Link
                         href={menuItem.path}
-                        className={`px-3 xl:px-4 py-2 text-sm xl:text-base font-black uppercase tracking-wider transition-all duration-300 relative ${
-                          usePathName === menuItem.path
-                            ? "text-lime-500"
-                            : "text-white/70 hover:text-white"
+                        className={`relative px-3 py-2 text-sm font-black uppercase tracking-wider transition-all duration-300 xl:px-4 xl:text-base ${
+                          usePathName === menuItem.path ? navLinkActive : navLinkMuted
                         }`}
                       >
                         {menuItem.title}
@@ -100,7 +110,7 @@ const Header = () => {
                       <div className="relative group">
                         <button
                           onClick={() => handleSubmenu(index)}
-                          className="flex items-center gap-1.5 px-3 xl:px-4 py-2 text-sm xl:text-base font-black uppercase tracking-wider text-white/70 hover:text-white transition-all duration-300 relative"
+                          className={`relative flex items-center gap-1.5 px-3 py-2 text-sm font-black uppercase tracking-wider transition-all duration-300 xl:px-4 xl:text-base ${navLinkMuted}`}
                         >
                           {menuItem.title}
                           {menuItem.isNew && (
@@ -143,14 +153,14 @@ const Header = () => {
             <div className="flex shrink-0 items-center gap-2 sm:gap-3 lg:gap-6">
               <Link
                 href="/signin"
-                className="whitespace-nowrap px-1.5 py-1.5 text-[11px] font-black uppercase tracking-wide text-white hover:text-lime-400 sm:px-2.5 sm:text-xs xl:px-4 xl:py-2 xl:text-sm xl:tracking-wider xl:text-white/70 xl:hover:text-lime-500"
+                className={`whitespace-nowrap px-1.5 py-1.5 text-[11px] font-black uppercase tracking-wide sm:px-2.5 sm:text-xs xl:px-4 xl:py-2 xl:text-sm xl:tracking-wider ${actionLinkClass}`}
               >
                 Sign In
               </Link>
 
               <Link
                 href="/signup"
-                className="hidden whitespace-nowrap px-1.5 py-1.5 text-[11px] font-black uppercase tracking-wide text-white hover:text-lime-400 sm:inline-block sm:px-2.5 sm:text-xs xl:px-4 xl:py-2 xl:text-sm xl:tracking-wider xl:text-white/70 xl:hover:text-lime-500"
+                className={`hidden whitespace-nowrap px-1.5 py-1.5 text-[11px] font-black uppercase tracking-wide sm:inline-block sm:px-2.5 sm:text-xs xl:px-4 xl:py-2 xl:text-sm xl:tracking-wider ${actionLinkClass}`}
               >
                 Join
               </Link>
@@ -168,10 +178,14 @@ const Header = () => {
               
               <button
                 onClick={navbarToggleHandler}
-                className="flex h-10 w-10 shrink-0 items-center justify-center border border-white/10 bg-white/5 hover:bg-white/10 sm:h-11 sm:w-11 xl:hidden"
+                className={`flex h-10 w-10 shrink-0 items-center justify-center border sm:h-11 sm:w-11 xl:hidden ${menuButtonClass}`}
                 aria-label="Toggle Menu"
               >
-                {navbarOpen ? <X className="w-5 h-5 text-white" /> : <MenuIcon className="w-5 h-5 text-white" />}
+                {navbarOpen ? (
+                  <X className={`h-5 w-5 ${menuIconClass}`} />
+                ) : (
+                  <MenuIcon className={`h-5 w-5 ${menuIconClass}`} />
+                )}
               </button>
             </div>
 

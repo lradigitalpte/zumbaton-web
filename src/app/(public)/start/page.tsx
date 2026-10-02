@@ -58,7 +58,7 @@ const TESTIMONIALS = [
   },
 ];
 
-const CLASS_TASTER = ["Zumba Step", "Groove Stepper", "Piloxing", "Thunderbolt"];
+const CLASS_TASTER = ["Zumba Step", "Groove Stepper", "Piloxing", "Pilates Flow"];
 
 const formatPrice = (cents: number) => {
   const d = cents / 100;

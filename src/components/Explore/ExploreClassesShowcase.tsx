@@ -16,7 +16,7 @@ const STUDIO_VIBE: Record<string, string> = {
   "zumba-step": "High-energy step cardio that hits like a party. Pure energy.",
   "lil-steppers": "Games, friends, and confidence for young movers.",
   "thunderbolt-bodyweight-steppers": "Tabata on the step: bodyweight power with Coach Robert.",
-  "thunderbolt-resistance-dance": "Bands + dance cardio Thunderbolt: full body, no steppers, Coach Fizah.",
+  "pilates-flow": "Mindful mid-impact Pilates: core, mobility, and breath with Coach Fizah.",
   piloxing: "HIIT fusion of Pilates, boxing, and dance with Coach Fizah.",
 };
 

@@ -27,10 +27,10 @@ const classes = [
     slug: "thunderbolt-bodyweight-steppers",
   },
   {
-    title: "Thunderbolt · Resistance",
-    description: "Bands and dance-led cardio. No steppers, just results with Coach Fizah.",
+    title: "Pilates Flow",
+    description: "Mindful Pilates, stretch, and breath with Coach Fizah. Move. Flow. Strengthen. Breathe.",
     accent: "bg-lime-400",
-    slug: "thunderbolt-resistance-dance",
+    slug: "pilates-flow",
   },
   {
     title: "Piloxing",
