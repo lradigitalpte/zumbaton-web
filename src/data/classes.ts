@@ -6,6 +6,10 @@ export interface ZumbaClass {
   shortDescription: string;
   fullDescription: string;
   image: string;
+  /** Optional extra photos for the class detail page (`image` is used on cards). */
+  galleryImages?: string[];
+  /** Default `cover`. Use `contain` to show the full photo without cropping. */
+  imageObjectFit?: "cover" | "contain";
   featured: boolean;
   duration: string;
   intensity: "Beginner" | "Intermediate" | "Advanced" | "All Levels" | "Level 5";
@@ -22,11 +26,8 @@ export interface ZumbaClass {
   }[];
 }
 
-/** Bookable Thunderbolt formats (category = Thunderbolt; two distinct classes). */
-export const THUNDERBOLT_CLASS_SLUGS = [
-  "thunderbolt-bodyweight-steppers",
-  "thunderbolt-resistance-dance",
-] as const;
+/** Bookable Thunderbolt formats (Tabata-style conditioning on the step). */
+export const THUNDERBOLT_CLASS_SLUGS = ["thunderbolt-bodyweight-steppers"] as const;
 
 export function isThunderboltClassSlug(slug: string): boolean {
   return (THUNDERBOLT_CLASS_SLUGS as readonly string[]).includes(slug);
@@ -37,7 +38,7 @@ export const CLASS_ENERGY: Record<string, number> = {
   "zumba-step": 2.5,
   "lil-steppers": 1,
   "thunderbolt-bodyweight-steppers": 4,
-  "thunderbolt-resistance-dance": 4,
+  "pilates-flow": 2,
   piloxing: 3,
   "thunderbolt-tabata-outdoor": 4,
   zumfiesta: 4,
@@ -227,39 +228,48 @@ export const zumbaClasses: ZumbaClass[] = [
   },
   {
     id: "5",
-    slug: "thunderbolt-resistance-dance",
-    name: "Thunderbolt · Resistance & Dance",
+    slug: "pilates-flow",
+    name: "Pilates Flow",
     shortDescription:
-      "Full-body strength and endurance. Alternates between high-energy dance cardio and structured resistance band training.",
+      "Mindful, mid-impact Pilates with Coach Fizah: controlled movement, stretching, breathing, and smooth transitions for a balanced full-body session.",
     fullDescription:
-      "Thunderbolt (Resistance & Dance) is a high-output format led by Coach Fizah that prioritizes strength and endurance over pure cardio. The session alternates between different genres of music, Latin-inspired dance cardio, and structured resistance training using bands. This combination ensures you build lean muscle and stamina simultaneously. Ideal for those who want a floor-based Thunderbolt experience without steppers, focusing on full-body flow and resistance-based intervals.",
-    image: "/images/hero/hero2.jpeg",
+      "Pilates Flow with Coach Fizah is a mindful, mid-impact workout that combines controlled Pilates movements, stretching, breathing and smooth transitions to create a balanced full-body experience.\n\nLed by Coach Fizah, each session focuses on building core strength, improving flexibility and mobility, enhancing posture and developing better balance and body control. The flowing nature of the class allows you to move at a comfortable pace while staying connected to your breathing and body.\n\nWhether you're new to Pilates or looking to complement your existing fitness routine, Pilates Flow with Coach Fizah offers a refreshing way to move, strengthen and reconnect with your body.\n\nMove. Flow. Strengthen. Breathe.",
+    image: "/951E5D9F-66D6-4499-B865-97AD10F0E926.jpeg",
+    galleryImages: [
+      "/951E5D9F-66D6-4499-B865-97AD10F0E926.jpeg",
+      "/477E6FED-8177-4BDA-B156-F0577CC65748.jpeg",
+    ],
+    imageObjectFit: "contain",
     featured: true,
     duration: "60 min",
-    intensity: "Level 5",
-    calories: "500-800",
+    intensity: "All Levels",
+    calories: "300-450",
     instructor: "Coach Fizah",
-    energy: 4,
+    energy: 2,
     highlights: [
       {
-        title: "Strength + Endurance",
-        description: "Designed to build functional strength using resistance bands rather than just burning cardio.",
+        title: "Core Strength",
+        description: "Strengthens the abdominal and stabilising muscles that support everyday movement.",
       },
       {
-        title: "Dance-Led Cardio",
-        description: "Alternates between song genres and dance segments to keep the heart rate high and energy peaking.",
+        title: "Flexibility & Mobility",
+        description: "Helps improve range of motion through controlled stretches and movements.",
       },
       {
-        title: "Structured Resistance",
-        description: "Uses resistance bands to add load and variety across upper, lower, and core muscle groups.",
+        title: "Posture & Alignment",
+        description: "Builds greater awareness of body alignment and posture.",
       },
       {
-        title: "No Steppers Required",
-        description: "A floor-based format that delivers Thunderbolt intensity through rhythm and resistance.",
+        title: "Balance & Stability",
+        description: "Develops control and stability through mindful, precise movements.",
       },
       {
-        title: "Interval Training",
-        description: "Tabata-style timing helps you push hard through strength blocks with brief, active recovery.",
+        title: "Full-Body Conditioning",
+        description: "Engages multiple muscle groups without high-impact movements.",
+      },
+      {
+        title: "Mindful Movement",
+        description: "Combines breathing and controlled movement to encourage focus and body awareness.",
       },
     ],
     schedule: [

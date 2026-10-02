@@ -128,7 +128,7 @@ const PromosPage = () => {
       price: "$23",
       priceCents: 2300,
       tagline: "1-for-1 Special",
-      description: "Perfect for a high-energy studio session. Valid for Zumba Step, Groove Stepper, or Thunderbolt.",
+      description: "Perfect for a studio session. Valid for Zumba Step, Groove Stepper, Thunderbolt, or Pilates Flow.",
       location: "Studio Sessions",
       roomType: "studio",
       features: ["Two participants", "One price", "Full 60-min session", "Expert coaching"],
