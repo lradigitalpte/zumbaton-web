@@ -28,6 +28,7 @@ import {
   weekRangeFromAnchorYmd,
 } from "@/lib/trial-booking-dates";
 import type { PublicClass } from "@/lib/classes-server";
+import { normalizeStudioPromoIndoorCents } from "@/lib/duo-promo-config";
 
 interface Class extends PublicClass {
   instructor_avatar?: string | null;
@@ -45,17 +46,50 @@ interface TrialBookingClientProps {
   initialClasses?: Class[];
 }
 
+type PromoDisplayConfig = {
+  indoorPriceCents: number;
+  outdoorPriceCents: number;
+};
+
+const DEFAULT_PROMO_DISPLAY: PromoDisplayConfig = {
+  indoorPriceCents: 3000,
+  outdoorPriceCents: 3500,
+};
+
 function getDefaultTrialPrice(ageGroup: 'adult' | 'kid' | 'all' | null | undefined): number {
   if (ageGroup === 'kid') return 1800;
-  return 2300;
+  return DEFAULT_PROMO_DISPLAY.indoorPriceCents;
 }
 
 function getTrialPriceCents(ageGroup: 'adult' | 'kid' | 'all' | null | undefined, trialPriceCents: number | null, isOutdoor?: boolean): number {
   const fromDb = trialPriceCents && trialPriceCents > 0 ? trialPriceCents : null;
   if (ageGroup === 'kid' && fromDb === 1700) return 1800;
   if (fromDb != null) return fromDb;
-  if (isOutdoor) return 2800;
+  if (isOutdoor) return DEFAULT_PROMO_DISPLAY.outdoorPriceCents;
   return getDefaultTrialPrice(ageGroup);
+}
+
+/** List/checkout display for studio promo pricing (UI; charge amount still from payment API). */
+function getPromoSessionDisplayCents(
+  ageGroup: 'adult' | 'kid' | 'all' | null | undefined,
+  trialPriceCents: number | null,
+  isOutdoor: boolean | undefined,
+  promo: PromoDisplayConfig,
+): number {
+  if (ageGroup === 'kid') {
+    return getTrialPriceCents(ageGroup, trialPriceCents, isOutdoor);
+  }
+  if (isOutdoor) return promo.outdoorPriceCents;
+  return normalizeStudioPromoIndoorCents(promo.indoorPriceCents);
+}
+
+function getFilterBadgePriceCents(
+  filter: 'all' | 'adult' | 'kid' | 'outdoor',
+  promo: PromoDisplayConfig,
+): number {
+  if (filter === 'kid') return getDefaultTrialPrice('kid');
+  if (filter === 'outdoor') return promo.outdoorPriceCents;
+  return promo.indoorPriceCents;
 }
 
 export default function TrialBookingClient({
@@ -105,6 +139,24 @@ export default function TrialBookingClient({
   const trialEligibility = useTrialEligibilityCheck();
   const bookingWindowOpen = useBookingWindowOpen(selectedClass?.scheduled_at);
   const bookingWindowTick = useBookingWindowTick();
+  const [promoDisplay, setPromoDisplay] = useState<PromoDisplayConfig>(DEFAULT_PROMO_DISPLAY);
+
+  useEffect(() => {
+    fetch("/api/promos/config")
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.success && res.data) {
+          const indoor = normalizeStudioPromoIndoorCents(
+            res.data.indoorPriceCents ?? DEFAULT_PROMO_DISPLAY.indoorPriceCents,
+          );
+          setPromoDisplay({
+            indoorPriceCents: indoor,
+            outdoorPriceCents: res.data.outdoorPriceCents ?? DEFAULT_PROMO_DISPLAY.outdoorPriceCents,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (selectedClass && !isBookingWindowOpen(selectedClass.scheduled_at)) {
@@ -297,7 +349,7 @@ export default function TrialBookingClient({
       return;
     }
     if (trialEligibility.status === "blocked") {
-      toast.error("This email/phone has already used a trial. Please sign up to book a class.");
+      toast.error("This email/phone has already used the 1-for-1 promo. Please sign up to book a class.");
       return;
     }
     if (!formData.guestName.trim()) {
@@ -372,7 +424,7 @@ export default function TrialBookingClient({
         return;
       }
       if (companionEligibility.status === "blocked") {
-        toast.error("Your friend has already used a trial. They can sign up to book a class.");
+        toast.error("Your friend has already used the 1-for-1 promo. They can sign up to book a class.");
         return;
       }
       if (!companionData.name.trim()) {
@@ -475,17 +527,24 @@ export default function TrialBookingClient({
                   </h2>
                 </div>
 
-                <div className="flex items-baseline gap-3 bg-white dark:bg-zinc-900 px-6 py-3 border-2 border-black dark:border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
-                  <span className="text-2xl font-black text-lime-600 dark:text-lime-400">
-                    ${ageGroupFilter === 'kid'
-                      ? (getDefaultTrialPrice('kid') / 100).toFixed(2)
-                      : ageGroupFilter === 'outdoor'
-                        ? (2800 / 100).toFixed(2)
-                        : (getDefaultTrialPrice('adult') / 100).toFixed(2)}
-                  </span>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                    PER TRIAL SESSION
-                  </span>
+                <div className="flex flex-col items-start md:items-end gap-1 bg-white dark:bg-zinc-900 px-6 py-3 border-2 border-black dark:border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-2xl font-black text-lime-600 dark:text-lime-400">
+                      ${(getFilterBadgePriceCents(ageGroupFilter, promoDisplay) / 100).toFixed(2)}
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                      {ageGroupFilter === 'kid'
+                        ? "PER KIDS SESSION"
+                        : ageGroupFilter === 'outdoor'
+                          ? "OUTDOOR 1-FOR-1"
+                          : "STUDIO 1-FOR-1 PROMO"}
+                    </span>
+                  </div>
+                  {ageGroupFilter !== 'kid' && ageGroupFilter !== 'outdoor' && (
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 max-w-xs md:text-right">
+                      Alone ${(promoDisplay.indoorPriceCents / 100).toFixed(0)} · With a friend ${(promoDisplay.indoorPriceCents / 100).toFixed(0)} for both
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -764,13 +823,21 @@ export default function TrialBookingClient({
                         <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Total Price</p>
                         <span className="text-4xl font-black text-gray-900 dark:text-white">
                           ${(
-                            getTrialPriceCents(
+                            getPromoSessionDisplayCents(
                               getTrialBookingEffectiveAgeGroup(selectedClass.title, selectedClass.age_group),
                               selectedClass.trial_price_cents,
                               selectedClass.is_outdoor,
+                              promoDisplay,
                             ) / 100
                           ).toFixed(2)}
                         </span>
+                        {getTrialBookingEffectiveAgeGroup(selectedClass.title, selectedClass.age_group) !== "kid" &&
+                          !selectedClass.is_outdoor &&
+                          companionEnabled && (
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-lime-600 dark:text-lime-400 mt-2 text-right max-w-[14rem]">
+                              1-for-1: ${(promoDisplay.indoorPriceCents / 100).toFixed(0)} total for you and your friend
+                            </p>
+                          )}
                       </div>
                     </div>
 
@@ -948,6 +1015,7 @@ export default function TrialBookingClient({
                           data={companionData}
                           onChange={setCompanionData}
                           eligibility={companionEligibility}
+                          promoIndoorCents={promoDisplay.indoorPriceCents}
                         />
                       )}
                     </div>
@@ -1042,6 +1110,7 @@ export default function TrialBookingClient({
             bookingWindowOpen={bookingWindowOpen}
             onClose={() => setSelectedClass(null)}
             trialEligibility={trialEligibility}
+            promoDisplay={promoDisplay}
           />
         )}
       </AnimatePresence>
@@ -1051,9 +1120,8 @@ export default function TrialBookingClient({
 
 type CompanionData = { name: string; phone: string; email: string; age: string; gender: string };
 
-// Shared by the desktop form and the mobile bottom sheet: an optional free
-// plus-one, covered by the primary guest's waiver but counted as a 2nd
-// booked spot (enforced server-side against class capacity).
+// Shared by the desktop form and the mobile bottom sheet: optional +1 for
+// the studio 1-for-1 promo (same total price; 2nd spot enforced server-side).
 function CompanionSection({
   enabled,
   onToggle,
@@ -1061,6 +1129,7 @@ function CompanionSection({
   onChange,
   eligibility,
   inputTextClass = "",
+  promoIndoorCents = DEFAULT_PROMO_DISPLAY.indoorPriceCents,
 }: {
   enabled: boolean;
   onToggle: (enabled: boolean) => void;
@@ -1068,7 +1137,9 @@ function CompanionSection({
   onChange: (data: CompanionData) => void;
   eligibility: ReturnType<typeof useTrialEligibilityCheck>;
   inputTextClass?: string;
+  promoIndoorCents?: number;
 }) {
+  const promoDollars = (promoIndoorCents / 100).toFixed(0);
   const inputClass = `w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 ${inputTextClass} font-bold uppercase tracking-widest focus:border-lime-500 outline-none transition-colors rounded-none`;
   const emailClass = `w-full bg-zinc-50 dark:bg-black border border-black/10 dark:border-white/10 px-6 py-4 ${inputTextClass} font-bold tracking-wide focus:border-lime-500 outline-none transition-colors rounded-none normal-case`;
 
@@ -1082,7 +1153,7 @@ function CompanionSection({
           className="mt-1 w-6 h-6 accent-lime-500"
         />
         <span className="text-xs font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 leading-relaxed">
-          + Bring a friend for free — add a second person to this booking at no extra cost
+          + Bring a friend — 1-for-1 Promo: same price for both of you (${promoDollars} total for two)
         </span>
       </label>
 
@@ -1190,9 +1261,10 @@ interface MobileBookingSheetProps {
   bookingWindowOpen: boolean;
   onClose: () => void;
   trialEligibility: ReturnType<typeof useTrialEligibilityCheck>;
+  promoDisplay: PromoDisplayConfig;
 }
 
-function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData, setGuardianData, companionEnabled, setCompanionEnabled, companionData, setCompanionData, companionEligibility, onSubmit, processing, bookingWindowOpen, onClose, trialEligibility }: MobileBookingSheetProps) {
+function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData, setGuardianData, companionEnabled, setCompanionEnabled, companionData, setCompanionData, companionEligibility, onSubmit, processing, bookingWindowOpen, onClose, trialEligibility, promoDisplay }: MobileBookingSheetProps) {
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -1204,10 +1276,11 @@ function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData
     getTrialBookingEffectiveAgeGroup(selectedClass.title, selectedClass.age_group) === "kid";
   const displayTitle = getTrialBookingDisplayTitle(selectedClass.title);
   const price = (
-    getTrialPriceCents(
+    getPromoSessionDisplayCents(
       getTrialBookingEffectiveAgeGroup(selectedClass.title, selectedClass.age_group),
       selectedClass.trial_price_cents,
       selectedClass.is_outdoor,
+      promoDisplay,
     ) / 100
   ).toFixed(2);
 
@@ -1331,6 +1404,7 @@ function MobileBookingSheet({ selectedClass, formData, setFormData, guardianData
               onChange={setCompanionData}
               eligibility={companionEligibility}
               inputTextClass="text-gray-900 dark:text-white"
+              promoIndoorCents={promoDisplay.indoorPriceCents}
             />
           )}
 

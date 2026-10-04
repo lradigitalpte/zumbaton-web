@@ -82,6 +82,9 @@ A: All levels welcome — movements can be modified to your comfort and ability.
 Q: What should I wear or bring?
 A: Covered shoes (no boots) are required. Comfortable activewear, supportive sneakers, a towel, and water are recommended.
 
+Q: What is the $30 1-for-1 Promo?
+A: Our current studio 1-for-1 offer (not called a trial): $30 if you come alone (same as Single Sesh), or $30 for two people if you bring a friend — 2 for the price of 1. Always confirm the live price with get_promo_pricing. Book via /start or /promos.
+
 Q: How do I sign up?
 A: Via /start (fastest, pay first, we schedule you) or /promos (pick a class and date). Existing members can also reach out via WhatsApp.
 

@@ -47,10 +47,10 @@ function isClassEligibleForPromo(c: Class, promoRoomType: string | undefined): b
 
 function promoEligibilityMessage(promoId: string): string {
   if (promoId === "indoor-duo") {
-    return "This session is not eligible for the Studio Duo Trial. Please choose a studio class.";
+    return "This session is not eligible for the Studio $30 1-for-1 Promo. Please choose a studio class.";
   }
   if (promoId === "outdoor-duo") {
-    return "This session is not eligible for the Outdoor Duo Trial. Please choose an outdoor class.";
+    return "This session is not eligible for the Outdoor 1-for-1 Promo. Please choose an outdoor class.";
   }
   return "This session is not eligible for the selected promo.";
 }
@@ -91,7 +91,7 @@ const PromosPage = () => {
     outdoorPriceCents: number;
     bookingMode: DuoBookingMode;
     live: boolean;
-  }>({ indoorPriceCents: 2300, outdoorPriceCents: 3500, bookingMode: "pay_online", live: true });
+  }>({ indoorPriceCents: 3000, outdoorPriceCents: 3500, bookingMode: "pay_online", live: true });
   const [reserveSuccess, setReserveSuccess] = useState<{ reference: string; amount: string } | null>(null);
 
   useEffect(() => {
@@ -101,7 +101,7 @@ const PromosPage = () => {
       .then((res) => {
         if (active && res?.success && res.data) {
           setPromoConfig({
-            indoorPriceCents: res.data.indoorPriceCents ?? 2300,
+            indoorPriceCents: res.data.indoorPriceCents ?? 3000,
             outdoorPriceCents: res.data.outdoorPriceCents ?? 3500,
             bookingMode: res.data.bookingMode ?? "pay_online",
             live: res.data.live ?? true,
@@ -124,23 +124,24 @@ const PromosPage = () => {
   const promos = [
     {
       id: "indoor-duo",
-      title: "Studio Duo Trial",
-      price: "$23",
-      priceCents: 2300,
-      tagline: "1-for-1 Special",
-      description: "Perfect for a studio session. Valid for Zumba Step, Groove Stepper, Thunderbolt, or Pilates Flow.",
+      title: "$30 1-for-1 Promo",
+      price: "$30",
+      priceCents: 3000,
+      tagline: "Studio · 1-for-1",
+      description:
+        "Coming alone: $30 (our Single Sesh price). Bringing a friend: $30 for both — 2 for the price of 1. Valid for Zumba Step, Groove Stepper, Thunderbolt, Pilates Flow, and more.",
       location: "Studio Sessions",
       roomType: "studio",
-      features: ["Two participants", "One price", "Full 60-min session", "Expert coaching"],
+      features: ["Come alone or bring a friend", "$30 total either way", "Full 60-min session", "Expert coaching"],
       accent: "border-lime-500",
       bg: "bg-white dark:bg-zinc-950",
     },
     {
       id: "outdoor-duo",
-      title: "Outdoor Duo Trial",
+      title: "Outdoor 1-for-1 Promo",
       price: "$35",
       priceCents: 3500,
-      tagline: "1-for-1 Special",
+      tagline: "Outdoor · 1-for-1",
       description: "Fresh air, big energy. Join us at our signature outdoor location for a dual workout.",
       location: "OCBC Arena, Kallang",
       roomType: "outdoor",
@@ -422,7 +423,7 @@ const PromosPage = () => {
               WHAT&apos;S <span className="text-lime-500">NEW</span>
             </h1>
             <p className="max-w-xl text-white/80 font-bold text-sm md:text-base uppercase tracking-wider border-l-4 border-lime-500 pl-6">
-              Exclusive 1-for-1 trial specials. Bring a friend, share the energy, and start your journey together.
+              The $30 1-for-1 Promo — come alone or bring a friend. Same price, double the energy.
             </p>
           </motion.div>
         </div>
@@ -445,7 +446,7 @@ const PromosPage = () => {
             <div>
               <h2 className="text-2xl md:text-3xl font-black uppercase italic tracking-tight mb-2">No Hidden Fees. Ever.</h2>
               <p className="text-gray-600 dark:text-zinc-400 font-medium text-sm md:text-base uppercase tracking-tight">
-                At One Step Fitness, we believe in transparency. There are <span className="text-lime-600 dark:text-lime-400 font-bold">zero referral fees</span> or hidden registration costs for any of our trial promos. Just pure dance energy.
+                At One Step Fitness, we believe in transparency. There are <span className="text-lime-600 dark:text-lime-400 font-bold">zero referral fees</span> or hidden registration costs on our 1-for-1 promos. Just pure dance energy.
               </p>
             </div>
           </motion.div>
@@ -472,8 +473,13 @@ const PromosPage = () => {
                   </div>
                   <div className="text-6xl md:text-7xl font-black italic tracking-tighter mb-6">
                     {formatPrice(priceCentsFor(promo.id))}
-                    <span className="text-sm font-black uppercase tracking-widest opacity-40 ml-2">/ duo</span>
+                    <span className="text-sm font-black uppercase tracking-widest opacity-40 ml-2">total</span>
                   </div>
+                  {promo.id === "indoor-duo" ? (
+                    <p className="mb-4 text-[11px] font-bold uppercase tracking-wide opacity-70">
+                      Alone $30 · With a friend $30 for both
+                    </p>
+                  ) : null}
                   <p className="font-medium text-sm md:text-base leading-relaxed uppercase tracking-tight opacity-80">
                     {promo.description}
                   </p>
@@ -502,7 +508,7 @@ const PromosPage = () => {
                       : 'bg-black dark:bg-white text-white dark:text-black hover:bg-lime-500 hover:text-black'
                   }`}
                 >
-                  <span>{promoConfig.bookingMode === "reserve_only" ? "Book Duo Trial" : "Book & Pay Duo Trial"}</span>
+                  <span>{promoConfig.bookingMode === "reserve_only" ? "Book 1-for-1 Promo" : "Book & Pay"}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </motion.div>
@@ -515,7 +521,7 @@ const PromosPage = () => {
             whileInView={{ opacity: 1 }}
             className="text-center text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-24"
           >
-            * Duo trials are processed securely online. <br className="hidden sm:block" /> Select your session and provide details for both participants to proceed.
+            * 1-for-1 promos are processed securely online. <br className="hidden sm:block" /> Select your session and add participant details when you bring a friend.
           </motion.p>
 
 
@@ -559,7 +565,7 @@ const PromosPage = () => {
         </div>
       </section>
 
-      {/* Duo Trial Booking Modal */}
+      {/* 1-for-1 Promo Booking Modal */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 lg:p-8">
@@ -581,7 +587,7 @@ const PromosPage = () => {
               <div className="flex items-center justify-between p-6 md:p-8 border-b border-black/10 dark:border-white/10 bg-white dark:bg-black">
                 <div>
                   <div className="text-lime-600 dark:text-lime-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">
-                    Duo Trial Booking
+                    1-for-1 Promo Booking
                   </div>
                   <h2 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white">
                     {selectedPromo?.title} · <span className="text-lime-500">{formatPrice(priceCentsFor(selectedPromo?.id))}</span>

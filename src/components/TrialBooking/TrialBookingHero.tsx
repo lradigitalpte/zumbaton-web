@@ -18,7 +18,7 @@ const TrialBookingHero = () => {
       <div className="absolute inset-0 -z-10">
         <Image 
           src="/images/hero/hero.jpeg"
-          alt="Book a Trial Class"
+          alt="Book the $30 1-for-1 Promo"
           fill
           className="object-cover scale-105 transition-transform duration-[2000ms]"
           priority
@@ -42,21 +42,20 @@ const TrialBookingHero = () => {
               One Step Fitness
             </div>
             
-            <h1 className="text-3xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white uppercase italic tracking-tighter leading-[0.85] mb-6 md:mb-10 drop-shadow-2xl">
-              BOOK A <br />
-              <span className="text-lime-500 underline decoration-4 underline-offset-8">TRIAL CLASS</span>
+            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white uppercase italic tracking-tighter leading-[0.85] mb-6 md:mb-10 drop-shadow-2xl">
+              $30 <br />
+              <span className="text-lime-500 underline decoration-4 underline-offset-8">1-FOR-1 PROMO</span>
             </h1>
 
             <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
               <nav className="flex items-center gap-3 text-[9px] md:text-xs font-black uppercase tracking-widest bg-lime-500 text-black px-3 py-1.5 md:px-6 md:py-3 self-start shadow-2xl">
                 <Link href="/explore" className="hover:opacity-70 transition-opacity">Home</Link>
                 <span className="opacity-30">/</span>
-                <span>Book a Trial</span>
+                <span>1-for-1 Promo</span>
               </nav>
               
               <p className="max-w-md text-white font-bold text-xs md:text-base leading-relaxed border-l-4 border-lime-500 pl-6 md:pl-8 uppercase tracking-wider">
-                Select a class, enter your details, and pay securely. 
-                No account required to start your journey.
+                Alone $30 · With a friend $30 for both. Pick a class, enter your details, and pay securely — no account required.
               </p>
             </div>
           </motion.div>

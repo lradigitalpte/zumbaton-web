@@ -74,7 +74,7 @@ const PricingHero = () => {
                   className="group flex items-center gap-3 text-[10px] md:text-xs font-black uppercase tracking-[0.2em] bg-black text-white px-3 py-2 md:px-6 md:py-3 self-start border border-white/10 hover:bg-lime-500 hover:text-black transition-all"
                 >
                   <Zap className="w-3 h-3 md:w-4 md:h-4 text-lime-500 group-hover:text-black" />
-                  View Trial Promos
+                  View 1-for-1 Promos
                 </Link>
               </div>
               

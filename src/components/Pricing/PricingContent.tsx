@@ -76,10 +76,10 @@ const PricingContent = ({
                 Limited Time Offer
               </div>
               <h3 className="text-3xl md:text-5xl font-black text-white uppercase italic tracking-tighter leading-none mb-4">
-                1-FOR-1 <span className="text-lime-500">TRIAL SPECIALS</span>
+                $30 <span className="text-lime-500">1-FOR-1 PROMO</span>
               </h3>
               <p className="text-white/70 font-bold uppercase tracking-widest text-xs md:text-sm">
-                Bring a friend. Pay for one. No hidden referral fees.
+                Alone $30 · With a friend $30 for both. No hidden referral fees.
               </p>
             </div>
             <Link 

@@ -42,10 +42,21 @@ export interface DuoPromoConfig {
   startPageMode: StartPageMode
 }
 
+/** Studio list price for the 1-for-1 promo (Single Sesh parity). */
+export const STUDIO_1FOR1_PROMO_CENTS = 3000
+
+/** Legacy trial price — map to current promo when still stored in settings/classes. */
+export const LEGACY_TRIAL_INDOOR_CENTS = 2300
+
+export function normalizeStudioPromoIndoorCents(cents: number): number {
+  if (cents === LEGACY_TRIAL_INDOOR_CENTS) return STUDIO_1FOR1_PROMO_CENTS
+  return cents
+}
+
 /** Original hardcoded behaviour — used whenever settings are missing. */
 export const DEFAULT_DUO_PROMO_CONFIG: DuoPromoConfig = {
   active: true,
-  indoorPriceCents: 2300, // $23
+  indoorPriceCents: STUDIO_1FOR1_PROMO_CENTS,
   outdoorPriceCents: 3500, // $35
   bookingMode: 'pay_online',
   paymentTerms: 'full',
@@ -97,7 +108,9 @@ export function parseDuoPromoConfig(value: Record<string, unknown> | null | unde
 
   return {
     active: typeof value.duo_promo_active === 'boolean' ? value.duo_promo_active : DEFAULT_DUO_PROMO_CONFIG.active,
-    indoorPriceCents: coercePriceCents(value.duo_indoor_price_cents, DEFAULT_DUO_PROMO_CONFIG.indoorPriceCents),
+    indoorPriceCents: normalizeStudioPromoIndoorCents(
+      coercePriceCents(value.duo_indoor_price_cents, DEFAULT_DUO_PROMO_CONFIG.indoorPriceCents),
+    ),
     outdoorPriceCents: coercePriceCents(value.duo_outdoor_price_cents, DEFAULT_DUO_PROMO_CONFIG.outdoorPriceCents),
     bookingMode: isBookingMode(value.duo_booking_mode) ? value.duo_booking_mode : DEFAULT_DUO_PROMO_CONFIG.bookingMode,
     paymentTerms: isPaymentTerms(value.duo_payment_terms) ? value.duo_payment_terms : DEFAULT_DUO_PROMO_CONFIG.paymentTerms,

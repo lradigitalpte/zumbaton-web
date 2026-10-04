@@ -32,7 +32,7 @@ export const CHAT_TOOLS = [
   {
     name: 'get_promo_pricing',
     description:
-      "Get the current 1-for-1 Duo Trial promo pricing and how a visitor can book it (pay online now, reserve and pay at the studio, or both). Use this for any pricing or 'how do I try it' question.",
+      "Get the current $30 1-for-1 Promo pricing (studio and outdoor) and how a visitor can book it (pay online now, reserve and pay at the studio, or both). Use for pricing or how to book the 1-for-1 promo.",
     parametersJsonSchema: {
       type: 'object',
       properties: {},
@@ -84,7 +84,7 @@ async function getPromoPricingResult(): Promise<Record<string, unknown>> {
   if (!config.active || isDuoPromoExpired(config)) {
     return {
       active: false,
-      note: 'The 1-for-1 Duo Trial promo is not currently running.',
+      note: 'The $30 1-for-1 Promo is not currently running.',
     }
   }
 

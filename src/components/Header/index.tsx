@@ -34,7 +34,7 @@ const Header = () => {
   const handleSubmenu = (index: number) => setOpenIndex(openIndex === index ? -1 : index);
 
   const usePathName = usePathname();
-  const lightBackgroundPages = ['/signin', '/signup', '/forgot-password', '/schedule', '/packages'];
+  const lightBackgroundPages = ['/signin', '/signup', '/forgot-password', '/schedule', '/packages', '/trial-booking'];
   const isClassDetailPage = Boolean(usePathName?.match(/^\/classes\/[^/]+/));
   const isLightBackgroundPage =
     lightBackgroundPages.some((path) => usePathName?.startsWith(path)) ||

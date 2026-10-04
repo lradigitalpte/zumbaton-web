@@ -109,7 +109,7 @@ export default function ClassDetailPage() {
                     href="/trial-booking"
                     className="inline-flex items-center justify-center gap-2 bg-lime-500 px-6 py-3.5 text-xs font-black uppercase tracking-widest text-black transition-colors hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black"
                   >
-                    Book trial
+                    Book 1-for-1 Promo
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                   <Link
@@ -370,7 +370,7 @@ const ClassDetailCTA = () => {
               Ready to move?
             </h3>
             <p className="max-w-md text-sm text-zinc-400 md:text-base">
-              Book a trial or WhatsApp us — we&apos;ll get you into the right class.
+              Book the $30 1-for-1 promo or WhatsApp us — we&apos;ll get you into the right class.
             </p>
           </motion.div>
           <motion.div
@@ -383,7 +383,7 @@ const ClassDetailCTA = () => {
               href="/trial-booking"
               className="inline-flex items-center justify-center gap-2 bg-lime-500 px-8 py-4 text-sm font-black uppercase tracking-widest text-black hover:bg-white"
             >
-              Book trial
+              Book 1-for-1 Promo
             </Link>
             <button
               type="button"

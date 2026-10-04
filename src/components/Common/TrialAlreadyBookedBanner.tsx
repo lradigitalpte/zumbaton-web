@@ -8,9 +8,9 @@ import Link from "next/link";
 export function TrialAlreadyBookedBanner() {
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
-      <p className="font-medium">Looks like you&apos;ve already had a trial with us.</p>
+      <p className="font-medium">Looks like you&apos;ve already used this promo with us.</p>
       <p>
-        Trials are one per person. Sign up for an account and grab a token package to keep coming
+        The 1-for-1 promo is one per person. Sign up for an account and grab a token package to keep coming
         to class.
       </p>
       <Link

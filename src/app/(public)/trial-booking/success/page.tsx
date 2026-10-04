@@ -176,7 +176,7 @@ function TrialBookingSuccessContent() {
               Booking Confirmed!
             </h1>
             <p className="text-base md:text-lg text-gray-600 dark:text-gray-400">
-              Your trial class has been successfully booked
+              Your 1-for-1 promo session is booked
               {bookingData?.guestEmail && !String(bookingData.guestEmail).includes("@guest.onestepfitness.sg") && (
                 <>
                   <br />

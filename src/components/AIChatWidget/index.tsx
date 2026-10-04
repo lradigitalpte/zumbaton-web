@@ -7,7 +7,7 @@ import { ArrowUp, CalendarDays, Sparkles, Tag, X } from "lucide-react";
 import { ChatMessageContent } from "./ChatMessageContent";
 
 const QUICK_PRIMARY = "What classes are on this week?";
-const QUICK_SECONDARY = "How much is the duo trial?";
+const QUICK_SECONDARY = "How much is the $30 1-for-1 promo?";
 
 const MAX_TURNS = 18;
 
@@ -274,7 +274,7 @@ function WelcomePanel({
           onClick={onSecondary}
           className="rounded-full border border-zinc-300/80 bg-white px-5 py-2.5 text-sm font-semibold text-zinc-700 shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98]"
         >
-          Duo trial price
+          $30 1-for-1 promo
         </button>
       </div>
     </div>

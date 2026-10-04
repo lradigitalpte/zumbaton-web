@@ -134,7 +134,7 @@ const ClassesV2 = () => {
                           href="/trial-booking"
                           className="pointer-events-auto relative z-[2] text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 transition-colors hover:text-lime-500"
                         >
-                          Book Trial
+                          Book 1-for-1 Promo
                         </Link>
                       </div>
                       <div className="flex h-12 w-12 items-center justify-center border-2 border-black/10 bg-[#f6f4ee] text-gray-900 transition-all duration-300 group-hover:border-lime-500 group-hover:bg-lime-500 group-hover:text-black dark:border-white/10 dark:bg-zinc-900 dark:text-white dark:group-hover:border-lime-400 dark:group-hover:bg-lime-500 dark:group-hover:text-black">

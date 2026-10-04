@@ -110,7 +110,7 @@ function ClassCard({
                   href="/trial-booking"
                   className="pointer-events-auto relative z-[2] text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 transition-colors hover:text-lime-500"
                 >
-                  Book Trial
+                  Book 1-for-1 Promo
                 </Link>
               </motion.div>
               <span className="flex h-9 w-9 items-center justify-center rounded-none border-2 border-gray-200 bg-gray-50 text-gray-900 transition-all duration-300 group-hover:border-lime-500 group-hover:bg-lime-500 group-hover:text-black dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:group-hover:text-black">

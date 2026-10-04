@@ -14,10 +14,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const classes = await getPublicClasses({ from, to });
 
   return {
-    title: "Book a Trial Class | One Step Fitness",
+    title: "Book $30 1-for-1 Promo | One Step Fitness",
     description: buildScheduleMetadataDescription(classes).replace(
       "weekly schedule",
-      "available trial classes"
+      "sessions eligible for our $30 1-for-1 promo"
     ),
   };
 }

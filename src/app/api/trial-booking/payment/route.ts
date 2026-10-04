@@ -19,6 +19,11 @@ import {
   isBookingWindowOpen,
   logBookingWindowRejection,
 } from '@/lib/booking-window'
+import {
+  getDuoPromoConfig,
+  LEGACY_TRIAL_INDOOR_CENTS,
+  normalizeStudioPromoIndoorCents,
+} from '@/lib/duo-promo-config'
 
 export const dynamic = 'force-dynamic'
 
@@ -233,13 +238,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       guestEmail = d.guestEmail
     }
 
-    // Calculate price: use trial_price_cents from DB if set, otherwise fallback based on age group
-    // Kids: $18 (1800 cents), Adults: $23 (2300 cents). Treat kids DB value 1700 as legacy -> use 1800.
-    const DEFAULT_TRIAL_CENTS = effectiveAgeGroup === 'kid' ? 1800 : 2300
+    // Kids: $18 (1800). Adults: studio 1-for-1 promo from admin config ($30 default).
+    const promoConfig = await getDuoPromoConfig()
     const fromDb = classData.trial_price_cents && classData.trial_price_cents > 0 ? classData.trial_price_cents : null
-    const amountCents = effectiveAgeGroup === 'kid' && fromDb === 1700
-      ? 1800
-      : (fromDb ?? DEFAULT_TRIAL_CENTS)
+    let amountCents: number
+    if (effectiveAgeGroup === 'kid') {
+      amountCents = fromDb === 1700 ? 1800 : (fromDb ?? 1800)
+    } else if (classData.is_outdoor) {
+      amountCents = fromDb ?? promoConfig.outdoorPriceCents
+    } else {
+      const classCents =
+        fromDb != null && fromDb !== LEGACY_TRIAL_INDOOR_CENTS ? fromDb : null
+      amountCents = normalizeStudioPromoIndoorCents(classCents ?? promoConfig.indoorPriceCents)
+    }
 
     // Check capacity
     const { data: existingBookings, error: bookingsError } = await supabaseAdmin

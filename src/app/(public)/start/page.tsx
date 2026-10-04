@@ -86,7 +86,7 @@ export default function StartPage() {
     startPageMode: "quick_join" | "trial";
     endDate: string | null;
   }>({
-    indoorPriceCents: 2300,
+    indoorPriceCents: 3000,
     outdoorPriceCents: 3500,
     live: true,
     paymentTerms: "full",
@@ -127,7 +127,7 @@ export default function StartPage() {
       .then((res) => {
         if (active && res?.success && res.data) {
           setPromo({
-            indoorPriceCents: res.data.indoorPriceCents ?? 2300,
+            indoorPriceCents: res.data.indoorPriceCents ?? 3000,
             outdoorPriceCents: res.data.outdoorPriceCents ?? 3500,
             live: res.data.live ?? true,
             paymentTerms: res.data.paymentTerms ?? "full",
@@ -337,7 +337,7 @@ export default function StartPage() {
               href="#book"
               className="whitespace-nowrap bg-lime-500 px-4 py-2.5 text-xs font-black uppercase tracking-wide text-black transition-colors hover:bg-black hover:text-white sm:px-5 sm:text-sm"
             >
-              Claim my trial
+              {isDuoBooking ? "Book 1-for-1 promo" : "Claim my trial"}
             </a>
           </div>
         </div>
@@ -440,8 +440,30 @@ export default function StartPage() {
               </div>
             ) : (
               <form onSubmit={handleJoin} className="overflow-hidden border border-black/10 bg-white shadow-xl">
-                {/* Price comparison — large and impossible to miss */}
-                {showAnchor && (
+                {/* Price — duo promo vs discounted trial */}
+                {isDuoBooking ? (
+                  <div className="border-b border-black/10 bg-lime-500 px-4 py-3.5 sm:px-6 sm:py-5">
+                    <p className="text-center text-[10px] font-black uppercase tracking-wide text-black/70 sm:text-[11px]">
+                      $30 1-for-1 Promo
+                    </p>
+                    <p className="mt-2 text-center text-3xl font-black italic leading-none tracking-tighter text-black sm:text-5xl">
+                      {formatPrice(priceCents)}
+                    </p>
+                    <p className="mt-3 text-center text-xs font-bold leading-relaxed text-black/80">
+                      Coming alone: {formatPrice(priceCents)} (Single Sesh price).
+                      <br />
+                      Bringing a friend: {formatPrice(priceCents)} for both — 2 for 1.
+                    </p>
+                    <p className="mt-2 text-center text-xs font-bold text-black/75">
+                      Pick your class, then pay securely online.
+                    </p>
+                    {offerEndsLabel && (
+                      <p className="mt-2.5 text-center text-[10px] font-bold uppercase tracking-wide text-black/70 sm:text-xs">
+                        Offer ends {offerEndsLabel}
+                      </p>
+                    )}
+                  </div>
+                ) : showAnchor ? (
                   <div className="border-b border-black/10 bg-lime-500 px-4 py-3.5 sm:px-6 sm:py-5">
                     <div className="mb-2.5 flex flex-wrap items-center justify-center gap-2">
                       <p className="text-center text-[10px] font-black uppercase tracking-wide text-black/70 sm:text-[11px]">
@@ -460,7 +482,6 @@ export default function StartPage() {
                       </span>
                     </div>
                     <p className="mt-3 text-center text-xs font-bold text-black/75">
-                      {isDuoBooking ? "Bring a friend for the same price. " : ""}
                       Pick your class, then pay securely online.
                     </p>
                     {offerEndsLabel && (
@@ -469,9 +490,7 @@ export default function StartPage() {
                       </p>
                     )}
                   </div>
-                )}
-
-                {!showAnchor && (
+                ) : (
                   <div className="border-b border-black/10 bg-lime-500/20 px-6 py-5">
                     <p className="text-[10px] font-black uppercase tracking-[0.25em] text-lime-800">
                       Your risk-free first class

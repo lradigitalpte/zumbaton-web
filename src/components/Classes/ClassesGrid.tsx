@@ -92,7 +92,7 @@ const ClassesGrid = () => {
               </div>
               <div className="relative z-10">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-lime-500 mb-2">Limited Time</p>
-                <h3 className="text-xl font-black uppercase italic tracking-tighter text-white mb-4">1-for-1 Trial <br />Special</h3>
+                <h3 className="text-xl font-black uppercase italic tracking-tighter text-white mb-4">$30 1-for-1 <br />Promo</h3>
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/60 group-hover:text-white transition-colors">
                   <span>View Promos</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -291,7 +291,7 @@ const ClassCard = ({ classItem, index, sectionInView, cellVariant = "default" }:
                 href="/trial-booking"
                 className="pointer-events-auto relative z-[2] hidden sm:block text-[10px] font-black uppercase tracking-[0.2em] text-lime-600 dark:text-lime-400 hover:underline"
               >
-                Book Trial
+                Book 1-for-1 Promo
               </Link>
             </div>
             <div className="w-12 h-12 bg-black dark:bg-white text-white dark:text-black flex items-center justify-center group-hover:bg-lime-500 group-hover:text-black transition-all duration-300">
