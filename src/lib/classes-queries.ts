@@ -186,8 +186,19 @@ async function processAndGroupClasses(
       }
     })
 
+    const bookingCountsFromApi: Record<string, number> = {}
+    for (const c of [...transformedParents, ...transformedChildren]) {
+      if (c?.id) {
+        bookingCountsFromApi[c.id] = Number(c.booked_count || 0)
+      }
+    }
+
     try {
-      const grouped = groupRecurringClasses(transformedParents, transformedChildren, {})
+      const grouped = groupRecurringClasses(
+        transformedParents,
+        transformedChildren,
+        bookingCountsFromApi,
+      )
       if (grouped.length === 0 && transformedParents.length > 0) {
         return transformedParents
       }
@@ -793,7 +804,8 @@ function groupRecurringClasses(
   // Process each parent class
   parentClasses.forEach((parent) => {
     processedParentIds.add(parent.id)
-    const bookedCount = bookingCounts[parent.id] || 0
+    const bookedCount =
+      bookingCounts[parent.id] ?? parent.booked_count ?? 0
     
     const baseClass: ClassWithAvailability = {
       id: parent.id,
@@ -842,7 +854,10 @@ function groupRecurringClasses(
         // For BOTH recurring and course: show parent card (folder UI)
         const now = new Date()
         const nextUpcoming = sorted.find(s => new Date(s.scheduled_at) > now) || sorted[sorted.length - 1] || sorted[0]
-        const totalEnrolled = sorted.reduce((sum, s) => sum + (bookingCounts[s.id] || 0), 0)
+        const totalEnrolled = sorted.reduce(
+          (sum, s) => sum + (bookingCounts[s.id] ?? s.booked_count ?? 0),
+          0,
+        )
         const perSessionCapacity = parent.capacity
         
         if (isCourse) {
@@ -915,7 +930,10 @@ function groupRecurringClasses(
       
       const now = new Date()
       const nextUpcoming = sorted.find(s => new Date(s.scheduled_at) > now) || sorted[sorted.length - 1] || sorted[0]
-      const totalEnrolled = sorted.reduce((sum, s) => sum + (bookingCounts[s.id] || 0), 0)
+      const totalEnrolled = sorted.reduce(
+        (sum, s) => sum + (bookingCounts[s.id] ?? s.booked_count ?? 0),
+        0,
+      )
       
       const syntheticParent: ClassWithAvailability = {
         id: parentId,
