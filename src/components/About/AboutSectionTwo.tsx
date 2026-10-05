@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useRef } from "react";
+import { SITE_IMAGES } from "@/data/site-images";
 
 const AboutSectionTwo = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -64,7 +65,7 @@ const AboutSectionTwo = () => {
                 className="absolute top-0 left-0 w-[85%] aspect-[4/3] z-10 border-4 border-white dark:border-zinc-900 shadow-2xl overflow-hidden"
               >
                 <Image
-                  src="/images/image00040.jpeg"
+                  src="/images/studio/studio-step-boards-4.png"
                   alt="Training Session"
                   fill
                   className="object-cover"
@@ -81,8 +82,8 @@ const AboutSectionTwo = () => {
                 className="absolute bottom-0 right-0 w-[60%] aspect-square z-20 border-4 border-lime-500 shadow-2xl overflow-hidden"
               >
                 <Image
-                  src="/images/image00065.jpeg"
-                  alt="Personal Coaching"
+                  src={SITE_IMAGES.communityMirrorSelfie}
+                  alt="One Step Fitness community mirror selfie"
                   fill
                   className="object-cover"
                   sizes="(max-width: 1024px) 100vw, 33vw"

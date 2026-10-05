@@ -252,7 +252,7 @@ function SigninPageContent() {
               {/* Background Image */}
               <div 
                 className="absolute inset-0 bg-cover bg-center opacity-40 grayscale"
-                style={{ backgroundImage: "url(/images/hero/hero.jpeg)" }}
+                style={{ backgroundImage: "url(/images/studio/wide-studio-step-boards-1.png)" }}
               ></div>
               <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
               

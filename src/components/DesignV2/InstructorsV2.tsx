@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { SITE_IMAGES } from "@/data/site-images";
 import Image from "next/image";
 
 type CoachAvatar = { name: string; image?: string };
@@ -91,7 +92,7 @@ const InstructorsV2 = () => {
               transition={{ duration: 0.36, ease: "easeOut" }}
               className="absolute inset-0 overflow-hidden border border-black/10 shadow-none dark:border-white/10"
             >
-              <Image src="/images/hero/contact.jpeg" alt="One Step Fitness class in session" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
+              <Image src={SITE_IMAGES.communityMirrorSelfie} alt="One Step Fitness community in the studio" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover object-center" />
               <div className="absolute inset-0 bg-black/30" />
               <div className="absolute left-8 top-8 border border-white/20 bg-black/50 px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-white">
                 High-Energy Guidance

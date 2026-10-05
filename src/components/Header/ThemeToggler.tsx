@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 
 interface ThemeTogglerProps {
   showLabel?: boolean;
+  /** When false, use dark icon/border for light glass nav bars */
+  onDarkBackground?: boolean;
+  compact?: boolean;
 }
 
-const ThemeToggler = ({ showLabel = false }: ThemeTogglerProps) => {
+const ThemeToggler = ({ showLabel = false, onDarkBackground = true, compact = false }: ThemeTogglerProps) => {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -15,14 +18,23 @@ const ThemeToggler = ({ showLabel = false }: ThemeTogglerProps) => {
   }, []);
 
   const isDark = resolvedTheme === "dark";
-  const iconClass = "h-5 w-5 shrink-0 text-white";
+  const iconClass = `h-5 w-5 shrink-0 ${onDarkBackground ? "text-white" : "text-gray-900"}`;
+  const compactBtn = compact
+    ? `flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border transition-colors ${
+        onDarkBackground
+          ? "border-white/25 bg-white/10 text-white hover:border-white/45 hover:bg-white/15"
+          : "border-black/15 bg-black/5 text-gray-900 hover:border-lime-500/50 hover:bg-lime-500/10"
+      }`
+    : null;
 
   if (!mounted) {
     return (
       <div className={
         showLabel
           ? "flex w-full items-center justify-between rounded-none border border-white/20 bg-white/5 px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white transition-all"
-          : "flex h-12 w-12 shrink-0 items-center justify-center rounded-none border border-white/35 bg-white/10 text-white"
+          : compact
+            ? compactBtn ?? ""
+            : "flex h-12 w-12 shrink-0 items-center justify-center rounded-none border border-white/35 bg-white/10 text-white"
       }>
         {showLabel && <span>Appearance</span>}
         <div className="h-5 w-5" />
@@ -37,7 +49,8 @@ const ThemeToggler = ({ showLabel = false }: ThemeTogglerProps) => {
       className={
         showLabel
           ? "flex w-full items-center justify-between rounded-none border border-white/20 bg-white/5 px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:border-lime-400 hover:bg-white/10"
-          : "flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-none border border-white/35 bg-white/10 text-white transition-colors hover:border-white/55 hover:bg-white/20"
+          : compactBtn ??
+            "flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-none border border-white/35 bg-white/10 text-white transition-colors hover:border-white/55 hover:bg-white/20"
       }
     >
       {showLabel && <span>Appearance</span>}

@@ -17,7 +17,7 @@ const ScheduleHero = () => {
       {/* High-Impact Background Image */}
       <div className="absolute inset-0 -z-10">
         <Image 
-          src="/images/hero/hero2.jpeg"
+          src="/images/studio/studio-step-boards-2.png"
           alt="One Step Fitness Schedule"
           fill
           className="object-cover scale-105 transition-transform duration-[2000ms]"

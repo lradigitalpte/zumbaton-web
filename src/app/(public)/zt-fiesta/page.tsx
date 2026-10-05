@@ -15,6 +15,7 @@ import { BookingWindowBanner } from "@/components/Booking/BookingWindowBanner";
 import { useBookingWindowOpen } from "@/hooks/useBookingWindowOpen";
 import { useBookingWindowTick } from "@/hooks/useBookingWindowTick";
 import { BOOKING_WINDOW_CLOSED_MESSAGE, isBookingWindowOpen } from "@/lib/booking-window";
+import { SITE_IMAGES } from "@/data/site-images";
 
 type FiestaPackage = "1_session";
 
@@ -249,6 +250,7 @@ export default function ZtFiestaPage() {
           { label: "Classes", href: "/classes" },
           { label: "Thunderbolt Tabata" },
         ]}
+        backgroundImages={[SITE_IMAGES.outdoorPrimary, SITE_IMAGES.outdoorAccent]}
       />
 
       <section ref={sectionRef} className="overflow-x-hidden bg-[#f6f4ee] py-20 dark:bg-black md:py-32">
@@ -315,7 +317,7 @@ export default function ZtFiestaPage() {
                 <div className="relative grid h-[380px] grid-cols-12 grid-rows-6 gap-3 sm:h-[440px] md:h-[500px]">
                   <div className="relative col-span-8 row-span-6 overflow-hidden border-4 border-white bg-zinc-900 shadow-2xl dark:border-zinc-900">
                     <Image
-                      src="/OSF%20IMAGES/OS2.jpg"
+                      src={SITE_IMAGES.outdoorPrimary}
                       alt="Outdoor Thunderbolt Tabata Full Body Workout"
                       fill
                       sizes="(max-width: 1024px) 70vw, 32vw"
@@ -325,7 +327,7 @@ export default function ZtFiestaPage() {
                   </div>
                   <div className="relative col-span-4 row-span-4 row-start-3 overflow-hidden border-4 border-lime-500 bg-zinc-900 shadow-2xl">
                     <Image
-                      src="/OSF%20IMAGES/OS1.jpg"
+                      src={SITE_IMAGES.outdoorSecondary}
                       alt="Outdoor Thunderbolt Tabata at OCBC Arena"
                       fill
                       sizes="(max-width: 1024px) 35vw, 16vw"

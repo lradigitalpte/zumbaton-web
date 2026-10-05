@@ -398,8 +398,8 @@ const PromosPage = () => {
       <section className="relative h-[40vh] md:h-[50vh] flex items-center overflow-hidden bg-black pt-24">
         <div className="absolute inset-0 -z-10">
           <Image 
-            src="/images/hero/hero2.jpeg"
-            alt="One Step Fitness Promos"
+            src="/images/outdoor/turquoise-step-board-2.png"
+            alt="One Step Fitness outdoor promos"
             fill
             className="object-cover opacity-50"
             priority

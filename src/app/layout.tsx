@@ -6,7 +6,7 @@ import "../styles/index.css";
 const defaultWebUrl = "https://onestepfitness.sg";
 const configuredWebUrl = process.env.NEXT_PUBLIC_WEB_APP_URL || process.env.NEXT_PUBLIC_APP_URL || defaultWebUrl;
 const siteUrl = configuredWebUrl.includes("admin.") ? defaultWebUrl : configuredWebUrl;
-const firstHeroImage = `${siteUrl}/images/hero/hero.jpeg`;
+const firstHeroImage = `${siteUrl}/images/studio/wide-studio-step-boards-1.png`;
 const clarityProjectId = process.env.NEXT_PUBLIC_CLARITY_ID;
 
 export const metadata: Metadata = {

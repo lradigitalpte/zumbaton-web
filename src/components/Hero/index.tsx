@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
+import { SITE_IMAGES } from "@/data/site-images";
 
 const slides = [
   {
     id: 1,
-    image: "/images/hero/hero.jpeg",
+    image: SITE_IMAGES.heroCarousel[0],
     headline: "Move with",
     highlight: "Passion",
     description:
@@ -16,7 +17,7 @@ const slides = [
   },
   {
     id: 2,
-    image: "/images/hero/hero2.jpeg",
+    image: SITE_IMAGES.heroCarousel[1],
     headline: "Join the",
     highlight: "Energy",
     description:
@@ -24,7 +25,7 @@ const slides = [
   },
   {
     id: 3,
-    image: "/images/hero/notbad.jpeg",
+    image: SITE_IMAGES.heroCarousel[2],
     headline: "Fitness Meets",
     highlight: "Happiness",
     description:

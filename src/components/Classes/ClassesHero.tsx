@@ -4,6 +4,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { SITE_IMAGES } from "@/data/site-images";
 
 export interface BreadcrumbItem {
   label: string;
@@ -14,12 +15,15 @@ interface ClassesHeroProps {
   title?: string;
   description?: string;
   breadcrumbs?: BreadcrumbItem[];
+  /** Dual hero panels — defaults to studio photography */
+  backgroundImages?: [string, string];
 }
 
 const ClassesHero = ({
   title = "Classes",
   description = "Explore our adult dance fitness lineup, from high-energy step workouts to structured choreography sessions built for stamina and strength.",
   breadcrumbs,
+  backgroundImages = [SITE_IMAGES.heroPrimary, SITE_IMAGES.heroTertiary],
 }: ClassesHeroProps) => {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.2 });
@@ -38,7 +42,7 @@ const ClassesHero = ({
       <div className="absolute inset-0 -z-10 flex flex-col md:flex-row">
         <div className="relative h-1/2 w-full overflow-hidden border-b border-white/10 md:h-full md:w-1/2 md:border-b-0 md:border-r">
           <Image
-            src="/images/hero/hero.jpeg"
+            src={backgroundImages[0]}
             alt="One Step Fitness Classes"
             fill
             className="scale-110 object-cover transition-all duration-1000"
@@ -48,7 +52,7 @@ const ClassesHero = ({
         </div>
         <div className="relative h-1/2 w-full overflow-hidden md:h-full md:w-1/2">
           <Image
-            src="/images/hero/hero2.jpeg"
+            src={backgroundImages[1]}
             alt="One Step Fitness Movement"
             fill
             className="scale-110 object-cover transition-all duration-1000"

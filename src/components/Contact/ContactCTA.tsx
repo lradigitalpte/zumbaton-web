@@ -18,7 +18,7 @@ const ContactCTA = () => {
       {/* Editorial Background Image */}
       <div className="absolute inset-0 -z-10">
         <Image 
-          src="/images/image00040.jpeg"
+          src="/images/studio/studio-step-boards-4.png"
           alt="Ready to Dance"
           fill
           className="object-cover opacity-40 grayscale hover:grayscale-0 transition-all duration-1000"

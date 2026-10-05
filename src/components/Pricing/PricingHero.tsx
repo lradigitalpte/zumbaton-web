@@ -20,7 +20,7 @@ const PricingHero = () => {
         {/* Image 1 - Left/Top */}
         <div className="relative w-full h-1/2 md:h-full md:w-1/2 overflow-hidden border-b md:border-b-0 md:border-r border-white/10">
           <Image 
-            src="/images/hero/notbad.jpeg"
+            src="/images/studio/studio-step-boards-6.png"
             alt="One Step Fitness Pricing"
             fill
             className="object-cover scale-110 transition-all duration-1000"
@@ -32,7 +32,7 @@ const PricingHero = () => {
         {/* Image 2 - Right/Bottom */}
         <div className="relative w-full h-1/2 md:h-full md:w-1/2 overflow-hidden">
           <Image 
-            src="/images/hero/hero.jpeg"
+            src="/images/studio/studio-step-boards-4.png"
             alt="One Step Fitness Packages"
             fill
             className="object-cover scale-110 transition-all duration-1000"

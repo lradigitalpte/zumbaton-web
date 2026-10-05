@@ -2,30 +2,31 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { SITE_IMAGES } from "@/data/site-images";
 
 const features = [
   {
     title: "Inclusive Community",
     description: "No judgment. Just pure energy and support.",
-    image: "/images/image00059.jpeg",
+    image: SITE_IMAGES.communityMirrorSelfie,
     colSpan: "md:col-span-2",
   },
   {
     title: "Expert Coaches",
     description: "Learn from the best in the industry.",
-    image: "/images/image00065.jpeg",
+    image: "/images/studio/studio-step-boards-5.png",
     colSpan: "md:col-span-1",
   },
   {
     title: "Any Fitness Level",
     description: "From beginner to pro, we have a spot for you.",
-    image: "/images/hero/hero2.jpeg",
+    image: "/images/studio/studio-step-boards-2.png",
     colSpan: "md:col-span-1",
   },
   {
     title: "Fun First",
     description: "Workouts that feel like a party.",
-    image: "/images/hero/notbad.jpeg",
+    image: "/images/studio/wide-studio-step-boards-1.png",
     colSpan: "md:col-span-2",
   },
 ];

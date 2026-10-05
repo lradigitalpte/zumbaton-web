@@ -19,7 +19,7 @@ const AboutHero = () => {
         {/* Image 1 - Left/Top */}
         <div className="relative w-full h-1/2 md:h-full md:w-1/2 overflow-hidden border-b md:border-b-0 md:border-r border-white/10">
           <Image 
-            src="/images/hero/hero2.jpeg"
+            src="/images/studio/studio-step-boards-2.png"
             alt="One Step Fitness Energy"
             fill
             className="object-cover scale-110 transition-all duration-1000"
@@ -31,7 +31,7 @@ const AboutHero = () => {
         {/* Image 2 - Right/Bottom */}
         <div className="relative w-full h-1/2 md:h-full md:w-1/2 overflow-hidden">
           <Image 
-            src="/images/hero/hero.jpeg"
+            src="/images/studio/wide-studio-step-boards-1.png"
             alt="One Step Fitness Movement"
             fill
             className="object-cover scale-110 transition-all duration-1000"

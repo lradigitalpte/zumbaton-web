@@ -5,25 +5,26 @@ import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
 import Image from "next/image";
+import { SITE_IMAGES } from "@/data/site-images";
 
 const slides = [
   {
     id: 1,
-    image: "/images/hero/hero.jpeg",
+    image: SITE_IMAGES.heroCarousel[0],
     title: "Step Into",
     highlight: "The Rhythm",
     description: "High-energy sessions that hit different. Clear, structured, and pure energy.",
   },
   {
     id: 2,
-    image: "/images/hero/hero2.jpeg",
+    image: SITE_IMAGES.heroCarousel[1],
     title: "Level Up",
     highlight: "Your Energy",
     description: "Join the tribe. No judgment, just consistent movement and a community that moves with you.",
   },
   {
     id: 3,
-    image: "/images/hero/notbad.jpeg",
+    image: SITE_IMAGES.heroCarousel[2],
     title: "Experience",
     highlight: "Pure Joy",
     description: "Feel the momentum. Stronger every session with music that keeps you coming back.",

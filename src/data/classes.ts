@@ -54,7 +54,7 @@ export const zumbaClasses: ZumbaClass[] = [
       "Synchronized stepper choreography that moves as one unit. Learn clean formations, timing, and groove while building endurance and lower-body strength.",
     fullDescription:
       "Groove Stepper Synchronized Dance blends structured stepper choreography with group synchronization. Led by Robert and Micky, each session trains you to hit counts together—formations, timing, and musicality—while elevating cardio and lower-body strength. Expect precise step work, dance-driven flow, and a team energy that makes every routine feel like a performance.",
-    image: "/OSF%20IMAGES/ZT3.jpg",
+    image: "/images/studio/studio-step-boards-3.png",
     featured: true,
     duration: "60 min",
     intensity: "All Levels",
@@ -96,7 +96,7 @@ export const zumbaClasses: ZumbaClass[] = [
     name: "Zumba Step",
     shortDescription: "High-energy step cardio that hits like a party. Pure energy, maximum movement.",
     fullDescription: "A high-energy step aerobics workout elevated for added intensity and calorie burn. This class blends fun, easy-to-follow dance choreography with step movements, delivering a full-body workout that feels more like a party than exercise.",
-    image: "/images/hero/hero2.jpeg",
+    image: "/images/studio/studio-step-boards-2.png",
     featured: true,
     duration: "60 min",
     intensity: "All Levels",
@@ -187,7 +187,7 @@ export const zumbaClasses: ZumbaClass[] = [
       "High-intensity Tabata rounds on the step. Explosive bodyweight power combined with stepper agility for maximum calorie burn and afterburn.",
     fullDescription:
       "Thunderbolt (Bodyweight & Steppers) is our signature high-intensity Tabata format led by Coach Robert. By pushing your body into the anaerobic zone with short bursts of maximum effort, you'll spike your metabolism and benefit from the 'afterburn effect' long after the session ends. The stepper adds a powerful lower-body focus on quads, glutes, and calves, while forcing balance, timing, and rhythm. It's a time-efficient, explosive workout designed to improve your VO2 max and mental toughness in record time.",
-    image: "/images/hero/notbad.jpeg",
+    image: "/images/studio/studio-step-boards-4.png",
     featured: true,
     duration: "60 min",
     intensity: "Level 5",

@@ -17,7 +17,7 @@ const TrialBookingHero = () => {
       {/* High-Impact Background Image */}
       <div className="absolute inset-0 -z-10">
         <Image 
-          src="/images/hero/hero.jpeg"
+          src="/images/studio/wide-studio-step-boards-1.png"
           alt="Book the $30 1-for-1 Promo"
           fill
           className="object-cover scale-105 transition-transform duration-[2000ms]"

@@ -37,7 +37,7 @@ const PricingCarousel = ({ initialAdultPackages = [] }: PricingCarouselProps) =>
     <section id="pricing" className="relative text-gray-900 dark:text-white py-12 sm:py-16 md:py-20 lg:py-28 overflow-hidden bg-[#f6f4ee] dark:bg-black">
       <div className="absolute inset-0 -z-10">
         <Image
-          src="/images/image00065.jpeg"
+          src="/images/studio/studio-step-boards-5.png"
           alt="Dance fitness pricing background"
           fill
           className="object-cover"

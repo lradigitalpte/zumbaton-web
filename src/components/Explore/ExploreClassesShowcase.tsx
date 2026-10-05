@@ -8,6 +8,7 @@ import { zumbaClasses, type ZumbaClass, CLASS_ENERGY } from "@/data/classes";
 import { highlightCoachInText } from "@/lib/highlightCoachInText";
 import { LightningRating } from "@/components/Common/LightningRating";
 import { HorizontalScrollCarousel } from "@/components/Common/HorizontalScrollCarousel";
+import { SITE_IMAGES } from "@/data/site-images";
 
 const DEFAULT_CARD_DURATION = "60 min";
 
@@ -35,7 +36,7 @@ const OUTDOOR: OutdoorClass[] = [
     slug: "thunderbolt-tabata-outdoor",
     name: "Thunderbolt Tabata Full Body Workout",
     href: "/zt-fiesta",
-    image: "/OSF%20IMAGES/OS2.jpg",
+    image: SITE_IMAGES.outdoorPrimary,
     intensity: "Level 5",
     vibe: "Outdoor Tabata at OCBC Arena, Kallang Gate 20.",
     energy: 4,

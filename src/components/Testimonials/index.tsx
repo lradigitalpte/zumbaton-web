@@ -75,7 +75,7 @@ const Testimonials = () => {
         className="absolute inset-0 -z-10"
       >
         <Image
-          src="/images/image00065.jpeg"
+          src="/images/studio/studio-step-boards-6.png"
           alt="Dance fitness background"
           fill
           className="object-cover"

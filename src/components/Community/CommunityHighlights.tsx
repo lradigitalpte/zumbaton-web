@@ -3,6 +3,7 @@
 import React, { useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { SITE_IMAGES } from "@/data/site-images";
 
 const highlights = [
   {
@@ -44,7 +45,7 @@ const CommunityHighlights = () => {
     >
       <div className="pointer-events-none absolute inset-0 -z-10 hidden dark:block">
         <Image
-          src="/images/image00059.jpeg"
+          src={SITE_IMAGES.communityMirrorSelfie}
           alt=""
           fill
           className="object-cover opacity-30"

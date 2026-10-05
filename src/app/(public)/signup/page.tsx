@@ -301,7 +301,7 @@ const SignupForm = () => {
             <div className="w-full lg:w-1/2 relative bg-black flex flex-col justify-center items-center text-center p-8 sm:p-12 lg:p-16 overflow-hidden">
               <div
                 className="absolute inset-0 bg-cover bg-center opacity-40 grayscale"
-                style={{ backgroundImage: "url(/images/hero/hero2.jpeg)" }}
+                style={{ backgroundImage: "url(/images/studio/studio-step-boards-2.png)" }}
               ></div>
               <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
               <div className="absolute inset-0 border-[20px] border-white/5 pointer-events-none z-10"></div>

@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
+import { SITE_IMAGES } from "@/data/site-images";
 
 export interface BreadcrumbItem {
   label: string;
@@ -20,7 +21,7 @@ interface PageHeroProps {
 const PageHero = ({
   title,
   breadcrumbs,
-  backgroundImage = "/images/hero/hero.jpeg",
+  backgroundImage = SITE_IMAGES.heroPrimary,
   titleMode = "display",
 }: PageHeroProps) => {
   const isArticle = titleMode === "article";

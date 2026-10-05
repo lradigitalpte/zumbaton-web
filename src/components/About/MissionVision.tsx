@@ -15,7 +15,7 @@ const MissionVision = () => {
         {/* Left Side - Visual Statement */}
         <div className="lg:w-1/2 relative min-h-[40vh] lg:min-h-0">
           <Image
-            src="/images/image00059.jpeg"
+            src="/images/studio/studio-step-boards-3.png"
             alt="One Step Fitness Mission"
             fill
             className="object-cover opacity-60 grayscale"

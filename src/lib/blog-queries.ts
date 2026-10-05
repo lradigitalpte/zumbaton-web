@@ -1,7 +1,7 @@
 import { getSupabaseAdminClient } from '@/lib/supabase'
 import { BLOG_CATEGORIES, postMatchesCategory } from '@/lib/blog-categories'
 
-const DEFAULT_IMAGE = '/images/hero/hero.jpeg'
+const DEFAULT_IMAGE = '/images/studio/wide-studio-step-boards-1.png'
 const DEFAULT_AUTHOR_IMAGE = '/logo/One step fitness logo.png'
 
 export const BLOG_PAGE_SIZE = 6

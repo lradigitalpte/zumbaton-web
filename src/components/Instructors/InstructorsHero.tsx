@@ -17,7 +17,7 @@ const InstructorsHero = () => {
       {/* High-Impact Single Image Background */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <Image
-          src="/images/hero/hero.jpeg"
+          src="/images/studio/wide-studio-step-boards-1.png"
           alt="One Step Fitness Instructors"
           fill
           className="scale-105 object-cover transition-transform duration-[2000ms]"

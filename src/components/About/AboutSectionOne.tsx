@@ -26,7 +26,7 @@ const AboutSectionOne = () => {
                 className="absolute inset-0 z-10 border border-black/10 dark:border-white/10"
               >
                 <Image
-                  src="/images/hero/hero2.jpeg"
+                  src="/images/studio/studio-step-boards-2.png"
                   alt="One Step Fitness Class"
                   fill
                   className="object-cover grayscale hover:grayscale-0 transition-all duration-700"
