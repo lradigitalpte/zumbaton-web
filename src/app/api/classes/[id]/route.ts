@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase'
+import { OCCUPIED_BOOKING_STATUSES } from '@/lib/booking-capacity'
 
 export async function GET(
   _request: NextRequest,
@@ -42,7 +43,7 @@ export async function GET(
       .from('bookings')
       .select('id', { count: 'exact', head: true })
       .eq('class_id', id)
-      .eq('status', 'confirmed')
+      .in('status', [...OCCUPIED_BOOKING_STATUSES])
 
     if (bookingCountError) {
       console.warn('[API] Error fetching booking count:', bookingCountError)

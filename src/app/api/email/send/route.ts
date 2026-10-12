@@ -28,6 +28,7 @@ import {
   sendReferralVoucherEmail,
   sendLeadFollowUpEmail,
   sendPickClassLinkEmail,
+  sendCheckoutReminderEmail,
   sendMemberBookingAdminNotificationEmail,
   sendMemberBookingTutorNotificationEmail,
   sendInvoiceEmail,
@@ -59,6 +60,7 @@ const EmailRequestSchema = z.object({
     'referral-voucher',
     'lead-follow-up',
     'pick-class-link',
+    'checkout-reminder',
     'member-booking-admin',
     'member-booking-tutor',
     'invoice',
@@ -312,6 +314,17 @@ export async function POST(request: NextRequest) {
           guestName: data.guestName as string,
           venueLabel: data.venueLabel as string,
           pickClassUrl: data.pickClassUrl as string,
+        })
+        break
+
+      case 'checkout-reminder':
+        result = await sendCheckoutReminderEmail({
+          customerEmail: data.customerEmail as string,
+          customerName: data.customerName as string,
+          itemLabel: data.itemLabel as string,
+          itemDetail: data.itemDetail as string | undefined,
+          amountLabel: data.amountLabel as string,
+          checkoutUrl: data.checkoutUrl as string,
         })
         break
 

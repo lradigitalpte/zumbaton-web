@@ -1072,6 +1072,35 @@ export async function sendPickClassLinkEmail(data: {
 }
 
 /**
+ * Send checkout reminder email (customer started HitPay checkout but didn't pay)
+ */
+export async function sendCheckoutReminderEmail(data: {
+  customerEmail: string
+  customerName: string
+  itemLabel: string
+  itemDetail?: string
+  amountLabel: string
+  checkoutUrl: string
+}): Promise<EmailResult> {
+  const { getCheckoutReminderEmailTemplate } = await import('./email-templates')
+  const template = getCheckoutReminderEmailTemplate({
+    customerName: data.customerName,
+    itemLabel: data.itemLabel,
+    itemDetail: data.itemDetail,
+    amountLabel: data.amountLabel,
+    checkoutUrl: data.checkoutUrl,
+  })
+
+  return sendEmail({
+    to: data.customerEmail,
+    subject: `Finish your payment — ${data.itemLabel}`,
+    html: template.html,
+    text: template.text,
+    replyTo: process.env.EMAIL_REPLY_TO || undefined,
+  })
+}
+
+/**
  * Send trial booking admin notification email
  */
 export async function sendTrialBookingAdminNotificationEmail(data: {

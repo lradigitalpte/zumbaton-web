@@ -1450,6 +1450,77 @@ ${data.pickClassUrl}
 }
 
 /**
+ * Checkout Reminder Email Template
+ * Sent when a customer opened HitPay checkout but never finished paying.
+ */
+export function getCheckoutReminderEmailTemplate(data: {
+  customerName: string
+  itemLabel: string
+  itemDetail?: string
+  amountLabel: string
+  checkoutUrl: string
+}): { html: string; text: string } {
+  const firstName = data.customerName.trim().split(/\s+/)[0] || 'there'
+  const html = getBaseTemplate(`
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Your Payment Didn't Go Through</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">${escapeHtml(data.itemLabel)}</p>
+    </div>
+
+    <p style="margin: 0 0 16px; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
+      Hi ${escapeHtml(firstName)}, it looks like your checkout wasn't completed, so this isn't confirmed yet. You can pick up where you left off below.
+    </p>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin: 0 0 8px; background-color: #f9fafb; border-radius: 12px;">
+      <tr>
+        <td style="padding: 16px 20px; color: #111827; font-size: 15px; font-weight: 600;">${escapeHtml(data.itemLabel)}</td>
+        <td align="right" style="padding: 16px 20px; color: #111827; font-size: 15px; font-weight: 700;">${escapeHtml(data.amountLabel)}</td>
+      </tr>
+      ${data.itemDetail ? `<tr><td colspan="2" style="padding: 0 20px 16px; color: #6b7280; font-size: 14px;">${escapeHtml(data.itemDetail)}</td></tr>` : ''}
+    </table>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin: 28px 0;">
+      <tr>
+        <td align="center" style="padding: 0 16px;">
+          <table role="presentation" cellspacing="0" cellpadding="0" style="width: 100%; max-width: 320px; margin: 0 auto;">
+            <tr>
+              <td align="center" style="border-radius: 999px; background-color: #16a34a; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);">
+                <a href="${data.checkoutUrl}" style="display: block; width: 100%; max-width: 100%; box-sizing: border-box; color: #ffffff !important; text-decoration: none; padding: 16px 20px; border-radius: 999px; font-weight: 700; font-size: 16px; line-height: 1.3; text-align: center;">
+                  Finish My Payment
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;" class="mobile-text">
+      Card declined or PayNow timed out? Just reply to this email and we'll help you sort it out. If you've already paid, you can ignore this message.
+    </p>
+  `, `Finish your payment — ${data.itemLabel}`)
+
+  const text = `
+Your Payment Didn't Go Through
+
+Hi ${firstName},
+
+It looks like your checkout wasn't completed, so this isn't confirmed yet:
+
+${data.itemLabel} — ${data.amountLabel}${data.itemDetail ? `\n${data.itemDetail}` : ''}
+
+FINISH MY PAYMENT
+${data.checkoutUrl}
+
+Card declined or PayNow timed out? Just reply to this email and we'll help you sort it out. If you've already paid, you can ignore this message.
+
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
+  `.trim()
+
+  return { html, text }
+}
+
+/**
  * Trial Booking Admin Notification Email Template
  */
 export function getTrialBookingAdminNotificationEmailTemplate(data: {

@@ -3,6 +3,7 @@
  */
 
 import { getSupabaseClient, TABLES } from './supabase'
+import { OCCUPIED_BOOKING_STATUSES } from './booking-capacity'
 
 export interface ClassDetail {
   id: string
@@ -156,7 +157,7 @@ export async function getClassDetail(classId: string): Promise<ClassDetail | nul
         .from(TABLES.BOOKINGS)
         .select('id')
         .eq('class_id', classId)
-        .eq('status', 'confirmed'),
+        .in('status', [...OCCUPIED_BOOKING_STATUSES]),
       timeoutPromise,
     ]) as { data: any; error: any }
     

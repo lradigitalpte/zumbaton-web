@@ -1,5 +1,6 @@
 import { cache } from 'react'
 import { getSupabaseAdminClient } from '@/lib/supabase'
+import { OCCUPIED_BOOKING_STATUSES } from '@/lib/booking-capacity'
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/
 const SG_TIMEZONE = 'Asia/Singapore'
@@ -143,7 +144,7 @@ export const getPublicClasses = cache(async function getPublicClasses(
       .from('bookings')
       .select('class_id')
       .in('class_id', classIds)
-      .in('status', ['confirmed', 'attended'])
+      .in('status', [...OCCUPIED_BOOKING_STATUSES])
 
     if (bookings) {
       bookings.forEach((booking) => {

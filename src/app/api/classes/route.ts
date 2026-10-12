@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase'
+import { OCCUPIED_BOOKING_STATUSES } from '@/lib/booking-capacity'
 
 /**
  * GET /api/classes
@@ -125,7 +126,7 @@ export async function GET(request: NextRequest) {
         .from('bookings')
         .select('class_id, status')
         .in('class_id', classIds)
-        .in('status', ['confirmed', 'attended'])
+        .in('status', [...OCCUPIED_BOOKING_STATUSES])
       bookings?.forEach((b: { class_id: string }) => {
         bookingCounts[b.class_id] = (bookingCounts[b.class_id] || 0) + 1
       })

@@ -23,6 +23,7 @@ import {
   logBookingWindowRejection,
 } from '@/lib/booking-window'
 import { sendMemberBookingStaffNotifications } from '@/lib/member-booking-notifications'
+import { OCCUPIED_BOOKING_STATUSES } from '@/lib/booking-capacity'
 import { chargePackage, recordBookingCharges, refundBookingTokens } from '@/lib/token-ledger'
 
 export const dynamic = 'force-dynamic'
@@ -307,7 +308,7 @@ async function handleSingleBooking(userId: string, classId: string) {
       .from('bookings')
       .select('id', { count: 'exact' })
       .eq('class_id', classId)
-      .eq('status', 'confirmed')
+      .in('status', [...OCCUPIED_BOOKING_STATUSES])
 
     const bookedCount = count || 0
     const isFull = bookedCount >= classData.capacity
@@ -646,7 +647,7 @@ async function handleCourseBooking(userId: string, parentClassId: string, parent
       .from('bookings')
       .select('class_id')
       .in('class_id', sessionIds)
-      .in('status', ['confirmed', 'attended'])
+      .in('status', [...OCCUPIED_BOOKING_STATUSES])
 
     const bookingsBySession: Record<string, number> = {}
     bookingCounts?.forEach((booking: any) => {

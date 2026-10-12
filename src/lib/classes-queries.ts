@@ -6,6 +6,7 @@
 import { getSupabaseClient, TABLES } from './supabase'
 import { getTokenBalance } from './dashboard-queries'
 import { getBookingSettings, type BookingSettings } from './booking-settings'
+import { OCCUPIED_BOOKING_STATUSES } from './booking-capacity'
 
 export interface InstructorInfo {
   id: string
@@ -526,7 +527,7 @@ async function processAndGroupClasses(
       .from(TABLES.BOOKINGS)
       .select('class_id, status')
       .in('class_id', allClassIds)
-      .in('status', ['confirmed', 'attended']) // Count both confirmed and attended bookings
+      .in('status', [...OCCUPIED_BOOKING_STATUSES])
     
     if (bookingError) {
       console.error('Error fetching booking counts:', {
