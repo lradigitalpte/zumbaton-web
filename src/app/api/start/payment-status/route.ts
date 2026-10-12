@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const supabase = getSupabaseAdminClient();
     const { data: payment, error } = await supabase
       .from("payments")
-      .select("id, status, class_id, hitpay_payment_request_id, metadata, created_at")
+      .select("id, status, class_id, amount_cents, currency, hitpay_payment_request_id, metadata, created_at")
       .eq("id", paymentId)
       .eq("is_trial_booking", true)
       .maybeSingle();
@@ -38,7 +38,12 @@ export async function GET(request: NextRequest) {
     const venue = typeof meta.venue === "string" ? meta.venue : null;
     const canSelectClass = flowType === "quick_trial" || flowType === "quick_join";
 
-    // If pending, attempt a lightweight HitPay poll (same as other flows)
+    const selectedClassId =
+      (typeof meta.selected_class_id === "string" ? meta.selected_class_id : null) ||
+      (typeof payment.class_id === "string" ? payment.class_id : null);
+
+    // If pending, sync with HitPay and confirm the booking (same as /api/trial-booking/status),
+    // so the class is booked even if the webhook is late or missed.
     if (
       !isPaid(payment.status) &&
       (payment.status === "pending" || payment.status === "in_progress") &&
@@ -53,20 +58,131 @@ export async function GET(request: NextRequest) {
         const hitpayData = hitpayRes.ok ? await hitpayRes.json() : null;
         const hitpayStatus = (hitpayData?.status as string | undefined)?.toLowerCase?.() ?? null;
         if (hitpayStatus === "completed" || hitpayStatus === "succeeded") {
-          await supabase
+          const hitpayPaymentId = (hitpayData?.payments?.[0]?.id as string | undefined) ?? null;
+
+          // Only the request that flips pending → succeeded does the follow-up work,
+          // so a page refresh (or the webhook arriving) can't double-send emails.
+          const { data: flipped } = await supabase
             .from("payments")
-            .update({ status: "succeeded", updated_at: new Date().toISOString() })
-            .eq("id", paymentId);
+            .update({ status: "succeeded", hitpay_payment_id: hitpayPaymentId, updated_at: new Date().toISOString() })
+            .eq("id", paymentId)
+            .in("status", ["pending", "in_progress"])
+            .select("id");
           payment.status = "succeeded";
+
+          if (flipped && flipped.length > 0) {
+            // Confirm draft bookings (metadata.draft_booking_id(s) or linked by payment_id).
+            // The webhook will see the payment as already processed, so this must happen here.
+            const draftIds = new Set<string>();
+            if (typeof meta.draft_booking_id === "string") draftIds.add(meta.draft_booking_id);
+            if (Array.isArray(meta.draft_booking_ids)) {
+              for (const id of meta.draft_booking_ids) if (typeof id === "string") draftIds.add(id);
+            }
+            const { data: byPayment } = await supabase
+              .from("bookings")
+              .select("id")
+              .eq("payment_id", paymentId)
+              .eq("status", "draft")
+              .eq("is_trial_booking", true);
+            for (const b of byPayment || []) draftIds.add(b.id);
+
+            if (draftIds.size > 0) {
+              await supabase
+                .from("bookings")
+                .update({
+                  status: "confirmed",
+                  payment_id: paymentId,
+                  booked_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                })
+                .in("id", [...draftIds])
+                .eq("status", "draft");
+            }
+
+            const guestName = typeof meta.guest_name === "string" ? meta.guest_name : "Guest";
+            const guestEmail = typeof meta.guest_email === "string" ? meta.guest_email : "";
+            const guestPhone = typeof meta.guest_phone === "string" ? meta.guest_phone : "";
+            const classTitle = typeof meta.class_title === "string" ? meta.class_title : "Trial Class";
+            const amountCents = typeof payment.amount_cents === "number" ? payment.amount_cents : 0;
+            const currency = typeof payment.currency === "string" ? payment.currency : "SGD";
+
+            // Guest confirmation email (the webhook would normally send this)
+            if (guestEmail && selectedClassId) {
+              void Promise.resolve().then(async () => {
+                const { data: cls } = await supabase
+                  .from("classes")
+                  .select("title, scheduled_at, location, instructor_name")
+                  .eq("id", selectedClassId)
+                  .maybeSingle();
+                if (!cls) return;
+                const { sendTrialBookingConfirmationEmail } = await import("@/lib/email");
+                await sendTrialBookingConfirmationEmail({
+                  guestEmail,
+                  guestName,
+                  className: cls.title,
+                  classDate: new Date(cls.scheduled_at).toLocaleDateString("en-SG", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    timeZone: "Asia/Singapore",
+                  }),
+                  classTime: new Date(cls.scheduled_at).toLocaleTimeString("en-SG", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                    timeZone: "Asia/Singapore",
+                  }),
+                  classLocation: cls.location || "TBA",
+                  instructorName: cls.instructor_name || undefined,
+                  amount: amountCents / 100,
+                  currency,
+                });
+              }).catch((emailErr: unknown) => {
+                console.error("[Start Payment Status] Guest confirmation email failed:", emailErr);
+              });
+            }
+
+            void Promise.resolve().then(async () => {
+              const { sendPaymentAlertEmail } = await import("@/lib/email");
+              await sendPaymentAlertEmail({
+                paymentId,
+                event: "succeeded",
+                paymentType: "trial-booking",
+                source: "status-sync",
+                amount: amountCents / 100,
+                currency,
+                guestName,
+                guestEmail,
+                guestPhone,
+                className: classTitle,
+              });
+            }).catch((alertErr: unknown) => {
+              console.error("[Start Payment Status] Payment alert send failed:", alertErr);
+            });
+
+            void (async () => {
+              const { createAndSendInvoice } = await import("@/lib/invoicing");
+              await createAndSendInvoice({
+                paymentId,
+                hitpayPaymentId,
+                amountCents,
+                currency,
+                description: `${classTitle} — Trial Class`,
+                guestName,
+                guestEmail,
+                guestPhone,
+              });
+            })().catch((invoiceErr: unknown) => {
+              console.error("[Start Payment Status] Invoice send failed:", invoiceErr);
+            });
+          }
         }
-      } catch {
+      } catch (syncErr) {
+        console.error("[Start Payment Status] HitPay sync error:", syncErr);
         // non-fatal: return current status
       }
     }
-
-    const selectedClassId =
-      (typeof meta.selected_class_id === "string" ? meta.selected_class_id : null) ||
-      (typeof payment.class_id === "string" ? payment.class_id : null);
 
     let selectedClass: {
       id: string;
