@@ -498,6 +498,56 @@ View bookings: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_
 }
 
 /**
+ * Streak reminder: come once this week or the week streak ends Sunday.
+ */
+export function getStreakReminderEmailTemplate(data: {
+  userName: string
+  streakWeeks: number
+  bookUrl: string
+}): { html: string; text: string } {
+  const streakLabel = data.streakWeeks === 1 ? '1-week streak' : `${data.streakWeeks}-week streak`
+  const html = getBaseTemplate(`
+    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
+      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Keep your streak</h2>
+      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">One class this week keeps it going</p>
+    </div>
+
+    <p style="margin: 0 0 20px 0; color: #374151; font-size: 16px; line-height: 1.6;" class="mobile-text">
+      Hi ${escapeHtml(data.userName)},
+    </p>
+
+    <div style="background-color: #fff7ed; border-left: 4px solid #f97316; padding: 25px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
+      <p style="margin: 0 0 8px 0; color: #9a3412; font-size: 14px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;">Week streak</p>
+      <p style="margin: 0; color: #111827; font-size: 32px; font-weight: 700; line-height: 1.2;">${data.streakWeeks}</p>
+      <p style="margin: 8px 0 0 0; color: #374151; font-size: 15px; line-height: 1.6;">
+        Your ${escapeHtml(streakLabel)} ends Sunday if you don't come in this week.
+      </p>
+    </div>
+
+    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
+      <a href="${escapeHtml(data.bookUrl)}"
+         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
+        Book a class
+      </a>
+    </div>
+  `, `Your ${streakLabel} ends Sunday. Come once this week to keep it.`)
+
+  const text = `
+Keep your streak
+
+Hi ${data.userName},
+
+Your ${streakLabel} ends Sunday if you don't come in this week. One class is enough.
+
+Book a class: ${data.bookUrl}
+
+© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
+  `.trim()
+
+  return { html, text }
+}
+
+/**
  * Booking Confirmation Email Template
  */
 export function getBookingConfirmationEmailTemplate(data: {

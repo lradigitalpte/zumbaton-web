@@ -1,392 +1,685 @@
 "use client";
 
+
+
 import { useState } from "react";
+
 import Link from "next/link";
+
+import MemberMobilePageShell from "@/components/Dashboard/MemberMobilePageShell";
+import Modal from "@/components/Modal/Modal";
+
+import { useAuth } from "@/context/AuthContext";
+
+import { useTokenBalanceStats } from "@/hooks/useTokenTransactions";
+
 import { useMyPackages, MyPackage, useDeletePackage } from "@/hooks/useMyPackages";
+
+
 
 type StatusFilter = "all" | "active" | "expired" | "depleted";
 
+
+
+const FILTERS: { id: StatusFilter; label: string }[] = [
+
+  { id: "all", label: "All" },
+
+  { id: "active", label: "Active" },
+
+  { id: "expired", label: "Expired" },
+
+  { id: "depleted", label: "Used up" },
+
+];
+
+
+
 const MyPackagesPage = () => {
+
+  const { user } = useAuth();
+
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+
   const [packageToDelete, setPackageToDelete] = useState<MyPackage | null>(null);
-  const { data, isLoading, error, refetch, isFetching } = useMyPackages(statusFilter === "all" ? undefined : statusFilter);
+
+  const { data, isLoading, error, refetch, isFetching } = useMyPackages(
+
+    statusFilter === "all" ? undefined : statusFilter
+
+  );
+
+  const { data: tokenBalance, isLoading: isLoadingBalance } = useTokenBalanceStats(user?.id);
+
   const deletePackage = useDeletePackage();
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+
+
+  const formatDate = (dateString: string) =>
+
+    new Date(dateString).toLocaleDateString("en-SG", {
+
       year: "numeric",
+
       month: "short",
+
       day: "numeric",
+
     });
-  };
 
-  const formatPrice = (priceCents: number, currency: string) => {
-    return new Intl.NumberFormat("en-SG", {
+
+
+  const formatPrice = (priceCents: number, currency: string) =>
+
+    new Intl.NumberFormat("en-SG", {
+
       style: "currency",
+
       currency: currency || "SGD",
+
     }).format(priceCents / 100);
+
+
+
+  const getStatusLabel = (pkg: MyPackage) => {
+
+    if (pkg.status === "frozen") return { text: "Frozen", tone: "blue" as const };
+
+    if (pkg.isExpired || pkg.status === "expired") return { text: "Expired", tone: "red" as const };
+
+    if (pkg.isExpiringSoon) return { text: "Expiring soon", tone: "amber" as const };
+
+    if (pkg.status === "depleted") return { text: "Used up", tone: "zinc" as const };
+
+    return { text: "Active", tone: "lime" as const };
+
   };
 
-  const getStatusBadge = (pkg: MyPackage) => {
-    if (pkg.status === "frozen") {
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-          </svg>
-          Frozen
-        </span>
-      );
+
+
+  const statusPillClass = (tone: "lime" | "amber" | "red" | "blue" | "zinc") => {
+
+    switch (tone) {
+
+      case "lime":
+
+        return "bg-lime-100 text-lime-900 dark:bg-lime-900/40 dark:text-lime-300";
+
+      case "amber":
+
+        return "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-300";
+
+      case "red":
+
+        return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300";
+
+      case "blue":
+
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300";
+
+      default:
+
+        return "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400";
+
     }
-    if (pkg.isExpired || pkg.status === "expired") {
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          Expired
-        </span>
-      );
-    }
-    if (pkg.isExpiringSoon) {
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          Expiring Soon
-        </span>
-      );
-    }
-    if (pkg.status === "depleted") {
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400">
-          Depleted
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-        Active
-      </span>
-    );
+
   };
+
+
 
   const getExpiryMessage = (pkg: MyPackage) => {
-    if (pkg.isExpired) {
-      return "Expired";
-    }
-    if (pkg.daysUntilExpiry === 0) {
-      return "Expires today";
-    }
-    if (pkg.daysUntilExpiry === 1) {
-      return "Expires tomorrow";
-    }
-    if (pkg.daysUntilExpiry <= 7) {
-      return `Expires in ${pkg.daysUntilExpiry} days`;
-    }
-    return `Expires ${formatDate(pkg.expiresAt)}`;
+
+    if (pkg.isExpired) return "Expired";
+
+    if (pkg.daysUntilExpiry === 0) return "Expires today";
+
+    if (pkg.daysUntilExpiry === 1) return "Expires tomorrow";
+
+    if (pkg.daysUntilExpiry <= 7) return `${pkg.daysUntilExpiry} days left`;
+
+    return `Until ${formatDate(pkg.expiresAt)}`;
+
   };
 
+
+
+  const progressBarClass = (pkg: MyPackage) => {
+
+    if (pkg.isExpired) return "bg-red-500";
+
+    if (pkg.isExpiringSoon) return "bg-amber-500";
+
+    if (pkg.status === "depleted") return "bg-zinc-400";
+
+    return "bg-lime-500";
+
+  };
+
+
+
+  const stats = data?.stats;
+
+  const packages = data?.packages ?? [];
+
+  const hasAnyPackages = (stats?.total ?? 0) > 0;
+
+  const showEmptyList = !isLoading && !error && packages.length === 0;
+
+
+
   return (
-    <div className="pb-6">
-      {/* Page Header */}
-      <div className="mb-4 xl:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <div>
-          <h1 className="text-2xl xl:text-3xl font-bold text-dark dark:text-white mb-1">
-            My Packages
-          </h1>
-          <p className="text-sm xl:text-base text-body-color dark:text-gray-400">
-            View your purchased token packages and expiry dates
-          </p>
-        </div>
+
+    <MemberMobilePageShell
+
+      eyebrow="Tokens"
+
+      title="My packages"
+
+      description="Track token packs you’ve bought and when they expire."
+
+      showDescriptionOnMobile
+
+      maxWidthClass="md:max-w-5xl"
+
+      action={
+
         <Link
+
           href="/packages"
-          className="inline-flex items-center justify-center gap-2 px-4 xl:px-6 py-2 xl:py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors active:scale-95 shrink-0"
+
+          className="inline-flex shrink-0 items-center rounded-full bg-zinc-900 px-4 py-2.5 text-sm font-bold text-white active:scale-[0.98] dark:bg-lime-400 dark:text-zinc-900"
+
         >
-          <svg className="w-4 h-4 xl:w-5 xl:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>Buy Tokens</span>
+
+          Buy tokens
+
         </Link>
-      </div>
 
-      {/* Stats Cards */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12 mb-6 xl:mb-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      ) : error ? (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6">
-          <p className="text-red-800 dark:text-red-300 text-sm">
-            {(error as Error)?.message || "Failed to load packages. Please try again."}
-          </p>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="mt-3 inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
-          >
-            {isFetching ? "Retrying..." : "Retry"}
-          </button>
-        </div>
-      ) : (
-        <>
-          {data?.stats && (
-            <div className="grid grid-cols-2 xl:grid-cols-5 gap-3 xl:gap-4 mb-6 xl:mb-8">
-              <div className="bg-white dark:bg-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-3 xl:p-5">
-                <p className="text-2xl xl:text-3xl font-bold text-dark dark:text-white">{data.stats.total}</p>
-                <p className="text-[10px] xl:text-sm text-body-color dark:text-gray-400">Total Packages</p>
-              </div>
-              <div className="bg-white dark:bg-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-3 xl:p-5">
-                <p className="text-2xl xl:text-3xl font-bold text-green-600 dark:text-green-400">{data.stats.active}</p>
-                <p className="text-[10px] xl:text-sm text-body-color dark:text-gray-400">Active</p>
-              </div>
-              <div className="bg-white dark:bg-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-3 xl:p-5">
-                <p className="text-2xl xl:text-3xl font-bold text-amber-600 dark:text-amber-400">{data.stats.expiringSoon}</p>
-                <p className="text-[10px] xl:text-sm text-body-color dark:text-gray-400">Expiring Soon</p>
-              </div>
-              <div className="bg-white dark:bg-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-3 xl:p-5">
-                <p className="text-2xl xl:text-3xl font-bold text-red-600 dark:text-red-400">{data.stats.expired}</p>
-                <p className="text-[10px] xl:text-sm text-body-color dark:text-gray-400">Expired</p>
-              </div>
-              <div className="bg-white dark:bg-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-3 xl:p-5 col-span-2 xl:col-span-1">
-                <p className="text-2xl xl:text-3xl font-bold text-blue-600 dark:text-blue-400">{data.stats.frozen}</p>
-                <p className="text-[10px] xl:text-sm text-body-color dark:text-gray-400">Frozen</p>
-              </div>
-            </div>
-          )}
+      }
 
-          {/* Filters */}
-          <div className="mb-4 xl:mb-6">
-            <div className="flex items-center gap-1.5 xl:gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {(["all", "active", "expired", "depleted"] as StatusFilter[]).map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setStatusFilter(status)}
-                  className={`px-3 xl:px-4 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-medium whitespace-nowrap transition-colors ${
-                    statusFilter === status
-                      ? "bg-primary text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  }`}
-                >
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
+    >
 
-          {/* Packages List */}
-          {data?.packages && data.packages.length === 0 ? (
-            <div className="bg-white dark:bg-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-8 xl:p-12 text-center">
-              <svg className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-              </svg>
-              <h3 className="text-lg font-semibold text-dark dark:text-white mb-2">No packages found</h3>
-              <p className="text-sm text-body-color dark:text-gray-400 mb-6">
-                {statusFilter === "all" 
-                  ? "You haven't purchased any packages yet."
-                  : `No ${statusFilter} packages found.`}
-              </p>
-              {statusFilter === "all" && (
-                <Link
-                  href="/packages"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors"
-                >
-                  Browse Packages
-                </Link>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-6">
-              {data?.packages.map((pkg) => (
-                <div
-                  key={pkg.id}
-                  className={`bg-white dark:bg-dark rounded-xl shadow-sm border ${
-                    pkg.isExpiringSoon && !pkg.isExpired
-                      ? "border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10"
-                      : pkg.isExpired
-                      ? "border-red-200 dark:border-red-800"
-                      : "border-gray-100 dark:border-gray-800"
-                  } p-4 xl:p-6`}
-                >
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg xl:text-xl font-bold text-dark dark:text-white mb-1 line-clamp-1">
-                        {pkg.packageName}
-                      </h3>
-                      {pkg.packageDescription && (
-                        <p className="text-xs xl:text-sm text-body-color dark:text-gray-400 line-clamp-2">
-                          {pkg.packageDescription}
-                        </p>
-                      )}
-                    </div>
-                    {getStatusBadge(pkg)}
-                  </div>
+      {!isLoadingBalance && (
 
-                  {/* Token Info */}
-                  <div className="grid grid-cols-2 gap-3 xl:gap-4 mb-4">
-                    <div>
-                      <p className="text-xs text-body-color dark:text-gray-400 mb-1">Tokens Available</p>
-                      <p className="text-xl xl:text-2xl font-bold text-dark dark:text-white">
-                        {pkg.tokensAvailable}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-body-color dark:text-gray-400 mb-1">Tokens Used</p>
-                      <p className="text-xl xl:text-2xl font-bold text-gray-600 dark:text-gray-400">
-                        {pkg.tokensUsed} / {pkg.originalTokenCount}
-                      </p>
-                    </div>
-                  </div>
+        <div className="mb-5 flex items-center justify-between gap-3 rounded-[1.25rem] bg-zinc-900 p-4 text-white">
 
-                  {/* Progress Bar */}
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between text-xs text-body-color dark:text-gray-400 mb-1">
-                      <span>Usage</span>
-                      <span>{pkg.usagePercentage}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div
-                        className="bg-primary rounded-full h-2 transition-all"
-                        style={{ width: `${Math.min(pkg.usagePercentage, 100)}%` }}
-                      ></div>
-                    </div>
-                  </div>
+          <div>
 
-                  {/* Held Tokens Warning */}
-                  {pkg.tokensHeld > 0 && (
-                    <div className="mb-4 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                      <p className="text-xs text-yellow-800 dark:text-yellow-300">
-                        <span className="font-medium">{pkg.tokensHeld}</span> token{pkg.tokensHeld !== 1 ? "s" : ""} held for bookings
-                      </p>
-                    </div>
-                  )}
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-lime-400">
 
-                  {/* Expiry Info */}
-                  <div className={`p-3 rounded-lg ${
-                    pkg.isExpired
-                      ? "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
-                      : pkg.isExpiringSoon
-                      ? "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800"
-                      : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
-                  }`}>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-body-color dark:text-gray-400 mb-1">Expiry Date</p>
-                        <p className="text-sm font-medium text-dark dark:text-white">
-                          {formatDate(pkg.expiresAt)}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-body-color dark:text-gray-400 mb-1">Status</p>
-                        <p className={`text-sm font-medium ${
-                          pkg.isExpired
-                            ? "text-red-600 dark:text-red-400"
-                            : pkg.isExpiringSoon
-                            ? "text-amber-600 dark:text-amber-400"
-                            : "text-green-600 dark:text-green-400"
-                        }`}>
-                          {getExpiryMessage(pkg)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+              Ready to book
 
-                  {/* Purchase Info */}
-                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs text-body-color dark:text-gray-400">
-                    <span>Purchased: {formatDate(pkg.purchasedAt)}</span>
-                    <span>{formatPrice(pkg.priceCents, pkg.currency)}</span>
-                  </div>
-
-                  {/* Frozen Info */}
-                  {pkg.status === "frozen" && pkg.frozenUntil && (
-                    <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                      <p className="text-xs text-blue-800 dark:text-blue-300">
-                        Frozen until {formatDate(pkg.frozenUntil)}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Delete Button - Only for expired and depleted packages */}
-                  {(pkg.isExpired || pkg.status === "expired" || pkg.status === "depleted") && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                      <button
-                        onClick={() => setPackageToDelete(pkg)}
-                        className="w-full px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                      >
-                        <svg className="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Delete Package
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* CTA Banner */}
-          {statusFilter === "all" && data?.stats && data.stats.active === 0 && (
-            <div className="mt-6 bg-gradient-to-r from-primary to-primary/80 rounded-xl p-4 xl:p-6 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3">
-              <div className="text-white flex-1">
-                <h3 className="text-sm xl:text-lg font-bold mb-1">Need more tokens?</h3>
-                <p className="text-xs xl:text-sm opacity-90">Purchase a package and start booking classes today.</p>
-              </div>
-              <Link
-                href="/packages"
-                className="w-full xl:w-auto px-6 py-3 bg-white text-primary font-medium rounded-lg hover:bg-gray-100 transition-colors text-center"
-              >
-                Buy Tokens
-              </Link>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {packageToDelete && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-dark rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-dark dark:text-white mb-2">Delete Package</h3>
-            <p className="text-sm text-body-color dark:text-gray-400 mb-4">
-              Are you sure you want to delete "{packageToDelete.packageName}"? This action cannot be undone.
             </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setPackageToDelete(null)}
-                disabled={deletePackage.isPending}
-                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    await deletePackage.mutateAsync(packageToDelete.id)
-                    setPackageToDelete(null)
-                  } catch (error) {
-                    console.error('Failed to delete package:', error)
-                    alert(error instanceof Error ? error.message : 'Failed to delete package')
-                  }
-                }}
-                disabled={deletePackage.isPending}
-                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-              >
-                {deletePackage.isPending ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
+
+            <p className="text-3xl font-bold tabular-nums">{tokenBalance?.available ?? 0}</p>
+
+            <p className="text-xs text-zinc-400">tokens across all active packs</p>
+
           </div>
+
+          <Link
+
+            href="/book-classes"
+
+            className="shrink-0 rounded-full bg-lime-400 px-4 py-2 text-xs font-bold text-zinc-900 active:scale-[0.98]"
+
+          >
+
+            Book class
+
+          </Link>
+
         </div>
+
       )}
-    </div>
+
+
+
+      {isLoading ? (
+
+        <div className="flex items-center justify-center py-16">
+
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-900 dark:border-zinc-700 dark:border-t-lime-400" />
+
+        </div>
+
+      ) : error ? (
+
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+
+          <p className="text-sm text-red-800 dark:text-red-300">
+
+            {(error as Error)?.message || "Failed to load packages. Please try again."}
+
+          </p>
+
+          <button
+
+            type="button"
+
+            onClick={() => refetch()}
+
+            disabled={isFetching}
+
+            className="mt-3 rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
+
+          >
+
+            {isFetching ? "Retrying…" : "Retry"}
+
+          </button>
+
+        </div>
+
+      ) : (
+
+        <>
+
+          {hasAnyPackages && stats && (
+
+            <div
+
+              data-keep-cols
+
+              className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:gap-3"
+
+            >
+
+              {[
+
+                { label: "Active", value: stats.active, accent: "text-lime-600 dark:text-lime-400" },
+
+                { label: "Expiring", value: stats.expiringSoon, accent: "text-amber-600 dark:text-amber-400" },
+
+                { label: "Expired", value: stats.expired, accent: "text-red-600 dark:text-red-400" },
+
+                { label: "Total", value: stats.total, accent: "text-zinc-900 dark:text-white" },
+
+              ].map((item) => (
+
+                <div
+
+                  key={item.label}
+
+                  className="rounded-2xl border border-zinc-100 bg-white p-3 dark:border-zinc-800 dark:bg-dark"
+
+                >
+
+                  <p className={`text-2xl font-bold tabular-nums ${item.accent}`}>{item.value}</p>
+
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+
+                    {item.label}
+
+                  </p>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          )}
+
+
+
+          <div className="mb-5 flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+
+            {FILTERS.map((f) => (
+
+              <button
+
+                key={f.id}
+
+                type="button"
+
+                onClick={() => setStatusFilter(f.id)}
+
+                className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition-colors active:scale-[0.98] ${
+
+                  statusFilter === f.id
+
+                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+
+                    : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+
+                }`}
+
+              >
+
+                {f.label}
+
+              </button>
+
+            ))}
+
+          </div>
+
+
+
+          {showEmptyList ? (
+
+            <div className="overflow-hidden rounded-[1.35rem] bg-gradient-to-br from-zinc-100 to-white p-8 text-center dark:from-zinc-900 dark:to-dark">
+
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-900 text-2xl font-bold text-lime-400">
+
+                0
+
+              </div>
+
+              <h3 className="text-lg font-bold text-zinc-900 dark:text-white">
+
+                {statusFilter === "all" ? "No packages yet" : `No ${FILTERS.find((x) => x.id === statusFilter)?.label.toLowerCase()} packs`}
+
+              </h3>
+
+              <p className="mx-auto mt-2 max-w-xs text-sm text-zinc-600 dark:text-zinc-400">
+
+                {statusFilter === "all"
+
+                  ? "When you buy a token pack, it will show up here with expiry and usage."
+
+                  : "Try another filter or buy a new pack."}
+
+              </p>
+
+              <Link
+
+                href="/packages"
+
+                className="mt-6 inline-flex rounded-full bg-zinc-900 px-6 py-3 text-sm font-bold text-white active:scale-[0.98] dark:bg-lime-400 dark:text-zinc-900"
+
+              >
+
+                Browse token packs
+
+              </Link>
+
+            </div>
+
+          ) : (
+
+            <div className="space-y-3">
+
+              {packages.map((pkg) => {
+
+                const status = getStatusLabel(pkg);
+
+                const remaining = pkg.tokensAvailable;
+
+                const total = pkg.originalTokenCount;
+
+
+
+                return (
+
+                  <article
+
+                    key={pkg.id}
+
+                    className={`overflow-hidden rounded-[1.35rem] border bg-white shadow-[0_8px_28px_rgba(0,0,0,0.06)] dark:bg-dark ${
+
+                      pkg.isExpiringSoon && !pkg.isExpired
+
+                        ? "border-amber-200 dark:border-amber-800"
+
+                        : pkg.isExpired
+
+                          ? "border-red-200/80 dark:border-red-900"
+
+                          : "border-zinc-100 dark:border-zinc-800"
+
+                    }`}
+
+                  >
+
+                    <div className="p-4">
+
+                      <div className="flex gap-3">
+
+                        <div
+
+                          className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl ${
+
+                            pkg.isExpired || pkg.status === "depleted"
+
+                              ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800"
+
+                              : "bg-zinc-900 text-lime-400"
+
+                          }`}
+
+                        >
+
+                          <span className="text-xl font-bold leading-none tabular-nums">{remaining}</span>
+
+                          <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-wide opacity-80">
+
+                            left
+
+                          </span>
+
+                        </div>
+
+
+
+                        <div className="min-w-0 flex-1">
+
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+
+                            <h3 className="text-base font-bold text-zinc-900 dark:text-white line-clamp-1">
+
+                              {pkg.packageName}
+
+                            </h3>
+
+                            <span
+
+                              className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${statusPillClass(status.tone)}`}
+
+                            >
+
+                              {status.text}
+
+                            </span>
+
+                          </div>
+
+                          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+
+                            {pkg.tokensUsed} of {total} used · {getExpiryMessage(pkg)}
+
+                          </p>
+
+                        </div>
+
+                      </div>
+
+
+
+                      <div className="mt-3">
+
+                        <div className="mb-1 flex justify-between text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+
+                          <span>Usage</span>
+
+                          <span>{pkg.usagePercentage}%</span>
+
+                        </div>
+
+                        <div className="h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+
+                          <div
+
+                            className={`h-full rounded-full transition-all ${progressBarClass(pkg)}`}
+
+                            style={{ width: `${Math.min(pkg.usagePercentage, 100)}%` }}
+
+                          />
+
+                        </div>
+
+                      </div>
+
+
+
+                      {pkg.tokensHeld > 0 && (
+
+                        <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900 dark:bg-amber-950/50 dark:text-amber-200">
+
+                          {pkg.tokensHeld} token{pkg.tokensHeld !== 1 ? "s" : ""} held for upcoming bookings
+
+                        </p>
+
+                      )}
+
+
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+
+                        <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+
+                          Bought {formatDate(pkg.purchasedAt)}
+
+                        </span>
+
+                        <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+
+                          {formatPrice(pkg.priceCents, pkg.currency)}
+
+                        </span>
+
+                      </div>
+
+
+
+                      {pkg.status === "frozen" && pkg.frozenUntil && (
+
+                        <p className="mt-3 text-xs text-blue-700 dark:text-blue-300">
+
+                          Frozen until {formatDate(pkg.frozenUntil)}
+
+                        </p>
+
+                      )}
+
+
+
+                      {(pkg.isExpired || pkg.status === "expired" || pkg.status === "depleted") && (
+
+                        <button
+
+                          type="button"
+
+                          onClick={() => setPackageToDelete(pkg)}
+
+                          className="mt-4 w-full rounded-full border border-red-200 py-2.5 text-sm font-semibold text-red-600 active:scale-[0.99] dark:border-red-900 dark:text-red-400"
+
+                        >
+
+                          Remove from list
+
+                        </button>
+
+                      )}
+
+                    </div>
+
+                  </article>
+
+                );
+
+              })}
+
+            </div>
+
+          )}
+
+
+
+          {hasAnyPackages && (stats?.active ?? 0) === 0 && statusFilter === "all" && (
+
+            <div className="mt-6 flex flex-col gap-3 rounded-[1.25rem] bg-zinc-900 p-4 text-white sm:flex-row sm:items-center sm:justify-between">
+
+              <div>
+
+                <p className="text-sm font-bold">Need more tokens?</p>
+
+                <p className="text-xs text-zinc-400">Grab a pack and book your next class.</p>
+
+              </div>
+
+              <Link
+
+                href="/packages"
+
+                className="rounded-full bg-lime-400 px-5 py-2.5 text-center text-sm font-bold text-zinc-900 active:scale-[0.98]"
+
+              >
+
+                Buy tokens
+
+              </Link>
+
+            </div>
+
+          )}
+
+        </>
+
+      )}
+
+
+
+      <Modal
+        isOpen={!!packageToDelete}
+        onClose={() => !deletePackage.isPending && setPackageToDelete(null)}
+        title="Remove package?"
+        size="md"
+        footer={
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setPackageToDelete(null)}
+              disabled={deletePackage.isPending}
+              className="flex-1 rounded-full bg-zinc-100 py-2.5 text-sm font-bold text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                if (!packageToDelete) return;
+                try {
+                  await deletePackage.mutateAsync(packageToDelete.id);
+                  setPackageToDelete(null);
+                } catch (err) {
+                  alert(err instanceof Error ? err.message : "Failed to remove package");
+                }
+              }}
+              disabled={deletePackage.isPending}
+              className="flex-1 rounded-full bg-red-600 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+            >
+              {deletePackage.isPending ? "Removing…" : "Remove"}
+            </button>
+          </div>
+        }
+      >
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          {packageToDelete
+            ? `“${packageToDelete.packageName}” will be removed from your list. This cannot be undone.`
+            : ""}
+        </p>
+      </Modal>
+
+    </MemberMobilePageShell>
+
   );
+
 };
 
+
+
 export default MyPackagesPage;
+
 

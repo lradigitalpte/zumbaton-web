@@ -17,16 +17,16 @@
   --color-transparent: transparent;
   --color-white: #ffffff;
   --color-black: #121723;
-  --color-dark: #1d2430;
+  --color-dark: #18181b;
   --color-primary: #65a30d;
   --color-yellow: #fbb040;
-  --color-bg-color-dark: #171c28;
+  --color-bg-color-dark: #09090b;
 
   --color-body-color: #788293;
-  --color-body-color-dark: #959cb1;
+  --color-body-color-dark: #a1a1aa;
 
   --color-stroke-stroke: #e3e8ef;
-  --color-stroke-dark: #353943;
+  --color-stroke-dark: #3f3f46;
 
   --color-gray-50: #f9fafb;
   --color-gray-100: #f3f4f6;
@@ -39,7 +39,7 @@
   --color-gray-800: #1f2937;
   --color-gray-900: #111827;
   --color-gray-950: #030712;
-  --color-gray-dark: #1e232e;
+  --color-gray-dark: #27272a;
   --color-gray-light: #f0f2f9;
 
   --shadow-sign-up: 0px 5px 10px rgba(4, 10, 34, 0.2);
@@ -80,28 +80,35 @@
   --radius: 0.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  @theme {
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 85 86% 50%;
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --primary: 85 86% 50%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-  }
+/* next-themes toggles `.dark` on <html> (system preference is off) */
+.dark {
+  color-scheme: dark;
+
+  --color-dark: #18181b;
+  --color-bg-color-dark: #09090b;
+  --color-gray-dark: #27272a;
+  --color-body-color-dark: #a1a1aa;
+  --color-stroke-dark: #3f3f46;
+
+  --border: 240 4% 16%;
+  --input: 240 4% 16%;
+  --ring: 84 81% 44%;
+  --background: 240 6% 4%;
+  --foreground: 0 0% 98%;
+  --primary: 84 81% 44%;
+  --primary-foreground: 240 6% 4%;
+  --secondary: 240 4% 16%;
+  --secondary-foreground: 0 0% 98%;
+  --destructive: 0 62% 45%;
+  --destructive-foreground: 0 0% 98%;
+  --muted: 240 4% 16%;
+  --muted-foreground: 240 5% 65%;
+  --accent: 240 4% 16%;
+  --accent-foreground: 0 0% 98%;
+  --popover: 240 6% 6%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 6% 10%;
+  --card-foreground: 0 0% 98%;
 }
 
 @utility container {
@@ -178,6 +185,11 @@
 @layer base {
   body {
     font-family: "Inter", sans-serif;
+  }
+
+  .dark body {
+    background-color: #09090b;
+    color: #fafafa;
   }
 }
 
@@ -411,9 +423,9 @@ html, body {
   }
 }
 
-/* Better mobile grid layouts */
+/* Better mobile grid layouts (skip grids marked data-keep-cols, e.g. member dashboard) */
 @media (max-width: 768px) {
-  .grid-cols-3 { 
+  .grid-cols-3:not([data-keep-cols]) { 
     @apply grid-cols-1;
   }
   

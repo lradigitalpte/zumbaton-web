@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useMobileOverlayLock } from '@/context/MobileOverlayContext';
 import { apiFetchJson } from '@/lib/api-fetch';
 
 interface OnboardingStep {
@@ -125,6 +126,8 @@ export default function UserOnboardingTour() {
   const pathname = usePathname();
   const targetRef = useRef<HTMLElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+
+  useMobileOverlayLock(isActive, 'user-onboarding-tour');
 
   useEffect(() => {
     // Only check/show onboarding if user is authenticated and we haven't checked yet
@@ -635,7 +638,7 @@ export default function UserOnboardingTour() {
 
       <div
         style={overlayStyle}
-        className="fixed inset-0 z-[9996] transition-all duration-300"
+        className="fixed inset-0 z-[99999] transition-all duration-300"
         onClick={isFirstStep ? undefined : handleNext}
       />
 
@@ -649,7 +652,7 @@ export default function UserOnboardingTour() {
       <div
         ref={tooltipRef}
         style={tooltipStyle}
-        className="onboarding-tooltip z-[9999]"
+        className="onboarding-tooltip z-[99999]"
         role="dialog"
         aria-labelledby="user-onboarding-title"
         aria-describedby="user-onboarding-content"

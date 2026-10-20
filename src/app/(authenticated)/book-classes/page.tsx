@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
+import { useMobileOverlayLock } from "@/context/MobileOverlayContext";
+import { Z_OVERLAY } from "@/lib/layering";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/Toast";
 import { useUpcomingClasses, useBookClass, useBookBatchClasses, type ClassWithAvailability } from "@/hooks/useClasses";
@@ -71,6 +74,11 @@ const ClassesPage = () => {
     classToBook?.scheduled_at ?? selectedClass?.scheduled_at
   );
   const bookingWindowTick = useBookingWindowTick();
+
+  useMobileOverlayLock(
+    sessionsPanel.isOpen && !!sessionsPanel.parentClass,
+    "book-classes-sessions-panel",
+  );
 
   // Keep token balance in React Query (avoids stale local state when routes are cached)
   const { data: tokenBalanceData } = useDashboardTokenBalance(user?.id);
@@ -189,6 +197,33 @@ const ClassesPage = () => {
       setSelectedSessions(new Set());
     }
   };
+
+  const handleClassBookClick = (e: React.MouseEvent, classItem: ClassWithAvailability) => {
+    e.stopPropagation();
+    const booked = classItem.booked_count ?? 0;
+    const isFull = classItem.capacity - booked <= 0;
+    const isRecurring = classItem.recurrence_type === "recurring";
+    const isCourse = classItem.recurrence_type === "course";
+
+    if (isRecurring && classItem._isParent && classItem._childInstances?.length) {
+      handleViewSessions(classItem, e);
+    } else if (isCourse && classItem._isParent && classItem._childInstances?.length) {
+      setConfirmationModal({ open: true, class: classItem });
+    } else if (!isFull) {
+      setConfirmationModal({ open: true, class: classItem });
+    }
+  };
+
+  const bookActionLabel = (
+    classItem: ClassWithAvailability,
+    isFull: boolean,
+    isRecurring: boolean
+  ) => {
+    if (bookClassMutation.isPending) return "...";
+    if (isFull) return "Full";
+    if (isRecurring && classItem._isParent) return "Sessions";
+    return "Book";
+  };
   
   // Handle selecting/deselecting sessions for multi-booking
   const handleToggleSession = (sessionId: string) => {
@@ -293,13 +328,20 @@ const ClassesPage = () => {
   ].filter(Boolean).length;
 
   return (
-    <div className="pb-6">
-      {/* Mobile-First Header */}
-      <div className="mb-4 sm:mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl sm:text-3xl font-bold text-dark dark:text-white">
-            Browse Classes
-          </h1>
+    <div className="mx-auto max-w-lg pb-6 md:max-w-none">
+      <div className="mb-4 md:mb-6">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500 md:hidden">
+              Schedule
+            </p>
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white md:text-3xl">
+              Browse Classes
+            </h1>
+            <p className="mt-1 hidden text-sm text-body-color dark:text-gray-400 md:block">
+              Find the perfect class for you
+            </p>
+          </div>
           {/* Filter Toggle Button - Mobile */}
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -316,9 +358,6 @@ const ClassesPage = () => {
             )}
           </button>
         </div>
-        <p className="text-sm sm:text-base text-body-color dark:text-gray-400">
-          Find the perfect class for you
-        </p>
       </div>
 
       {/* Only interrupt the user when their selected near-term class cannot be booked now. */}
@@ -588,174 +627,292 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
         </div>
       ) : (
         <>
-        {/* Classes grouped by date with section headers and break lines */}
-        <div className="space-y-8">
+        {/* Mobile: timeline list (matches dashboard cards) */}
+        <div className="space-y-4 md:hidden">
+          {classesByDate.map(([dateKey, classesOnDate]) => {
+            const firstScheduled = classesOnDate[0].scheduled_at;
+            const fullDateLabel = formatDateFull(firstScheduled);
+            const sectionDate = new Date(firstScheduled);
+            const isToday = sectionDate.toDateString() === new Date().toDateString();
+            const isTomorrow =
+              sectionDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
+            const dayBadge = isToday ? "Today" : isTomorrow ? "Tomorrow" : null;
+
+            return (
+              <article
+                key={dateKey}
+                className="overflow-hidden rounded-[1.35rem] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:bg-dark"
+              >
+                <header className="flex items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
+                  <h2 className="text-base font-bold leading-snug text-zinc-900 dark:text-white">
+                    {fullDateLabel}
+                  </h2>
+                  {dayBadge && (
+                    <span className="shrink-0 rounded-full bg-lime-400/30 px-2.5 py-0.5 text-[11px] font-bold text-lime-900 dark:text-lime-300">
+                      {dayBadge}
+                    </span>
+                  )}
+                </header>
+                <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  {classesOnDate.map((classItem) => {
+                    const booked = classItem.booked_count ?? 0;
+                    const spotsInfo = getSpotsLeft(classItem.capacity, booked);
+                    const isFull = classItem.capacity - booked <= 0;
+                    const isRecurring = classItem.recurrence_type === "recurring";
+                    const isCourse = classItem.recurrence_type === "course";
+                    const instructorName = classItem.instructor_name || "Unassigned";
+                    const initials =
+                      instructorName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2) || "??";
+                    const location = classItem.room_name || classItem.location || "Studio";
+                    const bookDisabled =
+                      isFull || bookClassMutation.isPending || (classItem._isParent && isRecurring);
+                    const label = bookActionLabel(classItem, isFull, isRecurring);
+
+                    return (
+                      <li key={classItem.id}>
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => handleClassClick(classItem)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              handleClassClick(classItem);
+                            }
+                          }}
+                          className={`flex items-center gap-3 px-4 py-3.5 active:bg-zinc-50 dark:active:bg-zinc-800/50 ${
+                            isFull ? "opacity-75" : ""
+                          }`}
+                        >
+                          <div className="w-[4.5rem] shrink-0">
+                            <p className="text-base font-bold tabular-nums leading-tight text-zinc-900 dark:text-white">
+                              {formatTime(classItem.scheduled_at)}
+                            </p>
+                          </div>
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-lime-400">
+                            {initials}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="line-clamp-2 text-sm font-semibold leading-snug text-zinc-900 dark:text-white">
+                              {classItem.name}
+                              {classItem.is_outdoor ? " (outdoors)" : ""}
+                            </p>
+                            <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">
+                              {instructorName} · {location} · {classItem.tokens_required} token
+                              {classItem.tokens_required !== 1 ? "s" : ""}
+                              {!isFull ? ` · ${spotsInfo.text}` : ""}
+                            </p>
+                            {(isCourse || isRecurring) && classItem._isParent && (
+                              <p className="mt-1 text-[11px] font-semibold text-zinc-600 dark:text-zinc-400">
+                                {isCourse ? "Course" : "Series"}
+                                {classItem._totalSessions ? ` · ${classItem._totalSessions} sessions` : ""}
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => handleClassBookClick(e, classItem)}
+                            disabled={bookDisabled}
+                            title={!bookingWindowOpen ? BOOKING_WINDOW_CLOSED_MESSAGE : undefined}
+                            className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition-transform active:scale-95 ${
+                              bookDisabled
+                                ? "cursor-not-allowed bg-zinc-100 text-zinc-400 dark:bg-zinc-800"
+                                : isCourse && classItem._isParent
+                                  ? "bg-purple-600 text-white"
+                                  : isRecurring && classItem._isParent
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-zinc-900 text-white"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </article>
+            );
+          })}
+        </div>
+
+        {/* Desktop: card grid */}
+        <div className="hidden space-y-8 md:block">
           {classesByDate.map(([dateKey, classesOnDate]) => {
             const firstScheduled = classesOnDate[0].scheduled_at;
             const fullDateLabel = formatDateFull(firstScheduled);
             return (
               <section key={dateKey}>
-                <h2 className="text-lg font-bold text-dark dark:text-white mb-1">
-                  {fullDateLabel}
-                </h2>
-                <hr className="border-gray-200 dark:border-gray-700 mb-4" aria-hidden="true" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                <h2 className="mb-1 text-lg font-bold text-dark dark:text-white">{fullDateLabel}</h2>
+                <hr className="mb-4 border-gray-200 dark:border-gray-700" aria-hidden="true" />
+                <div className="grid grid-cols-2 gap-4 xl:grid-cols-3">
                   {classesOnDate.map((classItem) => {
                     const booked = classItem.booked_count ?? 0;
                     const spotsInfo = getSpotsLeft(classItem.capacity, booked);
                     const isFull = classItem.capacity - booked <= 0;
                     const classDate = new Date(classItem.scheduled_at);
                     const isToday = classDate.toDateString() === new Date().toDateString();
-                    const isTomorrow = classDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
-
-                    const isRecurringOrCourse = classItem.recurrence_type === 'recurring' || classItem.recurrence_type === 'course';
-                    const isCourse = classItem.recurrence_type === 'course';
-                    const isRecurring = classItem.recurrence_type === 'recurring';
+                    const isTomorrow =
+                      classDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
+                    const isRecurringOrCourse =
+                      classItem.recurrence_type === "recurring" || classItem.recurrence_type === "course";
+                    const isCourse = classItem.recurrence_type === "course";
+                    const isRecurring = classItem.recurrence_type === "recurring";
 
                     return (
                       <div
                         key={classItem.id}
                         onClick={() => handleClassClick(classItem)}
-                        className={`bg-white dark:bg-dark rounded-xl shadow-md overflow-hidden active:scale-[0.98] transition-all cursor-pointer hover:shadow-lg flex flex-col ${
+                        className={`flex cursor-pointer flex-col overflow-hidden rounded-xl bg-white shadow-md transition-all hover:shadow-lg active:scale-[0.98] dark:bg-dark ${
                           isRecurringOrCourse
                             ? isCourse
-                              ? 'border-2 border-purple-300 dark:border-purple-700 bg-gradient-to-b from-purple-50/50 to-white dark:from-purple-950/30 dark:to-dark'
-                              : 'border-2 border-blue-300 dark:border-blue-700 bg-gradient-to-b from-blue-50/50 to-white dark:from-blue-950/30 dark:to-dark'
-                            : 'border border-gray-100 dark:border-gray-800'
+                              ? "border-2 border-purple-300 bg-gradient-to-b from-purple-50/50 to-white dark:border-purple-700 dark:from-purple-950/30 dark:to-dark"
+                              : "border-2 border-blue-300 bg-gradient-to-b from-blue-50/50 to-white dark:border-blue-700 dark:from-blue-950/30 dark:to-dark"
+                            : "border border-gray-100 dark:border-gray-800"
                         }`}
                       >
-                        {/* Top: time on first line, full date on second line */}
-                        <div className={`flex items-center justify-between px-4 py-2.5 ${
-                          isRecurringOrCourse
-                            ? isCourse
-                              ? 'bg-purple-500/10 dark:bg-purple-500/20'
-                              : 'bg-blue-500/10 dark:bg-blue-500/20'
-                            : 'bg-primary/10 dark:bg-primary/20'
-                        }`}>
+                        <div
+                          className={`flex items-center justify-between px-4 py-2.5 ${
+                            isRecurringOrCourse
+                              ? isCourse
+                                ? "bg-purple-500/10 dark:bg-purple-500/20"
+                                : "bg-blue-500/10 dark:bg-blue-500/20"
+                              : "bg-primary/10 dark:bg-primary/20"
+                          }`}
+                        >
                           <div className="flex flex-col gap-0.5">
-                            <span className={`text-lg font-bold ${
-                              isRecurringOrCourse
-                                ? isCourse ? 'text-purple-600 dark:text-purple-400' : 'text-blue-600 dark:text-blue-400'
-                                : 'text-primary'
-                            }`}>
+                            <span
+                              className={`text-lg font-bold ${
+                                isRecurringOrCourse
+                                  ? isCourse
+                                    ? "text-purple-600 dark:text-purple-400"
+                                    : "text-blue-600 dark:text-blue-400"
+                                  : "text-primary"
+                              }`}
+                            >
                               {formatTime(classItem.scheduled_at)}
                             </span>
-                            <span className="text-xs font-medium text-body-color dark:text-gray-400 leading-tight">
+                            <span className="text-xs font-medium leading-tight text-body-color dark:text-gray-400">
                               {isToday ? "Today" : isTomorrow ? "Tomorrow" : formatDateFull(classItem.scheduled_at)}
                             </span>
                           </div>
-                          {(classItem.recurrence_type === 'recurring' || classItem.recurrence_type === 'course') && (
-                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold shrink-0 ${
-                              isCourse ? 'bg-purple-200 text-purple-800 dark:bg-purple-800/40 dark:text-purple-300' : 'bg-blue-200 text-blue-800 dark:bg-blue-800/40 dark:text-blue-300'
-                            }`}>
-                              {classItem.recurrence_type === 'course' ? 'Course' : 'Series'}
+                          {(classItem.recurrence_type === "recurring" || classItem.recurrence_type === "course") && (
+                            <span
+                              className={`shrink-0 rounded-md px-2 py-0.5 text-[10px] font-semibold ${
+                                isCourse
+                                  ? "bg-purple-200 text-purple-800 dark:bg-purple-800/40 dark:text-purple-300"
+                                  : "bg-blue-200 text-blue-800 dark:bg-blue-800/40 dark:text-blue-300"
+                              }`}
+                            >
+                              {classItem.recurrence_type === "course" ? "Course" : "Series"}
                             </span>
                           )}
                         </div>
-
-                {/* Body: class name, badges, instructor, location */}
-                <div className="flex-1 p-4 flex flex-col min-h-0">
-                  <h3 className="text-base font-bold text-dark dark:text-white line-clamp-2 mb-2">
-                    {classItem.name}{classItem.is_outdoor ? " (outdoors)" : ""}
-                  </h3>
-                  <div className="flex items-center gap-1.5 flex-wrap mb-2">
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${spotsInfo.bg} ${spotsInfo.color}`}>
-                      {spotsInfo.text}
-                    </span>
-                    {classItem.age_group && classItem.age_group !== 'all' && (
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
-                        classItem.age_group === 'adult' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' : 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400'
-                      }`}>
-                        {classItem.age_group === 'adult' ? 'Adults' : 'Kids'}
-                      </span>
-                    )}
-                    {classItem._isParent && classItem._totalSessions && (
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
-                        isCourse ? 'bg-purple-200 text-purple-800 dark:bg-purple-800/40 dark:text-purple-300' : 'bg-blue-200 text-blue-800 dark:bg-blue-800/40 dark:text-blue-300'
-                      }`}>
-                        {classItem._totalSessions} sessions
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-body-color dark:text-gray-400 mb-2 min-w-0">
-                    <div className="flex -space-x-2 shrink-0">
-                      {(classItem.instructors && classItem.instructors.length > 0 ? classItem.instructors : [{
-                        id: classItem.instructor_id || '',
-                        name: classItem.instructor_name || 'Unassigned',
-                        avatar: null,
-                        initials: classItem.instructor_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || '??',
-                      }]).slice(0, 2).map((instructor: any, idx: number) => (
-                        <div
-                          key={instructor.id || idx}
-                          className="h-9 w-9 rounded-full border-2 border-white dark:border-dark flex items-center justify-center text-xs font-semibold text-white bg-primary overflow-hidden shadow-sm"
-                          title={instructor.name}
-                        >
-                          {instructor.avatar ? (
-                            <img src={instructor.avatar} alt="" className="h-full w-full object-cover" loading="lazy" />
-                          ) : (
-                            <span>{instructor.initials}</span>
-                          )}
+                        <div className="flex min-h-0 flex-1 flex-col p-4">
+                          <h3 className="mb-2 line-clamp-2 text-base font-bold text-dark dark:text-white">
+                            {classItem.name}
+                            {classItem.is_outdoor ? " (outdoors)" : ""}
+                          </h3>
+                          <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                            <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${spotsInfo.bg} ${spotsInfo.color}`}>
+                              {spotsInfo.text}
+                            </span>
+                            {classItem.age_group && classItem.age_group !== "all" && (
+                              <span
+                                className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${
+                                  classItem.age_group === "adult"
+                                    ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                                    : "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400"
+                                }`}
+                              >
+                                {classItem.age_group === "adult" ? "Adults" : "Kids"}
+                              </span>
+                            )}
+                          </div>
+                          <div className="mb-2 flex min-w-0 items-center gap-2 text-xs text-body-color dark:text-gray-400">
+                            <div className="flex -space-x-2 shrink-0">
+                              {(classItem.instructors && classItem.instructors.length > 0
+                                ? classItem.instructors
+                                : [
+                                    {
+                                      id: classItem.instructor_id || "",
+                                      name: classItem.instructor_name || "Unassigned",
+                                      avatar: null,
+                                      initials:
+                                        classItem.instructor_name
+                                          ?.split(" ")
+                                          .map((n: string) => n[0])
+                                          .join("")
+                                          .toUpperCase()
+                                          .slice(0, 2) || "??",
+                                    },
+                                  ]
+                              )
+                                .slice(0, 2)
+                                .map((instructor: { id?: string; name: string; avatar?: string | null; initials?: string }, idx: number) => (
+                                  <div
+                                    key={instructor.id || idx}
+                                    className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-primary text-xs font-semibold text-white shadow-sm dark:border-dark"
+                                    title={instructor.name}
+                                  >
+                                    {instructor.avatar ? (
+                                      <img src={instructor.avatar} alt="" className="h-full w-full object-cover" loading="lazy" />
+                                    ) : (
+                                      <span>{instructor.initials}</span>
+                                    )}
+                                  </div>
+                                ))}
+                            </div>
+                            <span className="truncate">{classItem.instructor_name || "Unassigned"}</span>
+                          </div>
+                          <div className="mb-3 flex items-center gap-1.5 text-xs text-body-color dark:text-gray-400">
+                            <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                              />
+                            </svg>
+                            <span className="truncate">{classItem.room_name || classItem.location || "Studio"}</span>
+                          </div>
+                          <div className="mt-auto flex items-center justify-between border-t border-gray-100 pt-3 dark:border-gray-800">
+                            <span
+                              className={`text-sm font-bold ${
+                                isRecurringOrCourse
+                                  ? isCourse
+                                    ? "text-purple-600 dark:text-purple-400"
+                                    : "text-blue-600 dark:text-blue-400"
+                                  : "text-primary"
+                              }`}
+                            >
+                              {classItem.tokens_required} token{classItem.tokens_required !== 1 ? "s" : ""}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => handleClassBookClick(e, classItem)}
+                              disabled={isFull || bookClassMutation.isPending || (classItem._isParent && isRecurring)}
+                              title={!bookingWindowOpen ? BOOKING_WINDOW_CLOSED_MESSAGE : undefined}
+                              className={`rounded-lg px-4 py-2 text-xs font-bold transition-all active:scale-95 ${
+                                isFull || bookClassMutation.isPending
+                                  ? "cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-gray-800"
+                                  : isRecurringOrCourse
+                                    ? isCourse && classItem._isParent
+                                      ? "bg-purple-600 text-white hover:bg-purple-700"
+                                      : "bg-blue-600 text-white hover:bg-blue-700"
+                                    : "bg-primary text-white hover:bg-primary/90"
+                              }`}
+                            >
+                              {bookActionLabel(classItem, isFull, isRecurring)}
+                            </button>
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                    <span className="truncate">{classItem.instructor_name || 'Unassigned'}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs text-body-color dark:text-gray-400 mb-3">
-                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    </svg>
-                    <span className="truncate">{classItem.room_name || classItem.location || "Studio"}</span>
-                  </div>
-                  {isCourse && classItem._isParent && classItem._totalSessions && classItem._totalSessions > 0 && (
-                    <button
-                      onClick={(e) => handleViewSessions(classItem, e)}
-                      className="text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 mb-2 self-start"
-                    >
-                      View {classItem._totalSessions} sessions
-                    </button>
-                  )}
-
-                  {/* Bottom: tokens + Book */}
-                  <div className="flex items-center justify-between pt-3 mt-auto border-t border-gray-100 dark:border-gray-800">
-                    <div className="flex items-center gap-1.5">
-                      <span className={`font-bold text-sm ${
-                        isRecurringOrCourse ? (isCourse ? 'text-purple-600 dark:text-purple-400' : 'text-blue-600 dark:text-blue-400') : 'text-primary'
-                      }`}>
-                        {classItem.tokens_required}
-                      </span>
-                      <span className="text-[10px] text-body-color dark:text-gray-400">
-                        token{classItem.tokens_required !== 1 ? "s" : ""}
-                        {classItem._isParent && classItem.recurrence_type === 'course' && " total"}
-                      </span>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (isRecurring && classItem._isParent && classItem._childInstances?.length) {
-                          handleViewSessions(classItem, e);
-                        } else if (isCourse && classItem._isParent && classItem._childInstances?.length) {
-                          setConfirmationModal({ open: true, class: classItem });
-                        } else if (!isFull) {
-                          setConfirmationModal({ open: true, class: classItem });
-                        }
-                      }}
-                      disabled={isFull || bookClassMutation.isPending || (classItem._isParent && isRecurring)}
-                      title={!bookingWindowOpen ? BOOKING_WINDOW_CLOSED_MESSAGE : undefined}
-                      className={`px-4 py-2 rounded-lg text-xs font-bold transition-all active:scale-95 ${
-                        isFull || bookClassMutation.isPending
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800"
-                          : isRecurringOrCourse
-                            ? isCourse && classItem._isParent
-                              ? "bg-purple-600 text-white hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600"
-                              : "bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-                            : "bg-primary text-white hover:bg-primary/90"
-                      }`}
-                    >
-                      {bookClassMutation.isPending ? "..." : isFull ? "Full" : isRecurring && classItem._isParent ? "Sessions" : "Book"}
-                    </button>
-                  </div>
-                </div>
-              </div>
+                      </div>
                     );
                   })}
                 </div>
@@ -874,15 +1031,19 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
 
       {/* Sessions Slider Panel for Recurring/Course Classes */}
       {sessionsPanel.isOpen && sessionsPanel.parentClass && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-end">
+        createPortal(
+        <div
+          className="fixed inset-0 flex items-end sm:items-center sm:justify-end"
+          style={{ zIndex: Z_OVERLAY }}
+        >
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 transition-opacity"
             onClick={() => setSessionsPanel({ isOpen: false, parentClass: null, sessions: [] })}
           />
-          
+
           {/* Panel */}
-          <div className="relative w-full sm:w-[500px] h-[80vh] sm:h-[600px] bg-white dark:bg-dark rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none shadow-2xl flex flex-col">
+          <div className="relative flex h-[80vh] w-full flex-col rounded-t-2xl bg-white shadow-2xl dark:bg-dark sm:h-[600px] sm:w-[500px] sm:rounded-l-2xl sm:rounded-tr-none">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
               <div className="flex-1">
@@ -1061,7 +1222,9 @@ onClick={() => setFilter({ ...filter, difficulty: "all" })}
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
+        )
       )}
     </div>
   );

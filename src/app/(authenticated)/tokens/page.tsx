@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import MemberMobilePageShell from "@/components/Dashboard/MemberMobilePageShell";
 import { useAuth } from "@/context/AuthContext";
 import { useTokenTransactions, useTokenBalanceStats } from "@/hooks/useTokenTransactions";
 import { useDashboardUpcomingBookings } from "@/hooks/useDashboard";
@@ -98,114 +99,81 @@ const TokensPage = () => {
   };
 
   return (
-    <div className="pb-6">
-      {/* Mobile-First Page Header */}
-      <div className="mb-4 xl:mb-8">
-        <h1 className="text-2xl xl:text-3xl font-bold text-dark dark:text-white mb-1">
-          Token History
-        </h1>
-        <p className="text-sm xl:text-base text-body-color dark:text-gray-400">
-          Track your token purchases, usage, and balance
-        </p>
-      </div>
-
-      {/* Balance Cards - Compact on mobile */}
+    <MemberMobilePageShell
+      eyebrow="Tokens"
+      title="Token history"
+      description="Track purchases, usage, and balance"
+      maxWidthClass="md:max-w-5xl"
+    >
       {isLoadingBalance ? (
         <div className="flex items-center justify-center py-12 mb-6 xl:mb-8">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 xl:gap-4 mb-6 xl:mb-8">
-          <div className="bg-white dark:bg-dark rounded-xl xl:rounded-xl rounded-2xl shadow-sm xl:shadow-sm shadow-md border border-gray-100 dark:border-gray-800 p-3 xl:p-5">
-            <div className="flex items-center gap-2 xl:gap-3 mb-2 xl:mb-3">
-              <div className="w-8 h-8 xl:w-10 xl:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <svg className="w-4 h-4 xl:w-5 xl:h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                </svg>
-              </div>
-              <span className="text-[9px] xl:text-xs font-medium text-green-500 bg-green-50 dark:bg-green-900/20 px-1.5 xl:px-2 py-0.5 xl:py-1 rounded-full">
-                Available
-              </span>
+        <div data-keep-cols className="mb-6 grid grid-cols-2 gap-2 xl:mb-8 xl:grid-cols-4 xl:gap-4">
+          {[
+            { label: "Available", value: tokenBalance?.available || 0, hint: "Ready to book", highlight: true },
+            { label: "Booked", value: tokenBalance?.pending || 0, hint: "Upcoming classes" },
+            { label: "Used", value: tokenBalance?.used || 0, hint: "All time" },
+            { label: "Expired", value: tokenBalance?.expired || 0, hint: "No longer valid" },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className={`rounded-2xl p-3 shadow-sm xl:p-5 ${
+                stat.highlight
+                  ? "col-span-2 bg-zinc-900 text-white xl:col-span-1 xl:bg-white xl:text-inherit dark:xl:bg-dark"
+                  : "bg-white dark:bg-dark"
+              }`}
+            >
+              <p
+                className={`text-[10px] font-semibold uppercase tracking-wide ${
+                  stat.highlight ? "text-lime-400 xl:text-zinc-500" : "text-zinc-500"
+                }`}
+              >
+                {stat.label}
+              </p>
+              <p className="mt-1 text-3xl font-bold tabular-nums xl:text-3xl">{stat.value}</p>
+              <p className={`mt-0.5 text-[10px] xl:text-sm ${stat.highlight ? "text-zinc-400 xl:text-body-color" : "text-zinc-500"}`}>
+                {stat.hint}
+              </p>
             </div>
-            <p className="text-2xl xl:text-3xl font-bold text-dark dark:text-white">{tokenBalance?.available || 0}</p>
-            <p className="text-[10px] xl:text-sm text-body-color dark:text-gray-400">Ready to use</p>
-          </div>
-
-          <div className="bg-white dark:bg-dark rounded-xl xl:rounded-xl rounded-2xl shadow-sm xl:shadow-sm shadow-md border border-gray-100 dark:border-gray-800 p-3 xl:p-5">
-            <div className="flex items-center gap-2 xl:gap-3 mb-2 xl:mb-3">
-              <div className="w-8 h-8 xl:w-10 xl:h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center shrink-0">
-                <svg className="w-4 h-4 xl:w-5 xl:h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <span className="text-[9px] xl:text-xs font-medium text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 px-1.5 xl:px-2 py-0.5 xl:py-1 rounded-full">
-                Booked
-              </span>
-            </div>
-            <p className="text-2xl xl:text-3xl font-bold text-dark dark:text-white">{tokenBalance?.pending || 0}</p>
-            <p className="text-[10px] xl:text-sm text-body-color dark:text-gray-400">In upcoming classes</p>
-          </div>
-
-          <div className="bg-white dark:bg-dark rounded-xl xl:rounded-xl rounded-2xl shadow-sm xl:shadow-sm shadow-md border border-gray-100 dark:border-gray-800 p-3 xl:p-5">
-            <div className="flex items-center gap-2 xl:gap-3 mb-2 xl:mb-3">
-              <div className="w-8 h-8 xl:w-10 xl:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <svg className="w-4 h-4 xl:w-5 xl:h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-            <p className="text-2xl xl:text-3xl font-bold text-dark dark:text-white">{tokenBalance?.used || 0}</p>
-            <p className="text-[10px] xl:text-sm text-body-color dark:text-gray-400">Tokens used</p>
-          </div>
-
-          <div className="bg-white dark:bg-dark rounded-xl xl:rounded-xl rounded-2xl shadow-sm xl:shadow-sm shadow-md border border-gray-100 dark:border-gray-800 p-3 xl:p-5">
-            <div className="flex items-center gap-2 xl:gap-3 mb-2 xl:mb-3">
-              <div className="w-8 h-8 xl:w-10 xl:h-10 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
-                <svg className="w-4 h-4 xl:w-5 xl:h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </div>
-            </div>
-            <p className="text-2xl xl:text-3xl font-bold text-dark dark:text-white">{tokenBalance?.expired || 0}</p>
-            <p className="text-[10px] xl:text-sm text-body-color dark:text-gray-400">Tokens expired</p>
-          </div>
+          ))}
         </div>
       )}
 
-      {/* CTA Banner - Mobile Optimized */}
-      <div className="bg-gradient-to-r from-primary to-primary/80 rounded-xl xl:rounded-xl rounded-2xl p-3 xl:p-6 mb-4 xl:mb-8 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-2.5 xl:gap-0">
-        <div className="text-white flex-1 min-w-0">
-          <h3 className="text-sm xl:text-lg font-bold xl:font-semibold mb-0.5 xl:mb-1">Need more tokens?</h3>
-          <p className="opacity-90 xl:opacity-80 text-xs xl:text-sm leading-relaxed">Purchase a package and save with bulk discounts.</p>
+      <div className="mb-4 flex flex-col gap-3 rounded-[1.25rem] bg-zinc-900 p-4 text-white xl:mb-8 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <p className="text-sm font-bold">Need more tokens?</p>
+          <p className="text-xs text-zinc-300">Save when you buy a larger pack.</p>
         </div>
         <Link
           href="/packages"
-          className="w-full xl:w-auto px-4 xl:px-6 py-2 xl:py-3 bg-white text-primary font-bold xl:font-medium rounded-lg xl:rounded-lg rounded-xl hover:bg-gray-100 transition-all active:scale-95 xl:active:scale-100 text-center text-xs xl:text-base shadow-md xl:shadow-none shrink-0"
+          className="rounded-full bg-white px-5 py-2.5 text-center text-sm font-bold text-zinc-900 active:scale-[0.98]"
         >
-          Buy Tokens
+          Buy tokens
         </Link>
       </div>
 
-      {/* Transaction History - Mobile Optimized */}
-      <div className="bg-white dark:bg-dark rounded-xl xl:rounded-xl rounded-2xl shadow-sm xl:shadow-sm shadow-md border border-gray-100 dark:border-gray-800">
+      <div className="overflow-hidden rounded-[1.35rem] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:bg-dark">
         {/* Header & Filters - Mobile Optimized */}
         <div className="p-4 xl:p-6 border-b border-gray-100 dark:border-gray-800">
           <div className="flex flex-col gap-3 xl:gap-4">
             <h2 className="text-base xl:text-lg font-semibold text-dark dark:text-white">
               Transaction History
             </h2>
-            <div className="flex items-center gap-1.5 xl:gap-2 overflow-x-auto pb-1 xl:pb-0 -mx-1 px-1 xl:mx-0 xl:px-0 scrollbar-hide">
+            <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
               {(["all", "purchase", "used", "refund", "bonus", "expired"] as FilterType[]).map((f) => (
                 <button
                   key={f}
+                  type="button"
                   onClick={() => setFilter(f)}
-                  className={`px-2.5 xl:px-3 py-1.5 text-xs xl:text-sm font-medium rounded-lg xl:rounded-lg rounded-xl whitespace-nowrap transition-colors active:scale-95 xl:active:scale-100 shrink-0 ${
+                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold capitalize transition-colors active:scale-95 ${
                     filter === f
-                      ? "bg-primary text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-body-color dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                      : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
                   }`}
                 >
-                  {f.charAt(0).toUpperCase() + f.slice(1)}
+                  {f}
                 </button>
               ))}
             </div>
@@ -270,7 +238,7 @@ const TokensPage = () => {
 
       {/* Upcoming Classes with Check-In - Mobile Optimized */}
       {!isLoadingBookings && upcomingBookings.length > 0 && (
-        <div className="bg-white dark:bg-dark rounded-xl xl:rounded-xl rounded-2xl shadow-sm xl:shadow-sm shadow-md border border-gray-100 dark:border-gray-800 mt-6 xl:mt-8">
+        <div className="mt-6 overflow-hidden rounded-[1.35rem] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:bg-dark xl:mt-8">
           <div className="p-4 xl:p-6 border-b border-gray-100 dark:border-gray-800">
             <div className="flex items-center justify-between">
               <h2 className="text-base xl:text-lg font-semibold text-dark dark:text-white">
@@ -324,7 +292,7 @@ const TokensPage = () => {
           </div>
         </div>
       )}
-    </div>
+    </MemberMobilePageShell>
   );
 };
 

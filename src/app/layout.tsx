@@ -58,7 +58,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20260501" />
         <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="overflow-x-clip bg-[#FCFCFC] font-sans dark:bg-black">
+      <body className="overflow-x-clip bg-[#FCFCFC] font-sans dark:bg-zinc-950 dark:text-zinc-50">
         {/* Google Tag Manager */}
         <Script
           id="gtm-script"

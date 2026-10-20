@@ -13,6 +13,7 @@ import {
   sendTokenPurchaseEmail,
   sendTokenExpiryWarningEmail,
   sendClassReminderEmail,
+  sendStreakReminderEmail,
   sendBookingConfirmationEmail,
   sendTokenAdjustmentEmail,
   sendAdminCreatedUserEmail,
@@ -45,6 +46,7 @@ const EmailRequestSchema = z.object({
     'payment-alert',
     'token-expiry',
     'class-reminder',
+    'streak-reminder',
     'booking-confirmation',
     'token-adjustment',
     'admin-created-user',
@@ -162,6 +164,15 @@ export async function POST(request: NextRequest) {
           classTime: data.classTime as string,
           classLocation: data.classLocation as string,
           instructorName: data.instructorName as string | undefined,
+        })
+        break
+
+      case 'streak-reminder':
+        result = await sendStreakReminderEmail({
+          userEmail: data.userEmail as string,
+          userName: data.userName as string,
+          streakWeeks: data.streakWeeks as number,
+          bookUrl: data.bookUrl as string,
         })
         break
 

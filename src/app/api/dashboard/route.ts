@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdminClient, TABLES } from '@/lib/supabase'
+import { singaporeWeekBounds } from '@/lib/week-streak'
 
 /**
  * GET /api/dashboard
@@ -108,7 +109,7 @@ export async function GET(request: NextRequest) {
     // 3. Get user stats
     const { data: userStats, error: statsError } = await supabase
       .from('user_stats')
-      .select('total_classes_attended, total_tokens_used, streak_current')
+      .select('total_classes_attended, total_tokens_used, streak_current, streak_longest')
       .eq('user_id', userId)
       .single()
 
@@ -117,10 +118,26 @@ export async function GET(request: NextRequest) {
       // Don't fail - stats might not exist yet
     }
 
+    const { startIso, endIso } = singaporeWeekBounds()
+    const { data: attendedThisWeek, error: weekError } = await supabase
+      .from(TABLES.BOOKINGS)
+      .select('id, classes!inner(scheduled_at)')
+      .eq('user_id', userId)
+      .eq('status', 'attended')
+      .gte('classes.scheduled_at', startIso)
+      .lt('classes.scheduled_at', endIso)
+      .limit(1)
+
+    if (weekError) {
+      console.error('[API Dashboard] Error checking this week attendance:', weekError)
+    }
+
     const stats = {
       totalClassesAttended: userStats?.total_classes_attended || 0,
       tokensUsed: userStats?.total_tokens_used || 0,
       currentStreak: userStats?.streak_current || 0,
+      longestStreak: userStats?.streak_longest || 0,
+      weekSecured: (attendedThisWeek?.length || 0) > 0,
     }
 
     return NextResponse.json({

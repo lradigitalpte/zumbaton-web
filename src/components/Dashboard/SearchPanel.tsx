@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
+import { useMobileOverlayLock } from "@/context/MobileOverlayContext";
+import { Z_OVERLAY } from "@/lib/layering";
 import { useUpcomingClasses } from "@/hooks/useClasses";
 import { formatDate, formatTime } from "@/lib/utils";
 
@@ -12,7 +15,14 @@ interface SearchPanelProps {
 
 const SearchPanel = ({ isOpen, onClose }: SearchPanelProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useMobileOverlayLock(isOpen, "dashboard-search");
 
   // Fetch classes for search suggestions
   const { data: classes = [], isLoading } = useUpcomingClasses();
@@ -61,20 +71,17 @@ const SearchPanel = ({ isOpen, onClose }: SearchPanelProps) => {
     setSearchQuery("");
   };
 
-  return (
-    <>
+  const panel = (
+    <div className="fixed inset-0" style={{ zIndex: Z_OVERLAY }}>
       {/* Backdrop */}
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-[60] transition-opacity"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 bg-black/50 transition-opacity" onClick={onClose} aria-hidden />
       )}
 
       {/* Search Panel */}
       <div
         data-search-panel
-        className={`fixed top-0 right-0 h-full w-full sm:w-96 bg-white dark:bg-dark border-l border-gray-200 dark:border-gray-700 shadow-xl z-[70] transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 h-full w-full border-l border-zinc-200 bg-white shadow-xl transition-transform duration-300 ease-in-out dark:border-zinc-800 dark:bg-zinc-900 sm:w-96 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -239,8 +246,11 @@ const SearchPanel = ({ isOpen, onClose }: SearchPanelProps) => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
+
+  if (!isMounted || typeof window === "undefined") return null;
+  return createPortal(panel, document.body);
 };
 
 export default SearchPanel;

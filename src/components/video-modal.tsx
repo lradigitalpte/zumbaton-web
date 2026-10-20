@@ -26,7 +26,7 @@ export default function VideoModal({ isOpen, onClose, ...props }: PropsType) {
   }
 
   return createPortal(
-    <div className="fixed inset-0 flex items-center justify-center bg-black/60">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60">
       <div className="relative w-full max-w-4xl bg-gray-900">
         <button
           onClick={onClose}

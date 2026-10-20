@@ -80,7 +80,7 @@ const ToastContainer = ({ toasts, removeToast }: { toasts: Toast[]; removeToast:
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-[110] flex flex-col gap-2 max-w-sm">
+    <div className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] right-4 z-[99999] flex max-w-sm flex-col gap-2 md:bottom-4">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
       ))}

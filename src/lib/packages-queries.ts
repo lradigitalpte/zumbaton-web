@@ -77,9 +77,6 @@ export async function getAvailablePackages(packageType?: 'adults' | 'kids'): Pro
       if (response.ok) {
         const result = await response.json()
         if (result.success && result.data) {
-          if (process.env.NODE_ENV === 'development') {
-            console.log(`📦 Fetched ${result.data.length} packages via API for type: ${packageType || 'all'}`)
-          }
           return (result.data || []).map(mapPackageRow)
         }
 
@@ -97,13 +94,6 @@ export async function getAvailablePackages(packageType?: 'adults' | 'kids'): Pro
   // Server-side fallback to direct Supabase query.
   const supabase = getSupabaseClient()
 
-  // Debug: Check current session/auth state
-  if (process.env.NODE_ENV === 'development') {
-    const { data: { session } } = await supabase.auth.getSession()
-    console.log('🔐 Current session:', session ? 'Authenticated' : 'Anonymous')
-    console.log('🔐 User ID:', session?.user?.id || 'null (anonymous)')
-  }
-
   let query = supabase
     .from(TABLES.PACKAGES)
     .select('*')
@@ -113,57 +103,15 @@ export async function getAvailablePackages(packageType?: 'adults' | 'kids'): Pro
   if (packageType === 'adults') {
     // Adults packages: include 'adult' and 'all' types
     query = query.in('package_type', ['adult', 'all'])
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 Filtering for adults packages: package_type IN (adult, all)')
-    }
   } else if (packageType === 'kids') {
-    // Kids packages: only 'kid' type
     query = query.eq('package_type', 'kid')
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 Filtering for kids packages: package_type = kid')
-    }
-  } else {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 No package type filter - fetching all active packages')
-    }
   }
 
   const { data, error } = await query.order('token_count', { ascending: true })
 
   if (error) {
-    console.error('❌ Error fetching packages:', error)
-    console.error('Error code:', error.code)
-    console.error('Error message:', error.message)
-    console.error('Error details:', error.details)
-    console.error('Error hint:', error.hint)
-    console.error('Package type filter:', packageType)
-    console.error('Query details:', { 
-      table: TABLES.PACKAGES, 
-      filter: packageType === 'adults' ? ['adult', 'all'] : packageType === 'kids' ? 'kid' : 'all' 
-    })
+    console.error('Error fetching packages:', error.message)
     return []
-  }
-
-  // Enhanced logging
-  console.log(`📦 Fetched ${data?.length || 0} packages for type: ${packageType || 'all'}`)
-  if (data && data.length > 0) {
-    console.log('✅ Package data:', data)
-    console.log('Package details:', data.map(p => ({
-      id: p.id,
-      name: p.name,
-      package_type: p.package_type,
-      is_active: p.is_active,
-      price_cents: p.price_cents
-    })))
-  } else {
-    console.warn('⚠️ No packages returned!')
-    console.warn('Possible issues:')
-    console.warn('  1. RLS policy blocking anonymous access')
-    console.warn('  2. Packages not active (is_active = false)')
-    console.warn('  3. Package type filter mismatch')
-    console.warn('  4. Packages don\'t exist in database')
-    console.warn('')
-    console.warn('🔧 To fix: Run fix_packages_rls.sql in Supabase SQL Editor')
   }
 
   return (data || []).map(mapPackageRow)

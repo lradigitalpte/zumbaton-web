@@ -4,6 +4,7 @@
  */
 
 import { getSupabaseClient, TABLES } from './supabase'
+import { singaporeWeekBounds } from './week-streak'
 
 export interface TokenBalance {
   available: number
@@ -23,6 +24,38 @@ export interface UserStats {
   totalClassesAttended: number
   tokensUsed: number
   currentStreak: number
+  longestStreak: number
+  weekSecured: boolean
+}
+
+const EMPTY_USER_STATS: UserStats = {
+  totalClassesAttended: 0,
+  tokensUsed: 0,
+  currentStreak: 0,
+  longestStreak: 0,
+  weekSecured: false,
+}
+
+async function hasAttendedClassThisWeek(
+  supabase: ReturnType<typeof getSupabaseClient>,
+  userId: string,
+): Promise<boolean> {
+  const { startIso, endIso } = singaporeWeekBounds()
+  const { data, error } = await supabase
+    .from(TABLES.BOOKINGS)
+    .select('id, classes!inner(scheduled_at)')
+    .eq('user_id', userId)
+    .eq('status', 'attended')
+    .gte('classes.scheduled_at', startIso)
+    .lt('classes.scheduled_at', endIso)
+    .limit(1)
+
+  if (error) {
+    console.error('[User Stats] Failed to check this week attendance:', error)
+    return false
+  }
+
+  return (data?.length || 0) > 0
 }
 
 /**
@@ -244,7 +277,14 @@ export async function getUserStats(userId: string): Promise<UserStats> {
         const result = await response.json()
         if (result.success && result.data?.stats) {
           console.log('📈 Fetched user stats via API (bypassing RLS for faster queries)')
-          return result.data.stats
+          const stats = result.data.stats
+          return {
+            totalClassesAttended: stats.totalClassesAttended || 0,
+            tokensUsed: stats.tokensUsed || 0,
+            currentStreak: stats.currentStreak || 0,
+            longestStreak: stats.longestStreak || 0,
+            weekSecured: Boolean(stats.weekSecured),
+          }
         }
       } else {
         console.warn('⚠️ Dashboard API endpoint failed, falling back to direct Supabase query')
@@ -260,7 +300,7 @@ export async function getUserStats(userId: string): Promise<UserStats> {
 
   let query = supabase
     .from('user_stats')
-    .select('total_classes_attended, total_tokens_used, streak_current')
+    .select('total_classes_attended, total_tokens_used, streak_current, streak_longest')
     .eq('user_id', userId)
     .single()
 
@@ -282,36 +322,25 @@ export async function getUserStats(userId: string): Promise<UserStats> {
     error = result.error
   } catch (timeoutError: any) {
     console.error('[User Stats] Query timeout:', timeoutError?.message)
-    // For stats, return defaults on timeout (non-critical data)
-    return {
-      totalClassesAttended: 0,
-      tokensUsed: 0,
-      currentStreak: 0,
-    }
+    return EMPTY_USER_STATS
   }
 
   if (error) {
-    // If no stats record exists, return defaults (this is valid)
     if (error.code === 'PGRST116') {
-      return {
-        totalClassesAttended: 0,
-        tokensUsed: 0,
-        currentStreak: 0,
-      }
+      return EMPTY_USER_STATS
     }
     console.error('Error fetching user stats:', error)
-    // For stats, return defaults on error (non-critical data)
-    return {
-      totalClassesAttended: 0,
-      tokensUsed: 0,
-      currentStreak: 0,
-    }
+    return EMPTY_USER_STATS
   }
+
+  const weekSecured = await hasAttendedClassThisWeek(supabase, userId)
 
   return {
     totalClassesAttended: stats?.total_classes_attended || 0,
     tokensUsed: stats?.total_tokens_used || 0,
     currentStreak: stats?.streak_current || 0,
+    longestStreak: stats?.streak_longest || 0,
+    weekSecured,
   }
 }
 

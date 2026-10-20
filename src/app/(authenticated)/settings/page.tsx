@@ -1,379 +1,709 @@
 "use client";
 
+
+
 import { useState, useEffect } from "react";
+
+import Link from "next/link";
+
 import { useAuth } from "@/context/AuthContext";
+
 import { useToast } from "@/components/Toast";
+
 import { apiFetch } from "@/lib/api-fetch";
+
 import { useRouter } from "next/navigation";
 
-const SettingsPage = () => {
-  const { signOut, user } = useAuth();
-  const toast = useToast();
-  const router = useRouter();
-  
-  const [notifications, setNotifications] = useState({
-    classReminders: true,
-    bookingConfirmations: true,
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-  const [passwordError, setPasswordError] = useState("");
+import MemberMobilePageShell from "@/components/Dashboard/MemberMobilePageShell";
 
-  // Load settings on mount
-  useEffect(() => {
-    loadSettings();
-  }, []);
 
-  const loadSettings = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Load notification preferences
-      const notificationsResponse = await apiFetch('/api/settings/notifications');
-      if (notificationsResponse.ok) {
-        const notificationsData = await notificationsResponse.json();
-        if (notificationsData.success) {
-          setNotifications({
-            classReminders: notificationsData.data.classReminders,
-            bookingConfirmations: notificationsData.data.bookingConfirmations,
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error loading settings:', error);
-      toast.error('Error', 'Failed to load settings');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const handleNotificationChange = async (key: keyof typeof notifications) => {
-    const updatedNotifications = { ...notifications, [key]: !notifications[key] };
-    setNotifications(updatedNotifications);
-    
-    try {
-      setIsSaving(true);
-      const response = await apiFetch('/api/settings/notifications', {
-        method: 'PUT',
-        body: JSON.stringify(updatedNotifications),
-      });
+const inputClass =
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        // Revert on error
-        setNotifications(notifications);
-        toast.error('Error', errorData.error?.message || 'Failed to update notification preferences');
-        return;
-      }
+  "mt-1.5 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-lime-500 focus:ring-2 focus:ring-lime-500/25 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white";
 
-      toast.success("Settings updated", "Your notification preferences have been saved.");
-    } catch (error) {
-      // Revert on error
-      setNotifications(notifications);
-      console.error('Error updating notifications:', error);
-      toast.error('Error', 'Failed to update notification preferences');
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
-  const handlePasswordChange = async () => {
-    setPasswordError("");
 
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      const message = "New passwords do not match.";
-      setPasswordError(message);
-      toast.error("Password mismatch", message);
-      return;
-    }
-    
-    if (passwordForm.newPassword.length < 8) {
-      const message = "Password must be at least 8 characters.";
-      setPasswordError(message);
-      toast.error("Invalid password", message);
-      return;
-    }
+function Toggle({
 
-    try {
-      setIsSaving(true);
-      const response = await apiFetch('/api/settings/password', {
-        method: 'POST',
-        body: JSON.stringify({
-          currentPassword: passwordForm.currentPassword,
-          newPassword: passwordForm.newPassword,
-        }),
-      });
+  checked,
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        const message = errorData?.error?.message || 'Failed to change password';
-        setPasswordError(message);
-        toast.error('Error', message);
-        return;
-      }
-      
-      toast.success("Password changed", "Your password has been updated successfully.");
-      setPasswordError("");
-      setIsChangingPassword(false);
-      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-    } catch (error) {
-      console.error('Error changing password:', error);
-      setPasswordError('Failed to change password');
-      toast.error('Error', 'Failed to change password');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  onChange,
 
-  const handleDeleteAccount = async () => {
-    const confirmed = confirm("Are you sure you want to delete your account? This action cannot be undone. All your data will be permanently deleted.");
-    
-    if (!confirmed) {
-      return;
-    }
+  disabled,
 
-    // Double confirmation
-    const doubleConfirmed = confirm("This is your final warning. Your account and all data will be permanently deleted. Are you absolutely sure?");
-    
-    if (!doubleConfirmed) {
-      return;
-    }
+  label,
 
-    try {
-      setIsSaving(true);
-      const response = await apiFetch('/api/settings/delete-account', {
-        method: 'POST',
-        body: JSON.stringify({ confirm: true }),
-      });
+}: {
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        toast.error('Error', errorData.error?.message || 'Failed to delete account');
-        return;
-      }
+  checked: boolean;
 
-      toast.success("Account deleted", "Your account has been permanently deleted.");
-      
-      // Sign out and redirect to home
-      await signOut();
-      router.push('/');
-    } catch (error) {
-      console.error('Error deleting account:', error);
-      toast.error('Error', 'Failed to delete account');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  onChange: () => void;
 
-  if (isLoading) {
-    return (
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-dark dark:text-white mb-1">
-            Settings
-          </h1>
-          <p className="text-body-color dark:text-gray-400">
-            Manage your account settings and preferences
-          </p>
-        </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      </div>
-    );
-  }
+  disabled?: boolean;
+
+  label: string;
+
+}) {
 
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-dark dark:text-white mb-1">
-          Settings
-        </h1>
-        <p className="text-body-color dark:text-gray-400">
-          Manage your account settings and preferences
-        </p>
-      </div>
 
-      <div className="space-y-6">
-        {/* Notification Settings */}
-        <div className="bg-white dark:bg-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6">
-          <h3 className="text-lg font-semibold text-dark dark:text-white mb-4 flex items-center gap-2">
-            <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-            Notifications
-          </h3>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-800">
-              <div>
-                <p className="font-medium text-dark dark:text-white">Class Reminders</p>
-                <p className="text-sm text-body-color dark:text-gray-400">Get reminded before your booked classes</p>
-              </div>
-              <button
-                onClick={() => handleNotificationChange("classReminders")}
-                disabled={isSaving}
-                className={`relative w-12 h-6 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                  notifications.classReminders ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
-                }`}
-              >
-                <span
-                  className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                    notifications.classReminders ? "translate-x-6" : ""
-                  }`}
-                />
-              </button>
-            </div>
-            
-            <div className="flex items-center justify-between py-3">
-              <div>
-                <p className="font-medium text-dark dark:text-white">Booking Confirmations</p>
-                <p className="text-sm text-body-color dark:text-gray-400">Receive confirmation emails for bookings</p>
-              </div>
-              <button
-                onClick={() => handleNotificationChange("bookingConfirmations")}
-                disabled={isSaving}
-                className={`relative w-12 h-6 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                  notifications.bookingConfirmations ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
-                }`}
-              >
-                <span
-                  className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                    notifications.bookingConfirmations ? "translate-x-6" : ""
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-        </div>
+    <button
 
-        {/* Security Settings */}
-        <div className="bg-white dark:bg-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6">
-          <h3 className="text-lg font-semibold text-dark dark:text-white mb-4 flex items-center gap-2">
-            <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            Security
-          </h3>
-          
-          {!isChangingPassword ? (
-            <div className="flex items-center justify-between py-3">
-              <div>
-                <p className="font-medium text-dark dark:text-white">Password</p>
-                <p className="text-sm text-body-color dark:text-gray-400">Last changed 3 months ago</p>
-              </div>
-              <button
-                onClick={() => setIsChangingPassword(true)}
-                className="px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
-              >
-                Change Password
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-dark dark:text-white mb-2">
-                  Current Password
-                </label>
-                <input
-                  type="password"
-                  value={passwordForm.currentPassword}
-                  onChange={(e) => {
-                    setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }));
-                    if (passwordError) setPasswordError("");
-                  }}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-dark dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-dark dark:text-white mb-2">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  value={passwordForm.newPassword}
-                  onChange={(e) => {
-                    setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }));
-                    if (passwordError) setPasswordError("");
-                  }}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-dark dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-dark dark:text-white mb-2">
-                  Confirm New Password
-                </label>
-                <input
-                  type="password"
-                  value={passwordForm.confirmPassword}
-                  onChange={(e) => {
-                    setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }));
-                    if (passwordError) setPasswordError("");
-                  }}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-dark dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
-                />
-              </div>
-              {passwordError && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
-                  {passwordError}
-                </div>
-              )}
-              <div className="flex items-center gap-2 pt-2">
-                <button
-                  onClick={() => {
-                    setIsChangingPassword(false);
-                    setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-                    setPasswordError("");
-                  }}
-                  className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                >
-                  Cancel
-                </button>
-              <button
-                onClick={handlePasswordChange}
-                disabled={isSaving}
-                className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSaving ? "Updating..." : "Update Password"}
-              </button>
-              </div>
-            </div>
-          )}
-        </div>
+      type="button"
 
-        {/* Danger Zone */}
-        <div className="bg-white dark:bg-dark rounded-xl shadow-sm border border-red-200 dark:border-red-900/50 p-6">
-          <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-4 flex items-center gap-2">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            Danger Zone
-          </h3>
-          
-          <div className="flex items-center justify-between py-3">
-            <div>
-              <p className="font-medium text-dark dark:text-white">Delete Account</p>
-              <p className="text-sm text-body-color dark:text-gray-400">Permanently delete your account and all data</p>
-            </div>
-            <button
-              onClick={handleDeleteAccount}
-              disabled={isSaving}
-              className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSaving ? "Deleting..." : "Delete Account"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+      role="switch"
+
+      aria-checked={checked}
+
+      aria-label={label}
+
+      disabled={disabled}
+
+      onClick={onChange}
+
+      className={`relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-50 ${
+
+        checked ? "bg-lime-400" : "bg-zinc-300 dark:bg-zinc-600"
+
+      }`}
+
+    >
+
+      <span
+
+        className={`absolute top-1 left-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+
+          checked ? "translate-x-5" : ""
+
+        }`}
+
+      />
+
+    </button>
+
   );
+
+}
+
+
+
+const SettingsPage = () => {
+
+  const { signOut } = useAuth();
+
+  const toast = useToast();
+
+  const router = useRouter();
+
+
+
+  const [notifications, setNotifications] = useState({
+
+    classReminders: true,
+
+    bookingConfirmations: true,
+
+  });
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const [passwordForm, setPasswordForm] = useState({
+
+    currentPassword: "",
+
+    newPassword: "",
+
+    confirmPassword: "",
+
+  });
+
+  const [passwordError, setPasswordError] = useState("");
+
+
+
+  useEffect(() => {
+
+    loadSettings();
+
+  }, []);
+
+
+
+  const loadSettings = async () => {
+
+    try {
+
+      setIsLoading(true);
+
+      const notificationsResponse = await apiFetch("/api/settings/notifications");
+
+      if (notificationsResponse.ok) {
+
+        const notificationsData = await notificationsResponse.json();
+
+        if (notificationsData.success) {
+
+          setNotifications({
+
+            classReminders: notificationsData.data.classReminders,
+
+            bookingConfirmations: notificationsData.data.bookingConfirmations,
+
+          });
+
+        }
+
+      }
+
+    } catch (error) {
+
+      console.error("Error loading settings:", error);
+
+      toast.error("Error", "Failed to load settings");
+
+    } finally {
+
+      setIsLoading(false);
+
+    }
+
+  };
+
+
+
+  const handleNotificationChange = async (key: keyof typeof notifications) => {
+
+    const previous = notifications;
+
+    const updatedNotifications = { ...notifications, [key]: !notifications[key] };
+
+    setNotifications(updatedNotifications);
+
+
+
+    try {
+
+      setIsSaving(true);
+
+      const response = await apiFetch("/api/settings/notifications", {
+
+        method: "PUT",
+
+        body: JSON.stringify(updatedNotifications),
+
+      });
+
+
+
+      if (!response.ok) {
+
+        const errorData = await response.json();
+
+        setNotifications(previous);
+
+        toast.error("Error", errorData.error?.message || "Failed to update notification preferences");
+
+        return;
+
+      }
+
+
+
+      toast.success("Saved", "Notification preference updated.");
+
+    } catch (error) {
+
+      setNotifications(previous);
+
+      console.error("Error updating notifications:", error);
+
+      toast.error("Error", "Failed to update notification preferences");
+
+    } finally {
+
+      setIsSaving(false);
+
+    }
+
+  };
+
+
+
+  const handlePasswordChange = async () => {
+
+    setPasswordError("");
+
+
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+
+      const message = "New passwords do not match.";
+
+      setPasswordError(message);
+
+      toast.error("Password mismatch", message);
+
+      return;
+
+    }
+
+
+
+    if (passwordForm.newPassword.length < 8) {
+
+      const message = "Password must be at least 8 characters.";
+
+      setPasswordError(message);
+
+      toast.error("Invalid password", message);
+
+      return;
+
+    }
+
+
+
+    try {
+
+      setIsSaving(true);
+
+      const response = await apiFetch("/api/settings/password", {
+
+        method: "POST",
+
+        body: JSON.stringify({
+
+          currentPassword: passwordForm.currentPassword,
+
+          newPassword: passwordForm.newPassword,
+
+        }),
+
+      });
+
+
+
+      if (!response.ok) {
+
+        const errorData = await response.json();
+
+        const message = errorData?.error?.message || "Failed to change password";
+
+        setPasswordError(message);
+
+        toast.error("Error", message);
+
+        return;
+
+      }
+
+
+
+      toast.success("Password changed", "Your password has been updated.");
+
+      setPasswordError("");
+
+      setIsChangingPassword(false);
+
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+
+    } catch (error) {
+
+      console.error("Error changing password:", error);
+
+      setPasswordError("Failed to change password");
+
+      toast.error("Error", "Failed to change password");
+
+    } finally {
+
+      setIsSaving(false);
+
+    }
+
+  };
+
+
+
+  const handleDeleteAccount = async () => {
+
+    const confirmed = confirm(
+
+      "Are you sure you want to delete your account? This cannot be undone."
+
+    );
+
+    if (!confirmed) return;
+
+
+
+    const doubleConfirmed = confirm(
+
+      "Final confirmation: permanently delete your account and all data?"
+
+    );
+
+    if (!doubleConfirmed) return;
+
+
+
+    try {
+
+      setIsSaving(true);
+
+      const response = await apiFetch("/api/settings/delete-account", {
+
+        method: "POST",
+
+        body: JSON.stringify({ confirm: true }),
+
+      });
+
+
+
+      if (!response.ok) {
+
+        const errorData = await response.json();
+
+        toast.error("Error", errorData.error?.message || "Failed to delete account");
+
+        return;
+
+      }
+
+
+
+      toast.success("Account deleted", "Your account has been permanently deleted.");
+
+      await signOut();
+
+      router.push("/");
+
+    } catch (error) {
+
+      console.error("Error deleting account:", error);
+
+      toast.error("Error", "Failed to delete account");
+
+    } finally {
+
+      setIsSaving(false);
+
+    }
+
+  };
+
+
+
+  if (isLoading) {
+
+    return (
+
+      <MemberMobilePageShell eyebrow="Account" title="Settings" maxWidthClass="md:max-w-2xl">
+
+        <div className="flex justify-center py-20">
+
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-900 dark:border-zinc-700 dark:border-t-lime-400" />
+
+        </div>
+
+      </MemberMobilePageShell>
+
+    );
+
+  }
+
+
+
+  return (
+
+    <MemberMobilePageShell eyebrow="Account" title="Settings" maxWidthClass="md:max-w-2xl">
+
+      <article className="overflow-hidden rounded-[1.35rem] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:bg-zinc-900 dark:shadow-none dark:ring-1 dark:ring-zinc-800">
+
+        <div className="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
+
+          <h2 className="text-sm font-bold text-zinc-900 dark:text-white">Notifications</h2>
+
+          <p className="mt-0.5 text-xs text-zinc-500">Email preferences for your bookings</p>
+
+        </div>
+
+
+
+        <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+
+          <div className="flex items-center justify-between gap-4 px-5 py-4">
+
+            <div className="min-w-0">
+
+              <p className="text-sm font-medium text-zinc-900 dark:text-white">Class reminders</p>
+
+              <p className="text-xs text-zinc-500">Before booked classes</p>
+
+            </div>
+
+            <Toggle
+
+              label="Class reminders"
+
+              checked={notifications.classReminders}
+
+              onChange={() => handleNotificationChange("classReminders")}
+
+              disabled={isSaving}
+
+            />
+
+          </div>
+
+          <div className="flex items-center justify-between gap-4 px-5 py-4">
+
+            <div className="min-w-0">
+
+              <p className="text-sm font-medium text-zinc-900 dark:text-white">Booking confirmations</p>
+
+              <p className="text-xs text-zinc-500">When you book a class</p>
+
+            </div>
+
+            <Toggle
+
+              label="Booking confirmations"
+
+              checked={notifications.bookingConfirmations}
+
+              onChange={() => handleNotificationChange("bookingConfirmations")}
+
+              disabled={isSaving}
+
+            />
+
+          </div>
+
+        </div>
+
+
+
+        <div className="border-t border-zinc-100 px-5 py-4 dark:border-zinc-800">
+
+          <h2 className="text-sm font-bold text-zinc-900 dark:text-white">Password</h2>
+
+          {!isChangingPassword ? (
+
+            <button
+
+              type="button"
+
+              onClick={() => setIsChangingPassword(true)}
+
+              className="mt-3 w-full rounded-full border border-zinc-200 py-3 text-sm font-bold text-zinc-900 active:scale-[0.99] dark:border-zinc-700 dark:text-white"
+
+            >
+
+              Change password
+
+            </button>
+
+          ) : (
+
+            <div className="mt-3 space-y-3">
+
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+
+                Current password
+
+                <input
+
+                  type="password"
+
+                  value={passwordForm.currentPassword}
+
+                  onChange={(e) => {
+
+                    setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }));
+
+                    if (passwordError) setPasswordError("");
+
+                  }}
+
+                  className={inputClass}
+
+                  autoComplete="current-password"
+
+                />
+
+              </label>
+
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+
+                New password
+
+                <input
+
+                  type="password"
+
+                  value={passwordForm.newPassword}
+
+                  onChange={(e) => {
+
+                    setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }));
+
+                    if (passwordError) setPasswordError("");
+
+                  }}
+
+                  className={inputClass}
+
+                  autoComplete="new-password"
+
+                />
+
+              </label>
+
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+
+                Confirm new password
+
+                <input
+
+                  type="password"
+
+                  value={passwordForm.confirmPassword}
+
+                  onChange={(e) => {
+
+                    setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }));
+
+                    if (passwordError) setPasswordError("");
+
+                  }}
+
+                  className={inputClass}
+
+                  autoComplete="new-password"
+
+                />
+
+              </label>
+
+              {passwordError && (
+
+                <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+
+                  {passwordError}
+
+                </p>
+
+              )}
+
+              <div className="flex gap-2 pt-1">
+
+                <button
+
+                  type="button"
+
+                  onClick={() => {
+
+                    setIsChangingPassword(false);
+
+                    setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+
+                    setPasswordError("");
+
+                  }}
+
+                  className="flex-1 rounded-full border border-zinc-200 py-3 text-sm font-bold text-zinc-700 dark:border-zinc-700 dark:text-zinc-300"
+
+                >
+
+                  Cancel
+
+                </button>
+
+                <button
+
+                  type="button"
+
+                  onClick={handlePasswordChange}
+
+                  disabled={isSaving}
+
+                  className="flex-1 rounded-full bg-zinc-900 py-3 text-sm font-bold text-white disabled:opacity-50 dark:bg-lime-400 dark:text-zinc-900"
+
+                >
+
+                  {isSaving ? "Updating…" : "Update"}
+
+                </button>
+
+              </div>
+
+            </div>
+
+          )}
+
+        </div>
+
+
+
+        <div className="border-t border-red-100 bg-red-50/50 px-5 py-4 dark:border-red-900/40 dark:bg-red-950/20">
+
+          <h2 className="text-sm font-bold text-red-700 dark:text-red-400">Delete account</h2>
+
+          <p className="mt-1 text-xs text-red-600/90 dark:text-red-300/90">
+
+            Permanently removes your account and data. This cannot be undone.
+
+          </p>
+
+          <button
+
+            type="button"
+
+            onClick={handleDeleteAccount}
+
+            disabled={isSaving}
+
+            className="mt-3 w-full rounded-full border border-red-300 py-3 text-sm font-bold text-red-700 disabled:opacity-50 dark:border-red-800 dark:text-red-400"
+
+          >
+
+            {isSaving ? "Please wait…" : "Delete my account"}
+
+          </button>
+
+        </div>
+
+      </article>
+
+
+
+      <Link
+
+        href="/profile"
+
+        className="mt-4 block text-center text-sm font-medium text-zinc-500 underline-offset-2 hover:underline"
+
+      >
+
+        Back to profile
+
+      </Link>
+
+    </MemberMobilePageShell>
+
+  );
+
 };
 
+
+
 export default SettingsPage;
+
+

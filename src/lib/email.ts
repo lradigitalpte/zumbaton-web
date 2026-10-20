@@ -359,6 +359,7 @@ import {
   getTokenPurchaseEmailTemplate,
   getTokenExpiryWarningEmailTemplate,
   getClassReminderEmailTemplate,
+  getStreakReminderEmailTemplate,
   getBookingConfirmationEmailTemplate,
   getTokenAdjustmentEmailTemplate,
   getAdminCreatedUserEmailTemplate,
@@ -466,6 +467,30 @@ export async function sendClassReminderEmail(data: {
   return sendEmail({
     to: data.userEmail,
     subject: `📅 Class Reminder: ${data.className} starts in 3 hours!`,
+    html: template.html,
+    text: template.text,
+  })
+}
+
+/**
+ * Remind a member to attend once this week so their week streak survives Sunday.
+ */
+export async function sendStreakReminderEmail(data: {
+  userEmail: string
+  userName: string
+  streakWeeks: number
+  bookUrl: string
+}): Promise<EmailResult> {
+  const template = getStreakReminderEmailTemplate({
+    userName: data.userName,
+    streakWeeks: data.streakWeeks,
+    bookUrl: data.bookUrl,
+  })
+  const streakLabel = data.streakWeeks === 1 ? '1-week streak' : `${data.streakWeeks}-week streak`
+
+  return sendEmail({
+    to: data.userEmail,
+    subject: `Your ${streakLabel} ends Sunday`,
     html: template.html,
     text: template.text,
   })

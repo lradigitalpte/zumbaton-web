@@ -6,7 +6,12 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import Sidebar from "@/components/Dashboard/Sidebar";
 import DashboardHeader from "@/components/Dashboard/DashboardHeader";
+import MobileBottomNav from "@/components/Dashboard/MobileBottomNav";
 import UserOnboardingTour from "@/components/onboarding/UserOnboardingTour";
+import {
+  MobileOverlayProvider,
+  useMobileOverlayOpen,
+} from "@/context/MobileOverlayContext";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -28,7 +33,8 @@ async function withTimeout<T>(promise: PromiseLike<T>, timeoutMs: number, messag
   }
 }
 
-const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+const DashboardLayoutShell = ({ children }: DashboardLayoutProps) => {
+  const mobileOverlayOpen = useMobileOverlayOpen();
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated, isLoading, user, signOut } = useAuth();
@@ -186,14 +192,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   // Active-status verification runs in the background and must not block the shell.
   if (isLoading || (!isAuthenticated && !sessionChecked)) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-dark">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-zinc-950">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a2e]">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       {/* Sidebar */}
       <Sidebar 
         isMobileOpen={isMobileSidebarOpen}
@@ -213,15 +219,23 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         />
         
         {/* Page Content */}
-        <div className="pt-28 sm:pt-32 p-4 sm:p-6">
+        <div className="p-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-28 sm:p-6 sm:pb-6 sm:pt-32 md:pb-6">
           {children}
         </div>
       </div>
+
+      {!isMobileSidebarOpen && !mobileOverlayOpen && <MobileBottomNav />}
       
       {/* User Onboarding Tour */}
       <UserOnboardingTour />
     </div>
   );
 };
+
+const DashboardLayout = ({ children }: DashboardLayoutProps) => (
+  <MobileOverlayProvider>
+    <DashboardLayoutShell>{children}</DashboardLayoutShell>
+  </MobileOverlayProvider>
+);
 
 export default DashboardLayout;

@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useMobileOverlayLock } from "@/context/MobileOverlayContext";
+import { Z_OVERLAY } from "@/lib/layering";
 
 interface ModalProps {
   isOpen: boolean;
@@ -26,6 +28,8 @@ const Modal = ({
 }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const overlayKey = useId();
+  useMobileOverlayLock(isOpen, `modal-${overlayKey}`);
 
   // Ensure component is mounted before rendering portal
   useEffect(() => {
@@ -79,7 +83,10 @@ const Modal = ({
   if (!isOpen || !isMounted) return null;
 
   const modalContent = (
-    <div className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-0 sm:p-4" style={{ position: 'fixed' }}>
+    <div
+      className="fixed inset-0 flex items-end justify-center p-0 sm:items-center sm:p-4"
+      style={{ position: "fixed", zIndex: Z_OVERLAY }}
+    >
       {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/50 transition-opacity duration-300"
@@ -90,7 +97,7 @@ const Modal = ({
       {/* Modal - Mobile Bottom Sheet / Desktop Centered */}
       <div
         ref={modalRef}
-        className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-dark rounded-t-3xl sm:rounded-2xl shadow-xl transform transition-all duration-300 max-h-[90vh] sm:max-h-[85vh] flex flex-col ${
+        className={`relative w-full ${sizeClasses[size]} flex max-h-[90vh] transform flex-col rounded-t-3xl bg-white shadow-xl transition-all duration-300 sm:max-h-[85vh] sm:rounded-2xl dark:bg-zinc-900 ${
           isOpen ? "translate-y-0" : "translate-y-full sm:translate-y-0"
         }`}
       >
@@ -100,13 +107,13 @@ const Modal = ({
         </div>
 
         {/* Header */}
-        <div className="flex items-start justify-between px-4 sm:px-6 pt-2 sm:pt-6 pb-4 sm:pb-6 border-b border-gray-200 dark:border-gray-800 shrink-0">
+        <div className="flex shrink-0 items-start justify-between border-b border-zinc-200 px-4 pb-4 pt-2 dark:border-zinc-800 sm:px-6 sm:pb-6 sm:pt-6">
           <div className="flex-1">
-            <h2 className="text-lg sm:text-xl font-bold text-dark dark:text-white">
+            <h2 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-white sm:text-xl">
               {title}
             </h2>
             {description && (
-              <p className="mt-1 text-xs sm:text-sm text-body-color dark:text-gray-400">
+              <p className="mt-1 line-clamp-2 text-sm font-semibold text-zinc-700 dark:text-zinc-200 sm:font-normal sm:text-body-color">
                 {description}
               </p>
             )}
@@ -131,7 +138,7 @@ const Modal = ({
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center gap-3 px-4 sm:px-6 py-4 sm:py-6 border-t border-gray-200 dark:border-gray-800 shrink-0">
+          <div className="shrink-0 border-t border-zinc-200 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] dark:border-zinc-800 sm:px-6 sm:py-6 sm:pb-6">
             {footer}
           </div>
         )}

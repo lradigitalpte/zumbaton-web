@@ -1,37 +1,40 @@
 // Server wrapper: prefetch promo eligibility (if user authenticated) and render client component
 import PackagesClient from './PackagesClient'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 
 export const dynamic = 'force-dynamic'
+
+async function getInternalOrigin(): Promise<string> {
+  const h = await headers()
+  const host = h.get('x-forwarded-host') ?? h.get('host')
+  if (host) {
+    const proto = h.get('x-forwarded-proto') ?? (host.startsWith('localhost') ? 'http' : 'https')
+    return `${proto}://${host}`
+  }
+  return (
+    process.env.NEXT_PUBLIC_WEB_APP_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    'http://localhost:3001'
+  )
+}
 
 async function fetchPromoWithCookies() {
   try {
     const cookieStore = await cookies()
     const cookieHeader = cookieStore.toString()
-    const base = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-    const url = new URL('/api/promos/eligibility', base).toString()
-    
-    console.log('[Packages] Fetching promo with cookies:', !!cookieHeader)
-    
-    const res = await fetch(url, {
-      headers: cookieHeader ? { cookie: cookieHeader } : undefined,
+    if (!cookieHeader) return null
+
+    const base = await getInternalOrigin()
+    const res = await fetch(`${base}/api/promos/eligibility`, {
+      headers: { cookie: cookieHeader },
       cache: 'no-store',
     })
-    
-    console.log('[Packages] Promo fetch response status:', res.status)
-    
-    if (!res.ok) {
-      const errorText = await res.text()
-      console.log('[Packages] Promo fetch error:', errorText)
-      return null
-    }
-    
+
+    if (!res.ok) return null
+
     const data = await res.json()
-    console.log('[Packages] Promo data received:', JSON.stringify(data, null, 2))
-    
-    return data.data || data
-  } catch (err) {
-    console.warn('[Packages] Failed to prefetch promo:', err)
+    return data.data ?? data
+  } catch {
     return null
   }
 }

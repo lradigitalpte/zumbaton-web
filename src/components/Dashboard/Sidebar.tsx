@@ -143,21 +143,21 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-[45] lg:hidden"
+          className="fixed inset-0 z-[10035] bg-black/50 lg:hidden"
           onClick={onMobileClose}
           aria-hidden="true"
         />
       )}
 
       <aside
-        className={`fixed left-0 top-0 z-[50] h-screen flex flex-col transition-all duration-300 ease-in-out ${
-          isCollapsed ? "w-20" : "w-64"
-        } bg-gray-900 border-r border-gray-800 shadow-lg lg:shadow-none ${
+        className={`fixed left-0 top-0 z-[10040] flex flex-col transition-all duration-300 ease-in-out ${
+          isCollapsed ? "w-20" : "w-[min(100vw-2rem,17rem)] lg:w-64"
+        } h-[100dvh] max-h-[100dvh] bg-zinc-950 border-r border-zinc-800 shadow-xl lg:shadow-none ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
       {/* Logo & Toggle */}
-      <div className="relative flex items-center h-16 px-4 border-b border-gray-800 shrink-0">
+      <div className="relative flex h-14 shrink-0 items-center border-b border-zinc-800 px-4 lg:h-16">
         {/* Logo - centered in both states */}
         <div className="flex-1 flex items-center justify-center">
           {!isCollapsed ? (
@@ -188,10 +188,10 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
         {/* Mobile Close Button - absolute positioned */}
         <button
           onClick={onMobileClose}
-          className="absolute right-2 lg:hidden p-2 rounded-lg hover:bg-gray-800 transition-colors"
+          className="absolute right-1 rounded-full p-2.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white lg:hidden"
           aria-label="Close menu"
         >
-          <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
@@ -216,9 +216,13 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
       </div>
 
       {/* User Info */}
-      <div className={`p-4 border-b border-gray-800 shrink-0 ${isCollapsed ? "text-center" : ""}`}>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-lime-500/20 flex items-center justify-center shrink-0 overflow-hidden">
+      <div
+        className={`shrink-0 border-b border-zinc-800 p-4 ${isCollapsed ? "text-center" : ""}`}
+      >
+        <div
+          className={`flex items-center gap-3 ${!isCollapsed ? "rounded-2xl bg-zinc-900/80 p-2 lg:bg-transparent lg:p-0" : ""}`}
+        >
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-800 ring-2 ring-lime-400/30">
             {profile?.avatarUrl ? (
               <img
                 src={profile.avatarUrl}
@@ -245,84 +249,84 @@ const Sidebar = ({ isMobileOpen = false, onMobileClose }: SidebarProps) => {
           </div>
           {!isCollapsed && (
             <div className="overflow-hidden">
-              <p className="font-medium text-white truncate">
-                {user?.name || "User"}
-              </p>
-              <p className="text-sm text-gray-400 truncate">
-                {user?.email || ""}
-              </p>
+              <p className="truncate font-bold text-white">{user?.name || "User"}</p>
+              <p className="truncate text-xs text-zinc-500">{user?.email || ""}</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Main Content Wrapper - Same as Admin */}
-      <div className="flex flex-col flex-1 overflow-hidden">
-        {/* Scrollable Navigation Area */}
-        <div className="flex-1 overflow-y-auto">
-          <nav className="p-4 space-y-2">
-            {menuItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  data-onboarding={`user-${item.name.toLowerCase().replace(/\s+/g, '-')}-menu`}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                    isActive
-                      ? "bg-lime-500 text-gray-900 font-semibold"
-                      : "text-gray-300 hover:bg-gray-800 hover:text-lime-400"
-                  } ${isCollapsed ? "justify-center" : ""}`}
-                  title={isCollapsed ? item.name : undefined}
-                >
-                  {item.icon}
-                  {!isCollapsed && <span className="font-medium">{item.name}</span>}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
+      {/* Nav — on mobile, items stack without a huge empty gap above Profile */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pb-[max(1rem,env(safe-area-inset-bottom))] lg:overflow-hidden">
+        <nav className="space-y-1 p-3 lg:flex-1 lg:overflow-y-auto lg:p-4">
+          {menuItems.map((item) => {
+            const isActive =
+              pathname === item.href ||
+              (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={onMobileClose}
+                data-onboarding={`user-${item.name.toLowerCase().replace(/\s+/g, "-")}-menu`}
+                className={`flex items-center gap-3 rounded-full px-3 py-3 transition-colors active:scale-[0.99] lg:rounded-lg lg:py-2.5 ${
+                  isActive
+                    ? "bg-lime-400 font-bold text-zinc-900"
+                    : "font-medium text-zinc-400 hover:bg-zinc-900 hover:text-white"
+                } ${isCollapsed ? "justify-center px-2" : ""}`}
+                title={isCollapsed ? item.name : undefined}
+              >
+                {item.icon}
+                {!isCollapsed && <span>{item.name}</span>}
+              </Link>
+            );
+          })}
+        </nav>
 
-        {/* Fixed Bottom Section - Never Scrolls */}
-        <div className="pt-4 pb-5 border-t border-gray-800">
-          {/* Bottom Navigation */}
-          <div className="px-4 space-y-2 mb-4">
+        <div className="mt-2 shrink-0 border-t border-zinc-800 p-3 lg:mt-auto lg:pb-5">
+          <p className="mb-2 hidden px-3 text-[10px] font-semibold uppercase tracking-wide text-zinc-600 lg:block">
+            Account
+          </p>
+          <div className="space-y-1">
             {bottomMenuItems.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  data-onboarding={`user-${item.name.toLowerCase().replace(/\s+/g, '-')}-menu`}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                  onClick={onMobileClose}
+                  data-onboarding={`user-${item.name.toLowerCase().replace(/\s+/g, "-")}-menu`}
+                  className={`flex items-center gap-3 rounded-full px-3 py-3 transition-colors active:scale-[0.99] lg:rounded-lg lg:py-2.5 ${
                     isActive
-                      ? "bg-lime-500 text-gray-900 font-semibold"
-                      : "text-gray-300 hover:bg-gray-800 hover:text-lime-400"
-                  } ${isCollapsed ? "justify-center" : ""}`}
+                      ? "bg-lime-400 font-bold text-zinc-900"
+                      : "font-medium text-zinc-400 hover:bg-zinc-900 hover:text-white"
+                  } ${isCollapsed ? "justify-center px-2" : ""}`}
                   title={isCollapsed ? item.name : undefined}
                 >
                   {item.icon}
-                  {!isCollapsed && <span className="font-medium">{item.name}</span>}
+                  {!isCollapsed && <span>{item.name}</span>}
                 </Link>
               );
             })}
           </div>
-
-          {/* Logout Button - Always at Bottom */}
-          <div className="px-4">
-        <button
-          onClick={() => setShowLogoutModal(true)}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-400 hover:bg-red-900/30 transition-colors ${
-            isCollapsed ? "justify-center" : ""
-          }`}
-          title={isCollapsed ? "Logout" : undefined}
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          {!isCollapsed && <span className="font-medium">Logout</span>}
-        </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowLogoutModal(true)}
+            className={`mt-2 flex w-full items-center gap-3 rounded-full px-3 py-3 font-medium text-red-400 transition-colors hover:bg-red-950/50 active:scale-[0.99] lg:rounded-lg lg:py-2.5 ${
+              isCollapsed ? "justify-center" : ""
+            }`}
+            title={isCollapsed ? "Logout" : undefined}
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              />
+            </svg>
+            {!isCollapsed && <span>Logout</span>}
+          </button>
         </div>
       </div>
 

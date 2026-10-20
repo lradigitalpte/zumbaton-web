@@ -144,7 +144,7 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
 
   return (
     <header
-      className={`fixed top-0 right-0 z-[40] h-16 bg-white dark:bg-dark border-b border-gray-200 dark:border-gray-700 transition-all duration-300 ${
+      className={`fixed top-0 right-0 z-[40] h-16 border-b border-zinc-200 bg-white transition-all duration-300 dark:border-zinc-800 dark:bg-zinc-900 ${
         sidebarCollapsed ? "lg:left-20" : "lg:left-64"
       } left-0`}
     >
@@ -165,7 +165,7 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
           {/* Search Button - Desktop & Mobile */}
           <button
             onClick={() => setShowSearchPanel(true)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-1 max-w-xl min-w-0"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-1 max-w-xl min-w-0"
             aria-label="Search"
           >
             <svg
@@ -184,7 +184,7 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
             <span className="hidden sm:block text-sm text-gray-500 dark:text-gray-400 flex-1 text-left truncate">
               Search classes, instructors...
             </span>
-            <span className="hidden lg:inline-flex items-center gap-0.5 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-1.5 py-0.5 text-xs text-gray-500 dark:text-gray-400 shrink-0">
+            <span className="hidden lg:inline-flex items-center gap-0.5 rounded border border-gray-200 dark:border-zinc-800 bg-white dark:bg-gray-800 px-1.5 py-0.5 text-xs text-gray-500 dark:text-gray-400 shrink-0">
               <span>⌘</span>
               <span>K</span>
             </span>
@@ -232,8 +232,8 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
 
             {/* Notifications Dropdown */}
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-dark rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 max-h-[400px] overflow-y-auto">
-                <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-dark z-10">
+              <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-800 py-2 max-h-[400px] overflow-y-auto">
+                <div className="px-4 py-2 border-b border-gray-200 dark:border-zinc-800 sticky top-0 bg-white dark:bg-zinc-900 z-10">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-dark dark:text-white">Notifications</h3>
                     {unreadCount > 0 && (
@@ -296,7 +296,7 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
                         </div>
                       </div>
                     ))}
-                    <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 sticky bottom-0 bg-white dark:bg-dark">
+                    <div className="px-4 py-2 border-t border-gray-200 dark:border-zinc-800 sticky bottom-0 bg-white dark:bg-zinc-900">
                       <Link 
                         href="/notifications" 
                         className="text-primary text-sm font-medium hover:underline flex items-center gap-1"
@@ -356,8 +356,8 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
 
             {/* User Dropdown */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 sm:w-56 min-w-0 bg-white dark:bg-dark rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 min-w-0">
+              <div className="absolute right-0 mt-2 w-48 sm:w-56 min-w-0 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-800 py-2 overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-200 dark:border-zinc-800 min-w-0">
                   <p className="font-medium text-dark dark:text-white truncate" title={user?.name || undefined}>{user?.name}</p>
                   <p className="text-sm text-body-color dark:text-gray-400 truncate" title={user?.email || undefined}>{user?.email}</p>
                 </div>
@@ -380,7 +380,7 @@ const DashboardHeader = ({ sidebarCollapsed = false, onMobileMenuClick }: Dashbo
                   </svg>
                   Settings
                 </Link>
-                <div className="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
+                <div className="border-t border-gray-200 dark:border-zinc-800 mt-2 pt-2">
                   <button
                     onClick={signOut}
                     className="flex items-center gap-2 w-full px-4 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"

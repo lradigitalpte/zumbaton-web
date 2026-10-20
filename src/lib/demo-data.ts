@@ -11,6 +11,8 @@ export const DEMO_USER_STATS = {
   totalClassesAttended: 24,
   tokensUsed: 24,
   currentStreak: 5,
+  longestStreak: 8,
+  weekSecured: false,
 }
 
 export const DEMO_UPCOMING_BOOKINGS = [

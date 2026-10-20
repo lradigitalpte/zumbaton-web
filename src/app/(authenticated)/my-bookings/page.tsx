@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { CalendarDays } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useUserBookings, useCancelBooking } from "@/hooks/useBookings";
-import { formatDate, formatTime } from "@/lib/utils";
+import { SITE_IMAGES } from "@/data/site-images";
+import { formatDate, formatTime, formatDateFull } from "@/lib/utils";
 import Modal from "@/components/Modal/Modal";
 
 type FilterType = "upcoming" | "past" | "all";
@@ -19,21 +21,6 @@ const getInitials = (name: string): string => {
     .join('')
     .toUpperCase()
     .slice(0, 2);
-};
-
-const getAvatarColor = (name: string): string => {
-  const colors = [
-    'from-blue-400 to-blue-600',
-    'from-purple-400 to-purple-600',
-    'from-pink-400 to-pink-600',
-    'from-red-400 to-red-600',
-    'from-green-400 to-green-600',
-    'from-yellow-400 to-yellow-600',
-    'from-indigo-400 to-indigo-600',
-    'from-cyan-400 to-cyan-600',
-  ];
-  const index = name.charCodeAt(0) % colors.length;
-  return colors[index];
 };
 
 const MyBookingsPage = () => {
@@ -144,39 +131,58 @@ const MyBookingsPage = () => {
 
   const selectedBooking = bookings.find(b => b.id === cancelBookingId);
 
+  const bookingsByDate = useMemo(() => {
+    const groups = new Map<string, typeof bookings>();
+    for (const booking of bookings) {
+      const key = new Date(booking.scheduled_at).toLocaleDateString("en-CA", {
+        timeZone: "Asia/Singapore",
+      });
+      const list = groups.get(key) ?? [];
+      list.push(booking);
+      groups.set(key, list);
+    }
+    return Array.from(groups.entries()).sort(([a], [b]) =>
+      filter === "past" ? b.localeCompare(a) : a.localeCompare(b)
+    );
+  }, [bookings, filter]);
+
   return (
-    <div className="pb-6">
-      {/* Mobile-First Header */}
-      <div className="mb-4 sm:mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-dark dark:text-white mb-1">
-              My Bookings
-            </h1>
-            <p className="text-sm sm:text-base text-body-color dark:text-gray-400">
-              Manage your class reservations
-            </p>
-          </div>
-          <Link
-            href="/book-classes"
-            className="bg-primary text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-primary/90 transition-colors active:scale-95 shadow-md text-sm sm:text-base shrink-0"
-          >
-            Book Class
-          </Link>
+    <div className="mx-auto max-w-lg pb-6 md:max-w-3xl">
+      <div className="mb-4 flex items-start justify-between gap-3 md:mb-6">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500 md:hidden">
+            Reservations
+          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white md:text-3xl">
+            My Bookings
+          </h1>
+          <p className="mt-1 hidden text-sm text-body-color dark:text-gray-400 md:block">
+            Manage your class reservations
+          </p>
         </div>
+        <Link
+          href="/book-classes"
+          className="flex shrink-0 items-center gap-1.5 rounded-full bg-zinc-900 px-4 py-2.5 text-sm font-bold text-white transition-transform active:scale-[0.98] md:px-5"
+        >
+          <CalendarDays className="hidden h-4 w-4 text-lime-400 md:block" strokeWidth={2} />
+          Book
+        </Link>
       </div>
 
-      {/* Filter Tabs - Mobile App Style */}
-      <div className="mb-4 sm:mb-6">
-        <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 -mx-1 px-1 sm:mx-0 sm:px-0 scrollbar-hide">
+      <div className="mb-4 md:mb-6">
+        <div
+          data-keep-cols
+          className="grid grid-cols-3 gap-1 rounded-2xl bg-zinc-100 p-1 dark:bg-zinc-800/80"
+        >
           {(["upcoming", "past", "all"] as const).map((tab) => (
             <button
               key={tab}
+              type="button"
               onClick={() => setFilter(tab)}
-              className={`px-5 py-2.5 rounded-xl font-bold text-sm sm:text-base capitalize transition-all active:scale-95 shrink-0 ${
+              className={`rounded-xl py-2.5 text-sm font-bold capitalize transition-all active:scale-[0.98] ${
                 filter === tab
-                  ? "bg-primary text-white shadow-md shadow-primary/20"
-                  : "bg-white dark:bg-dark border-2 border-gray-200 dark:border-gray-700 text-body-color dark:text-gray-300 hover:border-primary/50"
+                  ? "bg-white text-zinc-900 shadow-sm dark:bg-dark dark:text-white"
+                  : "text-zinc-500 dark:text-zinc-400"
               }`}
             >
               {tab}
@@ -216,135 +222,142 @@ const MyBookingsPage = () => {
           </button>
         </div>
       ) : bookings.length === 0 ? (
-        <div className="bg-white dark:bg-dark rounded-2xl shadow-md border border-gray-100 dark:border-gray-800 p-8 sm:p-12 text-center">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+        <article className="overflow-hidden rounded-[1.35rem] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:bg-dark">
+          <div className="relative h-36 w-full">
+            <Image
+              src={SITE_IMAGES.heroSecondary}
+              alt=""
+              fill
+              className="object-cover object-center"
+              sizes="100vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/85 via-zinc-950/40 to-transparent" />
+            <p className="absolute bottom-4 left-4 right-4 text-sm font-medium leading-snug text-white">
+              {filter === "upcoming"
+                ? "No classes booked yet — find one on the schedule."
+                : filter === "past"
+                  ? "Past bookings will show up here after you attend."
+                  : "When you book a class, it will appear here."}
+            </p>
           </div>
-          <p className="text-body-color dark:text-gray-400 text-base sm:text-lg mb-2 font-semibold">
-            No {filter === "all" ? "" : filter} bookings found
-          </p>
-          <p className="text-sm text-body-color dark:text-gray-400 mb-6">
-            {filter === "upcoming" ? "You don't have any upcoming classes booked" : "No bookings to display"}
-          </p>
-          <Link
-            href="/book-classes"
-            className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors active:scale-95 shadow-md"
-          >
-            Browse Classes
-          </Link>
-        </div>
+          <div className="p-4 text-center">
+            <p className="text-base font-bold text-zinc-900 dark:text-white">
+              No {filter === "all" ? "" : `${filter} `}bookings
+            </p>
+            <Link
+              href="/book-classes"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-zinc-900 px-4 py-3.5 text-sm font-bold text-white active:scale-[0.98]"
+            >
+              <CalendarDays className="h-4 w-4 text-lime-400" strokeWidth={2} />
+              Browse classes
+            </Link>
+          </div>
+        </article>
       ) : (
-        <div className="space-y-1.5 xl:space-y-4">
-          {bookings.map((booking) => {
-            const statusBadge = getStatusBadge(booking.status);
-            const classDate = new Date(booking.scheduled_at);
-            const isToday = classDate.toDateString() === new Date().toDateString();
-            const isTomorrow = classDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
-            const isCancelled = booking.status === "cancelled" || booking.status === "cancelled-late";
+        <div className="space-y-4">
+          {bookingsByDate.map(([dateKey, bookingsOnDate]) => {
+            const firstScheduled = bookingsOnDate[0].scheduled_at;
+            const fullDateLabel = formatDateFull(firstScheduled);
+            const sectionDate = new Date(firstScheduled);
+            const isToday = sectionDate.toDateString() === new Date().toDateString();
+            const isTomorrow =
+              sectionDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
+            const dayBadge = isToday ? "Today" : isTomorrow ? "Tomorrow" : null;
 
             return (
-              <div
-                key={booking.id}
-                className={`bg-white dark:bg-dark rounded-xl xl:rounded-xl rounded-2xl shadow-sm xl:shadow-sm shadow-md border border-gray-100 dark:border-gray-800 overflow-hidden ${
-                  isCancelled ? "opacity-75" : ""
-                } active:scale-[0.98] transition-transform`}
+              <article
+                key={dateKey}
+                className="overflow-hidden rounded-[1.35rem] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:bg-dark"
               >
-                {/* Mobile App Style Card Layout */}
-                <div className="flex">
-                  {/* Left: Date/Time Badge - Very compact on mobile */}
-                  <div className="w-14 xl:w-20 flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 p-1.5 xl:p-3 shrink-0 border-r border-gray-100 dark:border-gray-800">
-                    <div className="text-center">
-                      <p className="text-lg xl:text-2xl font-bold text-primary mb-0.5">
-                        {formatTime(booking.scheduled_at).split(":")[0]}
-                      </p>
-                      <p className="text-[9px] xl:text-xs text-primary/70 font-medium">
-                        {formatTime(booking.scheduled_at).split(":")[1]}
-                      </p>
-                      <div className="mt-1 xl:mt-2 pt-1 xl:pt-2 border-t border-primary/20">
-                        <p className="text-[9px] xl:text-xs font-bold text-primary/80 uppercase leading-tight">
-                          {isToday ? "Today" : isTomorrow ? "Tomorrow" : formatDate(booking.scheduled_at).split(",")[0]}
-                        </p>
-                        <p className="text-[8px] xl:text-xs text-primary/60 mt-0.5 leading-tight">
-                          {formatDate(booking.scheduled_at).split(",")[1]?.trim()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                <header className="flex items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
+                  <h2 className="text-base font-bold leading-snug text-zinc-900 dark:text-white">
+                    {fullDateLabel}
+                  </h2>
+                  {dayBadge && (
+                    <span className="shrink-0 rounded-full bg-lime-400/30 px-2.5 py-0.5 text-[11px] font-bold text-lime-900 dark:text-lime-300">
+                      {dayBadge}
+                    </span>
+                  )}
+                </header>
+                <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  {bookingsOnDate.map((booking) => {
+                    const statusBadge = getStatusBadge(booking.status);
+                    const isCancelled =
+                      booking.status === "cancelled" || booking.status === "cancelled-late";
+                    const initials = getInitials(booking.instructor_name);
 
-                  {/* Right: Booking Details - Very compact on mobile */}
-                  <div className="flex-1 p-2.5 xl:p-4">
-                    {/* Header: Class Name & Status */}
-                    <div className="flex items-start justify-between mb-1 xl:mb-3">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm xl:text-lg font-bold text-dark dark:text-white mb-0.5 xl:mb-1.5 line-clamp-1">
-                          {booking.class_name}
-                        </h3>
-                        <span className={`px-1.5 xl:px-2.5 py-0.5 xl:py-1 rounded-lg text-[9px] xl:text-xs font-bold border ${statusBadge.bg} ${statusBadge.text} ${statusBadge.border}`}>
-                          {statusBadge.label}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Class Info - Very compact on mobile */}
-                    <div className="space-y-0.5 xl:space-y-2 mb-2 xl:mb-4">
-                      <div className="flex items-center gap-2 xl:gap-3 text-[11px] xl:text-sm text-body-color dark:text-gray-400">
-                        {/* Instructor Avatar - Larger */}
-                        <div className="relative h-10 w-10 xl:h-12 xl:w-12 rounded-full border-2 border-white dark:border-dark flex items-center justify-center text-xs xl:text-sm font-semibold text-white bg-gradient-to-br from-primary to-primary/80 dark:from-primary dark:to-primary/80 shrink-0 overflow-hidden">
-                          {booking.instructor_avatar ? (
-                            <img
-                              src={booking.instructor_avatar}
-                              alt={booking.instructor_name}
-                              className="h-full w-full object-cover"
-                              loading="lazy"
-                              onError={(e) => {
-                                // Fallback to initials if image fails to load
-                                const target = e.target as HTMLImageElement
-                                target.style.display = 'none'
-                                const parent = target.parentElement
-                                if (parent) {
-                                  parent.innerHTML = `<span>${getInitials(booking.instructor_name)}</span>`
+                    return (
+                      <li key={booking.id} className={isCancelled ? "opacity-70" : undefined}>
+                        <div className="px-4 py-3.5">
+                          <div className="flex items-start gap-3">
+                            <div className="w-[4.5rem] shrink-0 pt-0.5">
+                              <p className="text-base font-bold tabular-nums leading-tight text-zinc-900 dark:text-white">
+                                {formatTime(booking.scheduled_at)}
+                              </p>
+                            </div>
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-xs font-bold text-lime-400">
+                              {booking.instructor_avatar ? (
+                                <img
+                                  src={booking.instructor_avatar}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                initials
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-start gap-2">
+                                <p className="line-clamp-2 flex-1 text-sm font-semibold leading-snug text-zinc-900 dark:text-white">
+                                  {booking.class_name}
+                                </p>
+                                <span
+                                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${statusBadge.bg} ${statusBadge.text}`}
+                                >
+                                  {statusBadge.label}
+                                </span>
+                              </div>
+                              <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">
+                                {booking.instructor_name} · {booking.location}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex gap-2">
+                            {booking.status === "confirmed" && (
+                              <button
+                                type="button"
+                                onClick={() => handleCancelClick(booking.id)}
+                                disabled={cancelBookingMutation.isPending || !canCancel(booking)}
+                                title={
+                                  !canCancel(booking)
+                                    ? "Same-day cancellations are not allowed. Cancel by 23:59 the day before for a refund."
+                                    : undefined
                                 }
-                              }}
-                            />
-                          ) : (
-                            <span>{getInitials(booking.instructor_name)}</span>
-                          )}
+                                className={`flex-1 rounded-full border border-red-200 py-2 text-xs font-bold text-red-600 dark:border-red-900/50 dark:text-red-400 ${
+                                  !canCancel(booking) || cancelBookingMutation.isPending
+                                    ? "cursor-not-allowed opacity-50"
+                                    : "active:scale-[0.98]"
+                                }`}
+                              >
+                                {cancelBookingMutation.isPending && cancelBookingId === booking.id
+                                  ? "Cancelling..."
+                                  : "Cancel"}
+                              </button>
+                            )}
+                            <Link
+                              href={`/book-classes/${booking.class_id}`}
+                              className="flex-1 rounded-full bg-zinc-100 py-2 text-center text-xs font-bold text-zinc-900 active:scale-[0.98] dark:bg-zinc-800 dark:text-white"
+                            >
+                              Details
+                            </Link>
+                          </div>
                         </div>
-                        <span className="truncate font-medium">{booking.instructor_name}</span>
-                      </div>
-                      <div className="flex items-center gap-1 xl:gap-2 text-[11px] xl:text-sm text-body-color dark:text-gray-400">
-                        <svg className="w-3 h-3 xl:w-4 xl:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <span className="truncate">{booking.location}</span>
-                      </div>
-                    </div>
-
-                    {/* Actions - Very compact on mobile */}
-                    <div className="flex flex-col sm:flex-row gap-1.5 xl:gap-2 pt-1.5 xl:pt-3 border-t border-gray-100 dark:border-gray-800">
-                      {booking.status === 'confirmed' && (
-                        <button
-                          onClick={() => handleCancelClick(booking.id)}
-                          disabled={cancelBookingMutation.isPending || !canCancel(booking)}
-                          title={!canCancel(booking) ? 'Same-day cancellations are not allowed. Please cancel by 23:59 the day before the class to receive a refund.' : undefined}
-                          className={`flex-1 px-2.5 xl:px-4 py-1.5 xl:py-2.5 rounded-lg xl:rounded-xl text-[10px] xl:text-sm font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 transition-colors active:scale-95 xl:active:scale-100 ${(!canCancel(booking) || cancelBookingMutation.isPending) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-100 dark:hover:bg-red-900/30'}`}
-                        >
-                          {cancelBookingMutation.isPending && cancelBookingId === booking.id ? "Cancelling..." : "Cancel"}
-                        </button>
-                      )}
-                      <Link
-                        href={`/book-classes/${booking.class_id}`}
-                        className="flex-1 px-2.5 xl:px-4 py-1.5 xl:py-2.5 rounded-lg xl:rounded-xl text-[10px] xl:text-sm font-bold text-primary bg-primary/10 dark:bg-primary/20 border-2 border-primary/20 hover:bg-primary/20 dark:hover:bg-primary/30 transition-colors active:scale-95 xl:active:scale-100 text-center"
-                      >
-                        View Details
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </article>
             );
           })}
         </div>
@@ -361,39 +374,43 @@ const MyBookingsPage = () => {
         description="Are you sure you want to cancel this booking?"
         size="sm"
         footer={
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
+          <div className="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
             <button
+              type="button"
               onClick={() => {
                 setShowCancelModal(false);
                 setCancelBookingId(null);
               }}
               disabled={cancelBookingMutation.isPending}
-              className="flex-1 px-6 py-3 rounded-xl text-sm font-semibold text-body-color dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+              className="w-full rounded-full border border-zinc-200 py-3.5 text-sm font-semibold text-zinc-700 dark:border-zinc-700 dark:text-zinc-300 sm:flex-1 sm:rounded-xl sm:py-3 sm:bg-zinc-100 sm:dark:bg-zinc-800"
             >
-              Keep Booking
+              Keep booking
             </button>
             <button
+              type="button"
               onClick={handleCancelConfirm}
               disabled={cancelBookingMutation.isPending}
-              className="flex-1 px-6 py-3 rounded-xl text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 shadow-md shadow-red-600/20"
+              className="w-full rounded-full bg-red-600 py-3.5 text-sm font-bold text-white active:scale-[0.98] disabled:opacity-50 sm:flex-1 sm:rounded-xl sm:py-3"
             >
-              {cancelBookingMutation.isPending ? "Cancelling..." : "Yes, Cancel"}
+              {cancelBookingMutation.isPending ? "Cancelling..." : "Yes, cancel"}
             </button>
           </div>
         }
       >
         {selectedBooking && (
           <div className="space-y-4">
-            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
-              <h3 className="font-bold text-dark dark:text-white mb-2">{selectedBooking.class_name}</h3>
-              <div className="space-y-1 text-sm text-body-color dark:text-gray-400">
-                <p>{formatDate(selectedBooking.scheduled_at)} at {formatTime(selectedBooking.scheduled_at)}</p>
-                <p>with {selectedBooking.instructor_name}</p>
-                <p>{selectedBooking.location}</p>
-              </div>
+            <div className="overflow-hidden rounded-2xl bg-zinc-900 px-4 py-4 text-white">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-lime-400">Class</p>
+              <p className="mt-1 text-lg font-bold leading-snug">{selectedBooking.class_name}</p>
+              <p className="mt-2 text-sm text-zinc-300">
+                {formatDate(selectedBooking.scheduled_at)} · {formatTime(selectedBooking.scheduled_at)}
+              </p>
+              <p className="mt-1 text-sm text-zinc-400">
+                {selectedBooking.instructor_name} · {selectedBooking.location}
+              </p>
             </div>
-            <p className="text-sm text-body-color dark:text-gray-400">
-              Tokens will be refunded based on the cancellation policy.
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Tokens are refunded according to the cancellation policy.
             </p>
           </div>
         )}
