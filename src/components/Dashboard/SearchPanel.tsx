@@ -249,7 +249,7 @@ const SearchPanel = ({ isOpen, onClose }: SearchPanelProps) => {
     </div>
   );
 
-  if (!isMounted || typeof window === "undefined") return null;
+  if (!isMounted || typeof window === "undefined" || !isOpen) return null;
   return createPortal(panel, document.body);
 };
 
