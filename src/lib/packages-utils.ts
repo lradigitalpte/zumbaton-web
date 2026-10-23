@@ -32,6 +32,7 @@ export function formatPackageValidity(days: number): string {
   if (days === 30) return '1 month'
   if (days === 60) return '2 months'
   if (days === 90) return '3 months'
+  if (days === 180) return '6 months'
   return `${days} days`
 }
 

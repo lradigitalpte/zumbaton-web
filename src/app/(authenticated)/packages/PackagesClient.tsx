@@ -17,6 +17,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useTokenBalanceStats } from "@/hooks/useTokenTransactions";
 
 import { getUserType } from "@/lib/user-age-utils";
+import { formatPackageValidity } from "@/lib/packages-utils";
 
 import MemberMobilePageShell from "@/components/Dashboard/MemberMobilePageShell";
 
@@ -746,7 +747,7 @@ export default function PackagesClient({
 
             <li className="text-sm text-zinc-600 dark:text-zinc-400">
 
-              ✓ Valid for {pkg.validity_days} days from purchase
+              ✓ Valid for {formatPackageValidity(pkg.validity_days)} from purchase
 
             </li>
 
