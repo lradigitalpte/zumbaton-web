@@ -19,8 +19,7 @@ const Footer = () => {
       { name: "Groove Stepper Synchronized Dance", href: "/classes/groove-stepper" },
       { name: "Zumba Step", href: "/classes/zumba-step" },
       { name: "Lil Steppers", href: "/classes/lil-steppers" },
-      { name: "Thunderbolt", href: "/classes#thunderbolt-series" },
-      { name: "Outdoor Thunderbolt Tabata", href: "/zt-fiesta" },
+      { name: "Thunderbolt Tabata (Outdoor)", href: "/zt-fiesta" },
       { name: "View Schedule", href: "/schedule" },
     ],
     company: [

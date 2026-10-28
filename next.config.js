@@ -9,7 +9,12 @@ const nextConfig = {
       },
       {
         source: "/classes/thunderbolt-full-body-workout",
-        destination: "/classes/thunderbolt-bodyweight-steppers",
+        destination: "/zt-fiesta",
+        permanent: true,
+      },
+      {
+        source: "/classes/thunderbolt-bodyweight-steppers",
+        destination: "/zt-fiesta",
         permanent: true,
       },
       {

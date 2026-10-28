@@ -17,6 +17,7 @@ import {
   isBookingWindowOpen,
   logBookingWindowRejection,
 } from '@/lib/booking-window'
+import { isRetiredIndoorThunderbolt, RETIRED_INDOOR_THUNDERBOLT_MESSAGE } from '@/data/classes'
 
 export const dynamic = 'force-dynamic'
 
@@ -155,6 +156,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json(
         { error: 'Class not found', message: 'The selected class is not available' },
         { status: 404 }
+      )
+    }
+
+    if (isRetiredIndoorThunderbolt(classData)) {
+      return NextResponse.json(
+        { error: 'Class not eligible', message: RETIRED_INDOOR_THUNDERBOLT_MESSAGE },
+        { status: 400 }
       )
     }
 

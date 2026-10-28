@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase'
 import { OCCUPIED_BOOKING_STATUSES } from '@/lib/booking-capacity'
+import { isRetiredIndoorThunderbolt } from '@/data/classes'
 
 /**
  * GET /api/classes
@@ -133,10 +134,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Attach booked_count so UI can show "X spots" / "Full" (spots left = capacity - booked_count)
-    const classesWithCounts = classList.map((c: { id: string }) => {
-      const booked = bookingCounts[c.id] ?? 0
-      return { ...c, booked_count: booked }
-    })
+    const classesWithCounts = classList
+      .filter(
+        (c: { title?: string | null; is_outdoor?: boolean | null }) =>
+          !isRetiredIndoorThunderbolt(c)
+      )
+      .map((c: { id: string }) => {
+        const booked = bookingCounts[c.id] ?? 0
+        return { ...c, booked_count: booked }
+      })
 
     return NextResponse.json({
       success: true,

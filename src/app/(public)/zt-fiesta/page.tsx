@@ -19,7 +19,7 @@ import { SITE_IMAGES } from "@/data/site-images";
 
 type FiestaPackage = "1_session";
 
-const OUTDOOR_CLASS_NAME = "Thunderbolt Tabata Full Body Workout";
+const OUTDOOR_CLASS_NAME = "Thunderbolt Tabata Stepper";
 const OUTDOOR_LOCATION = "OCBC Arena, Kallang Gate 20";
 
 const FIESTA_PACKAGES: Record<FiestaPackage, { sessions: number; priceCents: number; label: string }> = {
@@ -243,8 +243,8 @@ export default function ZtFiestaPage() {
   return (
     <div className="bg-[#f6f4ee] dark:bg-black min-h-screen transition-colors duration-300">
       <ClassesHero
-        title="Thunderbolt Tabata Full Body Workout"
-        description="High-intensity outdoor Tabata under the open sky at OCBC Arena, Kallang Gate 20. Explosive full-body rounds designed for serious calorie burn and afterburn."
+        title="Thunderbolt Tabata Stepper"
+        description="Outdoor only. High-intensity Tabata on the step at OCBC Arena, Kallang Gate 20. This class is not held in the studio."
         breadcrumbs={[
           { label: "Home", href: "/explore" },
           { label: "Classes", href: "/classes" },
@@ -275,7 +275,7 @@ export default function ZtFiestaPage() {
                 </h2>
 
                 <p className="mb-12 text-lg font-medium uppercase leading-relaxed tracking-tight text-gray-600 dark:text-zinc-400 md:text-xl">
-                  Outdoor Thunderbolt Tabata Full Body Workout at OCBC Arena, Kallang Gate 20. High-intensity intervals under the open sky for all who want to push harder.
+                  Thunderbolt Tabata on the step is outdoor only, at OCBC Arena, Kallang Gate 20. High-intensity intervals under the open sky.
                 </p>
 
                 <div className="space-y-8">
@@ -318,7 +318,7 @@ export default function ZtFiestaPage() {
                   <div className="relative col-span-8 row-span-6 overflow-hidden border-4 border-white bg-zinc-900 shadow-2xl dark:border-zinc-900">
                     <Image
                       src={SITE_IMAGES.outdoorPrimary}
-                      alt="Outdoor Thunderbolt Tabata Full Body Workout"
+                      alt="Outdoor Thunderbolt Tabata Stepper"
                       fill
                       sizes="(max-width: 1024px) 70vw, 32vw"
                       className="object-cover object-[center_20%] grayscale transition-all duration-700 hover:grayscale-0"

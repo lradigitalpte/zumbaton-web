@@ -192,7 +192,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           signature: body.signature,
           waiver_agreed: true,
           notes: body.notes || "",
-          class_title: "Thunderbolt Tabata Full Body Workout",
+          class_title: "Thunderbolt Tabata Stepper",
           location: "OCBC Arena, Kallang Gate 20",
         },
       })

@@ -26,8 +26,22 @@ export interface ZumbaClass {
   }[];
 }
 
-/** Bookable Thunderbolt formats (Tabata-style conditioning on the step). */
-export const THUNDERBOLT_CLASS_SLUGS = ["thunderbolt-bodyweight-steppers"] as const;
+/** Indoor Thunderbolt Tabata on the step is retired. Outdoor booking is /zt-fiesta. */
+export const THUNDERBOLT_CLASS_SLUGS = [] as const;
+
+export const RETIRED_INDOOR_THUNDERBOLT_MESSAGE =
+  "Thunderbolt Tabata on the step is outdoor only. Pick an outdoor session.";
+
+/** Indoor classes titled Thunderbolt are no longer offered. Outdoor sessions stay bookable. */
+export function isRetiredIndoorThunderbolt(input: {
+  title?: string | null;
+  name?: string | null;
+  is_outdoor?: boolean | null;
+}): boolean {
+  if (input.is_outdoor) return false;
+  const label = `${input.title ?? ""} ${input.name ?? ""}`.toLowerCase();
+  return label.includes("thunderbolt");
+}
 
 export function isThunderboltClassSlug(slug: string): boolean {
   return (THUNDERBOLT_CLASS_SLUGS as readonly string[]).includes(slug);
@@ -37,7 +51,6 @@ export const CLASS_ENERGY: Record<string, number> = {
   "groove-stepper": 1.5,
   "zumba-step": 2.5,
   "lil-steppers": 1,
-  "thunderbolt-bodyweight-steppers": 4,
   "pilates-flow": 2,
   piloxing: 3,
   "thunderbolt-tabata-outdoor": 4,
@@ -180,53 +193,6 @@ export const zumbaClasses: ZumbaClass[] = [
     ]
   },
   {
-    id: "4",
-    slug: "thunderbolt-bodyweight-steppers",
-    name: "Thunderbolt · Bodyweight & Steppers",
-    shortDescription:
-      "High-intensity Tabata rounds on the step. Explosive bodyweight power combined with stepper agility for maximum calorie burn and afterburn.",
-    fullDescription:
-      "Thunderbolt (Bodyweight & Steppers) is our signature high-intensity Tabata format led by Coach Robert. By pushing your body into the anaerobic zone with short bursts of maximum effort, you'll spike your metabolism and benefit from the 'afterburn effect' long after the session ends. The stepper adds a powerful lower-body focus on quads, glutes, and calves, while forcing balance, timing, and rhythm. It's a time-efficient, explosive workout designed to improve your VO2 max and mental toughness in record time.",
-    image: "/images/studio/studio-step-boards-4.png",
-    featured: true,
-    duration: "60 min",
-    intensity: "Level 5",
-    calories: "500-800",
-    instructor: "Coach Robert",
-    energy: 4,
-    highlights: [
-      {
-        title: "Fat Loss & Afterburn",
-        description: "High-intensity intervals spike your metabolism, burning calories hours after the workout ends.",
-      },
-      {
-        title: "Full-Body Conditioning",
-        description: "Stepper focus targets quads, glutes, and calves, with arm combos for complete body toning.",
-      },
-      {
-        title: "Cardio & Stamina Fast",
-        description: "Proven to improve VO2 max and cardiovascular efficiency significantly in a short time.",
-      },
-      {
-        title: "Coordination & Agility",
-        description: "The stepper board forces balance, timing, and rhythm for better neuromuscular control.",
-      },
-      {
-        title: "Explosive Power",
-        description: "Activates fast-twitch muscle fibers, improving speed, reaction time, and athleticism.",
-      },
-      {
-        title: "Mental Toughness",
-        description: "Teaches discipline under fatigue and focus in short bursts, leaving you with a post-workout rush.",
-      },
-    ],
-    schedule: [
-      { day: "Tuesday", time: "7:00 PM" },
-      { day: "Friday", time: "7:30 PM" },
-      { day: "Sunday", time: "10:30 AM" },
-    ],
-  },
-  {
     id: "5",
     slug: "pilates-flow",
     name: "Pilates Flow",
@@ -328,9 +294,6 @@ export const zumbaClasses: ZumbaClass[] = [
 ];
 
 export const getClassBySlug = (slug: string): ZumbaClass | undefined => {
-  if (slug === "thunderbolt-full-body-workout") {
-    return zumbaClasses.find((c) => c.slug === "thunderbolt-bodyweight-steppers");
-  }
   return zumbaClasses.find((c) => c.slug === slug);
 };
 

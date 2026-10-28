@@ -33,7 +33,7 @@ const menuData: Menu[] = [
       },
       {
         id: 33,
-        title: "Outdoor Thunderbolt Tabata",
+        title: "Thunderbolt Tabata (Outdoor)",
         path: "/zt-fiesta",
         newTab: false,
       },

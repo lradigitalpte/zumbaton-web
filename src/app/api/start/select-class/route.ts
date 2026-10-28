@@ -5,6 +5,7 @@ import {
   isBookingWindowOpen,
   logBookingWindowRejection,
 } from "@/lib/booking-window";
+import { isRetiredIndoorThunderbolt, RETIRED_INDOOR_THUNDERBOLT_MESSAGE } from "@/data/classes";
 
 export const dynamic = "force-dynamic";
 
@@ -89,6 +90,12 @@ export async function POST(request: NextRequest) {
             ? "Please choose one of our outdoor sessions."
             : "Outdoor classes are not available for this offer.",
         },
+        { status: 400 }
+      );
+    }
+    if (isRetiredIndoorThunderbolt(cls)) {
+      return NextResponse.json(
+        { success: false, error: RETIRED_INDOOR_THUNDERBOLT_MESSAGE },
         { status: 400 }
       );
     }

@@ -188,7 +188,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             guestPhone: (metadata.customer_phone as string) || '',
             className:
               (metadata.class_title as string) ||
-              'Thunderbolt Tabata Full Body Workout (Outdoor)',
+              'Thunderbolt Tabata Stepper (Outdoor)',
           })
         } catch (notifyErr) {
           console.error('[Webhook] Non-critical: outdoor Thunderbolt staff email failed:', notifyErr)

@@ -129,7 +129,7 @@ const PromosPage = () => {
       priceCents: 3000,
       tagline: "Studio · 1-for-1",
       description:
-        "Coming alone: $30 (our Single Sesh price). Bringing a friend: $30 for both — 2 for the price of 1. Valid for Zumba Step, Groove Stepper, Thunderbolt, Pilates Flow, and more.",
+        "Coming alone: $30 (our Single Sesh price). Bringing a friend: $30 for both — 2 for the price of 1. Valid for Zumba Step, Groove Stepper, Pilates Flow, and more.",
       location: "Studio Sessions",
       roomType: "studio",
       features: ["Come alone or bring a friend", "$30 total either way", "Full 60-min session", "Expert coaching"],
@@ -142,7 +142,7 @@ const PromosPage = () => {
       price: "$35",
       priceCents: 3500,
       tagline: "Outdoor · 1-for-1",
-      description: "Fresh air, big energy. Join us at our signature outdoor location for a dual workout.",
+      description: "Outdoor only. Thunderbolt Tabata on the step at OCBC Arena, Kallang.",
       location: "OCBC Arena, Kallang",
       roomType: "outdoor",
       features: ["Two participants", "One price", "Fresh air vibes", "Community energy"],

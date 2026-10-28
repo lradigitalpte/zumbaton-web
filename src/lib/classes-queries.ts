@@ -7,6 +7,7 @@ import { getSupabaseClient, TABLES } from './supabase'
 import { getTokenBalance } from './dashboard-queries'
 import { getBookingSettings, type BookingSettings } from './booking-settings'
 import { OCCUPIED_BOOKING_STATUSES } from './booking-capacity'
+import { isRetiredIndoorThunderbolt } from '@/data/classes'
 
 export interface InstructorInfo {
   id: string
@@ -978,9 +979,11 @@ function groupRecurringClasses(
   })
 
   // Combine: single classes + recurring parents + course parents
-  return [...singleClasses, ...recurringParents, ...courseParents].sort((a, b) => 
-    new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()
-  )
+  return [...singleClasses, ...recurringParents, ...courseParents]
+    .filter((cls) => !isRetiredIndoorThunderbolt(cls))
+    .sort((a, b) =>
+      new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()
+    )
 }
 
 /**

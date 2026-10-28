@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { getSupabaseAdminClient } from '@/lib/supabase'
 import { OCCUPIED_BOOKING_STATUSES } from '@/lib/booking-capacity'
+import { isRetiredIndoorThunderbolt } from '@/data/classes'
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/
 const SG_TIMEZONE = 'Asia/Singapore'
@@ -154,9 +155,9 @@ export const getPublicClasses = cache(async function getPublicClasses(
     }
   }
 
-  return (classes || []).map((cls) =>
-    mapPublicClass(cls as Record<string, unknown>, bookingCounts[cls.id] || 0)
-  )
+  return (classes || [])
+    .map((cls) => mapPublicClass(cls as Record<string, unknown>, bookingCounts[cls.id] || 0))
+    .filter((cls) => !isRetiredIndoorThunderbolt(cls))
 })
 
 export function formatClassScheduleLine(cls: PublicClass): string {

@@ -23,6 +23,7 @@ import {
   logBookingWindowRejection,
 } from '@/lib/booking-window'
 import { sendMemberBookingStaffNotifications } from '@/lib/member-booking-notifications'
+import { isRetiredIndoorThunderbolt, RETIRED_INDOOR_THUNDERBOLT_MESSAGE } from '@/data/classes'
 import { OCCUPIED_BOOKING_STATUSES } from '@/lib/booking-capacity'
 import { chargePackage, recordBookingCharges, refundBookingTokens } from '@/lib/token-ledger'
 
@@ -209,6 +210,13 @@ async function handleSingleBooking(userId: string, classId: string) {
       return NextResponse.json(
         { success: false, error: { message: 'Class not found or not available' } },
         { status: 404 }
+      )
+    }
+
+    if (isRetiredIndoorThunderbolt(classData)) {
+      return NextResponse.json(
+        { success: false, error: { message: RETIRED_INDOOR_THUNDERBOLT_MESSAGE } },
+        { status: 400 }
       )
     }
 

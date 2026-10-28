@@ -14,6 +14,7 @@ import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
 import { isPlaceholderGuestEmail } from '@/lib/guest-email-placeholder'
 import { getTrialBookingEffectiveAgeGroup } from '@/lib/trial-booking-display'
+import { isRetiredIndoorThunderbolt, RETIRED_INDOOR_THUNDERBOLT_MESSAGE } from '@/data/classes'
 import {
   BOOKING_WINDOW_CLOSED_MESSAGE,
   isBookingWindowOpen,
@@ -147,6 +148,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json(
         { error: 'Class not found', message: 'The selected class is not available' },
         { status: 404 }
+      )
+    }
+
+    if (isRetiredIndoorThunderbolt(classData)) {
+      return NextResponse.json(
+        { error: 'Class not eligible', message: RETIRED_INDOOR_THUNDERBOLT_MESSAGE },
+        { status: 400 }
       )
     }
 

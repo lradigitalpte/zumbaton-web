@@ -16,7 +16,6 @@ const STUDIO_VIBE: Record<string, string> = {
   "groove-stepper": "Synchronized stepper choreography with Robert & Micky.",
   "zumba-step": "High-energy step cardio that hits like a party. Pure energy.",
   "lil-steppers": "Games, friends, and confidence for young movers.",
-  "thunderbolt-bodyweight-steppers": "Tabata on the step: bodyweight power with Coach Robert.",
   "pilates-flow": "Mindful mid-impact Pilates: core, mobility, and breath with Coach Fizah.",
   piloxing: "HIIT fusion of Pilates, boxing, and dance with Coach Fizah.",
 };
@@ -34,11 +33,11 @@ type OutdoorClass = {
 const OUTDOOR: OutdoorClass[] = [
   {
     slug: "thunderbolt-tabata-outdoor",
-    name: "Thunderbolt Tabata Full Body Workout",
+    name: "Thunderbolt Tabata Stepper",
     href: "/zt-fiesta",
     image: SITE_IMAGES.outdoorPrimary,
     intensity: "Level 5",
-    vibe: "Outdoor Tabata at OCBC Arena, Kallang Gate 20.",
+    vibe: "Outdoor only. Tabata on the step at OCBC Arena, Kallang Gate 20.",
     energy: 4,
   },
 ];

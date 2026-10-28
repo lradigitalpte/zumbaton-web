@@ -21,12 +21,6 @@ const classes = [
     slug: "zumba-step",
   },
   {
-    title: "Thunderbolt · Bodyweight",
-    description: "Tabata-style power on the step. Raw intensity with Coach Robert.",
-    accent: "bg-lime-500",
-    slug: "thunderbolt-bodyweight-steppers",
-  },
-  {
     title: "Pilates Flow",
     description: "Mindful Pilates, stretch, and breath with Coach Fizah. Move. Flow. Strengthen. Breathe.",
     accent: "bg-lime-400",
@@ -63,7 +57,7 @@ const ClassesV2 = () => {
                 <div className="text-sm font-black uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                   Sessions
                 </div>
-                <div className="mt-1 text-2xl font-black">5</div>
+                <div className="mt-1 text-2xl font-black">4</div>
               </div>
               <div className="border border-black/10 bg-white px-4 py-3.5 dark:border-white/10 dark:bg-zinc-900 sm:px-5 sm:py-4">
                 <div className="text-sm font-black uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">

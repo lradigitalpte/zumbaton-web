@@ -18,6 +18,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
 import { getDuoPromoConfig, isDuoPromoExpired, computeCharge, isOutdoorQuickJoinAvailable, isFastTrialStartAllowed } from '@/lib/duo-promo-config'
+import { isRetiredIndoorThunderbolt, RETIRED_INDOOR_THUNDERBOLT_MESSAGE } from '@/data/classes'
 import { getTrialBookingEffectiveAgeGroup } from '@/lib/trial-booking-display'
 import {
   BOOKING_WINDOW_CLOSED_MESSAGE,
@@ -206,6 +207,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               ? 'Please choose one of our outdoor sessions.'
               : 'That session is not eligible for this offer. Pick a studio class.',
           },
+          { status: 400 }
+        )
+      }
+
+      if (isRetiredIndoorThunderbolt(cls)) {
+        return NextResponse.json(
+          { error: 'Class not eligible', message: RETIRED_INDOOR_THUNDERBOLT_MESSAGE },
           { status: 400 }
         )
       }
