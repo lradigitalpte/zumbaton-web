@@ -252,7 +252,11 @@ export const zumbaClasses: ZumbaClass[] = [
       "A high-energy HIIT fusion of Pilates, boxing, and dance. Build core strength, burn calories, and find your balance in one powerful session.",
     fullDescription:
       "Piloxing is the ultimate high-intensity fusion workout that blends the power and speed of boxing with the sculpting and flexibility of Pilates, all tied together with fun dance cardio. This HIIT-style session is designed to challenge your core, improve endurance, and boost your agility. Led by Coach Fizah, it's a stress-relieving, full-body workout that leaves you feeling strong, toned, and empowered.",
-    image: "/OSF%20IMAGES/piloxing04.jpg",
+    image: "/images/community/studio-neon-piloxing-five.jpg",
+    galleryImages: [
+      "/images/community/studio-neon-piloxing-five.jpg",
+      "/OSF%20IMAGES/piloxing04.jpg",
+    ],
     featured: true,
     duration: "60 min",
     intensity: "All Levels",

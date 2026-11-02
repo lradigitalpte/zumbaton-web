@@ -17,6 +17,7 @@ import {
   isHomepagePopularPackage,
 } from "@/lib/packages-utils";
 import LoadingIcon from "@/components/Common/LoadingIcon";
+import { SITE_IMAGES } from "@/data/site-images";
 
 interface PricingCarouselProps {
   initialAdultPackages?: Package[];
@@ -37,8 +38,8 @@ const PricingCarousel = ({ initialAdultPackages = [] }: PricingCarouselProps) =>
     <section id="pricing" className="relative text-gray-900 dark:text-white py-12 sm:py-16 md:py-20 lg:py-28 overflow-hidden bg-[#f6f4ee] dark:bg-black">
       <div className="absolute inset-0 -z-10">
         <Image
-          src="/images/studio/studio-step-boards-5.png"
-          alt="Dance fitness pricing background"
+          src={SITE_IMAGES.communityGroupFive}
+          alt="One Step Fitness pricing"
           fill
           className="object-cover"
           sizes="100vw"

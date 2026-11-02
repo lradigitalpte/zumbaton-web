@@ -4,6 +4,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { SITE_IMAGES } from "@/data/site-images";
 
 const AboutHero = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -19,8 +20,8 @@ const AboutHero = () => {
         {/* Image 1 - Left/Top */}
         <div className="relative w-full h-1/2 md:h-full md:w-1/2 overflow-hidden border-b md:border-b-0 md:border-r border-white/10">
           <Image 
-            src="/images/studio/studio-step-boards-2.png"
-            alt="One Step Fitness Energy"
+            src={SITE_IMAGES.communityEnergy}
+            alt="One Step Fitness energy at the studio"
             fill
             className="object-cover scale-110 transition-all duration-1000"
             priority
@@ -31,8 +32,8 @@ const AboutHero = () => {
         {/* Image 2 - Right/Bottom */}
         <div className="relative w-full h-1/2 md:h-full md:w-1/2 overflow-hidden">
           <Image 
-            src="/images/studio/wide-studio-step-boards-1.png"
-            alt="One Step Fitness Movement"
+            src={SITE_IMAGES.communityPiloxing}
+            alt="One Step Fitness movement"
             fill
             className="object-cover scale-110 transition-all duration-1000"
             priority

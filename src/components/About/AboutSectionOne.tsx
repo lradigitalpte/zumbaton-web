@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRef } from "react";
 import { motion } from "framer-motion";
 import { useWhatsAppModal } from "@/context/WhatsAppModalContext";
+import { SITE_IMAGES } from "@/data/site-images";
 
 const AboutSectionOne = () => {
   const { openWhatsAppModal } = useWhatsAppModal();
@@ -26,8 +27,8 @@ const AboutSectionOne = () => {
                 className="absolute inset-0 z-10 border border-black/10 dark:border-white/10"
               >
                 <Image
-                  src="/images/studio/studio-step-boards-2.png"
-                  alt="One Step Fitness Class"
+                  src={SITE_IMAGES.communityGroupFour}
+                  alt="One Step Fitness class at the studio"
                   fill
                   className="object-cover grayscale hover:grayscale-0 transition-all duration-700"
                   sizes="(max-width: 1024px) 100vw, 50vw"

@@ -5,6 +5,7 @@ import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Zap } from "lucide-react";
+import { SITE_IMAGES } from "@/data/site-images";
 
 const PricingHero = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -20,8 +21,8 @@ const PricingHero = () => {
         {/* Image 1 - Left/Top */}
         <div className="relative w-full h-1/2 md:h-full md:w-1/2 overflow-hidden border-b md:border-b-0 md:border-r border-white/10">
           <Image 
-            src="/images/studio/studio-step-boards-6.png"
-            alt="One Step Fitness Pricing"
+            src={SITE_IMAGES.communityTribe}
+            alt="One Step Fitness community"
             fill
             className="object-cover scale-110 transition-all duration-1000"
             priority
@@ -32,8 +33,8 @@ const PricingHero = () => {
         {/* Image 2 - Right/Bottom */}
         <div className="relative w-full h-1/2 md:h-full md:w-1/2 overflow-hidden">
           <Image 
-            src="/images/studio/studio-step-boards-4.png"
-            alt="One Step Fitness Packages"
+            src={SITE_IMAGES.communityClass}
+            alt="One Step Fitness class"
             fill
             className="object-cover scale-110 transition-all duration-1000"
             priority

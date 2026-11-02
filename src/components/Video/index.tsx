@@ -1,6 +1,7 @@
 "use client";
 
 import SectionTitle from "../Common/SectionTitle";
+import { SITE_IMAGES } from "@/data/site-images";
 
 export default function Video() {
   return (
@@ -27,8 +28,8 @@ export default function Video() {
             <div className="mx-auto max-w-[770px] overflow-hidden rounded-2xl shadow-2xl border border-white/30 bg-white/60 backdrop-blur">
               <div className="relative aspect-[16/9] items-center justify-center">
                 <img
-                  src="/images/studio/studio-step-boards-5.png"
-                  alt="Dance fitness session"
+                  src={SITE_IMAGES.communityClass}
+                  alt="Dance fitness session at One Step Fitness"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/25 to-transparent" />

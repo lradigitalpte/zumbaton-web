@@ -4,6 +4,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { SITE_IMAGES } from "@/data/site-images";
 
 const TrialBookingHero = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -17,8 +18,8 @@ const TrialBookingHero = () => {
       {/* High-Impact Background Image */}
       <div className="absolute inset-0 -z-10">
         <Image 
-          src="/images/studio/wide-studio-step-boards-1.png"
-          alt="Book the $30 1-for-1 Promo"
+          src={SITE_IMAGES.communityEnergy}
+          alt="Book the $30 1-for-1 promo at One Step Fitness"
           fill
           className="object-cover scale-105 transition-transform duration-[2000ms]"
           priority

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { SITE_IMAGES } from "@/data/site-images";
 
 const testimonials = [
   {
@@ -75,8 +76,8 @@ const Testimonials = () => {
         className="absolute inset-0 -z-10"
       >
         <Image
-          src="/images/studio/studio-step-boards-6.png"
-          alt="Dance fitness background"
+          src={SITE_IMAGES.communityTribe}
+          alt="One Step Fitness community"
           fill
           className="object-cover"
           sizes="100vw"

@@ -497,6 +497,11 @@ View bookings: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_
   return { html, text }
 }
 
+export function getStreakReminderSubject(streakWeeks: number): string {
+  const streakLabel = streakWeeks === 1 ? '1-week streak' : `${streakWeeks}-week streak`
+  return `Your ${streakLabel} ends Sunday`
+}
+
 /**
  * Streak reminder: come once this week or the week streak ends Sunday.
  */

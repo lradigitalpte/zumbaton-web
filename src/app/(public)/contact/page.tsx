@@ -1,5 +1,6 @@
 import PageHero from "@/components/Common/PageHero";
 import { ContactLocations, ContactForm, ContactCTA } from "@/components/Contact";
+import { SITE_IMAGES } from "@/data/site-images";
 
 import { Metadata } from "next";
 
@@ -17,7 +18,7 @@ const ContactPage = () => {
           { label: "Home", href: "/" },
           { label: "Contact Us" }
         ]}
-        backgroundImage="/images/hero/contact.jpeg"
+        backgroundImage={SITE_IMAGES.communityGroupFive}
       />
 
       <ContactLocations />

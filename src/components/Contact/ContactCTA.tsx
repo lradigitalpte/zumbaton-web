@@ -5,6 +5,7 @@ import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
+import { SITE_IMAGES } from "@/data/site-images";
 
 const ContactCTA = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -18,7 +19,7 @@ const ContactCTA = () => {
       {/* Editorial Background Image */}
       <div className="absolute inset-0 -z-10">
         <Image 
-          src="/images/studio/studio-step-boards-4.png"
+          src={SITE_IMAGES.communityGroupFour}
           alt="Ready to Dance"
           fill
           className="object-cover opacity-40 grayscale hover:grayscale-0 transition-all duration-1000"

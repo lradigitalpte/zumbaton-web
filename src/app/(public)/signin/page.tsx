@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
 import LoadingIcon from "@/components/Common/LoadingIcon";
 import GoogleIcon from "@/components/Common/GoogleIcon";
+import { SITE_IMAGES } from "@/data/site-images";
 
 function SigninPageContent() {
   const router = useRouter();
@@ -252,7 +253,7 @@ function SigninPageContent() {
               {/* Background Image */}
               <div 
                 className="absolute inset-0 bg-cover bg-center opacity-40 grayscale"
-                style={{ backgroundImage: "url(/images/studio/wide-studio-step-boards-1.png)" }}
+                style={{ backgroundImage: `url(${SITE_IMAGES.communityGroupFour})` }}
               ></div>
               <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
               

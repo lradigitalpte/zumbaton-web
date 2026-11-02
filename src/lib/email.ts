@@ -360,6 +360,7 @@ import {
   getTokenExpiryWarningEmailTemplate,
   getClassReminderEmailTemplate,
   getStreakReminderEmailTemplate,
+  getStreakReminderSubject,
   getBookingConfirmationEmailTemplate,
   getTokenAdjustmentEmailTemplate,
   getAdminCreatedUserEmailTemplate,
@@ -486,11 +487,10 @@ export async function sendStreakReminderEmail(data: {
     streakWeeks: data.streakWeeks,
     bookUrl: data.bookUrl,
   })
-  const streakLabel = data.streakWeeks === 1 ? '1-week streak' : `${data.streakWeeks}-week streak`
 
   return sendEmail({
     to: data.userEmail,
-    subject: `Your ${streakLabel} ends Sunday`,
+    subject: getStreakReminderSubject(data.streakWeeks),
     html: template.html,
     text: template.text,
   })

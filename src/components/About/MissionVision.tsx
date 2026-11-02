@@ -3,6 +3,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import Image from "next/image";
+import { SITE_IMAGES } from "@/data/site-images";
 
 const MissionVision = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -15,8 +16,8 @@ const MissionVision = () => {
         {/* Left Side - Visual Statement */}
         <div className="lg:w-1/2 relative min-h-[40vh] lg:min-h-0">
           <Image
-            src="/images/studio/studio-step-boards-3.png"
-            alt="One Step Fitness Mission"
+            src={SITE_IMAGES.communityPiloxing}
+            alt="One Step Fitness mission — community in motion"
             fill
             className="object-cover opacity-60 grayscale"
           />

@@ -4,6 +4,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { SITE_IMAGES } from "@/data/site-images";
 
 const InstructorsHero = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -17,8 +18,8 @@ const InstructorsHero = () => {
       {/* High-Impact Single Image Background */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <Image
-          src="/images/studio/wide-studio-step-boards-1.png"
-          alt="One Step Fitness Instructors"
+          src={SITE_IMAGES.communityPiloxing}
+          alt="One Step Fitness instructors with the community"
           fill
           className="scale-105 object-cover transition-transform duration-[2000ms]"
           priority

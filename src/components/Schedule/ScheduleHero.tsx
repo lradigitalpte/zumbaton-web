@@ -4,6 +4,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { SITE_IMAGES } from "@/data/site-images";
 
 const ScheduleHero = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -17,8 +18,8 @@ const ScheduleHero = () => {
       {/* High-Impact Background Image */}
       <div className="absolute inset-0 -z-10">
         <Image 
-          src="/images/studio/studio-step-boards-2.png"
-          alt="One Step Fitness Schedule"
+          src={SITE_IMAGES.communityGroupFour}
+          alt="One Step Fitness schedule — join a class"
           fill
           className="object-cover scale-105 transition-transform duration-[2000ms]"
           priority

@@ -8,25 +8,25 @@ const features = [
   {
     title: "Inclusive Community",
     description: "No judgment. Just pure energy and support.",
-    image: SITE_IMAGES.communityMirrorSelfie,
+    image: SITE_IMAGES.communityGroupFour,
     colSpan: "md:col-span-2",
   },
   {
     title: "Expert Coaches",
     description: "Learn from the best in the industry.",
-    image: "/images/studio/studio-step-boards-5.png",
+    image: SITE_IMAGES.communityPiloxing,
     colSpan: "md:col-span-1",
   },
   {
     title: "Any Fitness Level",
     description: "From beginner to pro, we have a spot for you.",
-    image: "/images/studio/studio-step-boards-2.png",
+    image: SITE_IMAGES.communityTribe,
     colSpan: "md:col-span-1",
   },
   {
     title: "Fun First",
     description: "Workouts that feel like a party.",
-    image: "/images/studio/wide-studio-step-boards-1.png",
+    image: SITE_IMAGES.communityEnergy,
     colSpan: "md:col-span-2",
   },
 ];
