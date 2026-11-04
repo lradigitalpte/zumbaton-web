@@ -163,70 +163,27 @@ export async function sendPaymentAlertEmail(data: PaymentAlertEmailData): Promis
     return { success: true }
   }
 
-  const eventLabel = data.event === 'initiated'
-    ? 'Started'
-    : data.event === 'failed'
-      ? 'Failed'
-      : 'Successful'
-  const paymentTitle = data.paymentType === 'trial-booking'
-    ? `Trial Booking Payment ${eventLabel}`
-    : `Package Payment ${eventLabel}`
-  const eventMessage = data.event === 'initiated'
-    ? 'A customer started checkout. Payment has not been confirmed yet.'
-    : data.event === 'failed'
-      ? 'The payment attempt failed or was cancelled. No successful payment was recorded.'
-      : 'The payment was completed successfully in One Step Fitness.'
-  const customerName = data.userName || data.guestName || 'Unknown'
-  const customerEmail = data.userEmail || data.guestEmail || 'Not available'
-  const customerPhone = data.userPhone || data.guestPhone || null
-  const phoneLine = customerPhone
-    ? `<p><strong>Phone:</strong> <a href="tel:${escapeHtml(customerPhone)}">${escapeHtml(customerPhone)}</a></p>`
-    : ''
-  const description = data.paymentType === 'trial-booking'
-    ? `Trial class: ${data.className || 'Unknown class'}`
-    : `Package: ${data.packageName || 'Unknown package'}`
-  const tokenLine = data.tokenCount != null ? `<p><strong>Tokens:</strong> ${data.tokenCount}</p>` : ''
-  const failureLine = data.failureReason ? `<p><strong>Failure reason:</strong> ${data.failureReason}</p>` : ''
+  const template = getPaymentAlertEmailTemplate({
+    event: data.event,
+    paymentType: data.paymentType,
+    paymentId: data.paymentId,
+    source: data.source,
+    amount: data.amount,
+    currency: data.currency,
+    packageName: data.packageName,
+    tokenCount: data.tokenCount,
+    className: data.className,
+    customerName: data.userName || data.guestName || 'Unknown customer',
+    customerEmail: data.userEmail || data.guestEmail || null,
+    customerPhone: data.userPhone || data.guestPhone || null,
+    failureReason: data.failureReason,
+  })
 
   return sendEmail({
     to: recipients,
-    subject: `[One Step Fitness] ${paymentTitle}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1f2937; max-width: 640px; margin: 0 auto;">
-        <div style="background: #111827; color: #ffffff; padding: 20px 24px; border-radius: 8px 8px 0 0;">
-          <h2 style="margin: 0; font-size: 20px;">${paymentTitle}</h2>
-        </div>
-        <div style="border: 1px solid #e5e7eb; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">
-          <p style="margin-top: 0;">${eventMessage}</p>
-          <p><strong>Customer:</strong> ${customerName}</p>
-          <p><strong>Email:</strong> ${customerEmail}</p>
-          ${phoneLine}
-          <p><strong>Amount:</strong> ${data.amount} ${data.currency || 'SGD'}</p>
-          <p><strong>Payment ID:</strong> ${data.paymentId}</p>
-          <p><strong>Event:</strong> ${data.event}</p>
-          <p><strong>Source:</strong> ${data.source}</p>
-          <p><strong>Type:</strong> ${data.paymentType}</p>
-          <p><strong>Details:</strong> ${description}</p>
-          ${tokenLine}
-          ${failureLine}
-        </div>
-      </div>
-    `,
-    text: [
-      paymentTitle,
-      eventMessage,
-      `Customer: ${customerName}`,
-      `Email: ${customerEmail}`,
-      customerPhone ? `Phone: ${customerPhone}` : null,
-      `Amount: ${data.amount} ${data.currency || 'SGD'}`,
-      `Payment ID: ${data.paymentId}`,
-      `Event: ${data.event}`,
-      `Source: ${data.source}`,
-      `Type: ${data.paymentType}`,
-      `Details: ${description}`,
-      data.tokenCount != null ? `Tokens: ${data.tokenCount}` : null,
-      data.failureReason ? `Failure reason: ${data.failureReason}` : null,
-    ].filter(Boolean).join('\n'),
+    subject: `[One Step Fitness] ${template.title}`,
+    html: template.html,
+    text: template.text,
   })
 }
 
@@ -256,76 +213,7 @@ export interface ContactFormData {
 export async function sendContactEmail(formData: ContactFormData): Promise<EmailResult> {
   const recipientEmail = process.env.CONTACT_EMAIL || 'hello@onestepfitness.sg'
   
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #16a34a; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
-        .content { background-color: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; border-top: none; }
-        .field { margin-bottom: 15px; }
-        .label { font-weight: bold; color: #374151; margin-bottom: 5px; }
-        .value { color: #6b7280; }
-        .message-box { background-color: white; padding: 15px; border-radius: 4px; border-left: 4px solid #16a34a; margin-top: 10px; }
-        .footer { text-align: center; padding: 20px; color: #9ca3af; font-size: 12px; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h2 style="margin: 0;">New Contact Form Submission</h2>
-        </div>
-        <div class="content">
-          <div class="field">
-            <div class="label">Name:</div>
-            <div class="value">${escapeHtml(formData.name)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Email:</div>
-            <div class="value"><a href="mailto:${escapeHtml(formData.email)}">${escapeHtml(formData.email)}</a></div>
-          </div>
-          ${formData.phone ? `
-          <div class="field">
-            <div class="label">Phone:</div>
-            <div class="value"><a href="tel:${escapeHtml(formData.phone)}">${escapeHtml(formData.phone)}</a></div>
-          </div>
-          ` : ''}
-          <div class="field">
-            <div class="label">Subject:</div>
-            <div class="value">${escapeHtml(formData.subject)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Message:</div>
-            <div class="message-box">${escapeHtml(formData.message).replace(/\n/g, '<br>')}</div>
-          </div>
-        </div>
-        <div class="footer">
-          <p>This email was sent from the One Step Fitness website contact form.</p>
-          <p>You can reply directly to this email to respond to ${escapeHtml(formData.name)}.</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `
-
-  const text = `
-New Contact Form Submission
-
-Name: ${formData.name}
-Email: ${formData.email}
-${formData.phone ? `Phone: ${formData.phone}` : ''}
-Subject: ${formData.subject}
-
-Message:
-${formData.message}
-
----
-This email was sent from the One Step Fitness website contact form.
-You can reply directly to this email to respond to ${formData.name}.
-  `
+  const { html, text } = getContactFormEmailTemplate(formData)
 
   return sendEmail({
     to: recipientEmail,
@@ -334,20 +222,6 @@ You can reply directly to this email to respond to ${formData.name}.
     text,
     replyTo: formData.email,
   })
-}
-
-/**
- * Escape HTML to prevent XSS attacks
- */
-function escapeHtml(text: string): string {
-  const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
-  }
-  return text.replace(/[&<>"']/g, (m) => map[m])
 }
 
 // =====================================================
@@ -373,6 +247,12 @@ import {
   getForgotPasswordOTPEmailTemplate,
   getBirthdayEmailTemplate,
   getLeadFollowUpEmailTemplate,
+  getPaymentAlertEmailTemplate,
+  getContactFormEmailTemplate,
+  getReferralVoucherEmailTemplate,
+  getRegistrationFormEmailTemplate,
+  getRegistrationFormCompletedEmailTemplate,
+  getInvoiceEmailTemplate,
 } from './email-templates'
 
 /**
@@ -383,7 +263,7 @@ export async function sendWelcomeEmail(userEmail: string, userName: string): Pro
   
   return sendEmail({
     to: userEmail,
-    subject: 'Welcome to One Step Fitness! 🎉',
+    subject: `Welcome to One Step Fitness, ${userName.trim().split(/\s+/)[0] || 'friend'}`,
     html: template.html,
     text: template.text,
   })
@@ -412,7 +292,7 @@ export async function sendTokenPurchaseEmail(data: {
   
   return sendEmail({
     to: data.userEmail,
-    subject: `Payment Successful! ${data.tokenCount} tokens added`,
+    subject: `Payment received: ${data.tokenCount} ${data.tokenCount === 1 ? 'token' : 'tokens'} added`,
     html: template.html,
     text: template.text,
   })
@@ -438,7 +318,7 @@ export async function sendTokenExpiryWarningEmail(data: {
   
   return sendEmail({
     to: data.userEmail,
-    subject: `⏰ Your tokens expire in ${daysUntilExpiry} ${daysUntilExpiry === 1 ? 'day' : 'days'}`,
+    subject: `Your tokens expire in ${daysUntilExpiry} ${daysUntilExpiry === 1 ? 'day' : 'days'}`,
     html: template.html,
     text: template.text,
   })
@@ -467,7 +347,7 @@ export async function sendClassReminderEmail(data: {
   
   return sendEmail({
     to: data.userEmail,
-    subject: `📅 Class Reminder: ${data.className} starts in 3 hours!`,
+    subject: `${data.className} starts in 3 hours (${data.classTime})`,
     html: template.html,
     text: template.text,
   })
@@ -521,7 +401,7 @@ export async function sendBookingConfirmationEmail(data: {
   
   return sendEmail({
     to: data.userEmail,
-    subject: `🎉 Booking Confirmed: ${data.className}`,
+    subject: `You're booked: ${data.className}, ${data.classDate}`,
     html: template.html,
     text: template.text,
   })
@@ -632,7 +512,7 @@ export async function sendWaitlistPromotionEmail(data: {
   
   return sendEmail({
     to: data.userEmail,
-    subject: `🎟️ Spot Available: ${data.className}`,
+    subject: `A spot opened in ${data.className}. Confirm it now`,
     html: template.html,
     text: template.text,
   })
@@ -659,7 +539,7 @@ export async function sendClassCancellationEmail(data: {
   
   return sendEmail({
     to: data.userEmail,
-    subject: `Class Cancelled: ${data.className}`,
+    subject: `Sorry, ${data.className} on ${data.classDate} is cancelled`,
     html: template.html,
     text: template.text,
   })
@@ -690,7 +570,7 @@ export async function sendNoShowWarningEmail(data: {
   
   return sendEmail({
     to: data.userEmail,
-    subject: `⚠️ No-Show Recorded: ${data.className}`,
+    subject: `We missed you at ${data.className}`,
     html: template.html,
     text: template.text,
   })
@@ -738,7 +618,7 @@ export async function sendForgotPasswordOTPEmail(data: {
   
   return sendEmail({
     to: data.userEmail,
-    subject: 'Password Reset Verification Code - One Step Fitness',
+    subject: `Your One Step Fitness code: ${data.otpCode}`,
     html: template.html,
     text: template.text,
   })
@@ -782,7 +662,7 @@ export async function sendBirthdayEmail(data: {
   
   return sendEmail({
     to: data.userEmail,
-    subject: `Happy Birthday${data.age ? ` ${data.age}` : ''}, ${data.userName}! 🎉`,
+    subject: `Happy birthday, ${data.userName.trim().split(/\s+/)[0] || data.userName} 🎂`,
     html: template.html,
     text: template.text,
   })
@@ -797,69 +677,17 @@ export async function sendReferralVoucherEmail(data: {
   voucherCode: string
   discountPercent: number
 }): Promise<EmailResult> {
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      </head>
-      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">One Step Fitness</h1>
-          <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Your Referral Discount</p>
-        </div>
-        
-        <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none;">
-          <p style="font-size: 16px; margin-bottom: 20px;">Hi <strong>${data.userName}</strong>,</p>
-          
-          <p style="margin-bottom: 20px;">
-            You've received a <strong>${data.discountPercent}% discount</strong> voucher for your next token package purchase at One Step Fitness.
-          </p>
-          
-          <div style="background: white; border: 2px dashed #84cc16; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0;">
-            <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280;">Your voucher code</p>
-            <p style="margin: 0; font-size: 22px; font-weight: bold; letter-spacing: 2px; color: #15803d;">${data.voucherCode}</p>
-            <p style="margin: 12px 0 0 0; font-size: 14px; color: #6b7280;">${data.discountPercent}% off your next package</p>
-          </div>
-          
-          <p style="margin-bottom: 20px;">
-            Use this code when you buy tokens on the One Step Fitness app or website. The discount will be applied at checkout.
-          </p>
-          
-          <p style="margin-top: 24px; font-size: 14px; color: #6b7280;">
-            This voucher is for one-time use. If you have any questions, contact the One Step Fitness team.
-          </p>
-        </div>
-        
-        <div style="text-align: center; padding: 20px; font-size: 12px; color: #9ca3af;">
-          <p>© ${new Date().getFullYear()} One Step Fitness. All rights reserved.</p>
-        </div>
-      </body>
-    </html>
-  `
-
-  const text = `
-Your Referral Discount
-
-Hi ${data.userName},
-
-You've received a ${data.discountPercent}% discount voucher for your next token package purchase at One Step Fitness.
-
-Your voucher code: ${data.voucherCode}
-
-Use this code when you buy tokens on the One Step Fitness app or website. The discount will be applied at checkout.
-
-This voucher is for one-time use.
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `
+  const { html, text } = getReferralVoucherEmailTemplate({
+    userName: data.userName,
+    voucherCode: data.voucherCode,
+    discountPercent: data.discountPercent,
+  })
 
   return sendEmail({
     to: data.userEmail,
     subject: `Your ${data.discountPercent}% discount voucher – One Step Fitness`,
     html,
-    text: text.trim(),
+    text,
   })
 }
 
@@ -871,77 +699,11 @@ export async function sendRegistrationFormEmail(data: {
   userName: string
   formUrl: string
 }): Promise<EmailResult> {
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      </head>
-      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">One Step Fitness</h1>
-          <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Complete Your Registration</p>
-        </div>
-        
-        <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-          <p style="font-size: 16px; margin-bottom: 20px;">Hi <strong>${data.userName}</strong>,</p>
-          
-          <p style="margin-bottom: 20px;">
-            Please complete your registration by filling out the membership terms and conditions form. 
-            This is required to finalize your membership with One Step Fitness.
-          </p>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${data.formUrl}" 
-               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                      color: white; 
-                      padding: 15px 40px; 
-                      text-decoration: none; 
-                      border-radius: 25px; 
-                      font-weight: bold; 
-                      display: inline-block;
-                      font-size: 16px;">
-              Complete Registration Form
-            </a>
-          </div>
-          
-          <p style="margin-top: 30px; font-size: 14px; color: #666;">
-            This link will expire in 7 days. If you need a new link, please contact us.
-          </p>
-          
-          <p style="margin-top: 20px; font-size: 14px; color: #666;">
-            If the button above doesn't work, copy and paste this link into your browser:<br>
-            <a href="${data.formUrl}" style="color: #667eea; word-break: break-all;">${data.formUrl}</a>
-          </p>
-        </div>
-        
-        <div style="text-align: center; padding: 20px; font-size: 12px; color: #999;">
-          <p>© ${new Date().getFullYear()} One Step Fitness. All rights reserved.</p>
-          <p>If you didn't request this, please ignore this email.</p>
-        </div>
-      </body>
-    </html>
-  `
-
-  const text = `
-Complete Your Registration
-
-Hi ${data.userName},
-
-Please complete your registration by filling out the membership terms and conditions form.
-This is required to finalize your membership with One Step Fitness.
-
-Form Link: ${data.formUrl}
-
-This link will expire in 7 days. If you need a new link, please contact us.
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `
+  const { html, text } = getRegistrationFormEmailTemplate({ userName: data.userName, formUrl: data.formUrl })
 
   return await sendEmail({
     to: data.userEmail,
-    subject: 'One Step Fitness Registration Form - Action Required',
+    subject: 'One quick form to finish your One Step Fitness registration',
     html,
     text,
   })
@@ -956,74 +718,11 @@ export async function sendRegistrationFormCompletedEmail(data: {
   pdfBuffer: Buffer
   fileName: string
 }): Promise<EmailResult> {
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
-          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>✅ Registration Complete!</h1>
-          </div>
-          <div class="content">
-            <p>Hi ${data.userName},</p>
-            
-            <p>Thank you for completing your One Step Fitness membership registration!</p>
-            
-            <p>Your registration form has been submitted and is attached to this email as a PDF. Please save this for your records.</p>
-            
-            <p><strong>What happens next:</strong></p>
-            <ul>
-              <li>Our staff will review and countersign your form</li>
-              <li>You'll receive a final copy with all signatures</li>
-              <li>Your membership will be fully activated</li>
-            </ul>
-            
-            <p>If you have any questions, please don't hesitate to contact us.</p>
-            
-            <p>Welcome to the One Step Fitness family! 💃🕺</p>
-          </div>
-          <div class="footer">
-            <p>© ${new Date().getFullYear()} One Step Fitness. All rights reserved.</p>
-          </div>
-        </div>
-      </body>
-    </html>
-  `
-
-  const text = `
-Registration Complete!
-
-Hi ${data.userName},
-
-Thank you for completing your One Step Fitness membership registration!
-
-Your registration form has been submitted and is attached to this email as a PDF. 
-Please save this for your records.
-
-What happens next:
-- Our staff will review and countersign your form
-- You'll receive a final copy with all signatures
-- Your membership will be fully activated
-
-If you have any questions, please don't hesitate to contact us.
-
-Welcome to the One Step Fitness family!
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `
+  const { html, text } = getRegistrationFormCompletedEmailTemplate({ userName: data.userName })
 
   return await sendEmail({
     to: data.userEmail,
-    subject: '✅ Your One Step Fitness Registration Form',
+    subject: 'Your One Step Fitness registration form',
     html,
     text,
     attachments: [
@@ -1281,95 +980,19 @@ export async function sendInvoiceEmail(data: {
     day: 'numeric',
   })
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      </head>
-      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 26px;">One Step Fitness</h1>
-          <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Invoice ${escapeHtml(data.invoiceNumber)}</p>
-        </div>
-
-        <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none;">
-          <p style="font-size: 16px; margin-bottom: 20px;">Hi <strong>${escapeHtml(data.toName)}</strong>,</p>
-
-          <p style="margin-bottom: 20px;">
-            Thanks for your payment. Here's your invoice for <strong>${escapeHtml(data.description)}</strong>.
-          </p>
-
-          <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 24px 0;">
-            <table role="presentation" style="width: 100%; font-size: 14px;">
-              <tr>
-                <td style="padding: 6px 0; color: #6b7280;">Invoice Number</td>
-                <td style="padding: 6px 0; text-align: right; font-weight: 600;">${escapeHtml(data.invoiceNumber)}</td>
-              </tr>
-              <tr>
-                <td style="padding: 6px 0; color: #6b7280;">Issued</td>
-                <td style="padding: 6px 0; text-align: right; font-weight: 600;">${issuedDateLabel}</td>
-              </tr>
-              <tr>
-                <td style="padding: 6px 0; color: #6b7280;">Description</td>
-                <td style="padding: 6px 0; text-align: right; font-weight: 600;">${escapeHtml(data.description)}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0 0; color: #111827; font-size: 16px; font-weight: bold; border-top: 1px solid #e5e7eb;">Total Paid</td>
-                <td style="padding: 10px 0 0; text-align: right; color: #15803d; font-size: 16px; font-weight: bold; border-top: 1px solid #e5e7eb;">${amountLabel}</td>
-              </tr>
-            </table>
-          </div>
-
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${data.pdfUrl}"
-               style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-                      color: white;
-                      padding: 14px 36px;
-                      text-decoration: none;
-                      border-radius: 25px;
-                      font-weight: bold;
-                      display: inline-block;
-                      font-size: 15px;">
-              Download Invoice (PDF)
-            </a>
-          </div>
-
-          <p style="margin-top: 24px; font-size: 14px; color: #6b7280;">
-            If the button above doesn't work, copy and paste this link into your browser:<br>
-            <a href="${data.pdfUrl}" style="color: #16a34a; word-break: break-all;">${data.pdfUrl}</a>
-          </p>
-        </div>
-
-        <div style="text-align: center; padding: 20px; font-size: 12px; color: #9ca3af;">
-          <p>© ${new Date().getFullYear()} One Step Fitness. All rights reserved.</p>
-        </div>
-      </body>
-    </html>
-  `
-
-  const text = `
-Invoice ${data.invoiceNumber} — One Step Fitness
-
-Hi ${data.toName},
-
-Thanks for your payment. Here's your invoice for ${data.description}.
-
-Invoice Number: ${data.invoiceNumber}
-Issued: ${issuedDateLabel}
-Description: ${data.description}
-Total Paid: ${amountLabel}
-
-Download your invoice: ${data.pdfUrl}
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `
+  const { html, text } = getInvoiceEmailTemplate({
+    toName: data.toName,
+    invoiceNumber: data.invoiceNumber,
+    amountLabel,
+    issuedDateLabel,
+    description: data.description,
+    pdfUrl: data.pdfUrl,
+  })
 
   return sendEmail({
     to: data.toEmail,
     subject: `Invoice ${data.invoiceNumber} — One Step Fitness`,
     html,
-    text: text.trim(),
+    text,
   })
 }

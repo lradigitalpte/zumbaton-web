@@ -1,265 +1,128 @@
 /**
- * Professional Email Templates for One Step Fitness
- * All templates use a consistent, clean design without emojis
+ * Email templates for One Step Fitness.
+ *
+ * Every template is built from the shared kit in ./email-kit (dashboard look:
+ * black hero, lime pills, white cards on a grey tray). Each returns html + a
+ * plain-text version. Escape every user-supplied value with esc().
  */
+
+import {
+  COLORS,
+  STUDIO_EMAIL,
+  STUDIO_PHONE_DISPLAY,
+  STUDIO_WHATSAPP_URL,
+  actionRow,
+  adminUrl,
+  button,
+  card,
+  chip,
+  classTicket,
+  codeBlock,
+  contactCard,
+  darkCard,
+  detailRows,
+  emailShell,
+  esc,
+  eyebrow,
+  firstName,
+  heading,
+  hero,
+  heroPhoto,
+  lime,
+  linkFallback,
+  logoRow,
+  para,
+  plural,
+  quoteCard,
+  siteUrl,
+  spacer,
+  staffFooterCard,
+  statTiles,
+  strong,
+  textToParagraphs,
+  FONT,
+} from './email-kit'
 
 export interface EmailTemplateData {
   userName?: string
   [key: string]: unknown
 }
 
-/**
- * Base email template with consistent styling and mobile responsiveness
- */
-function getBaseTemplate(content: string, preheader?: string, options?: { logoUrl?: string }): string {
-  const logoBlock = options?.logoUrl
-    ? `<img src="${options.logoUrl}" alt="One Step Fitness" width="150" style="display: block; margin: 0 auto 18px; max-width: 150px; height: auto; border-radius: 14px; background-color: #ffffff; padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />`
-    : ''
+type Template = { html: string; text: string }
 
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light dark">
-  <meta name="supported-color-schemes" content="light dark">
-  <title>One Step Fitness</title>
-  <style type="text/css">
-    ${preheader ? `#preheader { display: none !important; visibility: hidden; opacity: 0; color: transparent; height: 0; width: 0; }` : ''}
-    
-    /* Mobile Responsive Styles */
-    @media only screen and (max-width: 600px) {
-      .email-container {
-        width: 100% !important;
-        padding: 10px !important;
-      }
-      
-      .email-content {
-        padding: 20px 15px !important;
-      }
-      
-      .email-header {
-        padding: 30px 20px !important;
-      }
-      
-      .email-header h1 {
-        font-size: 24px !important;
-      }
-      
-      .email-header p {
-        font-size: 13px !important;
-      }
-      
-      .email-footer {
-        padding: 20px 15px !important;
-      }
-      
-      .email-footer p {
-        font-size: 13px !important;
-      }
-      
-      .email-footer a {
-        display: block !important;
-        margin: 5px 0 !important;
-      }
-      
-      .mobile-button {
-        display: block !important;
-        width: 100% !important;
-        padding: 14px 20px !important;
-        font-size: 16px !important;
-        text-align: center !important;
-      }
-      
-      .mobile-table {
-        width: 100% !important;
-        display: block !important;
-      }
-      
-      .mobile-table td {
-        display: block !important;
-        width: 100% !important;
-        padding: 8px 0 !important;
-        text-align: left !important;
-      }
-      
-      .mobile-table td:first-child {
-        font-weight: 600 !important;
-        color: #374151 !important;
-        margin-bottom: 4px !important;
-      }
-      
-      .mobile-spacing {
-        margin: 20px 0 !important;
-      }
-      
-      .mobile-text {
-        font-size: 14px !important;
-        line-height: 1.5 !important;
-      }
-      
-      .mobile-title {
-        font-size: 20px !important;
-      }
-      
-      .mobile-subtitle {
-        font-size: 15px !important;
-      }
-      
-      .mobile-box {
-        padding: 15px !important;
-        margin: 20px 0 !important;
-      }
-      
-      .mobile-otp {
-        font-size: 28px !important;
-        padding: 15px 30px !important;
-        letter-spacing: 4px !important;
-      }
-      
-      .mobile-link-break {
-        display: block !important;
-      }
+const C = COLORS
+const year = () => new Date().getFullYear()
+const textFooter = () => `© ${year()} One Step Fitness · ${STUDIO_EMAIL} · WhatsApp ${STUDIO_PHONE_DISPLAY}`
+const lines = (...parts: Array<string | null | undefined | false>) =>
+  parts.filter((p) => p !== null && p !== undefined && p !== false).join('\n').replace(/\n{3,}/g, '\n\n').trim()
 
-      .lead-feature-col {
-        display: block !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        padding: 0 0 12px 0 !important;
-      }
+const CANCEL_RULE = 'Cancel by 23:59 the day before your class and your token goes straight back to your balance.'
 
-      .lead-cta-cell {
-        padding: 0 12px !important;
-      }
-
-      .lead-cta-btn {
-        display: block !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        padding: 16px 18px !important;
-        font-size: 15px !important;
-        box-sizing: border-box !important;
-      }
-
-      .lead-contact-link {
-        font-size: 14px !important;
-        word-break: break-word !important;
-      }
-    }
-    
-    /* Prevent auto-linking on iOS */
-    a[x-apple-data-detectors] {
-      color: inherit !important;
-      text-decoration: none !important;
-      font-size: inherit !important;
-      font-family: inherit !important;
-      font-weight: inherit !important;
-      line-height: inherit !important;
-    }
-  </style>
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
-  ${preheader ? `<div id="preheader" style="display: none !important; visibility: hidden; opacity: 0; color: transparent; height: 0; width: 0;">${preheader}</div>` : ''}
-  <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f3f4f6; padding: 20px;" class="email-container">
-    <tr>
-      <td align="center" style="padding: 20px 0;">
-        <table role="presentation" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <!-- Header -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 40px 30px; text-align: center;" class="email-header">
-              ${logoBlock}
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">One Step Fitness</h1>
-              <p style="margin: 8px 0 0 0; color: #d1fae5; font-size: 14px; font-weight: 500;">Dance Your Way to Fitness</p>
-            </td>
-          </tr>
-          
-          <!-- Content -->
-          <tr>
-            <td style="padding: 40px 30px;" class="email-content">
-              ${content}
-            </td>
-          </tr>
-          
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;" class="email-footer">
-              <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
-                <strong style="color: #374151;">One Step Fitness Fitness Studio</strong><br>
-                Singapore<br>
-                <a href="mailto:hello@onestepfitness.sg" style="color: #16a34a; text-decoration: none;">hello@onestepfitness.sg</a><span class="mobile-link-break" style="display: inline;"> | </span>
-                <a href="tel:+6584927347" style="color: #16a34a; text-decoration: none;">+65 8492 7347</a>
-              </p>
-              <p style="margin: 20px 0 0 0; color: #9ca3af; font-size: 12px;">
-                © ${new Date().getFullYear()} One Step Fitness. All rights reserved.<br>
-                Designed by LRA Digital
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-  `.trim()
+function formatMoney(amount: number, currency = 'SGD'): string {
+  try {
+    return new Intl.NumberFormat('en-SG', { style: 'currency', currency }).format(amount)
+  } catch {
+    return `${currency} ${Number(amount).toFixed(2)}`
+  }
 }
 
-/**
- * Welcome Email Template
- */
-export function getWelcomeEmailTemplate(data: { userName: string }): { html: string; text: string } {
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Welcome to One Step Fitness, ${escapeHtml(data.userName)}!</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">We're thrilled to have you join our dance fitness community!</p>
-    </div>
-    
-    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
-      <h3 style="margin: 0 0 15px 0; color: #15803d; font-size: 18px; font-weight: 600;" class="mobile-subtitle">Get Started</h3>
-      <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 15px; line-height: 1.8;" class="mobile-text">
-        <li style="margin-bottom: 8px;">Browse our exciting dance classes</li>
-        <li style="margin-bottom: 8px;">Purchase token packages to book classes</li>
-        <li style="margin-bottom: 8px;">Book your first session and start dancing!</li>
-      </ul>
-    </div>
-    
-    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/packages" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
-        Browse Packages
-      </a>
-    </div>
-    
-    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
-      If you have any questions, feel free to reach out to us at 
-      <a href="mailto:hello@onestepfitness.sg" style="color: #16a34a; text-decoration: none;">hello@onestepfitness.sg</a>
-    </p>
-  `, `Welcome to One Step Fitness! Start your dance fitness journey today.`)
+function formatLongDate(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleDateString('en-SG', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Singapore' })
+}
 
-  const text = `
-Welcome to One Step Fitness, ${data.userName}!
+function formatShortDate(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleDateString('en-SG', { day: 'numeric', month: 'short', timeZone: 'Asia/Singapore' })
+}
 
-We're thrilled to have you join our dance fitness community!
+// ===========================================================================
+// Member emails
+// ===========================================================================
 
-Get Started:
-- Browse our exciting dance classes
-- Purchase token packages to book classes
-- Book your first session and start dancing!
+export function getWelcomeEmailTemplate(data: { userName: string }): Template {
+  const site = siteUrl()
+  const step = (n: number, title: string, desc: string) => `<tr>
+<td width="44" style="vertical-align:top;padding:0 0 18px"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td align="center" style="width:34px;height:34px;background:${C.tile};border-radius:11px;font:800 14px/34px ${FONT};color:${C.lime}">${n}</td></tr></table></td>
+<td style="vertical-align:top;padding:0 0 18px 6px"><p style="margin:0;font:700 15px/22px ${FONT};color:${C.ink}">${title}</p><p style="margin:2px 0 0;font:400 14px/21px ${FONT};color:${C.muted}">${desc}</p></td></tr>`
 
-Visit: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/packages
+  const html = emailShell({
+    preheader: 'Your first class is three taps away.',
+    hero: hero({
+      eyebrow: 'Welcome to the family',
+      title: `You're in, ${esc(firstName(data.userName))}.<br>Let's get moving.`,
+      sub: 'Dance cardio and step workouts for every level. Your first class is three taps away.',
+      extra: heroPhoto(),
+    }),
+    cards: [
+      card(`${eyebrow('Your first week', C.muted)}${heading('Three steps to your first class')}${spacer(10)}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+${step(1, 'Grab a token pack', 'One token books one class. Packs stay valid for 6 months.')}
+${step(2, 'Pick a class', 'Browse the weekly schedule and book in seconds.')}
+${step(3, 'Show up and have fun', 'Arrive 10 minutes early. Bring water and a towel.')}
+</table>
+${button('See token packs', `${site}/packages`)}${spacer(8)}${button('Browse classes', `${site}/classes`, 'white')}`),
+    ],
+  })
 
-If you have any questions, feel free to reach out to us at hello@onestepfitness.sg
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    `Welcome to One Step Fitness, ${data.userName}!`,
+    '',
+    'Your first class is three steps away:',
+    '1. Grab a token pack. One token books one class. Packs stay valid for 6 months.',
+    '2. Pick a class from the weekly schedule.',
+    '3. Show up and have fun. Arrive 10 minutes early with water and a towel.',
+    '',
+    `See token packs: ${site}/packages`,
+    `Browse classes: ${site}/classes`,
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
-/**
- * Token Purchase Confirmation Email Template
- */
 export function getTokenPurchaseEmailTemplate(data: {
   userName: string
   packageName: string
@@ -267,161 +130,95 @@ export function getTokenPurchaseEmailTemplate(data: {
   amount: number
   currency?: string
   expiresAt: string
-}): { html: string; text: string } {
-  const currency = data.currency || 'SGD'
-  const formattedAmount = new Intl.NumberFormat('en-SG', {
-    style: 'currency',
-    currency,
-  }).format(data.amount)
-  
-  const expiresDate = new Date(data.expiresAt)
-  const formattedExpiry = expiresDate.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+}): Template {
+  const site = siteUrl()
+  const amount = formatMoney(data.amount, data.currency || 'SGD')
+  const expiry = formatLongDate(data.expiresAt)
+
+  const html = emailShell({
+    preheader: `${plural(data.tokenCount, 'token')} added. Valid until ${expiry}.`,
+    hero: hero({
+      eyebrow: 'Payment received',
+      title: esc(amount),
+      sub: `Thanks, ${esc(firstName(data.userName))}. ${plural(data.tokenCount, 'token')} ${data.tokenCount === 1 ? 'is' : 'are'} now in your account.`,
+      right: chip('Paid'),
+    }),
+    cards: [
+      statTiles([
+        { value: `+${data.tokenCount}`, label: 'Tokens added', dark: true },
+        { value: esc(formatShortDate(data.expiresAt)), label: 'Valid until' },
+      ]),
+      card(`${eyebrow('Receipt', C.muted)}${detailRows([
+        ['Package', esc(data.packageName)],
+        ['Tokens', String(data.tokenCount)],
+        ['Valid until', esc(expiry)],
+        ['Total paid', esc(amount)],
+      ])}${spacer(18)}${button('Book a class', `${site}/classes`)}${spacer(8)}${button('View my packages', `${site}/my-packages`, 'white')}`),
+    ],
   })
 
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Payment Successful!</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Your token package has been added to your account</p>
-    </div>
-    
-    <div style="background-color: #f9fafb; border-radius: 8px; padding: 25px; margin: 30px 0;" class="mobile-box">
-      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Package:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.packageName)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Tokens Added:</td>
-          <td style="padding: 10px 0; color: #16a34a; font-weight: 700; font-size: 18px;">${data.tokenCount} tokens</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Amount Paid:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${formattedAmount}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Expires:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${formattedExpiry}</td>
-        </tr>
-      </table>
-    </div>
-    
-    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-packages" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
-        View My Packages
-      </a>
-    </div>
-    
-    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
-      Ready to book a class? <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes" style="color: #16a34a; text-decoration: none; font-weight: 600;">Browse Classes</a>
-    </p>
-  `, `Payment successful! ${data.tokenCount} tokens added to your account.`)
-
-  const text = `
-Payment Successful!
-
-Hi ${data.userName},
-
-Your token package has been successfully added to your account.
-
-Package: ${data.packageName}
-Tokens Added: ${data.tokenCount} tokens
-Amount Paid: ${formattedAmount}
-Expires: ${formattedExpiry}
-
-View your packages: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-packages
-Browse classes: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    'Payment received',
+    '',
+    `Hi ${data.userName},`,
+    '',
+    `Thanks for your payment. ${plural(data.tokenCount, 'token')} ${data.tokenCount === 1 ? 'has' : 'have'} been added to your account.`,
+    '',
+    `Package: ${data.packageName}`,
+    `Tokens: ${data.tokenCount}`,
+    `Valid until: ${expiry}`,
+    `Total paid: ${amount}`,
+    '',
+    `Book a class: ${site}/classes`,
+    `View my packages: ${site}/my-packages`,
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
-/**
- * Token Expiry Warning Email Template
- */
 export function getTokenExpiryWarningEmailTemplate(data: {
   userName: string
   tokensRemaining: number
   expiresAt: string
-}): { html: string; text: string } {
-  const expiresDate = new Date(data.expiresAt)
-  const formattedExpiry = expiresDate.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+}): Template {
+  const site = siteUrl()
+  const expiry = formatLongDate(data.expiresAt)
+  const days = Math.max(0, Math.ceil((new Date(data.expiresAt).getTime() - Date.now()) / 86_400_000))
+  const daysLabel = plural(days, 'day')
+
+  const html = emailShell({
+    preheader: `${plural(data.tokensRemaining, 'token')} expire on ${expiry}. Book a class before then.`,
+    hero: hero({
+      eyebrow: 'Use them before they go',
+      title: `${lime(esc(plural(data.tokensRemaining, 'token')))} ${data.tokensRemaining === 1 ? 'expires' : 'expire'} in ${esc(daysLabel)}.`,
+      sub: `They expire on ${esc(expiry)}. Book a class before then so none go to waste.`,
+    }),
+    cards: [
+      statTiles([
+        { value: String(data.tokensRemaining), label: 'Expiring', dark: true },
+        { value: esc(formatShortDate(data.expiresAt)), label: 'Expiry date' },
+        { value: String(days), label: 'Days left' },
+      ]),
+      card(`${heading('Book now, dance later')}${para('Unused tokens are lost after the expiry date and can’t be restored. Book a class now to use them.')}${button('Book a class', `${site}/classes`)}`),
+    ],
   })
-  
-  const daysUntilExpiry = Math.ceil((expiresDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
 
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Your Tokens Are Expiring Soon</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Don't let your tokens go to waste!</p>
-    </div>
-    
-    <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
-      <h3 style="margin: 0 0 15px 0; color: #d97706; font-size: 18px; font-weight: 600;">Package Details</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Tokens Remaining:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 700; font-size: 18px;">${data.tokensRemaining} tokens</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Expires In:</td>
-          <td style="padding: 10px 0; color: #d97706; font-weight: 700; font-size: 18px;">${daysUntilExpiry} ${daysUntilExpiry === 1 ? 'day' : 'days'}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Expiry Date:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${formattedExpiry}</td>
-        </tr>
-      </table>
-    </div>
-    
-    <div style="background-color: #f0fdf4; border-radius: 8px; padding: 20px; margin: 30px 0;">
-       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
-        <strong>Important:</strong> Book a class now to use your tokens before they expire! Unused tokens will be lost after the expiry date.
-      </p>
-    </div>
-    
-    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
-        Book a Class Now
-      </a>
-    </div>
-  `, `Your tokens expire in ${daysUntilExpiry} days. Book a class now!`)
-
-  const text = `
-Your Tokens Are Expiring Soon
-
-Hi ${data.userName},
-
-Your token package is expiring soon. Don't let your tokens go to waste!
-
-Tokens Remaining: ${data.tokensRemaining} tokens
-Expires In: ${daysUntilExpiry} ${daysUntilExpiry === 1 ? 'day' : 'days'}
-Expiry Date: ${formattedExpiry}
-
-Important: Book a class now to use your tokens before they expire! Unused tokens will be lost after the expiry date.
-
-Book a class: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    'Your tokens are expiring soon',
+    '',
+    `Hi ${data.userName},`,
+    '',
+    `${plural(data.tokensRemaining, 'token')} expire in ${daysLabel}, on ${expiry}.`,
+    'Unused tokens are lost after the expiry date. Book a class now to use them.',
+    '',
+    `Book a class: ${site}/classes`,
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
-/**
- * Class Reminder Email Template (3 hours before)
- */
 export function getClassReminderEmailTemplate(data: {
   userName: string
   className: string
@@ -429,71 +226,50 @@ export function getClassReminderEmailTemplate(data: {
   classTime: string
   classLocation: string
   instructorName?: string
-}): { html: string; text: string } {
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Class Reminder</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Your class starts in 3 hours!</p>
-    </div>
-    
-    <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 25px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
-      <h3 style="margin: 0 0 20px 0; color: #1e40af; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Time:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classTime)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Location:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classLocation)}</td>
-        </tr>
-        ${data.instructorName ? `
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Instructor:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.instructorName)}</td>
-        </tr>
-        ` : ''}
-      </table>
-    </div>
-    
-    <div style="background-color: #f0fdf4; border-radius: 8px; padding: 20px; margin: 30px 0;">
-       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
-        <strong>Reminder:</strong> Please arrive 10 minutes early. Bring water and wear comfortable workout clothes. We can't wait to see you!
-      </p>
-    </div>
-    
-    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-bookings" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
-        View My Bookings
-      </a>
-    </div>
-  `, `Class reminder: ${data.className} starts in 3 hours!`)
+}): Template {
+  const site = siteUrl()
+  const tick = (t: string) => `<tr><td width="26" style="vertical-align:top;font:800 14px/22px ${FONT};color:${C.limeInk}">&#10003;</td><td style="font:400 15px/22px ${FONT};color:${C.body};padding-bottom:8px">${t}</td></tr>`
 
-  const text = `
-Class Reminder
+  const html = emailShell({
+    preheader: `${data.className} at ${data.classTime}. Arrive 10 minutes early.`,
+    hero: hero({
+      eyebrow: 'Class in 3 hours',
+      title: `${esc(data.className)}<br>${lime(esc(data.classTime))} today.`,
+      sub: `See you soon, ${esc(firstName(data.userName))}. Your spot is saved.`,
+    }),
+    cards: [
+      classTicket({
+        className: data.className,
+        classDate: data.classDate,
+        classTime: data.classTime,
+        instructorName: data.instructorName,
+        status: 'Confirmed',
+        rows: [['Location', esc(data.classLocation)]],
+      }),
+      card(`${heading('Bring along')}<table role="presentation" cellpadding="0" cellspacing="0">${tick('Water bottle')}${tick('Small towel')}${tick('Comfortable workout clothes and clean trainers')}</table>
+${spacer(8)}${para('Please arrive 10 minutes early so you can settle in.')}${button('View my bookings', `${site}/my-bookings`, 'dark')}`),
+    ],
+  })
 
-Hi ${data.userName},
-
-Your class starts in 3 hours!
-
-Class: ${data.className}
-Date: ${data.classDate}
-Time: ${data.classTime}
-Location: ${data.classLocation}
-${data.instructorName ? `Instructor: ${data.instructorName}` : ''}
-
-Reminder: Please arrive 10 minutes early. Bring water and wear comfortable workout clothes. We can't wait to see you!
-
-View bookings: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-bookings
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    'Class reminder',
+    '',
+    `Hi ${data.userName},`,
+    '',
+    'Your class starts in 3 hours.',
+    '',
+    `Class: ${data.className}`,
+    `Date: ${data.classDate}`,
+    `Time: ${data.classTime}`,
+    `Location: ${data.classLocation}`,
+    data.instructorName ? `Instructor: ${data.instructorName}` : null,
+    '',
+    'Please arrive 10 minutes early. Bring water, a towel and comfortable workout clothes.',
+    '',
+    `View bookings: ${site}/my-bookings`,
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
@@ -502,59 +278,48 @@ export function getStreakReminderSubject(streakWeeks: number): string {
   return `Your ${streakLabel} ends Sunday`
 }
 
-/**
- * Streak reminder: come once this week or the week streak ends Sunday.
- */
 export function getStreakReminderEmailTemplate(data: {
   userName: string
   streakWeeks: number
   bookUrl: string
-}): { html: string; text: string } {
+}): Template {
   const streakLabel = data.streakWeeks === 1 ? '1-week streak' : `${data.streakWeeks}-week streak`
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Keep your streak</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">One class this week keeps it going</p>
-    </div>
+  const shown = Math.min(Math.max(data.streakWeeks, 0), 7)
+  const block = (done: boolean) =>
+    `<td style="width:30px;height:30px;border-radius:9px;background:${done ? C.lime : 'transparent'};border:2px ${done ? 'solid' : 'dashed'} ${done ? C.lime : '#52525b'};font:800 12px/30px ${FONT};color:${done ? C.ink : C.faint};text-align:center">${done ? '&#10003;' : '?'}</td><td style="width:6px;font-size:0">&nbsp;</td>`
+  const weeks = `<table role="presentation" cellpadding="0" cellspacing="0"><tr>${Array.from({ length: shown }, () => block(true)).join('')}${block(false)}</tr></table>`
 
-    <p style="margin: 0 0 20px 0; color: #374151; font-size: 16px; line-height: 1.6;" class="mobile-text">
-      Hi ${escapeHtml(data.userName)},
-    </p>
+  const heroHtml = `${logoRow('Week streak')}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td class="px" style="padding:34px 32px 34px">
+${eyebrow('Keep it going')}
+<p class="mega" style="margin:0;font:900 120px/104px ${FONT};letter-spacing:-5px;color:${C.lime}">${data.streakWeeks}</p>
+<h1 class="hero-h" style="margin:14px 0 0;font:800 36px/40px ${FONT};letter-spacing:-1px;color:#ffffff">${data.streakWeeks === 1 ? 'week' : 'weeks'} in a row, ${esc(firstName(data.userName))}.</h1>
+<p style="margin:12px 0 22px;font:400 15px/24px ${FONT};color:${C.faint}">One class before Sunday keeps your streak alive.</p>
+${weeks}
+</td></tr></table>`
 
-    <div style="background-color: #fff7ed; border-left: 4px solid #f97316; padding: 25px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
-      <p style="margin: 0 0 8px 0; color: #9a3412; font-size: 14px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;">Week streak</p>
-      <p style="margin: 0; color: #111827; font-size: 32px; font-weight: 700; line-height: 1.2;">${data.streakWeeks}</p>
-      <p style="margin: 8px 0 0 0; color: #374151; font-size: 15px; line-height: 1.6;">
-        Your ${escapeHtml(streakLabel)} ends Sunday if you don't come in this week.
-      </p>
-    </div>
+  const html = emailShell({
+    preheader: `Your ${streakLabel} ends Sunday. Come once this week to keep it.`,
+    hero: heroHtml,
+    cards: [
+      card(`${heading(`${data.streakWeeks + 1} is one class away`)}${para('Pick any class this week. Lunchtime, evening or weekend, they all count.')}${button('Book a class', data.bookUrl)}`),
+    ],
+  })
 
-    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${escapeHtml(data.bookUrl)}"
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
-        Book a class
-      </a>
-    </div>
-  `, `Your ${streakLabel} ends Sunday. Come once this week to keep it.`)
-
-  const text = `
-Keep your streak
-
-Hi ${data.userName},
-
-Your ${streakLabel} ends Sunday if you don't come in this week. One class is enough.
-
-Book a class: ${data.bookUrl}
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    'Keep your streak',
+    '',
+    `Hi ${data.userName},`,
+    '',
+    `Your ${streakLabel} ends Sunday if you don't come in this week. One class is enough.`,
+    '',
+    `Book a class: ${data.bookUrl}`,
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
-/**
- * Booking Confirmation Email Template
- */
 export function getBookingConfirmationEmailTemplate(data: {
   userName: string
   className: string
@@ -563,244 +328,141 @@ export function getBookingConfirmationEmailTemplate(data: {
   classLocation: string
   tokensUsed: number
   instructorName?: string
-}): { html: string; text: string } {
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Booking Confirmed!</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">You're all set for your class</p>
-    </div>
-    
-    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 25px; border-radius: 8px; margin: 30px 0;">
-      <h3 style="margin: 0 0 20px 0; color: #15803d; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Time:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classTime)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Location:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classLocation)}</td>
-        </tr>
-        ${data.instructorName ? `
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Instructor:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.instructorName)}</td>
-        </tr>
-        ` : ''}
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Tokens:</td>
-          <td style="padding: 10px 0; color: #16a34a; font-weight: 700; font-size: 15px;">${data.tokensUsed} token${data.tokensUsed !== 1 ? 's' : ''} used</td>
-        </tr>
-      </table>
-    </div>
-    
-    <div style="background-color: #eff6ff; border-radius: 8px; padding: 20px; margin: 30px 0;">
-       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
-        <strong>What's Next?</strong><br>
-        You'll receive a reminder 3 hours before your class. Please arrive 10 minutes early and bring water!
-      </p>
-    </div>
-    
-    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-bookings" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
-        View My Bookings
-      </a>
-    </div>
-  `, `Booking confirmed! ${data.className} on ${data.classDate}`)
+}): Template {
+  const site = siteUrl()
+  const html = emailShell({
+    preheader: `${data.className} · ${data.classDate} · ${data.classTime}`,
+    hero: hero({
+      eyebrow: 'Booking confirmed',
+      title: `See you on the floor, ${esc(firstName(data.userName))}.`,
+      sub: 'Your spot is saved. Here are the details.',
+      right: chip('Booked'),
+    }),
+    cards: [
+      classTicket({
+        className: data.className,
+        classDate: data.classDate,
+        classTime: data.classTime,
+        instructorName: data.instructorName,
+        status: 'Confirmed',
+        rows: [
+          ['Location', esc(data.classLocation)],
+          ['Tokens used', String(data.tokensUsed)],
+        ],
+      }),
+      card(`${heading('Need to cancel?')}${para(CANCEL_RULE)}${para('We’ll also send you a reminder 3 hours before class.', { color: C.muted, size: 14 })}${button('Manage booking', `${site}/my-bookings`, 'dark')}`),
+    ],
+  })
 
-  const text = `
-Booking Confirmed!
-
-Hi ${data.userName},
-
-Your booking has been confirmed!
-
-Class: ${data.className}
-Date: ${data.classDate}
-Time: ${data.classTime}
-Location: ${data.classLocation}
-${data.instructorName ? `Instructor: ${data.instructorName}` : ''}
-Tokens: ${data.tokensUsed} token${data.tokensUsed !== 1 ? 's' : ''} used
-
-What's Next?
-You'll receive a reminder 3 hours before your class. Please arrive 10 minutes early and bring water!
-
-View bookings: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-bookings
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    'Booking confirmed',
+    '',
+    `Hi ${data.userName},`,
+    '',
+    'Your spot is saved.',
+    '',
+    `Class: ${data.className}`,
+    `Date: ${data.classDate}`,
+    `Time: ${data.classTime}`,
+    `Location: ${data.classLocation}`,
+    data.instructorName ? `Instructor: ${data.instructorName}` : null,
+    `Tokens used: ${data.tokensUsed}`,
+    '',
+    CANCEL_RULE,
+    'We’ll send you a reminder 3 hours before class.',
+    '',
+    `Manage booking: ${site}/my-bookings`,
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
-/**
- * Token Adjustment Email Template (Admin Action)
- */
 export function getTokenAdjustmentEmailTemplate(data: {
   userName: string
   tokensChange: number
   newBalance: number
   reason: string
   adjustedBy?: string
-}): { html: string; text: string } {
-  const isPositive = data.tokensChange > 0
-  const action = isPositive ? 'added' : 'removed'
-  const actionColor = isPositive ? '#16a34a' : '#dc2626'
+}): Template {
+  const site = siteUrl()
+  const added = data.tokensChange > 0
+  const change = `${added ? '+' : ''}${data.tokensChange}`
+  const amount = plural(Math.abs(data.tokensChange), 'token')
 
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Token Balance ${isPositive ? 'Updated' : 'Adjusted'}</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Your token balance has been ${action} by an administrator</p>
-    </div>
-    
-    <div style="background-color: #f9fafb; border-radius: 8px; padding: 25px; margin: 30px 0;" class="mobile-box">
-      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Tokens ${isPositive ? 'Added' : 'Removed'}:</td>
-          <td style="padding: 10px 0; color: ${actionColor}; font-weight: 700; font-size: 18px;">${isPositive ? '+' : ''}${data.tokensChange} tokens</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">New Balance:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 700; font-size: 18px;">${data.newBalance} tokens</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Reason:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.reason)}</td>
-        </tr>
-        ${data.adjustedBy ? `
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Adjusted By:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.adjustedBy)}</td>
-        </tr>
-        ` : ''}
-      </table>
-    </div>
-    
-    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-packages" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
-        View My Packages
-      </a>
-    </div>
-  `, `Token balance ${action}: ${isPositive ? '+' : ''}${data.tokensChange} tokens. New balance: ${data.newBalance} tokens.`)
+  const html = emailShell({
+    preheader: `New balance: ${plural(data.newBalance, 'token')}`,
+    hero: hero({
+      eyebrow: 'Balance updated',
+      title: added ? `${lime(`+${esc(amount)}`)}<br>added to your account.` : `${esc(amount)} removed<br>from your account.`,
+      sub: `Hi ${esc(firstName(data.userName))}, our team has updated your token balance.`,
+    }),
+    cards: [
+      statTiles([
+        { value: change, label: 'Change' },
+        { value: String(data.newBalance), label: 'New balance', dark: true },
+      ]),
+      quoteCard('Reason', data.reason),
+      card(`${data.adjustedBy ? para(`Updated by ${strong(esc(data.adjustedBy))}. Questions? Just reply to this email.`, { color: C.muted, size: 14 }) : ''}${button('Book a class', `${site}/classes`)}${spacer(8)}${button('View my packages', `${site}/my-packages`, 'white')}`, { pad: '22px 32px' }),
+    ],
+  })
 
-  const text = `
-Token Balance ${isPositive ? 'Updated' : 'Adjusted'}
-
-Hi ${data.userName},
-
-Your token balance has been ${action} by an administrator.
-
-Tokens ${isPositive ? 'Added' : 'Removed'}: ${isPositive ? '+' : ''}${data.tokensChange} tokens
-New Balance: ${data.newBalance} tokens
-Reason: ${data.reason}
-${data.adjustedBy ? `Adjusted By: ${data.adjustedBy}` : ''}
-
-View your packages: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-packages
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    'Token balance updated',
+    '',
+    `Hi ${data.userName},`,
+    '',
+    `Change: ${change} tokens`,
+    `New balance: ${data.newBalance} tokens`,
+    `Reason: ${data.reason}`,
+    data.adjustedBy ? `Updated by: ${data.adjustedBy}` : null,
+    '',
+    `View your packages: ${site}/my-packages`,
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
-/**
- * Admin Created User Email Template
- */
 export function getAdminCreatedUserEmailTemplate(data: {
   userName: string
   email: string
   temporaryPassword?: string
   createdBy?: string
-}): { html: string; text: string } {
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Welcome to One Step Fitness, ${escapeHtml(data.userName)}!</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Your account has been created by our team</p>
-    </div>
-    
-    ${data.temporaryPassword ? `
-    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
-      <h3 style="margin: 0 0 10px 0; color: #d97706; font-size: 18px; font-weight: 600;" class="mobile-subtitle">Temporary Password</h3>
-       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
-        Your temporary password: <strong style="font-family: monospace; background: white; padding: 4px 8px; border-radius: 4px;">${escapeHtml(data.temporaryPassword)}</strong>
-      </p>
-      <p style="margin: 15px 0 0 0; color: #6b7280; font-size: 14px;" class="mobile-text">
-        Please change this password after your first login for security.
-      </p>
-    </div>
-    ` : ''}
-    
-    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
-      <h3 style="margin: 0 0 15px 0; color: #15803d; font-size: 18px; font-weight: 600;" class="mobile-subtitle">Get Started</h3>
-      <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 15px; line-height: 1.8;" class="mobile-text">
-        <li style="margin-bottom: 8px;">Sign in to your account</li>
-        <li style="margin-bottom: 8px;">${data.temporaryPassword ? 'Change your temporary password' : 'Set up your profile'}</li>
-        <li style="margin-bottom: 8px;">Browse classes and book your first session</li>
-      </ul>
-    </div>
-    
-    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="https://onestepfitness.sg/signin" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3); margin-bottom: 15px;" class="mobile-button">
-        Sign In Now
-      </a>
-      ${data.temporaryPassword ? `
-      <div style="margin-top: 20px;">
-        <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px;" class="mobile-text">
-          Want to change your password?
-        </p>
-        <a href="https://onestepfitness.sg/forgot-password" 
-           style="display: inline-block; color: #16a34a; text-decoration: none; font-size: 14px; font-weight: 500; border-bottom: 1px solid #16a34a;">
-          Go to Forgot Password →
-        </a>
-      </div>
-      ` : ''}
-    </div>
-    
-    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
-      If you have any questions, feel free to reach out to us at 
-      <a href="mailto:hello@onestepfitness.sg" style="color: #16a34a; text-decoration: none;">hello@onestepfitness.sg</a>
-    </p>
-  `, `Welcome to One Step Fitness! Your account has been created.${data.temporaryPassword ? ` Temporary password: ${data.temporaryPassword}` : ''}`)
+}): Template {
+  const site = siteUrl()
+  const html = emailShell({
+    preheader: data.temporaryPassword ? 'Sign in with your temporary password and set your own.' : 'Your account is ready. Sign in to book classes.',
+    hero: hero({
+      eyebrow: 'Account ready',
+      title: `Welcome, ${esc(firstName(data.userName))}.<br>Your account is set up.`,
+      sub: 'Our team created your account. Sign in to book classes and track your tokens.',
+    }),
+    cards: [
+      card(`${eyebrow('Sign-in details', C.muted)}${detailRows([['Email', esc(data.email)]])}
+${data.temporaryPassword ? `${spacer(14)}${eyebrow('Temporary password', C.muted)}${codeBlock(data.temporaryPassword)}${para('Please change it after you sign in.', { color: C.muted, size: 14, margin: '14px 0 0' })}` : ''}
+${spacer(18)}${button('Sign in', `${site}/signin`)}
+${data.temporaryPassword ? `${spacer(8)}${button('Change my password', `${site}/forgot-password`, 'white')}` : ''}`),
+    ],
+  })
 
-  const text = `
-Welcome to One Step Fitness, ${data.userName}!
-
-Your account has been created by our team.
-
-${data.temporaryPassword ? `
-Temporary Password: ${data.temporaryPassword}
-Please change this password after your first login for security.
-` : ''}
-
-Get Started:
-- Sign in to your account
-- ${data.temporaryPassword ? 'Change your temporary password' : 'Set up your profile'}
-- Browse classes and book your first session
-
-Sign in: https://onestepfitness.sg/signin
-${data.temporaryPassword ? `
-Change your password: https://onestepfitness.sg/forgot-password
-You can change your password anytime by visiting the forgot password page.
-` : ''}
-
-If you have any questions, feel free to reach out to us at hello@onestepfitness.sg
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    `Welcome to One Step Fitness, ${data.userName}!`,
+    '',
+    'Your account has been created by our team.',
+    '',
+    `Email: ${data.email}`,
+    data.temporaryPassword ? `Temporary password: ${data.temporaryPassword}` : null,
+    data.temporaryPassword ? 'Please change this password after your first sign-in.' : null,
+    '',
+    `Sign in: ${site}/signin`,
+    data.temporaryPassword ? `Change your password: ${site}/forgot-password` : null,
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
-/**
- * Booking Cancellation Email Template
- */
 export function getBookingCancellationEmailTemplate(data: {
   userName: string
   className: string
@@ -809,217 +471,135 @@ export function getBookingCancellationEmailTemplate(data: {
   tokensRefunded: number
   penalty?: boolean
   reason?: string
-}): { html: string; text: string } {
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Booking Cancelled</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Your class booking has been cancelled</p>
-    </div>
-    
-    <div style="background-color: #f9fafb; border-radius: 8px; padding: 25px; margin: 30px 0;" class="mobile-box">
-      <h3 style="margin: 0 0 20px 0; color: #111827; font-size: 20px; font-weight: 600;">${escapeHtml(data.className)}</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Time:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classTime)}</td>
-        </tr>
-        ${data.tokensRefunded > 0 ? `
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Tokens:</td>
-          <td style="padding: 10px 0; color: #16a34a; font-weight: 700; font-size: 15px;">${data.tokensRefunded} token${data.tokensRefunded !== 1 ? 's' : ''} refunded</td>
-        </tr>
-        ` : data.penalty ? `
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Note:</td>
-          <td style="padding: 10px 0; color: #dc2626; font-weight: 600; font-size: 15px;">Late cancellation - tokens consumed</td>
-        </tr>
-        ` : ''}
-      </table>
-    </div>
-    
-    ${data.reason ? `
-    <div style="background-color: #f0fdf4; border-radius: 8px; padding: 20px; margin: 30px 0;">
-       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
-        <strong>Reason:</strong> ${escapeHtml(data.reason)}
-      </p>
-    </div>
-    ` : ''}
-    
-    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
-        Book Another Class
-      </a>
-    </div>
-  `, `Booking cancelled: ${data.className} on ${data.classDate}`)
+}): Template {
+  const site = siteUrl()
+  const refunded = data.tokensRefunded > 0
+  const html = emailShell({
+    preheader: refunded ? `${plural(data.tokensRefunded, 'token')} refunded to your balance.` : `Booking cancelled: ${data.className}`,
+    hero: hero({
+      eyebrow: 'Booking cancelled',
+      title: refunded ? `Your ${data.tokensRefunded === 1 ? 'token is' : 'tokens are'} back.` : 'Your booking is cancelled.',
+      sub: refunded
+        ? `We've cancelled your spot and returned ${esc(plural(data.tokensRefunded, 'token'))} to your balance.`
+        : data.penalty
+          ? 'This was a late cancellation, so the token was used.'
+          : "We've cancelled your spot.",
+    }),
+    cards: [
+      classTicket({ className: data.className, classDate: data.classDate, classTime: data.classTime, status: 'Cancelled', cancelled: true }),
+      refunded ? statTiles([{ value: `+${data.tokensRefunded}`, label: 'Tokens refunded', dark: true }]) : '',
+      data.reason ? quoteCard('Reason', data.reason) : '',
+      card(`${heading('Find another class')}${para(data.penalty && !refunded ? `Next time: ${CANCEL_RULE.charAt(0).toLowerCase()}${CANCEL_RULE.slice(1)}` : 'Pick a class that fits your week.')}${button('Book another class', `${site}/classes`)}`),
+    ],
+  })
 
-  const text = `
-Booking Cancelled
-
-Hi ${data.userName},
-
-Your booking has been cancelled.
-
-Class: ${data.className}
-Date: ${data.classDate}
-Time: ${data.classTime}
-${data.tokensRefunded > 0 ? `Tokens: ${data.tokensRefunded} token${data.tokensRefunded !== 1 ? 's' : ''} refunded` : data.penalty ? 'Note: Late cancellation - tokens consumed' : ''}
-${data.reason ? `Reason: ${data.reason}` : ''}
-
-Book another class: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    'Booking cancelled',
+    '',
+    `Hi ${data.userName},`,
+    '',
+    'Your booking has been cancelled.',
+    '',
+    `Class: ${data.className}`,
+    `Date: ${data.classDate}`,
+    `Time: ${data.classTime}`,
+    refunded ? `Tokens: ${plural(data.tokensRefunded, 'token')} refunded` : data.penalty ? 'Note: late cancellation, token used' : null,
+    data.reason ? `Reason: ${data.reason}` : null,
+    '',
+    `Book another class: ${site}/classes`,
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
-/**
- * Waitlist Promotion Email Template
- */
 export function getWaitlistPromotionEmailTemplate(data: {
   userName: string
   className: string
   classDate: string
   confirmUrl: string
   expiresIn?: string
-}): { html: string; text: string } {
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Spot Available!</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">A spot has opened up in the class you were waiting for</p>
-    </div>
-    
-    <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 25px; border-radius: 8px; margin: 30px 0;">
-      <h3 style="margin: 0 0 20px 0; color: #d97706; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
-        </tr>
-        ${data.expiresIn ? `
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Expires:</td>
-          <td style="padding: 10px 0; color: #d97706; font-weight: 700; font-size: 15px;">${escapeHtml(data.expiresIn)}</td>
-        </tr>
-        ` : ''}
-      </table>
-    </div>
-    
-    <div style="background-color: #f0fdf4; border-radius: 8px; padding: 20px; margin: 30px 0;">
-       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
-        <strong>Important:</strong> This spot is reserved for you, but you need to confirm your booking soon. If you don't confirm within the time limit, the spot will be offered to the next person on the waitlist.
-      </p>
-    </div>
-    
-    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${data.confirmUrl}" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
-        Confirm Booking Now
-      </a>
-    </div>
-  `, `Spot available! Confirm your booking for ${data.className}`)
+}): Template {
+  const html = emailShell({
+    preheader: `A spot opened in ${data.className}. Confirm it before it goes to the next person.`,
+    hero: hero({
+      eyebrow: "You're off the waitlist",
+      title: 'A spot just opened for you.',
+      sub: `Confirm it soon or it goes to the next person on the list.`,
+      right: data.expiresIn ? chip(esc(data.expiresIn)) : '',
+    }),
+    cards: [
+      classTicket({
+        className: data.className,
+        classDate: data.classDate,
+        status: 'Spot held',
+        rows: [data.expiresIn ? ['Hold expires', esc(data.expiresIn)] : null],
+      }),
+      card(`${button('Confirm my spot', data.confirmUrl)}${linkFallback(data.confirmUrl)}`, { pad: '22px 32px' }),
+    ],
+  })
 
-  const text = `
-Spot Available!
-
-Hi ${data.userName},
-
-A spot has opened up in the class you were waiting for!
-
-Class: ${data.className}
-Date: ${data.classDate}
-${data.expiresIn ? `Expires: ${data.expiresIn}` : ''}
-
-Important: This spot is reserved for you, but you need to confirm your booking soon. If you don't confirm within the time limit, the spot will be offered to the next person on the waitlist.
-
-Confirm booking: ${data.confirmUrl}
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    'A spot is available',
+    '',
+    `Hi ${data.userName},`,
+    '',
+    'A spot has opened up in the class you were waiting for.',
+    '',
+    `Class: ${data.className}`,
+    `Date: ${data.classDate}`,
+    data.expiresIn ? `Hold expires: ${data.expiresIn}` : null,
+    '',
+    "Confirm soon. If you don't, the spot goes to the next person on the waitlist.",
+    '',
+    `Confirm my spot: ${data.confirmUrl}`,
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
-/**
- * Class Cancellation Email Template (Admin cancelled class)
- */
 export function getClassCancellationEmailTemplate(data: {
   userName: string
   className: string
   classDate: string
   classTime: string
   tokensRefunded: number
-}): { html: string; text: string } {
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Class Cancelled</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">We're sorry, but this class has been cancelled</p>
-    </div>
-    
-    <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 25px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
-      <h3 style="margin: 0 0 20px 0; color: #991b1b; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Time:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classTime)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Tokens:</td>
-          <td style="padding: 10px 0; color: #16a34a; font-weight: 700; font-size: 15px;">${data.tokensRefunded} token${data.tokensRefunded !== 1 ? 's' : ''} refunded</td>
-        </tr>
-      </table>
-    </div>
-    
-    <div style="background-color: #eff6ff; border-radius: 8px; padding: 20px; margin: 30px 0;">
-       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
-        <strong>What Happened?</strong><br>
-        This class has been cancelled by our team. Your tokens have been automatically refunded to your account. We apologize for any inconvenience.
-      </p>
-    </div>
-    
-    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
-        Browse Other Classes
-      </a>
-    </div>
-  `, `Class cancelled: ${data.className} on ${data.classDate}`)
+}): Template {
+  const site = siteUrl()
+  const html = emailShell({
+    preheader: `Sorry, ${data.className} is cancelled. Your ${data.tokensRefunded === 1 ? 'token has' : 'tokens have'} been refunded.`,
+    hero: hero({
+      eyebrow: 'Class cancelled',
+      title: 'Sorry, this class is off.',
+      sub: `We've had to cancel ${esc(data.className)} on ${esc(data.classDate)}. ${data.tokensRefunded > 0 ? `${esc(plural(data.tokensRefunded, 'token'))} ${data.tokensRefunded === 1 ? 'is' : 'are'} already back in your account.` : ''}`,
+    }),
+    cards: [
+      classTicket({ className: data.className, classDate: data.classDate, classTime: data.classTime, status: 'Cancelled by studio', cancelled: true }),
+      data.tokensRefunded > 0 ? statTiles([{ value: `+${data.tokensRefunded}`, label: 'Tokens refunded', dark: true }]) : '',
+      card(`${heading('Pick another class')}${para('We’re sorry for the change of plans. There are plenty of other classes this week.')}${button("See this week's classes", `${site}/classes`)}`),
+    ],
+  })
 
-  const text = `
-Class Cancelled
-
-Hi ${data.userName},
-
-We're sorry, but this class has been cancelled.
-
-Class: ${data.className}
-Date: ${data.classDate}
-Time: ${data.classTime}
-Tokens: ${data.tokensRefunded} token${data.tokensRefunded !== 1 ? 's' : ''} refunded
-
-What Happened?
-This class has been cancelled by our team. Your tokens have been automatically refunded to your account. We apologize for any inconvenience.
-
-Browse other classes: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    'Class cancelled',
+    '',
+    `Hi ${data.userName},`,
+    '',
+    "We're sorry, but this class has been cancelled by our team.",
+    '',
+    `Class: ${data.className}`,
+    `Date: ${data.classDate}`,
+    `Time: ${data.classTime}`,
+    `Tokens: ${plural(data.tokensRefunded, 'token')} refunded`,
+    '',
+    `Browse other classes: ${site}/classes`,
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
-/**
- * No-Show Warning Email Template
- */
 export function getNoShowWarningEmailTemplate(data: {
   userName: string
   className: string
@@ -1028,343 +608,228 @@ export function getNoShowWarningEmailTemplate(data: {
   tokensConsumed: number
   noShowCount: number
   isFlagged?: boolean
-}): { html: string; text: string } {
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">No-Show Recorded</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">You missed your scheduled class</p>
-    </div>
-    
-    <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 25px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
-      <h3 style="margin: 0 0 20px 0; color: #991b1b; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Time:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classTime)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Tokens:</td>
-          <td style="padding: 10px 0; color: #dc2626; font-weight: 700; font-size: 15px;">${data.tokensConsumed} token${data.tokensConsumed !== 1 ? 's' : ''} consumed</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Total No-Shows:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${data.noShowCount}</td>
-        </tr>
-      </table>
-    </div>
-    
-    ${data.isFlagged ? `
-    <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 20px; border-radius: 8px; margin: 30px 0;">
-      <p style="margin: 0; color: #991b1b; font-size: 15px; line-height: 1.6; font-weight: 600;">
-        Your account has been flagged due to multiple no-shows. Please contact us if you have any questions.
-      </p>
-    </div>
-    ` : ''}
-    
-    <div style="background-color: #eff6ff; border-radius: 8px; padding: 20px; margin: 30px 0;">
-       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
-        <strong>Reminder:</strong> If you can't make it to a class, please cancel at least 24 hours in advance to avoid losing tokens. You can cancel bookings from your "My Bookings" page.
-      </p>
-    </div>
-    
-    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-bookings" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
-        View My Bookings
-      </a>
-    </div>
-  `, `No-show recorded: ${data.className} on ${data.classDate}`)
+}): Template {
+  const site = siteUrl()
+  const html = emailShell({
+    preheader: `${plural(data.tokensConsumed, 'token')} used. ${CANCEL_RULE}`,
+    hero: hero({
+      eyebrow: 'Missed class',
+      title: `We missed you, ${esc(firstName(data.userName))}.`,
+      sub: `You were booked for ${esc(data.className)} on ${esc(data.classDate)} at ${esc(data.classTime)}.`,
+    }),
+    cards: [
+      statTiles([
+        { value: String(data.tokensConsumed), label: data.tokensConsumed === 1 ? 'Token used' : 'Tokens used' },
+        { value: String(data.noShowCount), label: 'Missed classes', dark: true },
+      ]),
+      card(`${heading('Next time, cancel by 23:59 the day before')}${para('Cancel before then and your token comes straight back. You can cancel any booking from My bookings.')}${button('My bookings', `${site}/my-bookings`, 'dark')}`),
+      data.isFlagged
+        ? darkCard(`${eyebrow('Account flagged')}${para("You've missed several classes, so your account has been flagged. Message us and we'll sort it out together.", { color: C.faint, margin: '0 0 16px' })}${button('WhatsApp the studio', STUDIO_WHATSAPP_URL)}`)
+        : '',
+    ],
+  })
 
-  const text = `
-No-Show Recorded
-
-Hi ${data.userName},
-
-You missed your scheduled class.
-
-Class: ${data.className}
-Date: ${data.classDate}
-Time: ${data.classTime}
-Tokens: ${data.tokensConsumed} token${data.tokensConsumed !== 1 ? 's' : ''} consumed
-Total No-Shows: ${data.noShowCount}
-
-${data.isFlagged ? 'Your account has been flagged due to multiple no-shows. Please contact us if you have any questions.' : ''}
-
-Reminder: If you can't make it to a class, please cancel at least 24 hours in advance to avoid losing tokens. You can cancel bookings from your "My Bookings" page.
-
-View bookings: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/my-bookings
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    'We missed you',
+    '',
+    `Hi ${data.userName},`,
+    '',
+    'You missed a class you were booked for.',
+    '',
+    `Class: ${data.className}`,
+    `Date: ${data.classDate}`,
+    `Time: ${data.classTime}`,
+    `Tokens used: ${data.tokensConsumed}`,
+    `Missed classes: ${data.noShowCount}`,
+    '',
+    data.isFlagged ? "Your account has been flagged because of several missed classes. Message us and we'll sort it out together." : null,
+    '',
+    CANCEL_RULE,
+    '',
+    `View bookings: ${site}/my-bookings`,
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
-/**
- * Forgot Password Email Template (User requested reset)
- */
 export function getForgotPasswordEmailTemplate(data: {
   userName: string
   resetLink: string
   expiresIn?: string
-}): { html: string; text: string } {
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Reset Your Password</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Click the button below to reset your password</p>
-    </div>
-    
-    <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 30px 0;">
-       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
-        <strong>Security Note:</strong> This link will expire ${data.expiresIn || 'in 1 hour'}. If you didn't request this password reset, please ignore this email or contact us if you have concerns.
-      </p>
-    </div>
-    
-    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${data.resetLink}" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
-        Reset Password
-      </a>
-    </div>
-    
-    <div style="background-color: #f9fafb; border-radius: 8px; padding: 20px; margin: 30px 0;">
-      <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;" class="mobile-text">
-        <strong>Having trouble?</strong> If the button doesn't work, copy and paste this link into your browser:
-      </p>
-      <p style="margin: 10px 0 0 0; color: #3b82f6; font-size: 13px; word-break: break-all; font-family: monospace;">
-        ${data.resetLink}
-      </p>
-    </div>
-    
-    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
-      If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
-    </p>
-  `, `Reset your password: Click the link to reset your password`)
+}): Template {
+  const expires = data.expiresIn || 'in 1 hour'
+  const html = emailShell({
+    preheader: `Reset your password. The link expires ${expires}.`,
+    hero: hero({
+      eyebrow: 'Password reset',
+      title: 'Set a new password.',
+      sub: `Tap the button below to choose a new password. The link expires ${esc(expires)}.`,
+      size: 'md',
+    }),
+    cards: [
+      card(`${button('Reset password', data.resetLink)}${linkFallback(data.resetLink)}`),
+      card(`${heading("Didn't ask for this?")}${para('You can ignore this email. Your password stays the same.', { margin: '0' })}`),
+    ],
+  })
 
-  const text = `
-Reset Your Password
-
-Hi ${data.userName},
-
-Click the link below to reset your password:
-
-${data.resetLink}
-
-Security Note: This link will expire ${data.expiresIn || 'in 1 hour'}. If you didn't request this password reset, please ignore this email.
-
-If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    'Reset your password',
+    '',
+    `Hi ${data.userName},`,
+    '',
+    'Use this link to reset your password:',
+    data.resetLink,
+    '',
+    `The link expires ${expires}. If you didn't ask for this, ignore this email. Your password stays the same.`,
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
-/**
- * Forgot Password OTP Email Template (6-digit code)
- */
 export function getForgotPasswordOTPEmailTemplate(data: {
   userName: string
   otpCode: string
   verifyUrl?: string
   expiresIn?: string
-}): { html: string; text: string } {
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Reset Your Password</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Enter the verification code below to reset your password</p>
-    </div>
-    
-    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
-      <p style="margin: 0 0 15px 0; color: #374151; font-size: 15px; line-height: 1.6; text-align: center;">
-        <strong>Your verification code:</strong>
-      </p>
-      <div style="text-align: center; margin: 20px 0;">
-         <div style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; padding: 20px 40px; border-radius: 12px; font-size: 36px; font-weight: 700; letter-spacing: 8px; font-family: monospace; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-otp">
-          ${escapeHtml(data.otpCode)}
-        </div>
-      </div>
-      <p style="margin: 15px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;">
-        This code will expire ${data.expiresIn || 'in 15 minutes'}.
-      </p>
-    </div>
-    
-    <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin: 30px 0;">
-       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
-        <strong>Security Note:</strong> If you didn't request this password reset, please ignore this email or contact us if you have concerns.
-      </p>
-    </div>
-    
-    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
-      If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
-    </p>
-  `, `Reset your password: Enter verification code ${data.otpCode}`)
+}): Template {
+  const expires = data.expiresIn || 'in 15 minutes'
+  const digits = data.otpCode.split('')
+  const boxes = `<table role="presentation" cellpadding="0" cellspacing="6" style="margin:22px 0 0 -6px"><tr>${digits
+    .map(
+      (d) =>
+        `<td align="center" style="width:44px;height:58px;background:${C.tile};border:1px solid #3f3f46;border-radius:14px;font:800 28px/58px ui-monospace,Menlo,Consolas,monospace;color:${C.lime}">${esc(d)}</td>`,
+    )
+    .join('')}</tr></table>`
 
-  const text = `
-Reset Your Password
+  const html = emailShell({
+    preheader: `${data.otpCode} is your code. It expires ${expires}.`,
+    hero: hero({
+      eyebrow: 'Password reset',
+      title: "Here's your code.",
+      sub: `Enter it on the password reset page. It expires ${esc(expires)}.`,
+      extra: boxes,
+      size: 'md',
+    }),
+    cards: [
+      data.verifyUrl ? card(`${button('Open reset page', data.verifyUrl)}`, { pad: '22px 32px' }) : '',
+      card(`${heading("Didn't ask for this?")}${para('You can ignore this email. Your password stays the same. Never share this code, even with our team.', { margin: '0' })}`),
+    ],
+  })
 
-Hi ${data.userName},
-
-Enter this verification code to reset your password:
-
-${data.otpCode}
-
-This code will expire ${data.expiresIn || 'in 15 minutes'}.
-
-Please copy this code and enter it on the password reset page.
-
-Security Note: If you didn't request this password reset, please ignore this email.
-
-If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    'Reset your password',
+    '',
+    `Hi ${data.userName},`,
+    '',
+    `Your verification code: ${data.otpCode}`,
+    `It expires ${expires}.`,
+    data.verifyUrl ? `Reset page: ${data.verifyUrl}` : null,
+    '',
+    "If you didn't ask for this, ignore this email. Your password stays the same. Never share this code.",
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
-/**
- * Password Reset Email Template (Admin reset password)
- */
 export function getPasswordResetEmailTemplate(data: {
   userName: string
   newPassword: string
   resetBy?: string
-}): { html: string; text: string } {
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Password Reset</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">Your password has been reset by an administrator</p>
-    </div>
-    
-    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
-      <h3 style="margin: 0 0 10px 0; color: #d97706; font-size: 18px; font-weight: 600;" class="mobile-subtitle">New Password</h3>
-       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
-        Your new password: <strong style="font-family: monospace; background: white; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 8px;">${escapeHtml(data.newPassword)}</strong>
-      </p>
-      <p style="margin: 15px 0 0 0; color: #6b7280; font-size: 14px;" class="mobile-text">
-        Please change this password after your first login for security.
-      </p>
-    </div>
-    
-    ${data.resetBy ? `
-    <div style="background-color: #f9fafb; border-radius: 8px; padding: 15px; margin: 30px 0;">
-      <p style="margin: 0; color: #6b7280; font-size: 14px;" class="mobile-text">
-        Password reset by: <strong>${escapeHtml(data.resetBy)}</strong>
-      </p>
-    </div>
-    ` : ''}
-    
-    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_ADMIN_APP_URL || process.env.ADMIN_APP_URL || 'https://admin.onestepfitness.sg'}/signin" 
-         style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3);" class="mobile-button">
-        Sign In Now
-      </a>
-    </div>
-    
-    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
-      If you didn't request this password reset, please contact us immediately at 
-      <a href="mailto:hello@onestepfitness.sg" style="color: #16a34a; text-decoration: none;">hello@onestepfitness.sg</a>
-    </p>
-  `, `Password reset: Your new password is ${data.newPassword}`)
+}): Template {
+  const signin = `${adminUrl()}/signin`
+  const html = emailShell({
+    preheader: 'Your password was reset by our team.',
+    hero: hero({
+      eyebrow: 'Password reset',
+      title: 'Your password was reset.',
+      sub: `Hi ${esc(firstName(data.userName))}, our team set a new password for you. Please change it after you sign in.`,
+      size: 'md',
+    }),
+    cards: [
+      card(`${eyebrow('New password', C.muted)}${codeBlock(data.newPassword)}
+${data.resetBy ? para(`Reset by ${strong(esc(data.resetBy))}.`, { color: C.muted, size: 14, margin: '14px 0 0' }) : ''}
+${spacer(18)}${button('Sign in', signin)}`),
+      card(`${heading("Didn't ask for this?")}${para(`Contact us right away at <a href="mailto:${STUDIO_EMAIL}" style="color:${C.ink};font-weight:600">${STUDIO_EMAIL}</a>.`, { margin: '0' })}`),
+    ],
+  })
 
-  const text = `
-Password Reset
-
-Hi ${data.userName},
-
-Your password has been reset by an administrator.
-
-New Password: ${data.newPassword}
-Please change this password after your first login for security.
-
-${data.resetBy ? `Password reset by: ${data.resetBy}` : ''}
-
-Sign in: ${process.env.NEXT_PUBLIC_ADMIN_APP_URL || process.env.ADMIN_APP_URL || 'https://admin.onestepfitness.sg'}/signin
-
-If you didn't request this password reset, please contact us immediately at hello@onestepfitness.sg
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    'Password reset',
+    '',
+    `Hi ${data.userName},`,
+    '',
+    'Your password has been reset by our team.',
+    `New password: ${data.newPassword}`,
+    'Please change this password after you sign in.',
+    data.resetBy ? `Reset by: ${data.resetBy}` : null,
+    '',
+    `Sign in: ${signin}`,
+    '',
+    `If you didn't ask for this, contact us right away at ${STUDIO_EMAIL}.`,
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
 /**
- * Birthday Email Template
+ * Birthday email. Never shows the member's age: `age` is accepted for
+ * backwards compatibility but deliberately ignored.
  */
-export function getBirthdayEmailTemplate(data: {
-  userName: string
-  age?: number
-}): { html: string; text: string } {
-  const ageText = data.age ? ` turning ${data.age}` : ''
-  
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <div style="font-size: 48px; margin-bottom: 20px;">🎉🎂🎈</div>
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 28px; font-weight: 700;" class="mobile-title">Happy Birthday${ageText}, ${escapeHtml(data.userName)}!</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">We hope your special day is filled with joy and celebration!</p>
-    </div>
-    
-    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 25px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
-      <p style="margin: 0; color: #374151; font-size: 16px; line-height: 1.8; text-align: center;" class="mobile-text">
-        <strong>Thank you for being part of the One Step Fitness family!</strong><br>
-        We're so grateful to have you in our dance fitness community. On this special day, we want to celebrate you and wish you a year filled with health, happiness, and amazing dance sessions!
-      </p>
-    </div>
-    
-    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; border-radius: 8px; margin: 30px 0;" class="mobile-box">
-      <h3 style="margin: 0 0 15px 0; color: #15803d; font-size: 18px; font-weight: 600;" class="mobile-subtitle">Ready to Dance?</h3>
-      <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
-        What better way to celebrate than with a fun dance session? Book a class and let's make your birthday even more special!
-      </p>
-    </div>
-    
-    <div style="text-align: center; margin: 40px 0;" class="mobile-spacing">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes" 
-         style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3);" class="mobile-button">
-        Book a Class Today
-      </a>
-    </div>
-    
-    <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center;" class="mobile-text">
-      Once again, happy birthday! We hope you have an absolutely wonderful day! 🎊
-    </p>
-  `, `Happy Birthday${ageText}, ${data.userName}! 🎉`)
+export function getBirthdayEmailTemplate(data: { userName: string; age?: number }): Template {
+  const site = siteUrl()
+  const name = esc(firstName(data.userName))
+  const confetti = `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 22px"><tr>${['#03a862', '#f9e510', '#1e90ff', C.lime, '#ffffff', '#03a862', '#f9e510']
+    .map((c) => `<td style="width:22px;height:6px;background:${c};border-radius:3px;font-size:0;line-height:0">&nbsp;</td><td style="width:6px;font-size:0">&nbsp;</td>`)
+    .join('')}</tr></table>`
 
-  const text = `
-Happy Birthday${ageText}, ${data.userName}!
+  const heroHtml = `${logoRow('Birthday')}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+<tr><td class="px" style="padding:34px 32px 0">${confetti}
+${eyebrow('Today is all yours')}
+<h1 class="bday" style="margin:0;font:900 64px/62px ${FONT};letter-spacing:-2.5px;color:${C.lime}">Happy<br>birthday,</h1>
+<p class="bday" style="margin:4px 0 0;font:900 64px/62px ${FONT};letter-spacing:-2.5px;color:#ffffff">${name}.</p>
+<p style="margin:14px 0 0;font:400 15px/24px ${FONT};color:${C.faint}">Everyone at One Step Fitness is cheering for you today.</p>
+</td></tr>
+<tr><td style="padding:16px 12px 12px">${heroPhoto()}</td></tr>
+</table>`
 
-🎉🎂🎈
+  const html = emailShell({
+    preheader: 'Everyone at One Step Fitness is cheering for you today.',
+    hero: heroHtml,
+    cards: [
+      card(`${eyebrow('A note from the studio', C.muted)}${heading('Thank you for stepping with us')}
+${para('Every class is better because you’re in it. Your energy on the floor lifts the whole room, and we’re grateful you chose to spend part of your year with us.')}
+${para('We hope this next year brings you strong legs, good music and plenty of reasons to smile.', { margin: '0' })}`),
+      darkCard(`${eyebrow('Celebrate on the step')}<p style="margin:0 0 8px;font:800 24px/30px ${FONT};letter-spacing:-.6px;color:#ffffff">Dance your birthday in.</p>
+${para('Bring your best friend, pick your favourite class this week, and celebrate with us.', { color: C.faint, margin: '0 0 20px' })}
+${button('Book a birthday class', `${site}/classes`)}`),
+      card(`${para('With love,', { margin: '0' })}<p style="margin:2px 0 0;font:700 15px/24px ${FONT};color:${C.ink}">The One Step Fitness team</p>`, { pad: '22px 32px' }),
+    ],
+  })
 
-We hope your special day is filled with joy and celebration!
-
-Thank you for being part of the One Step Fitness family!
-We're so grateful to have you in our dance fitness community. On this special day, we want to celebrate you and wish you a year filled with health, happiness, and amazing dance sessions!
-
-Ready to Dance?
-What better way to celebrate than with a fun dance session? Book a class and let's make your birthday even more special!
-
-Book a class: ${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_APP_URL || 'https://onestepfitness.sg'}/classes
-
-Once again, happy birthday! We hope you have an absolutely wonderful day!
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    `Happy birthday, ${firstName(data.userName)}!`,
+    '',
+    'Everyone at One Step Fitness is cheering for you today.',
+    '',
+    "Thank you for stepping with us. Every class is better because you're in it, and we're grateful you chose to spend part of your year with us.",
+    '',
+    'We hope this next year brings you strong legs, good music and plenty of reasons to smile.',
+    '',
+    `Dance your birthday in. Book a class this week: ${site}/classes`,
+    '',
+    'With love,',
+    'The One Step Fitness team',
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
-/**
- * Escape HTML to prevent XSS
- */
-/**
- * Trial Booking Confirmation Email Template (Guest)
- */
 export function getTrialBookingConfirmationEmailTemplate(data: {
   guestName: string
   className: string
@@ -1374,210 +839,317 @@ export function getTrialBookingConfirmationEmailTemplate(data: {
   instructorName?: string
   amount: number
   currency: string
-}): { html: string; text: string } {
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Trial Class Booked!</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">We're excited to have you join us</p>
-    </div>
-    
-    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 25px; border-radius: 8px; margin: 30px 0;">
-      <h3 style="margin: 0 0 20px 0; color: #15803d; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Time:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classTime)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Location:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classLocation)}</td>
-        </tr>
-        ${data.instructorName ? `
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Instructor:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.instructorName)}</td>
-        </tr>
-        ` : ''}
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Amount Paid:</td>
-          <td style="padding: 10px 0; color: #16a34a; font-weight: 700; font-size: 15px;">${data.currency} ${data.amount.toFixed(2)}</td>
-        </tr>
-      </table>
-    </div>
-    
-    <div style="background-color: #eff6ff; border-radius: 8px; padding: 20px; margin: 30px 0;">
-       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
-        <strong>What to Expect:</strong><br>
-        Please arrive 10 minutes early for check-in. Bring water and wear comfortable workout clothes. Our team will be there to welcome you!
-      </p>
-    </div>
-    
-    <div style="background-color: #fef3c7; border-radius: 8px; padding: 20px; margin: 30px 0;">
-       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
-        <strong>Want to become a member?</strong><br>
-        If you enjoy the class, our team can help you set up a membership account. Just ask at the front desk!
-      </p>
-    </div>
-  `, `Trial class booked! ${data.className} on ${data.classDate}`)
+}): Template {
+  const amount = `${data.currency} ${data.amount.toFixed(2)}`
+  const html = emailShell({
+    preheader: `${data.className} · ${data.classDate} · ${data.classTime}. Arrive 10 minutes early.`,
+    hero: hero({
+      eyebrow: 'Trial booked',
+      title: `Your first class is booked, ${esc(firstName(data.guestName))}.`,
+      sub: "We can't wait to meet you.",
+      right: chip('Paid'),
+      extra: heroPhoto(),
+    }),
+    cards: [
+      classTicket({
+        className: data.className,
+        classDate: data.classDate,
+        classTime: data.classTime,
+        instructorName: data.instructorName,
+        status: 'Trial',
+        rows: [
+          ['Location', esc(data.classLocation)],
+          ['Paid', esc(amount)],
+        ],
+      }),
+      card(`${heading("First time? Here's what to bring")}${para('Water, a small towel and comfortable workout clothes. Please arrive 10 minutes early so we can welcome you. No experience needed: the coach shows every move.')}
+${para('Enjoyed it? Ask our team at the front desk about setting up a membership.', { color: C.muted, size: 14 })}
+${button('WhatsApp us a question', STUDIO_WHATSAPP_URL, 'dark')}`),
+    ],
+  })
 
-  const text = `
-Trial Class Booked!
-
-Hi ${data.guestName},
-
-Your trial class booking has been confirmed!
-
-Class: ${data.className}
-Date: ${data.classDate}
-Time: ${data.classTime}
-Location: ${data.classLocation}
-${data.instructorName ? `Instructor: ${data.instructorName}` : ''}
-Amount Paid: ${data.currency} ${data.amount.toFixed(2)}
-
-What to Expect:
-Please arrive 10 minutes early for check-in. Bring water and wear comfortable workout clothes. Our team will be there to welcome you!
-
-Want to become a member?
-If you enjoy the class, our team can help you set up a membership account. Just ask at the front desk!
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    'Trial class booked',
+    '',
+    `Hi ${data.guestName},`,
+    '',
+    'Your trial class is confirmed.',
+    '',
+    `Class: ${data.className}`,
+    `Date: ${data.classDate}`,
+    `Time: ${data.classTime}`,
+    `Location: ${data.classLocation}`,
+    data.instructorName ? `Instructor: ${data.instructorName}` : null,
+    `Paid: ${amount}`,
+    '',
+    'Please arrive 10 minutes early. Bring water, a small towel and comfortable workout clothes.',
+    'Enjoyed it? Ask our team at the front desk about setting up a membership.',
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
-/**
- * Pick-Your-Class Link Email Template
- * Sent to an already-paid pay-first (Studio 1-for-1 / Fast Trial) guest who
- * hasn't picked a class yet, so they can self-schedule instead of waiting on staff.
- */
 export function getPickClassLinkEmailTemplate(data: {
   guestName: string
   venueLabel: string
   pickClassUrl: string
-}): { html: string; text: string } {
-  const firstName = data.guestName.trim().split(/\s+/)[0] || 'there'
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">You're Paid Up — Pick Your Class!</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">${escapeHtml(data.venueLabel)}</p>
-    </div>
+}): Template {
+  const name = firstName(data.guestName)
+  const html = emailShell({
+    preheader: `Your ${data.venueLabel} is paid. Choose a time that suits you.`,
+    hero: hero({
+      eyebrow: 'Choose your class',
+      title: `Pick a time that suits you, ${esc(name)}.`,
+      sub: `Your ${esc(data.venueLabel)} is paid. Choose your session now, or reply to this email and our team will schedule it for you.`,
+      right: chip('Paid'),
+    }),
+    cards: [card(`${button('Pick my trial class', data.pickClassUrl)}${linkFallback(data.pickClassUrl)}`)],
+  })
 
-    <p style="margin: 0 0 24px; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
-      Hi ${escapeHtml(firstName)}, your payment is confirmed. Choose your session now, or reply to this email and our team will schedule it for you.
-    </p>
-
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin: 28px 0;">
-      <tr>
-        <td align="center" style="padding: 0 16px;">
-          <table role="presentation" cellspacing="0" cellpadding="0" style="width: 100%; max-width: 320px; margin: 0 auto;">
-            <tr>
-              <td align="center" style="border-radius: 999px; background-color: #16a34a; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);">
-                <a href="${data.pickClassUrl}" style="display: block; width: 100%; max-width: 100%; box-sizing: border-box; color: #ffffff !important; text-decoration: none; padding: 16px 20px; border-radius: 999px; font-weight: 700; font-size: 16px; line-height: 1.3; text-align: center;">
-                  Pick My Trial Class
-                </a>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  `, `Pick your class — ${data.venueLabel}`)
-
-  const text = `
-You're Paid Up — Pick Your Class!
-
-Hi ${firstName},
-
-Your payment for ${data.venueLabel} is confirmed. Choose your session now, or reply to this email and our team will schedule it for you.
-
-PICK MY TRIAL CLASS
-${data.pickClassUrl}
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    'Pick your class',
+    '',
+    `Hi ${name},`,
+    '',
+    `Your payment for ${data.venueLabel} is confirmed. Choose your session now, or reply to this email and our team will schedule it for you.`,
+    '',
+    `Pick my trial class: ${data.pickClassUrl}`,
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
-/**
- * Checkout Reminder Email Template
- * Sent when a customer opened HitPay checkout but never finished paying.
- */
 export function getCheckoutReminderEmailTemplate(data: {
   customerName: string
   itemLabel: string
   itemDetail?: string
   amountLabel: string
   checkoutUrl: string
-}): { html: string; text: string } {
-  const firstName = data.customerName.trim().split(/\s+/)[0] || 'there'
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">Your Payment Didn't Go Through</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">${escapeHtml(data.itemLabel)}</p>
-    </div>
+}): Template {
+  const name = firstName(data.customerName)
+  const html = emailShell({
+    preheader: `${data.itemLabel} isn't confirmed yet. Pick up where you left off.`,
+    hero: hero({
+      eyebrow: 'Still thinking?',
+      title: `Your ${esc(data.itemLabel)} is waiting.`,
+      sub: `Hi ${esc(name)}, your checkout wasn't completed, so this isn't confirmed yet. Pick up where you left off.`,
+    }),
+    cards: [
+      card(`${detailRows([['Item', esc(data.itemLabel)], data.itemDetail ? ['Details', esc(data.itemDetail)] : null, ['Total', esc(data.amountLabel)]])}${spacer(18)}${button('Finish my payment', data.checkoutUrl)}
+${para("Card declined or PayNow timed out? Just reply to this email and we'll help. If you've already paid, you can ignore this message.", { color: C.muted, size: 14, margin: '16px 0 0' })}`),
+    ],
+  })
 
-    <p style="margin: 0 0 16px; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
-      Hi ${escapeHtml(firstName)}, it looks like your checkout wasn't completed, so this isn't confirmed yet. You can pick up where you left off below.
-    </p>
-
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin: 0 0 8px; background-color: #f9fafb; border-radius: 12px;">
-      <tr>
-        <td style="padding: 16px 20px; color: #111827; font-size: 15px; font-weight: 600;">${escapeHtml(data.itemLabel)}</td>
-        <td align="right" style="padding: 16px 20px; color: #111827; font-size: 15px; font-weight: 700;">${escapeHtml(data.amountLabel)}</td>
-      </tr>
-      ${data.itemDetail ? `<tr><td colspan="2" style="padding: 0 20px 16px; color: #6b7280; font-size: 14px;">${escapeHtml(data.itemDetail)}</td></tr>` : ''}
-    </table>
-
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin: 28px 0;">
-      <tr>
-        <td align="center" style="padding: 0 16px;">
-          <table role="presentation" cellspacing="0" cellpadding="0" style="width: 100%; max-width: 320px; margin: 0 auto;">
-            <tr>
-              <td align="center" style="border-radius: 999px; background-color: #16a34a; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);">
-                <a href="${data.checkoutUrl}" style="display: block; width: 100%; max-width: 100%; box-sizing: border-box; color: #ffffff !important; text-decoration: none; padding: 16px 20px; border-radius: 999px; font-weight: 700; font-size: 16px; line-height: 1.3; text-align: center;">
-                  Finish My Payment
-                </a>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-
-    <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;" class="mobile-text">
-      Card declined or PayNow timed out? Just reply to this email and we'll help you sort it out. If you've already paid, you can ignore this message.
-    </p>
-  `, `Finish your payment — ${data.itemLabel}`)
-
-  const text = `
-Your Payment Didn't Go Through
-
-Hi ${firstName},
-
-It looks like your checkout wasn't completed, so this isn't confirmed yet:
-
-${data.itemLabel} — ${data.amountLabel}${data.itemDetail ? `\n${data.itemDetail}` : ''}
-
-FINISH MY PAYMENT
-${data.checkoutUrl}
-
-Card declined or PayNow timed out? Just reply to this email and we'll help you sort it out. If you've already paid, you can ignore this message.
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    "Your payment didn't go through",
+    '',
+    `Hi ${name},`,
+    '',
+    "Your checkout wasn't completed, so this isn't confirmed yet:",
+    `${data.itemLabel} — ${data.amountLabel}`,
+    data.itemDetail || null,
+    '',
+    `Finish my payment: ${data.checkoutUrl}`,
+    '',
+    "Card declined or PayNow timed out? Reply to this email and we'll help. If you've already paid, ignore this message.",
+    '',
+    textFooter(),
+  )
   return { html, text }
 }
 
-/**
- * Trial Booking Admin Notification Email Template
- */
+export function getReferralVoucherEmailTemplate(data: {
+  userName: string
+  voucherCode: string
+  discountPercent: number
+}): Template {
+  const site = siteUrl()
+  const html = emailShell({
+    preheader: `Use code ${data.voucherCode} for ${data.discountPercent}% off your next token pack.`,
+    hero: hero({
+      eyebrow: 'Referral reward',
+      title: `${lime(`${data.discountPercent}% off`)}<br>your next pack.`,
+      sub: `Hi ${esc(firstName(data.userName))}, here's a discount on your next token package.`,
+    }),
+    cards: [
+      card(`${eyebrow('Your code', C.muted)}${codeBlock(data.voucherCode)}${para('Enter it at checkout when you buy tokens on the app or website. One-time use.', { color: C.muted, size: 14, margin: '14px 0 18px' })}${button('Buy tokens', `${site}/packages`)}`),
+    ],
+  })
+
+  const text = lines(
+    'Your referral discount',
+    '',
+    `Hi ${data.userName},`,
+    '',
+    `You've received a ${data.discountPercent}% discount voucher for your next token package.`,
+    `Your voucher code: ${data.voucherCode}`,
+    '',
+    'Enter it at checkout when you buy tokens on the app or website. One-time use.',
+    '',
+    `Buy tokens: ${site}/packages`,
+    '',
+    textFooter(),
+  )
+  return { html, text }
+}
+
+export function getRegistrationFormEmailTemplate(data: { userName: string; formUrl: string }): Template {
+  const html = emailShell({
+    preheader: 'One quick form to finalise your membership. The link expires in 7 days.',
+    hero: hero({
+      eyebrow: 'Before you start',
+      title: `One quick form, ${esc(firstName(data.userName))}.`,
+      sub: 'Please fill in the membership terms and conditions form. It’s needed to finalise your membership.',
+    }),
+    cards: [
+      card(`${button('Complete the form', data.formUrl)}${para('This link expires in 7 days. Need a new one? Just reply to this email.', { color: C.muted, size: 14, margin: '16px 0 0' })}${linkFallback(data.formUrl)}`),
+    ],
+    footerNote: "If you didn't expect this, you can ignore this email.",
+  })
+
+  const text = lines(
+    'Complete your registration',
+    '',
+    `Hi ${data.userName},`,
+    '',
+    'Please fill in the membership terms and conditions form. It is needed to finalise your membership.',
+    '',
+    `Form link: ${data.formUrl}`,
+    '',
+    'This link expires in 7 days. Need a new one? Reply to this email.',
+    '',
+    textFooter(),
+  )
+  return { html, text }
+}
+
+export function getRegistrationFormCompletedEmailTemplate(data: { userName: string }): Template {
+  const tick = (t: string) => `<tr><td width="26" style="vertical-align:top;font:800 14px/22px ${FONT};color:${C.limeInk}">&#10003;</td><td style="font:400 15px/22px ${FONT};color:${C.body};padding-bottom:8px">${t}</td></tr>`
+  const html = emailShell({
+    preheader: 'Your signed registration form is attached as a PDF.',
+    hero: hero({
+      eyebrow: 'Registration complete',
+      title: `Thanks, ${esc(firstName(data.userName))}. You're registered.`,
+      sub: 'Your form is attached to this email as a PDF. Please keep it for your records.',
+      right: chip('Done'),
+    }),
+    cards: [
+      card(`${heading('What happens next')}<table role="presentation" cellpadding="0" cellspacing="0">${tick('Our staff review and countersign your form')}${tick('You get a final copy with all signatures')}${tick('Your membership is fully activated')}</table>
+${spacer(6)}${para('Questions? Just reply to this email. Welcome to the One Step Fitness family!', { margin: '0' })}`),
+    ],
+  })
+
+  const text = lines(
+    'Registration complete',
+    '',
+    `Hi ${data.userName},`,
+    '',
+    'Thank you for completing your One Step Fitness membership registration.',
+    'Your form is attached to this email as a PDF. Please keep it for your records.',
+    '',
+    'What happens next:',
+    '- Our staff review and countersign your form',
+    '- You get a final copy with all signatures',
+    '- Your membership is fully activated',
+    '',
+    'Questions? Reply to this email. Welcome to the One Step Fitness family!',
+    '',
+    textFooter(),
+  )
+  return { html, text }
+}
+
+export function getInvoiceEmailTemplate(data: {
+  toName: string
+  invoiceNumber: string
+  amountLabel: string
+  issuedDateLabel: string
+  description: string
+  pdfUrl: string
+}): Template {
+  const html = emailShell({
+    preheader: `${data.amountLabel} · ${data.description}`,
+    hero: hero({
+      eyebrow: `Invoice ${esc(data.invoiceNumber)}`,
+      title: esc(data.amountLabel),
+      sub: `Hi ${esc(firstName(data.toName))}, thanks for your payment. Here's your invoice for ${esc(data.description)}.`,
+      right: chip('Paid'),
+    }),
+    cards: [
+      card(`${detailRows([
+        ['Invoice no.', esc(data.invoiceNumber)],
+        ['Issued', esc(data.issuedDateLabel)],
+        ['Description', esc(data.description)],
+        ['Total paid', esc(data.amountLabel)],
+      ])}${spacer(18)}${button('Download invoice (PDF)', data.pdfUrl)}${linkFallback(data.pdfUrl)}`),
+    ],
+  })
+
+  const text = lines(
+    `Invoice ${data.invoiceNumber} — One Step Fitness`,
+    '',
+    `Hi ${data.toName},`,
+    '',
+    `Thanks for your payment. Here's your invoice for ${data.description}.`,
+    '',
+    `Invoice number: ${data.invoiceNumber}`,
+    `Issued: ${data.issuedDateLabel}`,
+    `Description: ${data.description}`,
+    `Total paid: ${data.amountLabel}`,
+    '',
+    `Download your invoice: ${data.pdfUrl}`,
+    '',
+    textFooter(),
+  )
+  return { html, text }
+}
+
+/** Personal follow-up written by staff (lead outreach). */
+export function getLeadFollowUpEmailTemplate(data: {
+  leadName: string
+  bodyText: string
+  subject?: string
+}): Template {
+  const site = siteUrl()
+  const trialUrl = `${site}/trial-booking`
+  const scheduleUrl = `${site}/schedule`
+  const preheader = (data.subject || 'A message from One Step Fitness').slice(0, 120)
+
+  const html = emailShell({
+    preheader,
+    hero: `${logoRow('Message')}${spacer(26)}`,
+    cards: [
+      card(`${textToParagraphs(data.bodyText)}${spacer(4)}${actionRow([
+        ['Book a trial class', trialUrl],
+        ['WhatsApp us', STUDIO_WHATSAPP_URL],
+      ])}
+<p style="margin:16px 0 0;font:400 14px/22px ${FONT};color:${C.muted}"><a href="${esc(scheduleUrl)}" style="color:${C.ink};font-weight:600;text-decoration:underline">View the class schedule</a> or just reply to this email.</p>`),
+    ],
+  })
+
+  const text = lines(
+    data.bodyText,
+    '',
+    '---',
+    `Book a trial class: ${trialUrl}`,
+    `Class schedule: ${scheduleUrl}`,
+    `WhatsApp: ${STUDIO_WHATSAPP_URL}`,
+    `Phone: ${STUDIO_PHONE_DISPLAY}`,
+    `Email: ${STUDIO_EMAIL}`,
+    '',
+    'Reply to this email and our team will get back to you shortly.',
+    '',
+    textFooter(),
+  )
+  return { html, text }
+}
+
+// ===========================================================================
+// Staff emails
+// ===========================================================================
+
 export function getTrialBookingAdminNotificationEmailTemplate(data: {
   guestName: string
   guestEmail: string
@@ -1591,109 +1163,59 @@ export function getTrialBookingAdminNotificationEmailTemplate(data: {
   amount: number
   currency: string
   bookingId: string
-}): { html: string; text: string } {
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">New Trial Class Booking</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">A guest has booked a trial class</p>
-    </div>
-    
-    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 25px; border-radius: 8px; margin: 30px 0;">
-      <h3 style="margin: 0 0 20px 0; color: #92400e; font-size: 20px; font-weight: 600;" class="mobile-subtitle">Guest Information</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Name:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.guestName)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Email:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.guestEmail)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Phone:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.guestPhone)}</td>
-        </tr>
-        ${data.guestDateOfBirth ? `
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Date of Birth:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(new Date(data.guestDateOfBirth).toLocaleDateString('en-SG', { year: 'numeric', month: 'long', day: 'numeric' }))}</td>
-        </tr>
-        ` : ''}
-      </table>
-    </div>
-    
-    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 25px; border-radius: 8px; margin: 30px 0;">
-      <h3 style="margin: 0 0 20px 0; color: #15803d; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Time:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classTime)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Location:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classLocation)}</td>
-        </tr>
-        ${data.instructorName ? `
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Instructor:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.instructorName)}</td>
-        </tr>
-        ` : ''}
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Amount Paid:</td>
-          <td style="padding: 10px 0; color: #16a34a; font-weight: 700; font-size: 15px;">${data.currency} ${data.amount.toFixed(2)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Booking ID:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.bookingId)}</td>
-        </tr>
-      </table>
-    </div>
-    
-    <div style="background-color: #eff6ff; border-radius: 8px; padding: 20px; margin: 30px 0;">
-       <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.6;" class="mobile-text">
-        <strong>Action Required:</strong><br>
-        Please create a user account for this guest if they want to become a member. The guest information is provided above.
-      </p>
-    </div>
-  `, `New trial booking: ${data.guestName} - ${data.className}`)
+}): Template {
+  const amount = `${data.currency} ${data.amount.toFixed(2)}`
+  const dob = data.guestDateOfBirth
+    ? new Date(data.guestDateOfBirth).toLocaleDateString('en-SG', { year: 'numeric', month: 'long', day: 'numeric' })
+    : null
 
-  const text = `
-New Trial Class Booking
+  const html = emailShell({
+    preheader: `Paid ${amount} · ${data.className} · ${data.classDate} ${data.classTime}`,
+    hero: hero({
+      eyebrow: 'New trial booking',
+      title: `${esc(data.guestName)} booked a trial class.`,
+      sub: 'First visit. Send a quick welcome message before class.',
+      right: chip(`Paid ${esc(amount)}`),
+      size: 'md',
+    }),
+    cards: [
+      classTicket({
+        className: data.className,
+        classDate: data.classDate,
+        classTime: data.classTime,
+        instructorName: data.instructorName,
+        status: 'Trial',
+        rows: [
+          ['Location', esc(data.classLocation)],
+          ['Booking ID', esc(data.bookingId)],
+        ],
+      }),
+      contactCard({ name: data.guestName, email: data.guestEmail, phone: data.guestPhone, extraRows: [dob ? ['Date of birth', esc(dob)] : null] }),
+      staffFooterCard('Open trial bookings', '/trial-bookings'),
+    ],
+  })
 
-A guest has booked a trial class:
-
-Guest Information:
-Name: ${data.guestName}
-Email: ${data.guestEmail}
-Phone: ${data.guestPhone}
-${data.guestDateOfBirth ? `Date of Birth: ${new Date(data.guestDateOfBirth).toLocaleDateString('en-SG', { year: 'numeric', month: 'long', day: 'numeric' })}` : ''}
-
-Class Details:
-Class: ${data.className}
-Date: ${data.classDate}
-Time: ${data.classTime}
-Location: ${data.classLocation}
-${data.instructorName ? `Instructor: ${data.instructorName}` : ''}
-Amount Paid: ${data.currency} ${data.amount.toFixed(2)}
-Booking ID: ${data.bookingId}
-
-Action Required:
-Please create a user account for this guest if they want to become a member. The guest information is provided above.
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    'New trial class booking',
+    '',
+    `Guest: ${data.guestName}`,
+    `Email: ${data.guestEmail}`,
+    `Phone: ${data.guestPhone}`,
+    dob ? `Date of birth: ${dob}` : null,
+    '',
+    `Class: ${data.className}`,
+    `Date: ${data.classDate}`,
+    `Time: ${data.classTime}`,
+    `Location: ${data.classLocation}`,
+    data.instructorName ? `Instructor: ${data.instructorName}` : null,
+    `Paid: ${amount}`,
+    `Booking ID: ${data.bookingId}`,
+    '',
+    `Open in admin: ${adminUrl()}/trial-bookings`,
+  )
   return { html, text }
 }
 
-/**
- * Member Booking Admin Notification Email Template
- */
 export function getMemberBookingAdminNotificationEmailTemplate(data: {
   memberName: string
   memberEmail: string
@@ -1706,103 +1228,53 @@ export function getMemberBookingAdminNotificationEmailTemplate(data: {
   tokensUsed: number
   bookingId?: string
   bookingNote?: string
-}): { html: string; text: string } {
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">New Class Booking</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">A member has booked a class</p>
-    </div>
-    
-    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 25px; border-radius: 8px; margin: 30px 0;">
-      <h3 style="margin: 0 0 20px 0; color: #92400e; font-size: 20px; font-weight: 600;" class="mobile-subtitle">Member Information</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Name:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.memberName)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Email:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.memberEmail)}</td>
-        </tr>
-        ${data.memberPhone ? `
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Phone:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.memberPhone)}</td>
-        </tr>
-        ` : ''}
-      </table>
-    </div>
-    
-    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 25px; border-radius: 8px; margin: 30px 0;">
-      <h3 style="margin: 0 0 20px 0; color: #15803d; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Date:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Time:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classTime)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Location:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classLocation)}</td>
-        </tr>
-        ${data.instructorName ? `
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Instructor:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.instructorName)}</td>
-        </tr>
-        ` : ''}
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Tokens Used:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${data.tokensUsed}</td>
-        </tr>
-        ${data.bookingNote ? `
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Note:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.bookingNote)}</td>
-        </tr>
-        ` : ''}
-        ${data.bookingId ? `
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Booking ID:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.bookingId)}</td>
-        </tr>
-        ` : ''}
-      </table>
-    </div>
-  `, `New booking: ${data.memberName} - ${data.className}`)
+}): Template {
+  const html = emailShell({
+    preheader: `${plural(data.tokensUsed, 'token')} used · ${data.className} · ${data.classDate} ${data.classTime}`,
+    hero: hero({
+      eyebrow: 'New member booking',
+      title: `${esc(data.memberName)} booked ${esc(data.className)}.`,
+      right: chip(esc(plural(data.tokensUsed, 'token'))),
+      size: 'md',
+    }),
+    cards: [
+      classTicket({
+        className: data.className,
+        classDate: data.classDate,
+        classTime: data.classTime,
+        instructorName: data.instructorName,
+        status: 'Confirmed',
+        rows: [
+          ['Location', esc(data.classLocation)],
+          ['Tokens used', String(data.tokensUsed)],
+          data.bookingId ? ['Booking ID', esc(data.bookingId)] : null,
+        ],
+      }),
+      data.bookingNote ? quoteCard('Note from member', data.bookingNote) : '',
+      contactCard({ name: data.memberName, email: data.memberEmail, phone: data.memberPhone }),
+      staffFooterCard('Open classes', '/classes'),
+    ],
+  })
 
-  const text = `
-New Class Booking
-
-A member has booked a class:
-
-Member Information:
-Name: ${data.memberName}
-Email: ${data.memberEmail}
-${data.memberPhone ? `Phone: ${data.memberPhone}` : ''}
-
-Class Details:
-Class: ${data.className}
-Date: ${data.classDate}
-Time: ${data.classTime}
-Location: ${data.classLocation}
-${data.instructorName ? `Instructor: ${data.instructorName}` : ''}
-Tokens Used: ${data.tokensUsed}
-${data.bookingNote ? `Note: ${data.bookingNote}` : ''}
-${data.bookingId ? `Booking ID: ${data.bookingId}` : ''}
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
+  const text = lines(
+    'New class booking',
+    '',
+    `Member: ${data.memberName}`,
+    `Email: ${data.memberEmail}`,
+    data.memberPhone ? `Phone: ${data.memberPhone}` : null,
+    '',
+    `Class: ${data.className}`,
+    `Date: ${data.classDate}`,
+    `Time: ${data.classTime}`,
+    `Location: ${data.classLocation}`,
+    data.instructorName ? `Instructor: ${data.instructorName}` : null,
+    `Tokens used: ${data.tokensUsed}`,
+    data.bookingNote ? `Note: ${data.bookingNote}` : null,
+    data.bookingId ? `Booking ID: ${data.bookingId}` : null,
+  )
   return { html, text }
 }
 
-/**
- * Member Booking Tutor Notification Email Template
- */
 export function getMemberBookingTutorNotificationEmailTemplate(data: {
   memberName: string
   className: string
@@ -1811,237 +1283,149 @@ export function getMemberBookingTutorNotificationEmailTemplate(data: {
   classLocation: string
   tokensUsed?: number
   bookingNote?: string
-}): { html: string; text: string } {
-  const html = getBaseTemplate(`
-    <div style="text-align: center; margin-bottom: 30px;" class="mobile-spacing">
-      <h2 style="margin: 0 0 10px 0; color: #111827; font-size: 24px; font-weight: 700;" class="mobile-title">New Student Booked</h2>
-      <p style="margin: 0; color: #6b7280; font-size: 16px;" class="mobile-subtitle">${escapeHtml(data.memberName)} has booked your class</p>
-    </div>
-    
-    <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 25px; border-radius: 8px; margin: 30px 0;">
-      <h3 style="margin: 0 0 20px 0; color: #15803d; font-size: 20px; font-weight: 600;" class="mobile-subtitle">${escapeHtml(data.className)}</h3>
-      <table role="presentation" style="width: 100%; border-collapse: collapse;" class="mobile-table">
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 140px; vertical-align: top;">Student:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.memberName)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Date:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classDate)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Time:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classTime)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Location:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.classLocation)}</td>
-        </tr>
-        ${typeof data.tokensUsed === 'number' ? `
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Tokens Used:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${data.tokensUsed}</td>
-        </tr>
-        ` : ''}
-        ${data.bookingNote ? `
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; font-size: 15px; vertical-align: top;">Note:</td>
-          <td style="padding: 10px 0; color: #111827; font-weight: 600; font-size: 15px;">${escapeHtml(data.bookingNote)}</td>
-        </tr>
-        ` : ''}
-      </table>
-    </div>
-  `, `New student booked: ${data.className}`)
+}): Template {
+  const html = emailShell({
+    preheader: `${data.memberName} joined ${data.className} · ${data.classDate} ${data.classTime}`,
+    hero: hero({
+      eyebrow: 'New student',
+      title: `${esc(data.memberName)} joined your class.`,
+      sub: `${esc(data.className)}, ${esc(data.classDate)} at ${esc(data.classTime)}.`,
+      size: 'md',
+    }),
+    cards: [
+      classTicket({
+        className: data.className,
+        classDate: data.classDate,
+        classTime: data.classTime,
+        rows: [
+          ['Student', esc(data.memberName)],
+          ['Location', esc(data.classLocation)],
+          typeof data.tokensUsed === 'number' ? ['Tokens used', String(data.tokensUsed)] : null,
+        ],
+      }),
+      data.bookingNote ? quoteCard('Note from student', data.bookingNote) : '',
+    ],
+  })
 
-  const text = `
-New Student Booked
-
-${data.memberName} has booked your class:
-
-Class: ${data.className}
-Date: ${data.classDate}
-Time: ${data.classTime}
-Location: ${data.classLocation}
-${typeof data.tokensUsed === 'number' ? `Tokens Used: ${data.tokensUsed}` : ''}
-${data.bookingNote ? `Note: ${data.bookingNote}` : ''}
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
-  return { html, text }
-}
-
-const LEAD_OUTREACH_PHONE_DISPLAY = '+65 8492 7347'
-const LEAD_OUTREACH_PHONE_TEL = '+6584927347'
-const LEAD_OUTREACH_WHATSAPP_URL = 'https://wa.me/6584927347'
-const LEAD_OUTREACH_EMAIL = 'hello@onestepfitness.sg'
-
-function getOutreachSiteUrl(): string {
-  const url =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXT_PUBLIC_WEB_URL ||
-    'https://onestepfitness.sg'
-  return url.replace(/\/$/, '')
-}
-
-function getOutreachLogoUrl(): string {
-  return `${getOutreachSiteUrl()}/logo/One%20step%20fitness%20logo.png`
-}
-
-function bodyTextToHtmlParagraphs(text: string): string {
-  return text
-    .split(/\n\n+/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean)
-    .map(
-      (paragraph) =>
-        `<p style="margin: 0 0 18px 0; color: #374151; font-size: 16px; line-height: 1.75;" class="mobile-text">${escapeHtml(paragraph).replace(/\n/g, '<br>')}</p>`
-    )
-    .join('')
-}
-
-/**
- * Branded lead marketing / follow-up email template
- */
-export function getLeadFollowUpEmailTemplate(data: {
-  leadName: string
-  bodyText: string
-  subject?: string
-}): { html: string; text: string } {
-  const siteUrl = getOutreachSiteUrl()
-  const trialUrl = `${siteUrl}/trial-booking`
-  const scheduleUrl = `${siteUrl}/schedule`
-  const firstName = data.leadName.trim().split(/\s+/)[0] || 'there'
-  const preheader = (data.subject || 'A message from One Step Fitness').slice(0, 120)
-
-  const html = getBaseTemplate(
-    `
-    <div style="text-align: center; margin-bottom: 28px; padding: 0 4px;" class="mobile-spacing">
-      <p style="margin: 0 0 8px 0; color: #16a34a; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">One Step Fitness</p>
-      <h2 style="margin: 0; color: #111827; font-size: 26px; font-weight: 700; line-height: 1.35;" class="mobile-title">We would love to dance with you!</h2>
-    </div>
-
-    <div style="height: 4px; width: 64px; background: linear-gradient(90deg, #16a34a, #22c55e); border-radius: 999px; margin: 0 auto 28px;"></div>
-
-    ${bodyTextToHtmlParagraphs(data.bodyText)}
-
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin: 28px 0;">
-      <tr>
-        <td class="lead-feature-col" style="width: 100%; padding: 0 0 12px 0; vertical-align: top;">
-          <div style="background-color: #f0fdf4; border-radius: 12px; padding: 18px 16px; text-align: center; border: 1px solid #bbf7d0;">
-            <p style="margin: 0 0 6px; color: #16a34a; font-size: 18px; font-weight: 800; line-height: 1;">01</p>
-            <p style="margin: 0; color: #15803d; font-size: 14px; font-weight: 700;">Zumba &amp; Dance</p>
-            <p style="margin: 6px 0 0; color: #6b7280; font-size: 13px; line-height: 1.4;">Fun, energetic classes</p>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <td class="lead-feature-col" style="width: 100%; padding: 0 0 12px 0; vertical-align: top;">
-          <div style="background-color: #eff6ff; border-radius: 12px; padding: 18px 16px; text-align: center; border: 1px solid #bfdbfe;">
-            <p style="margin: 0 0 6px; color: #1d4ed8; font-size: 18px; font-weight: 800; line-height: 1;">02</p>
-            <p style="margin: 0; color: #1d4ed8; font-size: 14px; font-weight: 700;">All Levels</p>
-            <p style="margin: 6px 0 0; color: #6b7280; font-size: 13px; line-height: 1.4;">Beginners welcome</p>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <td class="lead-feature-col" style="width: 100%; padding: 0; vertical-align: top;">
-          <div style="background-color: #fdf4ff; border-radius: 12px; padding: 18px 16px; text-align: center; border: 1px solid #e9d5ff;">
-            <p style="margin: 0 0 6px; color: #7e22ce; font-size: 18px; font-weight: 800; line-height: 1;">03</p>
-            <p style="margin: 0; color: #7e22ce; font-size: 14px; font-weight: 700;">Great Community</p>
-            <p style="margin: 6px 0 0; color: #6b7280; font-size: 13px; line-height: 1.4;">Supportive instructors</p>
-          </div>
-        </td>
-      </tr>
-    </table>
-
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin: 32px 0 20px;">
-      <tr>
-        <td align="center" class="lead-cta-cell" style="padding: 0 16px;">
-          <table role="presentation" cellspacing="0" cellpadding="0" style="width: 100%; max-width: 320px; margin: 0 auto;">
-            <tr>
-              <td align="center" style="border-radius: 999px; background-color: #16a34a; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);">
-                <a href="${trialUrl}" class="lead-cta-btn mobile-button" style="display: block; width: 100%; max-width: 100%; box-sizing: border-box; color: #ffffff !important; text-decoration: none; padding: 16px 20px; border-radius: 999px; font-weight: 700; font-size: 16px; line-height: 1.3; text-align: center; mso-line-height-rule: exactly;">
-                  Book Your Trial Class
-                </a>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-
-    <p style="text-align: center; margin: 0 0 28px; padding: 0 16px;">
-      <a href="${scheduleUrl}" style="color: #16a34a; font-size: 14px; font-weight: 600; text-decoration: underline;">View class schedule</a>
-    </p>
-
-    <div style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border-radius: 14px; padding: 22px 16px; border: 1px solid #bbf7d0;">
-      <p style="margin: 0 0 16px; text-align: center; color: #15803d; font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">Questions? We are here to help</p>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td style="padding: 8px 0; text-align: center;">
-            <a href="tel:${LEAD_OUTREACH_PHONE_TEL}" class="lead-contact-link" style="color: #111827; font-size: 15px; font-weight: 600; text-decoration: none;">
-              Call: ${LEAD_OUTREACH_PHONE_DISPLAY}
-            </a>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 8px 0; text-align: center;">
-            <a href="${LEAD_OUTREACH_WHATSAPP_URL}" class="lead-contact-link" style="color: #16a34a; font-size: 15px; font-weight: 600; text-decoration: none;">
-              WhatsApp: Chat with us
-            </a>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 8px 0; text-align: center;">
-            <a href="mailto:${LEAD_OUTREACH_EMAIL}" class="lead-contact-link" style="color: #16a34a; font-size: 15px; font-weight: 600; text-decoration: none; word-break: break-word;">
-              Email: ${LEAD_OUTREACH_EMAIL}
-            </a>
-          </td>
-        </tr>
-      </table>
-    </div>
-
-    <p style="margin: 28px 0 0; text-align: center; color: #9ca3af; font-size: 13px; line-height: 1.6;" class="mobile-text">
-      Simply reply to this email and our team will get back to you shortly.
-    </p>
-  `,
-    preheader,
-    { logoUrl: getOutreachLogoUrl() }
+  const text = lines(
+    'New student booked',
+    '',
+    `${data.memberName} has booked your class:`,
+    '',
+    `Class: ${data.className}`,
+    `Date: ${data.classDate}`,
+    `Time: ${data.classTime}`,
+    `Location: ${data.classLocation}`,
+    typeof data.tokensUsed === 'number' ? `Tokens used: ${data.tokensUsed}` : null,
+    data.bookingNote ? `Note: ${data.bookingNote}` : null,
   )
-
-  const text = `
-Hi ${firstName},
-
-${data.bodyText}
-
----
-BOOK YOUR TRIAL CLASS
-${trialUrl}
-
-VIEW CLASS SCHEDULE
-${scheduleUrl}
-
-GET IN TOUCH
-Phone: ${LEAD_OUTREACH_PHONE_DISPLAY}
-WhatsApp: ${LEAD_OUTREACH_WHATSAPP_URL}
-Email: ${LEAD_OUTREACH_EMAIL}
-
-Reply to this email and our team will get back to you shortly.
-
-© ${new Date().getFullYear()} One Step Fitness. All rights reserved.
-  `.trim()
-
   return { html, text }
 }
 
-function escapeHtml(text: string): string {
-  const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
-  }
-  return text.replace(/[&<>"']/g, (m) => map[m])
+export function getPaymentAlertEmailTemplate(data: {
+  event: 'initiated' | 'succeeded' | 'failed'
+  paymentType: 'package-purchase' | 'trial-booking'
+  paymentId: string
+  source: string
+  amount: number
+  currency?: string
+  packageName?: string
+  tokenCount?: number
+  className?: string
+  customerName: string
+  customerEmail?: string | null
+  customerPhone?: string | null
+  failureReason?: string
+}): Template & { title: string } {
+  const amount = formatMoney(Number(data.amount), data.currency || 'SGD')
+  const isTrial = data.paymentType === 'trial-booking'
+  const item = isTrial ? `trial class${data.className ? ` (${data.className})` : ''}` : data.packageName || 'a package'
+  const what = isTrial ? 'Trial booking' : 'Package purchase'
+
+  const meta = {
+    initiated: { eyebrow: 'Payment started', chip: chip('Pending', 'pending'), title: `${esc(data.customerName)} is checking out.`, sub: `${esc(amount)} for ${esc(item)}. Payment isn't confirmed yet.`, label: 'Started' },
+    succeeded: { eyebrow: 'Payment received', chip: chip('Succeeded'), title: esc(amount), sub: `${esc(data.customerName)} paid for ${esc(item)}.`, label: 'Successful' },
+    failed: { eyebrow: 'Payment failed', chip: chip('Failed', 'danger'), title: `${esc(amount)} didn't go through.`, sub: `${esc(data.customerName)} tried to pay for ${esc(item)}.`, label: 'Failed' },
+  }[data.event]
+  const title = `${isTrial ? 'Trial Booking' : 'Package'} Payment ${meta.label}`
+
+  const html = emailShell({
+    preheader: `${meta.label}: ${amount} · ${what} · ${data.customerName}`,
+    hero: hero({ eyebrow: meta.eyebrow, title: meta.title, sub: meta.sub, right: meta.chip, size: 'md' }),
+    cards: [
+      data.event === 'failed' && data.failureReason ? quoteCard('Reason', data.failureReason) : '',
+      card(`${eyebrow('Payment', C.muted)}${detailRows([
+        ['Type', what],
+        isTrial ? ['Class', esc(data.className || 'Unknown class')] : ['Package', esc(data.packageName || 'Unknown package')],
+        data.tokenCount != null ? ['Tokens', String(data.tokenCount)] : null,
+        ['Amount', esc(amount)],
+        ['Source', esc(data.source)],
+        ['Payment ID', esc(data.paymentId)],
+      ])}${data.event === 'initiated' ? para("You'll get another email when this payment succeeds or fails.", { color: C.muted, size: 14, margin: '16px 0 0' }) : ''}`),
+      contactCard({ name: data.customerName, email: data.customerEmail, phone: data.customerPhone }),
+      staffFooterCard('Open revenue report', '/reports/revenue'),
+    ],
+  })
+
+  const text = lines(
+    title,
+    '',
+    data.event === 'initiated'
+      ? 'A customer started checkout. Payment has not been confirmed yet.'
+      : data.event === 'failed'
+        ? 'The payment attempt failed or was cancelled. No successful payment was recorded.'
+        : 'The payment was completed successfully.',
+    '',
+    `Customer: ${data.customerName}`,
+    `Email: ${data.customerEmail || 'Not available'}`,
+    data.customerPhone ? `Phone: ${data.customerPhone}` : null,
+    `Amount: ${amount}`,
+    `Type: ${what}`,
+    isTrial ? `Class: ${data.className || 'Unknown class'}` : `Package: ${data.packageName || 'Unknown package'}`,
+    data.tokenCount != null ? `Tokens: ${data.tokenCount}` : null,
+    `Source: ${data.source}`,
+    `Payment ID: ${data.paymentId}`,
+    data.failureReason ? `Failure reason: ${data.failureReason}` : null,
+  )
+  return { html, text, title }
+}
+
+export function getContactFormEmailTemplate(data: {
+  name: string
+  email: string
+  phone?: string
+  subject: string
+  message: string
+}): Template {
+  const html = emailShell({
+    preheader: data.message.slice(0, 120),
+    hero: hero({
+      eyebrow: 'Website enquiry',
+      title: `${esc(data.name)} sent a message.`,
+      sub: esc(data.subject),
+      right: chip('New'),
+      size: 'md',
+    }),
+    cards: [
+      quoteCard('Message', data.message),
+      contactCard({ name: data.name, email: data.email, phone: data.phone }),
+      card(para(`Reply to this email to answer ${strong(esc(data.name))} directly.`, { color: C.muted, size: 14, margin: '0' }), { pad: '20px 32px' }),
+    ],
+  })
+
+  const text = lines(
+    'New contact form submission',
+    '',
+    `Name: ${data.name}`,
+    `Email: ${data.email}`,
+    data.phone ? `Phone: ${data.phone}` : null,
+    `Subject: ${data.subject}`,
+    '',
+    'Message:',
+    data.message,
+    '',
+    '---',
+    `Reply to this email to respond to ${data.name}.`,
+  )
+  return { html, text }
 }
